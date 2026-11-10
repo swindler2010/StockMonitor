@@ -86,7 +86,7 @@ class SizingTests(unittest.TestCase):
         store=SimpleNamespace(path='unused',setting=lambda k,d=None:f.cfg if k==hourly.CONFIG else writes.get(k,d),
             set_setting=lambda k,v:writes.update({k:v}),read_cache=SimpleNamespace(token_for=lambda _:{}))
         app=SimpleNamespace(store=store,watchlist=[f.info],closing=False,user_dirty=False,ai_config={},
-            root=SimpleNamespace(after=lambda *args:None),compute_feed=SimpleNamespace(calculate=lambda *args:copy.deepcopy(f.result)))
+            root=SimpleNamespace(after=lambda *args:None),compute_trading=SimpleNamespace(calculate=lambda *args:copy.deepcopy(f.result)))
         app.job=lambda work,done,failed=None,**kwargs:done(work())
         with patch.object(hourly.sqlite3,'connect',return_value=f.db),patch.object(hourly.time,'time',return_value=f.now):
             runtime=hourly.Runtime(app);runtime.tick()

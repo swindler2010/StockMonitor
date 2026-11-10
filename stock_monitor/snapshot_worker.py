@@ -81,6 +81,11 @@ class SnapshotContext:
         """
         if info.get('kind')=='benchmark':return None
         now=getattr(self,'analysis_at',pd.Timestamp.now(tz='UTC'));tf=self.timeframe.get()
+        required=getattr(self,'trading_required_tf',None)
+        if required is not None:
+            from trading_context import plan
+            required=tuple(plan(tf,required)['required_tf'])
+        else:required=profile(tf)
         state=copy.deepcopy(self.user_state(info));frames={}
         from cp_controls import demo_initialization_policy,initialization_policy_for
         policy_key='cp_manual_risk:'+info['isin']
@@ -95,7 +100,7 @@ class SnapshotContext:
         approved_analysis=(demo_initialization_policy(policy,info['isin'])
             and tf in policy.get('analysis_timeframes',[])
             and (tf not in policy['entry_timeframes'] or getattr(self,'analysis_only',False)))
-        for interval in dict.fromkeys((tf,*profile(tf),'1D')):
+        for interval in dict.fromkeys((tf,*required,'1D')):
             try:
                 if approved_analysis:
                     frames[interval]=self.closed_frame(info,Desktop014._frame_uncached(self,info,interval,required_identity=policy['identity']),interval)
@@ -117,7 +122,7 @@ class SnapshotContext:
             data=frame.copy(deep=False);data.attrs={**frame.attrs,'timeframe':interval}
             try:return (analytics.bar_ends(data)<=now).tobytes()
             except (ValueError,TypeError,KeyError):return b'invalid'
-        key=('trading_engine',generation,info['isin'],tf,self.period.get(),
+        key=('trading_engine',generation,info['isin'],tf,self.period.get(),tuple(required),
              json.dumps(state,sort_keys=True,default=str),str(now.date()),
              tuple((interval,tuple(frame.attrs.get(k) for k in ('source','symbol','venue','currency','timezone')),closed_token(frame,interval),json.dumps({k:frame.attrs.get('data_quality',{}).get(k) for k in ('state','issues')},sort_keys=True,default=str)) for interval,frame in frames.items()),
              closed_token(benchmark_frame,'1D'))
@@ -145,7 +150,7 @@ class SnapshotContext:
                 # this provider. Legacy Proxy preferences are not its inputs.
                 # Every dependent frame still has to match this exact identity.
                 state['expected_identity']=dict(reviewed_identity)
-            result=analytics.analyse_multiframe({interval:frames[interval] for interval in dict.fromkeys((tf,*profile(tf)))},tf,state,market,now=now)
+            result=analytics.analyse_multiframe({interval:frames[interval] for interval in dict.fromkeys((tf,*required))},tf,state,market,now=now,required_tf=required)
             result['analysis_scope']=frames[tf].attrs.get('analysis_scope')
             return result
         result=self.store.read_cache.get(key,calculate_engine,scoped=True,inputs=dict(generation),category='analytics')

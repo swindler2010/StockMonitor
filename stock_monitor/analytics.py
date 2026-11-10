@@ -286,16 +286,20 @@ def analyse(frame, info=None, now=None):
     return enriched,result
 
 
-def analyse_multiframe(frames, selected_tf, info=None, benchmark=None, now=None):
+def analyse_multiframe(frames, selected_tf, info=None, benchmark=None, now=None,required_tf=None):
     """Core API: supplied OHLCV only, no fetches, persistence or UI operations.
 
     All TF must carry READY quality, matching listing identity and timeframe.
     Caller supplies existing Relative Performance context; no fallback is made.
     """
     from trading_engine import evaluate, profile
+    required=profile(selected_tf)
+    if required_tf is not None:
+        from trading_context import plan
+        required=tuple(plan(selected_tf,required_tf)['required_tf'])
     info=info or {}; contexts={}; reference=None
     clock=pd.Timestamp.now(tz='UTC') if now is None else pd.Timestamp(now)
-    for tf in dict.fromkeys((selected_tf,*profile(selected_tf))):
+    for tf in dict.fromkeys((selected_tf,*required)):
         frame=frames.get(tf)
         if frame is None:continue
         calc=dict(info);meta=frame.attrs
@@ -313,7 +317,7 @@ def analyse_multiframe(frames, selected_tf, info=None, benchmark=None, now=None)
         for key,value in info.get('expected_identity',{}).items():
             if meta.get(key)!=value:result.update(data_quality={'state':'INVALID'},reason='Несовпадение ожидаемой идентичности: '+key)
         contexts[tf]=result
-    answer=evaluate(contexts,selected_tf,info.get('position'),benchmark)
+    answer=evaluate(contexts,selected_tf,info.get('position'),benchmark,required=required)
     for tf,context in answer.get('timeframe_context',{}).items():
         if contexts.get(tf,{}).get('scope_initialization'):
             context['scope_initialization']=contexts[tf]['scope_initialization']
@@ -334,7 +338,7 @@ def analyse_multiframe(frames, selected_tf, info=None, benchmark=None, now=None)
         if consistent:
             for choices in product(*([c,*c['_demo_seed_trials']] for c in sensitive.values())):
                 trial_contexts={**contexts,**dict(zip(sensitive,choices))}
-                trial=evaluate(trial_contexts,selected_tf,info.get('position'),benchmark)
+                trial=evaluate(trial_contexts,selected_tf,info.get('position'),benchmark,required=required)
                 checked+=1
                 if any(trial.get(k)!=answer.get(k) for k in keys):
                     consistent=False;proof_status='UNSTABLE';break

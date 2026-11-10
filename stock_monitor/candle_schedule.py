@@ -54,6 +54,24 @@ def decision(store,isin,meta,base,now=None):
  rev=revision(store,isin,base)
  if not b['close_at']:return {**b,'due':False,'reason':'NO_PUBLISHED_CLOSED_INTERVAL','key':key}
  reason='RETRY_DUE' if prior.get('outcome')=='ERROR' else 'NEW_CLOSED_INTERVAL' if prior.get('close_at')!=b['close_at'] else 'INPUT_REVISION' if prior.get('revisions')!=rev else 'UNCHANGED'
+ # The final session bar can arrive after the first post-close request.
+ # A successful HTTP receipt does not prove that this candle was published.
+ # Reuse the durable scheduler, with four bounded checks, never an overnight
+ # loop or a claim that an absent response proves NO_TRADES.
+ if not b['session_open'] and base in ('5m','15m') and meta.get('source')=='gettex_chart':
+  saved=store.setting('gettex_chart:'+isin+':'+base,{})
+  try:
+   target=pd.Timestamp(b['close_at']);observed=pd.Timestamp(saved['last']).tz_localize(meta['timezone'])+pd.Timedelta(minutes=MINUTES[base])
+   if saved.get('identity')==meta and saved.get('state') in ('SAVED','UNCHANGED','PARTIAL') and observed<target:
+    count=prior.get('intraday_publication_rechecks',0) if prior.get('pending_intraday_close')==b['close_at'] else 0
+    elapsed=pd.Timestamp(prior.get('finished_at') or b['eligible_at'])
+    due_at=max(pd.Timestamp(b['eligible_at']),elapsed+pd.Timedelta(minutes=(0,5,15,30)[min(count,3)]))
+    until=target+pd.Timedelta(hours=2);due=count<4 and now<until and now>=due_at
+    return {**b,'due':due,'reason':'PENDING_INTRADAY_PUBLICATION' if due else 'INTRADAY_PUBLICATION_WAIT' if count<4 and now<until else 'INTRADAY_PUBLICATION_UNCONFIRMED',
+      'key':key,'revisions':rev,'planned_at':now.isoformat(),'pending_intraday_close':b['close_at'],
+      'intraday_publication_rechecks':count+1 if due else count,'next_publication_check':due_at.isoformat(),
+      'publication_retry_until':until.isoformat(),'publication_delay_status':'UNKNOWN'}
+  except (ValueError,TypeError,KeyError):pass
  # A checked HTTP response is not proof that the last daily candle arrived.
  # Recheck a delayed GETTEX daily tail after session close, with durable bounded
  # backoff. Never change DQ or invent a candle for an empty provider response.
@@ -85,6 +103,9 @@ def finish(store,isin,meta,base,plan,error=None,now=None):
  if prior.get('pending_daily_close') and prior['pending_daily_close']==plan.get('close_at'):
   row['pending_daily_close']=prior['pending_daily_close']
   row['publication_rechecks']=max(prior.get('publication_rechecks',0),row.get('publication_rechecks',0))
+ if prior.get('pending_intraday_close') and prior['pending_intraday_close']==plan.get('close_at'):
+  row['pending_intraday_close']=prior['pending_intraday_close']
+  row['intraday_publication_rechecks']=max(prior.get('intraday_publication_rechecks',0),row.get('intraday_publication_rechecks',0))
  if error:
   row['error']=type(error).__name__;row['retry_after']=(now+pd.Timedelta(minutes=15)).isoformat()
   response=getattr(error,'response',None);status=getattr(error,'code',None) or getattr(response,'status_code',None)
@@ -237,10 +258,43 @@ def trade_maintenance(store,infos,now):
 def fresh_window(plan,base,now):
  """Include the last publication just after close, not an overnight poll loop."""
  if plan.get('session_open') or base=='1D':return True
+ if plan.get('reason')=='PENDING_INTRADAY_PUBLICATION':
+  return pd.Timestamp(plan['next_publication_check'])<=now<pd.Timestamp(plan['publication_retry_until'])
  try:
   eligible=pd.Timestamp(plan['eligible_at'])
   return pd.notna(eligible) and eligible<=now<eligible+pd.Timedelta(minutes=15)
  except (KeyError,TypeError,ValueError):return False
+
+
+def operational_chart_due(db,now):
+ """Bounded configured/held instruments only; no all-stock audit or IO."""
+ from contextlib import contextmanager
+ from paper_hourly import read,authority,CONFIG
+ from paper_account import ledger
+ from gettex_chart import confirmed_state
+ class ExistingSnapshot:
+  @contextmanager
+  def connect(self):yield db
+  def setting(self,k,d=None):return read(db,k,d)
+ store=ExistingSnapshot();identities={}
+ for isin in read(db,CONFIG,{}).get('identities',{}):
+  try:identities[isin]=authority(db,isin)['identities'][isin]
+  except ValueError:pass
+ for p in ledger(db).get('positions',[]):
+  if float(p['quantity'])>0:identities[p['isin']]=p['identity']
+ due=[]
+ for isin,meta in identities.items():
+  if meta.get('source')!='gettex_chart' or meta.get('venue')!='GETTEX' or meta.get('currency')!='EUR':continue
+  row=db.execute('SELECT payload FROM instruments WHERE isin=?',(isin,)).fetchone()
+  if not row:continue
+  info=json.loads(row[0])
+  for base in ('5m','15m'):
+   saved=store.setting('gettex_chart:'+isin+':'+base,{})
+   if not confirmed_state(info,saved) or saved['identity']!=meta:continue
+   if saved.get('retry_after') and now<pd.Timestamp(saved['retry_after']):continue
+   request=decision(store,isin,meta,base,now)
+   if request['due'] and fresh_window(request,base,now):due.append((saved.get('received_at',''),isin,base))
+ return sorted(due)
 
 def fresh_candidate(store,infos,now,focus=None):
  """One short job on the existing serial feed lane, for the whole watchlist."""

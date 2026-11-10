@@ -28,6 +28,11 @@ def automation_summary(state):
         if variable_size(auto) else 'максимум по 1 акции')
     lines=['\nАвтоторговля демо: '+('ВКЛЮЧЕНА' if auto.get('enabled') else 'ПАУЗА')+
         ' • сигнал 1H, подтверждение 4H/1D • только GETTEX/EUR\n'+size]
+    from paper_protection import enabled
+    try:protection=enabled(auto)
+    except ValueError:protection=False
+    lines.append('Стоп / цель: по закрытой проверенной 5m/15m-свече; цена уровня не гарантируется.'
+        if protection else 'Стоп / цель основного счёта: не активированы; выход по CORE. V2 — отдельно в тени.')
     if auto.get('target_equity'):
         equity=state.get('equity');target=Decimal(auto['target_equity'])
         progress=('оценка счёта недоступна' if equity is None else

@@ -613,6 +613,23 @@ def historical_review_turn(store,info,now=None):
         db.execute('BEGIN');grant=read(db,key,{})
         review=grant.get('historical_review',{})
         if review.get('version')!=1:return {'state':'NOT_REQUESTED'}
+        if _review_receipts_retired(grant):
+            # This was a review of OLD authorizations, not a second archive
+            # recovery loop. Once all targets were examined and every original
+            # receipt revoked, new quotes cannot reopen those permissions.
+            # Ordinary DQ/recovery and current independently issued grants
+            # remain revision-bound and continue through their normal queues.
+            if not review.get('receipts_retired') or review.get('execution_suspended') or review.get('state')!='COMPLETE':
+                db.execute('ROLLBACK');db.execute('BEGIN IMMEDIATE')
+                current=read(db,key,{})
+                if digest(current)!=digest(grant):raise ValueError('RISK_REVIEW_INPUT_CHANGED')
+                review=current['historical_review']
+                review.update(state='COMPLETE',execution_suspended=False,receipts_retired=True,
+                    retired_at=clock.isoformat(),retirement_basis='All original receipts reviewed and revoked; current DQ/recovery remain active')
+                write(db,key,current)
+                return dict(state='COMPLETE',reviewed=len(review['results']),total=len(review['targets']),
+                            summary=review.get('summary',{}),revoked=0,receipts_retired=True)
+            return dict(state='UNCHANGED',reviewed=len(review['results']),summary=review.get('summary',{}),receipts_retired=True)
         original=digest(grant);groups={}
         proven_auto={pid for pid,e in effective_accepted(db,isin,grant).items() if e.get('actor')==AUTO_ACTOR}
         for pid,entry in review.get('targets',{}).items():
@@ -704,11 +721,24 @@ def historical_review_due(store,infos,now=None):
     pending=[];clock=pd.Timestamp(now or stamp())
     with store.connect() as db:
         for info in infos:
-            review=read(db,'cp_manual_risk:'+info['isin'],{}).get('historical_review',{})
+            grant=read(db,'cp_manual_risk:'+info['isin'],{})
+            review=grant.get('historical_review',{})
+            if _review_receipts_retired(grant) and review.get('receipts_retired'):continue
             retry_due=any(r.get('state')=='WAITING' and r.get('next_retry') and pd.Timestamp(r['next_retry'])<=clock for r in review.get('results',{}).values())
             if review.get('state') in ('PENDING','RUNNING') or retry_due:
                 pending.append((review.get('checked_at',''),info))
     return [dict(min(pending,key=lambda x:x[0])[1],_review_only=True)] if pending else []
+
+
+def _review_receipts_retired(grant):
+    """No count-only or flag-only shortcut; inspect exact reviewed target IDs."""
+    review=grant.get('historical_review',{})
+    targets=review.get('targets',{})
+    results=review.get('results',{})
+    return bool(review.get('version')==1 and targets and set(targets)<=set(results)
+        and all(results[k].get('state') for k in targets)
+        and not any(_original_review_receipt(review,pid,entry)
+                    for pid,entry in grant.get('accepted',{}).items()))
 
 
 RISK_CONTEXT='owner_accepted_estimated_close_v2'

@@ -622,11 +622,22 @@ def daily_candidate(store,info,tf,current,current_base,official,official_base,no
     return raw,base
 
 
-def reserve_request(db,now):
+def reserve_request(db,now,isin=None,base=None,recovery=False):
     """Shared by normal feed and bounded DQ recovery; caller holds write lock."""
     reservation=db.execute("SELECT value FROM settings WHERE key='gettex_chart_next_request'").fetchone()
     if reservation and now<pd.Timestamp(json.loads(reservation[0])):return False
+    # Queue rank alone cannot reserve a shared HTTP budget. Two operational
+    # requests, then one ordinary/archive request, reuse the same limiter.
+    # A reservation is counted even on HTTP failure; retries stay bounded.
+    due=scheduler.operational_chart_due(db,now)
+    key='gettex_chart_request_rotation'
+    row=db.execute('SELECT value FROM settings WHERE key=?',(key,)).fetchone()
+    streak=json.loads(row[0]).get('priority_streak',0) if row else 0
+    priority=not recovery and any((isin,base)==(i,b) for _,i,b in due)
+    if due and streak<2 and not priority:return False
     db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',('gettex_chart_next_request',json.dumps((now+pd.Timedelta(minutes=1)).isoformat())))
+    db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',(key,json.dumps(dict(
+        priority_streak=min(2,streak+1) if priority else 0,at=now.isoformat(),isin=isin,base=base,priority=priority))))
     return True
 
 
@@ -642,6 +653,11 @@ def recovery_wait(store,info,meta,base,now=None):
         value=store.setting(key)
         retry=value.get('retry_after') if isinstance(value,dict) else value
         if retry and pd.Timestamp(retry)>now:future.append(pd.Timestamp(retry))
+    if not future:
+        with store.connect() as db:
+            row=db.execute("SELECT value FROM settings WHERE key='gettex_chart_request_rotation'").fetchone()
+            streak=json.loads(row[0]).get('priority_streak',0) if row else 0
+            if streak<2 and scheduler.operational_chart_due(db,now):future.append(now+pd.Timedelta(seconds=30))
     return max(future).isoformat() if future else None
 
 
@@ -667,7 +683,7 @@ def recovery_download(store,info,meta,base,start,end,now=None,client=None):
             value=json.loads(row[0]) if row else None
             retry=value.get('retry_after') if isinstance(value,dict) else value
             if retry and now<pd.Timestamp(retry):raise ValueError('GETTEX_RECOVERY_COOLDOWN')
-        if not reserve_request(db,now):raise ValueError('GETTEX_RECOVERY_RATE_WAIT')
+        if not reserve_request(db,now,info['isin'],base,recovery=True):raise ValueError('GETTEX_RECOVERY_RATE_WAIT')
     plan={'key':unit,'planned_at':now.isoformat(),'reason':'BOUNDED_DQ_RECOVERY'}
     try:
         payload,returned=(client or Client()).fetch(info['isin'],base,start.tz_convert('UTC'),end.tz_convert('UTC'))
@@ -802,7 +818,7 @@ def _fetch_turn(info, store, now=None, client=None, preferred_tf=None):
                         'archive_prefix':{'state':'ALREADY_PRESENT','checked_at':now.isoformat(),'floor':daily_floor}}
                     db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',(state_key(isin,base),json.dumps(saved,ensure_ascii=False)))
                     return {'state':'UNCHANGED','base':base,'added':0,'changed':0,'archive_prefix':saved['archive_prefix']}
-        if not reserve_request(db,now):
+        if not reserve_request(db,now,isin,base):
             return {'state':'RATE_WAIT'}
         # At most one five-request public chart job/minute across CP workers.
         if preferred_tf:
