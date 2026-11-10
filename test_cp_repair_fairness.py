@@ -94,7 +94,7 @@ class RepairFairness(unittest.TestCase):
         self.assertEqual(self.store.setting(self.key), before)
 
     def test_service_records_actual_attempt_and_preserves_unresolved_dq(self):
-        report = dict(state='UNCONFIRMED', ranges=[self.second['range']],
+        report = dict(state='UNCONFIRMED', ranges=[self.second['range']], recovery_provider_attempted=True,
                       next_retry=(self.now + pd.Timedelta(hours=1)).isoformat())
         with patch.object(cp, 'problems', return_value=[self.first, self.second]), \
              patch('eur_listings.stored_identity', return_value=self.meta), \
@@ -115,9 +115,9 @@ class RepairFairness(unittest.TestCase):
         self.store.save('cp_source_retry:gettex', retry)
         with patch.object(cp, 'problems', return_value=[self.first, self.second]), \
              patch('eur_listings.stored_identity', return_value=self.meta), \
-             patch('data_quality.repair') as repair:
+             patch('data_quality.repair', return_value=dict(state='UNCONFIRMED',ranges=[self.second['range']])) as repair:
             out = cp.service_request(self.info, self.store, lambda *a: None, self.now)
-        repair.assert_not_called()
+        self.assertTrue(repair.call_args.kwargs['local_only'])
         self.assertEqual(out['attempts'], 0)
         self.assertNotIn('last_attempt_at', out)
         self.assertEqual(out['next_retry'], retry)
@@ -149,21 +149,23 @@ class RepairFairness(unittest.TestCase):
         self.store.save('cp_source_retry:gettex', '2026-11-03T19:39:02Z')
         with patch.object(cp, 'problems', return_value=[self.first, self.second]), \
              patch('eur_listings.stored_identity', return_value=self.meta), \
-             patch('data_quality.repair') as repair:
+             patch('data_quality.repair',return_value=dict(state='UNCONFIRMED',ranges=[self.first['range']])) as repair:
             out = cp.service_request(self.info, self.store, lambda *a: None,
                                      pd.Timestamp('2026-11-03T18:50:00Z'))
-        repair.assert_not_called()
+        self.assertTrue(repair.call_args.kwargs['local_only'])
         self.assertEqual(out['attempts'], 5)
         self.assertEqual(out.get('legacy_rotation_at'), '2026-11-03T17:30:00Z')
         self.assertNotIn('last_attempt_at', out)  # no invented historical measurement
         self.assertEqual(self.due(pd.Timestamp('2026-11-03T19:39:03Z'))['problem']['range'],
-                         self.first['range'])
+                         self.second['range'])
 
     def test_mixed_legacy_and_new_receipts_keep_alternating_after_failed_attempts(self):
+        self.requests[cp.repair_id(self.first)]['attempts']=1
+        self.store.save(self.key,self.requests)
         chosen = []
-        for turn in range(4):
+        for turn in range(3):
             clock = self.now + pd.Timedelta(minutes=2 * turn)
-            report = dict(state='UNCONFIRMED', ranges=[self.first['range'], self.second['range']],
+            report = dict(state='UNCONFIRMED', ranges=[self.first['range'], self.second['range']], recovery_provider_attempted=True,
                           next_retry=(clock + pd.Timedelta(minutes=1)).isoformat())
             with patch.object(cp, 'problems', return_value=[self.first, self.second]), \
                  patch('eur_listings.stored_identity', return_value=self.meta), \
@@ -172,7 +174,7 @@ class RepairFairness(unittest.TestCase):
             chosen.append(out['problem']['range'])
             self.assertEqual(out['state'], 'WAITING')
             self.assertEqual(out['last_attempt_at'], clock.isoformat())
-        self.assertEqual(chosen, [self.second['range'], self.first['range']] * 2)
+        self.assertEqual(chosen, [self.second['range'], self.first['range'], self.second['range']])
         self.assertIsNone(self.store.setting('cp_manual_risk:' + self.isin))
 
 

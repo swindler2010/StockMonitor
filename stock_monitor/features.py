@@ -53,6 +53,8 @@ class Features:
         from compute_process import Client
         self.compute_chart=Client(self.store.path);self.compute_snapshot=Client(self.store.path)
         self.compute_feed=Client(self.store.path)
+        self.compute_eligibility=Client(self.store.path)
+        self.compute_trading=Client(self.store.path)
         self.compute_feed_update=Client(self.store.path,feed_updates=True)
         self.events=queue.Queue(); self.closing=False; self.feed_active=set(); self.feed_slots=threading.Semaphore(2)
         from performance_dispatcher import Dispatcher
@@ -77,6 +79,8 @@ class Features:
         self.paper_runtime=PaperRuntime(self);self.paper_runtime.start()
         from paper_strategy_shadow import Runtime as ShadowRuntime
         self.paper_shadow=ShadowRuntime(self);self.paper_shadow.start()
+        from cp_assessment import Runtime as AssessmentRuntime
+        self.cp_assessment=AssessmentRuntime(self);self.cp_assessment.start()
         from watchlist_order import Runtime as WatchlistOrder
         self.stock_order=WatchlistOrder(self);self.stock_order.start()
         if self.ai_config['open_on_start']:self.root.after(750,self.show_ai)

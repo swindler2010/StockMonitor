@@ -191,6 +191,8 @@ class BenchmarkMixin:
             self.compute_chart.close();self.compute_snapshot.close()
             for request in getattr(self,'_feed_analysis_jobs',{}).values():request.close()
             self.compute_feed.close();self.compute_feed_update.close()
+            if hasattr(self,'compute_eligibility'):self.compute_eligibility.close()
+            if hasattr(self,'compute_trading'):self.compute_trading.close()
         return result
 
     def _render_prepared_chart(self):

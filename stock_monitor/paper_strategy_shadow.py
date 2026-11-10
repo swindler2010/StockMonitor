@@ -162,7 +162,7 @@ class Runtime:
                     target=app.store.directory/DB_NAME
                     with closing(connect(target)) as ledger:
                         try:
-                            result=app.compute_feed.calculate('paper_hourly',values)
+                            result=app.compute_trading.calculate('paper_hourly',values)
                             def guard():
                                 if app.closing or app.user_dirty:raise ValueError('SHADOW_APP_NOT_READY')
                                 with closing(sqlite3.connect(Path(app.store.path).resolve().as_uri()+'?mode=ro',uri=True,timeout=.2)) as source:
@@ -185,7 +185,7 @@ class Runtime:
                     return report
                 def done(_):self.busy=False;self.next_check=time.time()+60
                 def failed(_):self.busy=False;self.next_check=time.time()+60
-                if app.job(work,done,failed,lane='read',key='paper_strategy_shadow',isin=isin) is False:self.busy=False
+                if app.job(work,done,failed,lane='trading',key='paper_strategy_shadow',isin=isin) is False:self.busy=False
         app.root.after(15000,self.tick)
 
 def attach(app,parent):

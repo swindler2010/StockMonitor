@@ -93,7 +93,7 @@ class AutomaticRepair(unittest.TestCase):
   self.plan()
   for n in range(3):
    at=self.now+pd.Timedelta(minutes=n*20)
-   report=dict(state='UNCONFIRMED',ranges=[self.span],next_retry=(at+pd.Timedelta(minutes=5)).isoformat())
+   report=dict(state='UNCONFIRMED',ranges=[self.span],recovery_provider_attempted=True,next_retry=(at+pd.Timedelta(minutes=5)).isoformat())
    with patch('data_quality.repair',return_value=report) as repair:
     result=cp.service_request(self.info,self.s,Mock(),at)
     if result is None:result=cp.service_request(self.info,self.s,Mock(),at)
@@ -102,8 +102,8 @@ class AutomaticRepair(unittest.TestCase):
   self.assertEqual(self.plan(at+pd.Timedelta(days=1))['state'],'CHECKED');self.assertIsNone(self.s.setting('cp_manual_risk:'+self.isin))
  def test_retry_after_blocks_network_without_consuming_attempt(self):
   self.plan();self.s.set_setting('cp_source_retry:gettex',(self.now+pd.Timedelta(hours=1)).isoformat())
-  with patch('data_quality.repair') as repair:result=cp.service_request(self.info,self.s,Mock(),self.now)
-  repair.assert_not_called();self.assertEqual(result['state'],'WAITING');self.assertEqual(result['attempts'],0)
+  with patch('data_quality.repair',return_value=dict(state='UNCONFIRMED',ranges=[self.span])) as repair:result=cp.service_request(self.info,self.s,Mock(),self.now)
+  self.assertTrue(repair.call_args.kwargs['local_only']);self.assertEqual(result['state'],'WAITING');self.assertEqual(result['attempts'],0)
   self.assertIsNone(cp.due_request(self.s.db,self.isin,self.now))
  def test_daily_subset_is_revalidated_and_changed_identity_or_resolved_range_skipped(self):
   q=dict(self.q,ranges=[['2026-11-06 11:15:00','2026-11-09 11:15:00']]);self.s.set_setting(self.qkey,q)

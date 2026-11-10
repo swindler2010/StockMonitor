@@ -621,6 +621,7 @@ def observe_batch(store,isin,packet,answers,submission_id,confirmed=False):
 
 def complete_analysis_request(store,isin,requested,result):
     """Receipt of existing eligibility pipeline, not a new admission mechanism."""
+    if not requested or (result or {}).get('deferred'):return
     with store.connect() as db:
         db.execute('BEGIN IMMEDIATE');p=read(db,PROGRESS+isin,{})
         if p.get('analysis_requested_at')!=requested:return

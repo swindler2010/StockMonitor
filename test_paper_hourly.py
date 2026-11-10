@@ -138,9 +138,9 @@ class HourlyTests(unittest.TestCase):
             set_setting=lambda k,v:writes.update({k:v}),read_cache=SimpleNamespace(token_for=lambda _:{}))
         root=SimpleNamespace(after=lambda ms,fn:calls.append(('timer',ms)))
         def job(work,done,failed=None,**kwargs):
-            self.assertEqual(kwargs['lane'],'read');calls.append(('job',kwargs['key']));done(work());return True
+            self.assertEqual(kwargs['lane'],'trading');calls.append(('job',kwargs['key']));done(work());return True
         app=SimpleNamespace(store=store,watchlist=[self.info],closing=False,user_dirty=False,ai_config={},root=root,job=job,
-            compute_feed=SimpleNamespace(calculate=lambda *args:copy.deepcopy(self.result)))
+            compute_trading=SimpleNamespace(calculate=lambda *args:copy.deepcopy(self.result)))
         with patch.object(hourly.time,'time',return_value=self.now):
             runtime=hourly.Runtime(app);runtime.tick()
             for _ in range(50):runtime.tick()

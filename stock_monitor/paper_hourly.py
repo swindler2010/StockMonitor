@@ -286,14 +286,15 @@ def reset(db, epoch):
 
 def compact(result):
     engine = result.get('execution_context', {}).get('trading_engine', {})
-    return dict(at=time.time(), core=engine.get('status', 'UNKNOWN'), signal=engine.get('signal', 'WAIT'),
+    return dict(at=time.time(), calculation_seconds=result.get('_calculation_timing',{}).get('compute_seconds'),
+        core=engine.get('status', 'UNKNOWN'), signal=engine.get('signal', 'WAIT'),
         signal_at=engine.get('timestamp'), reason=engine.get('reason'),
         quote_blocker=result.get('quote_blocker'),
         quote_at=(result.get('execution_quote', {}).get('bars') or [{}])[-1].get('close_at'))
 
 
 class Runtime:
-    """One bounded job, existing serial read client and Dispatcher; durable receipts."""
+    """One bounded trading job; owned read client, existing Dispatcher and ledger."""
     def __init__(self, app):
         self.app = app;self.busy = False;self.cursor = 0
 
@@ -318,7 +319,7 @@ class Runtime:
 
                 def work():
                     # All computation, proof verification and the write transaction stay off Tk.
-                    result = app.compute_feed.calculate('paper_hourly', values)
+                    result = app.compute_trading.calculate('paper_hourly', values)
                     report = compact(result)
                     engine = result['execution_context']['trading_engine']
                     report['state'] = 'WAIT' if engine.get('status') == 'READY' else 'BLOCKED'
@@ -361,6 +362,6 @@ class Runtime:
                     report = dict(state='BLOCKED', at=time.time(), execution_blocker=message, next_check=time.time()+60)
                     app.job(lambda:app.store.set_setting(STATUS+isin, report), lambda _:None, lane='misc', key='paper_auto_error')
 
-                if app.job(work, done, failed, lane='read', key='paper_auto_hourly', isin=isin) is False:
+                if app.job(work, done, failed, lane='trading', key='paper_auto_hourly', isin=isin) is False:
                     self.busy = False
         app.root.after(15000, self.tick)

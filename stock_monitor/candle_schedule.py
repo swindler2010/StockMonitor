@@ -167,7 +167,7 @@ def trade_maintenance(store,infos,now):
     cfg=authority(db,isin);exact=cfg['identities'][isin]
     if stored_identity(db,info,exact,'15m'):
      result.setdefault(isin,[]).append(dict(identity=exact,timeframe='1H',required_tf=['15m','1H','4H','1D'],
-       strategy='CORE:'+VERSION,proof_state='OWNER_HOURLY_MAINTENANCE',execution_permission=False))
+       execution_tf=['5m','15m'],strategy='CORE:'+VERSION,proof_state='OWNER_HOURLY_MAINTENANCE',execution_permission=False))
    except ValueError:pass
    # Project only positive receipts; avoid decoding each full 11-TF payload.
    rows=db.execute("""SELECT json_extract(s.value,'$.isin','$.execution_version','$.context',
@@ -234,6 +234,14 @@ def trade_maintenance(store,infos,now):
       execution_permission=False))
  return result
 
+def fresh_window(plan,base,now):
+ """Include the last publication just after close, not an overnight poll loop."""
+ if plan.get('session_open') or base=='1D':return True
+ try:
+  eligible=pd.Timestamp(plan['eligible_at'])
+  return pd.notna(eligible) and eligible<=now<eligible+pd.Timedelta(minutes=15)
+ except (KeyError,TypeError,ValueError):return False
+
 def fresh_candidate(store,infos,now,focus=None):
  """One short job on the existing serial feed lane, for the whole watchlist."""
  from gettex_chart import confirmed_state
@@ -276,13 +284,13 @@ def fresh_candidate(store,infos,now,focus=None):
      observed=pd.Timestamp(saved['last']);target=pd.Timestamp(plan['close_at'])
      if pd.isna(observed) or pd.isna(target) or observed.date()>=target.tz_convert(saved['identity']['timezone']).date():continue
     except (KeyError,ValueError,TypeError):continue
-   if plan['due'] and (plan.get('session_open') or base=='1D') and (not retry or now>=pd.Timestamp(retry)):
+   if plan['due'] and fresh_window(plan,base,now) and (not retry or now>=pd.Timestamp(retry)):
     stats['due']+=1
     if chart_allowed:choices.append((saved.get('received_at',''),'gettex_chart',base))
   # Official GETTEX files are shared on disk by all instruments. The existing
   # downloader verifies EUR trades and downloads only files not already cached.
   meta=gettex_meta(isin);plan=decision(store,isin,meta,'5m',now)
-  if plan['due'] and plan.get('session_open'):
+  if plan['due'] and fresh_window(plan,'5m',now):
    prior=store.setting(plan['key'],{});choices.append((prior.get('finished_at',''),'gettex','5m'));stats['due']+=1
   if not choices:continue
   last,source,base=min(choices)
@@ -292,6 +300,9 @@ def fresh_candidate(store,infos,now,focus=None):
    for proof in trades.get(isin,[]):
     # Use the strategy's real base lanes, not optional 1m/5m chart detail.
     bases={'1D' if tf in ('1D','1W','1M') else '5m' if tf in ('5m','10m') or choice[1]=='gettex' else '15m' for tf in proof['required_tf']}
+    # Execution may use either native closed quote lane. Keeping 5m fresh is
+    # not a 5m analysis/warmup dependency of the hourly strategy.
+    bases.update(proof.get('execution_tf',[]))
     if choice[2] in bases and all(meta.get(k)==proof['identity'].get(k) for k in FIELDS):
      trade_choice=choice;trade_proof=proof;break
    if trade_choice:break

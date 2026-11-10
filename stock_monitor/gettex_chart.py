@@ -630,9 +630,15 @@ def reserve_request(db,now):
     return True
 
 
+def recovery_key(isin,meta,base):
+    # Same scheduler/rate limiter, separate receipt for an old requested range.
+    # An empty historical response must not delay acquisition of a new bar.
+    return scheduler.unit_key(isin,meta,base).replace('cp_schedule:','cp_recovery_schedule:',1)
+
+
 def recovery_wait(store,info,meta,base,now=None):
     now=scheduler.clock(now);future=[]
-    for key in ('cp_source_retry:'+SOURCE,state_key(info['isin'],base),scheduler.unit_key(info['isin'],meta,base),'gettex_chart_next_request'):
+    for key in ('cp_source_retry:'+SOURCE,state_key(info['isin'],base),recovery_key(info['isin'],meta,base),'gettex_chart_next_request'):
         value=store.setting(key)
         retry=value.get('retry_after') if isinstance(value,dict) else value
         if retry and pd.Timestamp(retry)>now:future.append(pd.Timestamp(retry))
@@ -650,7 +656,7 @@ def recovery_download(store,info,meta,base,start,end,now=None,client=None):
     if (base not in BASES or start.tzinfo is None or end.tzinfo is None or
         not pd.Timedelta(0)<end-start<=pd.Timedelta(days=1) or end>now):
         raise ValueError('GETTEX_RECOVERY_RANGE_BLOCKED')
-    unit=scheduler.unit_key(info['isin'],meta,base)
+    unit=recovery_key(info['isin'],meta,base)
     with store.connect() as db:
         db.execute('BEGIN IMMEDIATE')
         row=db.execute('SELECT payload FROM instruments WHERE isin=?',(info['isin'],)).fetchone()

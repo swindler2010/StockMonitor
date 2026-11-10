@@ -32,7 +32,7 @@ class Client:
                 raise RuntimeError('Superseded read-only calculation' if epoch!=self.epoch else 'Calculation worker stopped unexpectedly') from None
             finally:
                 self.active=False;self.active_kind=None
-                if process is not None and (epoch!=self.epoch or process.poll() is not None):
+                if process is not None and (self.closed or epoch!=self.epoch or process.poll() is not None):
                     if process.poll() is None:process.terminate()
                     process.wait(timeout=5);process.stdin.close();process.stdout.close()
                     if self.process is process:self.process=None
@@ -47,6 +47,10 @@ class Client:
 
     def close(self):
         self.closed=True
+        # Let the serial writer finish its transaction/request. calculate's
+        # finally closes it after receiving the response; readonly workers are
+        # disposable. Never terminate a writer halfway through a CP turn.
+        if self.feed_updates and self.active:return
         process=self.process
         if process is not None and process.poll() is None:process.terminate()
 
@@ -88,6 +92,11 @@ def serve():
                 from feed_worker import FeedContext
                 if feed_context is None:feed_context=FeedContext(store)
                 result=feed_context.calculate(values['info'])
+            elif kind=='eligibility':
+                from calculation_window import calculate_eligibility
+                result=calculate_eligibility(store,values['info'])
+                if result is None:raise ValueError('ELIGIBILITY_INSTRUMENT_NOT_FOUND')
+                store.read_cache.assert_current(result.get('_input_revisions',{}))
             elif kind=='snapshot':
                 from snapshot_worker import calculate,validate_snapshot
                 from performance_cache import frozen_store

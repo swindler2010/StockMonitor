@@ -663,7 +663,7 @@ def repair(info,store,symbol,base,meta,download,now=None,max_ranges=8,target_ran
     persist(store,info,symbol,base,{**report,'state':'RECOVERING'})
     interval={'1D':'1d','5m':'5m','15m':'15m','1H':'60m'}[base]
     before={};attempt_method='local_children'
-    failures=[];completed=[];visited=[];waiting=None;local_skips=0
+    failures=[];completed=[];visited=[];waiting=None;local_skips=0;provider_attempted=False
     for first,last in batch:
         visited.append([first,last])
         try:
@@ -695,6 +695,7 @@ def repair(info,store,symbol,base,meta,download,now=None,max_ranges=8,target_ran
                 if meta['source']=='proxy' and cutoff is not None and start<cutoff:
                     raise ValueError('SOURCE_LIMITED: no complete compatible local children; historical HTTP skipped')
                 attempt_method='provider_range'
+                provider_attempted=True
                 try:replacement=download(symbol,interval,start,end=end)
                 except Exception as provider_error:
                     # A provider-wide wait/error is not permission to try its
@@ -707,6 +708,13 @@ def repair(info,store,symbol,base,meta,download,now=None,max_ranges=8,target_ran
             replacement_report=audit(replacement,base,meta,now,check_stale=False)
             required=expected_index(meta,base,first,last,now)
             if replacement_report['state']!='READY' or not required.isin(replacement.index).all():
+                # A partial local candidate is not permission to bypass the
+                # provider wait through an auxiliary child-data endpoint.
+                waits=[pd.Timestamp(x) for x in (previous.get('next_retry'),network_not_before) if x and clock<pd.Timestamp(x)]
+                if local_only or waits:
+                    waiting=max(waits).isoformat() if waits else (clock+pd.Timedelta(minutes=15)).isoformat()
+                    break
+                provider_attempted=True
                 alternative=recover_from_children(info,store,meta,base,first,last,clock,allow_download=True,observations=observations)
                 if alternative is not None:
                     replacement=alternative;replacement_report=audit(replacement,base,meta,now,check_stale=False)
@@ -773,6 +781,7 @@ def repair(info,store,symbol,base,meta,download,now=None,max_ranges=8,target_ran
     after['recovery_completed_ranges']=completed
     after['recovery_failed_ranges']=[{k:v for k,v in f.items() if k!='error'} for f in failures]
     after['local_recovery_reused']=local_skips
+    after['recovery_provider_attempted']=provider_attempted
     after['recovery_cursor']=previous.get('recovery_cursor') if target_range is not None else visited[-1][0] if visited else None
     if waiting:
         after['next_retry']=waiting

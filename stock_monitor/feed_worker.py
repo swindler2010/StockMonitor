@@ -8,6 +8,7 @@ class FeedContext(StockMonitor):
     def __init__(self,store):
         # Deliberately skip UI initialization, migration, timers and Bridge.
         self.store=store;self.closing=False
+        self.store.defer_eligibility=True
         self.feed_slots=nullcontext();self.events=queue.Queue()
         self.http_cache={};self.http_lock=threading.Lock()
 

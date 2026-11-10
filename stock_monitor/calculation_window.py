@@ -571,30 +571,19 @@ def _owner_initialization_current(record):
     return all(c.get('owner_initialization_semantics')==3 for c in (record or {}).get('candidates',[]) if c.get('owner_reviewed_analysis'))
 
 
-def eligibility_turn(store, info):
-    """One instrument, all TF, in the existing CP writer process; no network."""
+def calculate_eligibility(store, info):
+    """Existing all-TF assessment, read-only; acquisition need not wait for it."""
     import json
     from snapshot_worker import SnapshotContext, Value
     from paper_account import UNIVERSE_VERSION
     isin=info['isin'];key='cp_eligibility:'+isin
-    # Any ordinary CP queue turn can fulfil a saved TV review request, not only
-    # the feed turn which originally created it. Capture before calculation;
-    # complete_analysis_request compares this exact request again atomically.
-    with store.connect() as db:
-        row=db.execute('SELECT value FROM settings WHERE key=?',('cp_reconciliation_progress:'+isin,)).fetchone()
-        requested=(json.loads(row[0]) if row else {}).get('analysis_requested_at')
-    def receipt(result):
-        if requested:
-            from cp_reconciliation import complete_analysis_request
-            complete_analysis_request(store,isin,requested,result)
-        return result
     reused=None
     with store.connect() as db:
         db.execute('BEGIN')
         prior=db.execute('SELECT value FROM settings WHERE key=?',(key,)).fetchone()
         prior=json.loads(prior[0]) if prior else None
         if prior and prior.get('paper_universe_version')==UNIVERSE_VERSION and prior.get('input_binding_version')==2 and prior.get('closed_input_semantics')==2 and _owner_initialization_current(prior) and eligibility_state(db,prior,pd.Timestamp.now(tz='UTC'))=='CURRENT': reused=prior
-    if reused is not None:return receipt(reused)
+    if reused is not None:return reused
     now=pd.Timestamp.now(tz='UTC')
     try:
         with store.read_cache.track_inputs(isolated=True) as token:
@@ -612,24 +601,39 @@ def eligibility_turn(store, info):
             result['paper_universe_version']=UNIVERSE_VERSION
             result['_input_revisions']=dict(token)
             store.read_cache.assert_current(token)
-        with store.connect() as db:
-            db.execute('BEGIN IMMEDIATE')
-            publication_state=eligibility_state(db,result,pd.Timestamp.now(tz='UTC'))
-            if publication_state not in ('CURRENT','EXPIRED'):
-                raise ValueError('ELIGIBILITY_INPUT_CHANGED: '+publication_state)
-            # A shorter TF can expire while all TF are calculated. Keep the
-            # checked evidence; every reader/executor still validates each
-            # candidate's original deadline and actual closed dependencies.
-            # Do not extend deadlines or publish an expired trading permission.
-            result['publication_state']=publication_state
-            db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',(key,json.dumps(result,ensure_ascii=False,allow_nan=False)))
-        return receipt(result)
+        return result
     except Exception as error:
-        # Never retain an old READY through a failed re-evaluation.
-        result=dict(isin=isin,error=type(error).__name__+': '+str(error),checked_at=now.isoformat(),
+        return dict(isin=isin,error=type(error).__name__+": "+str(error),checked_at=now.isoformat(),
                     expires_at=(now+pd.Timedelta(minutes=5)).isoformat())
-        store.set_setting(key,result)
-        return receipt(result)
+
+
+def publish_eligibility(store,info,result):
+    """Short validated publication; never publish stale dependencies as READY."""
+    import json
+    if result is None:return None
+    with store.connect() as db:
+        db.execute('BEGIN IMMEDIATE')
+        if not result.get('error'):
+            state=eligibility_state(db,result,pd.Timestamp.now(tz='UTC'))
+            if state not in ('CURRENT','EXPIRED'):
+                raise ValueError('ELIGIBILITY_INPUT_CHANGED: '+state)
+            result=dict(result,publication_state=state)
+        db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',
+            ('cp_eligibility:'+info['isin'],json.dumps(result,ensure_ascii=False,allow_nan=False)))
+    return result
+
+
+def eligibility_turn(store, info):
+    """Preserve the entry point; the live feed only requests the owned read worker."""
+    if getattr(store,'defer_eligibility',False):
+        from cp_assessment import request
+        return request(store,info['isin'])
+    requested=store.setting('cp_reconciliation_progress:'+info['isin'],{}).get('analysis_requested_at')
+    result=publish_eligibility(store,info,calculate_eligibility(store,info))
+    if requested:
+        from cp_reconciliation import complete_analysis_request
+        complete_analysis_request(store,info['isin'],requested,result)
+    return result
 
 
 def eligibility_due(store, infos, now):

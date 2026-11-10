@@ -1207,6 +1207,8 @@ def service_request(info,store,recover_gettex,now=None):
             remaining=unit.get('blockers',[])
             out=dict(state='BLOCKED' if remaining or assessment.get('error') else 'RECHECKED',
                 reason='; '.join(remaining) or assessment.get('error') or 'Штатная оценка обновлена; это не разрешение сделки')
+            if assessment.get('deferred'):
+                out=dict(state='WAITING',next_retry=(clock+pd.Timedelta(minutes=5)).isoformat(),reason='Оценка поставлена в существующую очередь расчётов')
         elif not p.get('range') or p['tf'] not in ('5m','15m','1H','1D'):
             out=dict(state='BLOCKED',reason='Нет адресного повреждённого диапазона для recovery. CORE/прогрев нельзя исправить вымышленными свечами')
         else:
@@ -1219,26 +1221,39 @@ def service_request(info,store,recover_gettex,now=None):
                 from gettex_chart import recovery_wait
                 delays.append(recovery_wait(store,info,meta,p['tf'],clock))
             future=[pd.Timestamp(t) for t in delays if t and pd.Timestamp(t)>clock]
-            if future:out=dict(state='WAITING',next_retry=max(future).isoformat(),reason='Ожидание cooldown / Retry-After источника')
-            else:
-                if meta['source']=='gettex':callback=lambda symbol,interval,start,end=None:recover_gettex(symbol,start,end,p['tf'])
-                elif meta['source']=='gettex_chart':
-                    from gettex_chart import recovery_download
-                    callback=lambda symbol,interval,start,end=None:recovery_download(store,info,meta,p['tf'],start,end,clock)
-                elif meta['source']=='proxy':callback=lambda symbol,interval,start,end=None:history_service.download(symbol,interval,start,end,store=store,expected=meta)
-                else:raise ValueError('Для этого источника нет подтверждённого адресного recovery')
-                item['last_attempt_at']=clock.isoformat()
-                report=dq.repair(info,store,meta['symbol'],p['tf'],meta,callback,clock,max_ranges=1,target_range=p['range'])
-                a,b=map(pd.Timestamp,p['range']);remaining=any(pd.Timestamp(x)<=b and pd.Timestamp(y)>=a for x,y in report.get('ranges',[]))
-                if not remaining and report.get('state') not in ('INVALID','SOURCE_UNAVAILABLE','RECOVERING'):
-                    out=dict(state='COMPLETED',reason='Выбранный диапазон больше не имеет этой DQ-проблемы; остальные проверки сохранены')
-                elif report.get('next_retry'):
-                    out=dict(state='WAITING',next_retry=report['next_retry'],reason=report.get('recovery_error') or report.get('state'))
-                else:out=dict(state='BLOCKED',reason=report.get('recovery_constraints',{}).get('status') or report.get('state','UNCONFIRMED'))
-                out['quality']=report.get('state');item['attempts']=item.get('attempts',0)+1
+            # Validate available local data even during provider cooldown. The
+            # bounded budget covers legacy/owner requests as well as new ones.
+            capped=item.get('attempts',0)>=3
+            if meta['source']=='gettex':adapter=lambda symbol,interval,start,end=None:recover_gettex(symbol,start,end,p['tf'])
+            elif meta['source']=='gettex_chart':
+                from gettex_chart import recovery_download
+                adapter=lambda symbol,interval,start,end=None:recovery_download(store,info,meta,p['tf'],start,end,clock)
+            elif meta['source']=='proxy':adapter=lambda symbol,interval,start,end=None:history_service.download(symbol,interval,start,end,store=store,expected=meta)
+            else:raise ValueError('Для этого источника нет подтверждённого адресного recovery')
+            attempted=False
+            def callback(symbol,interval,start,end=None):
+                nonlocal attempted
+                attempted=True
+                return adapter(symbol,interval,start,end=end)
+            try:
+                report=dq.repair(info,store,meta['symbol'],p['tf'],meta,callback,clock,max_ranges=1,target_range=p['range'],
+                    local_only=capped or bool(future),network_not_before=max(future).isoformat() if future else None)
+            finally:
+                if attempted:
+                    item['last_attempt_at']=clock.isoformat();item['attempts']=item.get('attempts',0)+1
+            if report.get('recovery_provider_attempted') and not attempted:
+                item['last_attempt_at']=clock.isoformat();item['attempts']=item.get('attempts',0)+1
+            a,b=map(pd.Timestamp,p['range']);remaining=any(pd.Timestamp(x)<=b and pd.Timestamp(y)>=a for x,y in report.get('ranges',[]))
+            if not remaining and report.get('state') not in ('INVALID','SOURCE_UNAVAILABLE','RECOVERING'):
+                out=dict(state='COMPLETED',reason='Выбранный диапазон больше не имеет этой DQ-проблемы; остальные проверки сохранены')
+            elif report.get('next_retry') or future:
+                retries=[pd.Timestamp(t) for t in [report.get('next_retry'),*future] if t]
+                out=dict(state='WAITING',next_retry=max(retries).isoformat(),reason=report.get('recovery_error') or report.get('state'))
+            else:out=dict(state='BLOCKED',reason=report.get('recovery_constraints',{}).get('status') or report.get('state','UNCONFIRMED'))
+            out['quality']=report.get('state')
         item.update(out,finished_at=stamp())
     except Exception as error:item.update(state='BLOCKED',reason=str(error),finished_at=stamp())
-    if _automatic_request(item):
+    if _automatic_request(item) or item.get('attempts',0)>=3:
         if item.get('state')=='WAITING' and item.get('attempts',0)>=3:
             item.update(state='BLOCKED',reason='Три адресные попытки без исправления; новая попытка при новых доказательствах или плановой перепроверке. '+item.get('reason',''))
         if item.get('state')=='BLOCKED':

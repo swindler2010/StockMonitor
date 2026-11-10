@@ -71,8 +71,9 @@ class Dispatcher:
 
     def _rank(self,task):
         lane=task['lane'];isin=task['isin']
-        priority=0 if lane=='chart' else 1 if lane=='read' else 2 if isin and isin==self.visible else 3 if isin in self.positions else 4 if lane=='misc' else 5 if lane=='snapshot' else 6
+        priority=0 if lane=='chart' else .5 if lane=='trading' else 1 if lane=='read' else 2 if isin and isin==self.visible else 3 if isin in self.positions else 4 if lane=='misc' else 5 if lane=='snapshot' else 6
         if lane=='feed_update' and task.get('owner_priority'):priority=float(task['owner_priority'])
+        if lane in ('snapshot','eligibility'):priority=5  # FIFO between long readonly jobs.
         # CP session polling must not starve older feed/history turns behind
         # an always-changing visible instrument. Preserve chart/read priority.
         if lane=='feed_update' and time.monotonic()-task['queued']>=300:priority=min(priority,2)
@@ -97,7 +98,8 @@ class Dispatcher:
                     # pressure retain the existing two-slot policy so reads
                     # and the single writer can still progress without a chart.
                     choices=[t for t in self.pending.values() if (t['lane'] not in lanes or t['lane']=='misc') and
-                             (t['lane']=='chart' or (t['lane']=='read' and capacity<=2) or len(self.running)<capacity-1)]
+                             not (t['lane'] in ('snapshot','eligibility') and lanes & {'snapshot','eligibility'}) and
+                             (t['lane'] in ('chart','trading') or (t['lane']=='read' and capacity<=2) or len(self.running)<capacity-1)]
                     if self.loaded and choices and len(self.running)<capacity:
                         task=min(choices,key=self._rank);key=task['key'];self.pending.pop(key);self.running[key]=task;break
                     self.cv.wait(.1)
