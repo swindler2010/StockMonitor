@@ -55,6 +55,22 @@ class BudgetTests(unittest.TestCase):
         self.assertFalse(chart.reserve_request(self.f.db,self.now,self.f.isin,'15m',recovery=True))
         self.assertIsNone(self.store.setting('gettex_chart_next_request'))
 
+    def test_closed_daily_filter_gets_priority_without_forming_or_complete_day(self):
+        key='gettex_chart:'+self.f.isin+':1D'
+        saved=copy.deepcopy(self.store.setting('gettex_chart:'+self.f.isin+':15m'))
+        saved.update(last='2026-11-09 00:00:00',received_at='2026-11-10T22:02Z')
+        self.f.write(key,saved)
+        now=pd.Timestamp('2026-11-10T22:47Z')
+        due=schedule.operational_chart_due(self.f.db,now)
+        self.assertIn(('',self.f.isin,'1D'),[('',i,b) for _,i,b in due])
+        self.assertFalse(chart.reserve_request(self.f.db,now,'BACKGROUND','1D'))
+        self.assertTrue(chart.reserve_request(self.f.db,now,self.f.isin,'1D'))
+        # Before today's close, yesterday's verified candle is sufficient.
+        before=pd.Timestamp('2026-11-10T20:00Z')
+        self.assertNotIn('1D',[b for _,i,b in schedule.operational_chart_due(self.f.db,before)])
+        saved['last']='2026-11-10 00:00:00';self.f.write(key,saved)
+        self.assertNotIn('1D',[b for _,i,b in schedule.operational_chart_due(self.f.db,now)])
+
     def tail(self):
         now=pd.Timestamp('2026-11-10T22:20Z')
         saved=self.store.setting('gettex_chart:'+self.f.isin+':15m')

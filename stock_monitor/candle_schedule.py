@@ -288,11 +288,18 @@ def operational_chart_due(db,now):
   row=db.execute('SELECT payload FROM instruments WHERE isin=?',(isin,)).fetchone()
   if not row:continue
   info=json.loads(row[0])
-  for base in ('5m','15m'):
+  for base in ('5m','15m','1D'):
    saved=store.setting('gettex_chart:'+isin+':'+base,{})
    if not confirmed_state(info,saved) or saved['identity']!=meta:continue
    if saved.get('retry_after') and now<pd.Timestamp(saved['retry_after']):continue
    request=decision(store,isin,meta,base,now)
+   # The daily trend filter is an operational dependency too. Only reserve
+   # a missing already-closed session, not archive work or a forming day.
+   if base=='1D':
+    try:
+     observed=pd.Timestamp(saved['last']);target=pd.Timestamp(request['close_at'])
+     if pd.isna(observed) or pd.isna(target) or observed.date()>=target.tz_convert(meta['timezone']).date():continue
+    except (KeyError,ValueError,TypeError):continue
    if request['due'] and fresh_window(request,base,now):due.append((saved.get('received_at',''),isin,base))
  return sorted(due)
 

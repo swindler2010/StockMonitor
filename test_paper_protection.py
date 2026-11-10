@@ -100,6 +100,16 @@ class ProtectionTests(unittest.TestCase):
         f.cfg['protection']=copy.deepcopy(protection.POLICY);f.write(fixture.hourly.CONFIG,f.cfg)
         self.advance(94);self.assertIsNone(self.command())
 
+    def test_protective_exit_cannot_trade_closed_session_or_tampered_quantity(self):
+        f=self.f;self.buy();self.advance(94);f.args=self.command()
+        f.args['quantity']=.5
+        with self.assertRaisesRegex(ValueError,'SIZE_BLOCKED'):f.trade()
+        import pandas as pd
+        f.now=pd.Timestamp('2026-11-04T22:05Z').timestamp()-900
+        self.advance(94);f.args=self.command()
+        with self.assertRaisesRegex(ValueError,'SESSION_CLOSED'):f.trade()
+        self.assertEqual(len(fixture.paper.ledger(f.db)['fills']),1)
+
     def test_risk_plan_supports_all_eleven_tf_without_authorizing_execution(self):
         from timeframes import LABELS
         f=self.f;size=self.s.size();base=f.result['execution_context']['trading_engine']['timeframe_context']['1H']
