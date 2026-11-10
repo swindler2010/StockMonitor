@@ -1,0 +1,5 @@
+# Runtime pins used by the verified Windows TEST environment.
+-r stock_monitor/requirements.txt
+# Direct imports formerly supplied transitively by matplotlib/pandas.
+Pillow==12.3.0
+python-dateutil==2.9.0.post0

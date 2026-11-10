@@ -1,0 +1,116 @@
+from i18n import tr
+"""Existing paper ledger projection; all database work uses the app dispatcher."""
+from decimal import Decimal
+import tkinter as tk
+from tkinter import ttk
+
+def _auto_refresh(parent,app,refresh,interval_ms=5000):
+    """Schedule existing read jobs only; stop with the tab or application."""
+    timer=None
+    def tick():
+        nonlocal timer
+        timer=None
+        if app.closing or not parent.winfo_exists():return
+        refresh()
+        timer=parent.after(interval_ms,tick)
+    def stop(event):
+        nonlocal timer
+        if event.widget is parent and timer is not None:
+            parent.after_cancel(timer);timer=None
+    parent.bind('<Destroy>',stop,add='+')
+    tick()
+
+def automation_summary(state):
+    auto=state.get('automation',{})
+    if not auto:return ''
+    from paper_hourly import variable_size
+    size=('количество автоматически • до 45% свободных денег на вход • расчётный риск 1%'
+        if variable_size(auto) else 'максимум по 1 акции')
+    lines=['\nАвтоторговля демо: '+('ВКЛЮЧЕНА' if auto.get('enabled') else 'ПАУЗА')+
+        ' • сигнал 1H, подтверждение 4H/1D • только GETTEX/EUR\n'+size]
+    if auto.get('target_equity'):
+        equity=state.get('equity');target=Decimal(auto['target_equity'])
+        progress=('оценка счёта недоступна' if equity is None else
+            'осталось '+str(max(Decimal(0),target-Decimal(equity)))+' EUR')
+        lines.append('Цель: '+str(target)+' EUR • '+progress+' • достижение и предел убытка не гарантируются.')
+    for isin,row in auto.get('instruments',{}).items():
+        name=auto.get('names',{}).get(isin,isin)
+        code=row.get('execution_blocker') or row.get('quote_blocker')
+        text={'PAPER_STALE_QUOTE':'Цена исполнения устарела — ожидаем свежую свечу.',
+              'PAPER_DATA_BLOCKED':'Качество текущей цены не подтверждено.'}.get(code,code or row.get('reason') or 'Ожидается первая проверка')
+        if len(text)>180:text=text[:177]+'…'
+        lines.append(name+': '+row.get('state','ОЖИДАНИЕ')+' • CORE '+row.get('core','UNKNOWN')+
+            ' • '+row.get('signal','WAIT')+'\n'+text)
+    if state.get('archived_fills'):lines.append('Предыдущий прогон сохранён в архиве: '+str(state['archived_fills'])+' операций.')
+    return '\n'.join(lines)
+
+
+def summary(state):
+    if state.get('status') != 'ACTIVE': return tr('Демосчёт: ') + str(state.get('status',tr('недоступен')))
+    start=state['policy']['starting_cash'];equity=state.get('equity')
+    change=tr('не определена') if equity is None else f'{(Decimal(equity)/Decimal(start)-1)*100:.2f}%'
+    def value(key): return str(state[key])+' EUR' if state.get(key) is not None else tr('DATA BLOCKED / нет оценки')
+    universe=(f"\n{tr('Подключено акций: ')}{len(state.get('allowed_isins',[]))}"+
+              tr(' • Новые подключаются автоматически; качество данных и допуск проверяются отдельно.')) if state.get('universe',{}).get('automatic_new_instruments') else ''
+    return (f"{state['account']}{tr(' • только виртуальные операции\nНачальный капитал: ')}{start}{tr(' EUR • Доходность: ')}{change}\nCash: {value('cash')} • Equity: {value('equity')}{tr('\nРеализованный P&L: ')}{value('realized')}{tr(' • Нереализованный: ')}{value('unrealized')}{tr(' • Комиссии: ')}{value('fees')}"+universe+automation_summary(state))
+
+def attach(app, parent):
+    head=tk.StringVar(value=tr('Загрузка демосчёта…'))
+    ttk.Label(parent,textvariable=head,justify='left',wraplength=1000).pack(anchor='w',padx=10,pady=8)
+    controls=ttk.Frame(parent);controls.pack(side='bottom',fill='x',padx=10,pady=4)
+    notebook=ttk.Notebook(parent);notebook.pack(fill='both',expand=True,padx=10)
+    def table(title,columns):
+        body=ttk.Frame(notebook);notebook.add(body,text=tr(title))
+        tree=ttk.Treeview(body,columns=columns,show='headings',height=6)
+        for col in columns: tree.heading(col,text=tr(col));tree.column(col,width=130,stretch=False)
+        x=ttk.Scrollbar(body,orient='horizontal',command=tree.xview);x.pack(side='bottom',fill='x')
+        y=ttk.Scrollbar(body,orient='vertical',command=tree.yview);y.pack(side='right',fill='y')
+        tree.configure(xscrollcommand=x.set,yscrollcommand=y.set);tree.pack(fill='both',expand=True)
+        return tree
+    positions=table(tr('Открытые позиции'),('ISIN',tr('Количество'),tr('Затраты'),tr('Цена'),tr('Текущая стоимость'),'P&L',tr('Площадка'),tr('Валюта'),tr('Время оценки'),'DQ'))
+    fills=table(tr('История BUY / SELL'),(tr('Время'),'ISIN',tr('Операция'),tr('Количество'),tr('Цена'),tr('Комиссия'),tr('Площадка'),tr('Валюта'),tr('Свеча')))
+    shadow=ttk.Frame(notebook);notebook.add(shadow,text=tr('V1 / V2 — теневые портфели'))
+    from paper_strategy_shadow import attach as attach_shadow
+    attach_shadow(app,shadow)
+    ttk.Label(controls,text=tr('Только демо. WAIT — ожидание условий стратегии; прибыль не гарантируется.')).pack(anchor='w')
+    busy=False
+    def alive(): return bool(parent.winfo_exists()) and not app.closing
+    def done(state):
+        nonlocal busy
+        busy=False
+        if not alive(): return
+        head.set(summary(state))
+        for tree in (positions,fills):
+            tree.delete(*tree.get_children())
+        for p in state.get('positions',[]):
+            if not Decimal(p['quantity']): continue
+            ident=p['identity']
+            detail=(tr('Цена проверена')+' '+p.get('mark_timeframe','')) if p.get('mark_context')=='CURRENT_CLOSED_BAR' else p['mark_status']
+            if p.get('archive_quality') not in (None,'READY'):detail+=tr(' • архив: ')+p['archive_quality']
+            if p.get('mark_reason'):detail+=': '+p['mark_reason']
+            positions.insert('','end',values=(p['isin'],p['quantity'],p['cost'],p.get('mark','—'),p.get('market_value','—'),p.get('unrealized','—'),ident['venue'],ident['currency'],p.get('mark_at','—'),detail))
+        for f in state.get('fills',[]):
+            fills.insert('','end',values=(f['at'],f['isin'],f['side'],f['quantity'],f['price'],f['fee'],f['identity']['venue'],f['identity']['currency'],f['bar_close_at']))
+    def failed(message):
+        nonlocal busy
+        busy=False
+        if alive(): head.set(tr('Демосчёт временно недоступен; данные не изменены.'))
+    def refresh():
+        nonlocal busy
+        if busy or not alive(): return
+        busy=True
+        from paper_account import status
+        if app.job(lambda:status(app.store.path),done,failed,lane='read',key='paper_portfolio_read:'+str(parent)) is False:busy=False
+    ttk.Button(controls,text=tr('Обновить демосчёт'),command=refresh).pack(side='left',padx=4)
+    def toggle():
+        def work():
+            import json
+            from paper_hourly import CONFIG,read
+            with app.store.connect() as db:
+                db.execute('BEGIN IMMEDIATE');cfg=read(db,CONFIG,{})
+                if cfg.get('approved') is not True:raise ValueError('Нет настроенного разрешения владельца')
+                cfg['enabled']=not cfg.get('enabled',False)
+                db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',(CONFIG,json.dumps(cfg)))
+        app.job(work,lambda _:refresh(),failed,lane='misc',key='paper_auto_toggle')
+    ttk.Button(controls,text=tr('Автоторговля 1H: пауза / продолжить'),command=toggle).pack(side='left',padx=4)
+    _auto_refresh(parent,app,refresh)
