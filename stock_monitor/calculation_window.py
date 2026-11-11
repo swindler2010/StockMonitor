@@ -625,6 +625,7 @@ def publish_eligibility(store,info,result):
             if state not in ('CURRENT','EXPIRED'):
                 raise ValueError('ELIGIBILITY_INPUT_CHANGED: '+state)
             result=dict(result,publication_state=state)
+            result.pop('last_failed_attempt',None)
             saved=result
         else:
             # A failed refresh is not a replacement calculation. Retain exact

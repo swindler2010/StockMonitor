@@ -65,5 +65,14 @@ class PreserveAssessment(unittest.TestCase):
         self.assertNotIn('last_failed_attempt',saved)
         self.assertEqual(saved,expected)
 
+    def test_successful_reuse_clears_previous_attempt_without_extending_proof(self):
+        saved=self.fail_refresh()
+        with patch.object(cw,'eligibility_state',return_value='CURRENT'):
+            cw.publish_eligibility(self.store,self.info,saved)
+        refreshed=self.store.setting('cp_eligibility:TEST')
+        self.assertNotIn('last_failed_attempt',refreshed)
+        self.assertEqual(refreshed['candidates'],self.prior['candidates'])
+        self.assertEqual(refreshed['expires_at'],self.prior['expires_at'])
+
 
 if __name__=='__main__':unittest.main()
