@@ -78,6 +78,16 @@ def _setting_value(db, key, start=None):
         elif key.startswith(('history_identity:','history_coverage:')):
             value={k:v for k,v in value.items() if k!='fetched_at'}
         elif key.startswith('gettex_chart:'):
+            # A verified provider tail is acquisition progress, not part of
+            # an earlier closed range. SAVED/UNCHANGED differ only by this
+            # receipt's added/changed count. Preserve PARTIAL, faults, quality,
+            # identity and every unknown field; execution keeps raw revisions.
+            from gettex_chart import confirmed_state
+            bound=(isinstance(value.get('identity'),dict) and isinstance(value.get('listing_proof'),dict)
+                   and confirmed_state({'isin':key.split(':')[1]},value))
+            if bound:
+                value={k:v for k,v in value.items() if k!='last'}
+                if value.get('state') in ('SAVED','UNCHANGED'):value['state']='SAVED_OR_UNCHANGED'
             # A later HTTP receipt can contain exactly the same candles.
             # Closed OHLCV have their own digest; retain identity, listing
             # status/evidence, quality, archive faults and native-month proof.

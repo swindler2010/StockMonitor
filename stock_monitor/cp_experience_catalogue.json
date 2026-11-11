@@ -4,6 +4,30 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "closed_gettex_tail_progress",
+      "title": "Новые свечи источника не отменяют неизменный закрытый расчёт",
+      "sources": [
+        "GETTEX/LSEG saved state",
+        "exact SQLite closed-input proof"
+      ],
+      "states": [
+        "STALE",
+        "INPUT_CHANGED"
+      ],
+      "status": "8 NEW PASS; WINDOWS APPLY PENDING",
+      "steps": [
+        "Только для подтверждённого exact GETTEX/EUR listing в closed-input fingerprint исключить last транспортного ответа и сравнивать SAVED/UNCHANGED как один успешный результат.",
+        "Сохранять PARTIAL отдельно, DQ, rejected ranges, identity, listing evidence, native monthly proof, неизвестные поля и exact used OHLCV.",
+        "Не менять исходную SQLite запись, raw execution revisions или expiry. Старые proofs требуют штатного пересчёта; исправление не выдаёт разрешение сделки."
+      ],
+      "evidence": [
+        "Два сохранённых естественных обновления Apple/NVIDIA13:35–13:36CET: прежние fingerprints различались, новые совпали только после исключения last и SAVED/UNCHANGED.",
+        "Положительный append-after-window тест ERROR до0502090;8новых уникальныхPASS после, включая исправление/удаление/позднюю вставку внутри окна, identity/DQ/unknown, malformed,expiry/strict execution,serialization,53/200.",
+        "Первый отрицательный execution тест остановился на SMART_CONTEXT_MISMATCH из-за неполной test fixture; после добавления прежнего context подтвердил SMART_EXECUTION_INPUT_CHANGED."
+      ],
+      "limits": "Не игнорировать изменения действительных свечей, повреждения или условия исполнения. Новые данные требуют следующего расчёта по обычному расписанию. Это устранение ложного отзыва, не продление срока действия."
+    },
+    {
       "id": "late_snapshot_publication_independence",
       "title": "Изменение одной акции перед публикацией не отменяет независимые результаты",
       "sources": [
