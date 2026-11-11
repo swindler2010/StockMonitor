@@ -231,7 +231,9 @@ def _classify(job, inputs, now):
                     native_dq=check['state'],market_state=market,can_affect_dq=False,
                     confirmed_empty_intervals=len(confirmed),actual_candles=len(frame),
                     observation_current=current)
-    sessions=schedule(meta,a,b)
+    # Identity alone omits TF; otherwise historical daily reviews incorrectly
+    # take the narrower intraday calendar and fail before comparing evidence.
+    sessions=schedule({**meta,'timeframe':job['tf']},a,b)
     lo=a.tz_localize(meta['timezone']).tz_convert('UTC');hi=b.tz_localize(meta['timezone']).tz_convert('UTC')
     if not any(r.open<hi and r.close>lo for _,r in sessions.iterrows()):
         state=market='MARKET_CLOSED';reason='Подтверждённый календарь: торговая сессия отсутствует'

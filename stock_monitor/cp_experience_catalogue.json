@@ -4,6 +4,28 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "daily_review_timeframe_calendar",
+      "title": "Дневная сверка TV использует уже проверенный дневной календарь",
+      "sources": [
+        "saved assisted TradingView review"
+      ],
+      "states": [
+        "BLOCKED"
+      ],
+      "status": "6 NEW TESTS PASS; WINDOWS PENDING",
+      "steps": [
+        "Передавать timeframe задания в существующий timeframes.schedule; чистая identity его не содержит.",
+        "Сохранить прежние границы подтверждённых календарей: старый intraday и дневные периоды до подтверждённой истории отклоняются.",
+        "Сверка отсутствия остаётся UNCONFIRMED/MISSING_IN_BOTH; найденная в TV нулевая свеча остаётся TV_ROW_MISSING_IN_SM. Не создавать OHLCV, NO_TRADES или разрешения."
+      ],
+      "evidence": [
+        "test_cp_daily_review_calendar:6 PASS; two exact historical daily failures reproduced before fix",
+        "Existing test_cp_reconciliation:20 PASS,3 failures reproduced against HEAD _classify; not full suite PASS",
+        "Two saved daily review inputs reclassified read-only with current binding; natural runtime awaits existing next_check"
+      ],
+      "limits": "Не расширяет календарь и не подтверждает native 1W/1M provenance. Не обеспечивает TV export/import. Старые BLOCKED задания сохраняют next_check; не ускорять ради отчёта."
+    },
+    {
       "id": "unavailable_file_head_starvation",
       "title": "Отсутствующий официальный файл не задерживает остальные срезы",
       "sources": [
