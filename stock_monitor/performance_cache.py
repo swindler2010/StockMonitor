@@ -94,6 +94,24 @@ def _setting_value(db, key, start=None):
                 value['listing_proof']={k:v for k,v in value['listing_proof'].items() if k!='verified_at'}
         elif key.startswith('benchmark_history:'):
             value={k:v for k,v in value.items() if k!='attempted_at'}
+        elif key.startswith('cp_reconciliation_job:'):
+            observation=value.get('observation') or {};finding=value.get('finding') or {}
+            fingerprint=value.get('input_fingerprint','')
+            # v4 already binds exact rows/neighbours, verified listing and
+            # scoped authoritative proof, excluding only its check timestamp.
+            # Retain every decision, evidence, identity and unknown field. A
+            # legacy/unbound/failed review stays byte-sensitive as before.
+            if (isinstance(observation,dict) and isinstance(finding,dict)
+                and value.get('fingerprint_version')==4 and isinstance(fingerprint,str)
+                and len(fingerprint)==64 and all(c in '0123456789abcdef' for c in fingerprint)
+                and observation.get('fingerprint_version')==4 and observation.get('identity_confirmed') is True
+                and observation.get('input_fingerprint')==fingerprint and finding.get('observation_current') is True
+                and value.get('review_required') is False and value.get('status') in ('AWAITING_SOURCE','RESOLVED_NATIVE','REVIEW_WEEKLY')):
+                value={k:v for k,v in value.items() if k not in ('checked_at','next_check','checks','native_retry','history')}
+                value['finding']={k:v for k,v in finding.items() if k!='evidence_checked_at'}
+                if 'evidence_digest' in finding:value['finding']['evidence_digest']='v4-scoped:'+fingerprint
+                if isinstance(value.get('source_comparison'),dict):
+                    value['source_comparison']={k:v for k,v in value['source_comparison'].items() if k!='native_checked_at'}
         elif key.startswith('cp_manual_risk:'):
             # The CP writer may reconfirm the SAME decision after a later bar
             # or transport receipt. Compare its contents and bound scope set,

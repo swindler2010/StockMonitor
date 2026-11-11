@@ -4,6 +4,31 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "reconciliation_v4_bookkeeping_closed_proof",
+      "title": "Повторная сверка неизменного интервала без ложного отзыва анализа",
+      "sources": [
+        "CP exact v4 review",
+        "same-source SQLite closed input proof"
+      ],
+      "states": [
+        "STALE",
+        "INPUT_CHANGED"
+      ],
+      "status": "8 NEW +2 AFFECTED PASS; WINDOWS APPLY PENDING",
+      "steps": [
+        "Только при v4 current identity-confirmed observation и точном совпадении input_fingerprint сравнивать решение без служебных checked_at/next_check/checks/native_retry/history.",
+        "В finding заменить повторный timestamp-sensitive evidence_digest существующим полным v4 input_fingerprint; сохранить все фактические поля, scoped authoritative proof, observation, native rows/neighbours и неизвестные поля.",
+        "Не менять исходные квитанции, разрешения, TTL, DQ или raw execution revisions. Старые/неподтверждённые/ошибочные квитанции остаются строгими.",
+        "Старые расчётные proofs не мигрировать: штатная очередь должна рассчитать новые."
+      ],
+      "evidence": [
+        "Before13:18:41/after13:20:40 CET:7 real Apple15m records changed only bookkeeping and checked_at-sensitive proof digest; exact v4 inputs and decisions identical.",
+        "Positive unit reproduced ERROR on804ef813, then PASS.8unique new tests include53/200independence,changedOHLCV/evidence/identity,oldproof,expiry,strictexecution and malformedrecords.2directlyaffected receipt-policy guards PASS.",
+        "Same7saved real pairs:raw unequal7/7,canonical equal7/7; readonly/in-memory comparison only, no live edits."
+      ],
+      "limits": "Не новый NO_TRADES, не принятие неизвестного риска, не исправление рыночной свечи. Текущая авторитетная evidence остаётся отдельной строгой зависимостью. Ни одна сделка не создана."
+    },
+    {
       "id": "fresh_review_durable_assessment_handoff",
       "title": "Передача свежего подтверждения в существующую очередь анализа",
       "sources": [
