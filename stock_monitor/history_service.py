@@ -386,6 +386,31 @@ def parent_provenance_key(isin,meta,base):
     return 'parent_provenance:'+isin+':'+base+':'+hashlib.sha256(json.dumps([meta.get(k) for k in ('source','symbol','venue','currency','timezone')]).encode()).hexdigest()[:20]
 
 
+def _parent_absence_valid(proof,meta):
+    """Revalidate only the empty child slots used by this recovered parent.
+
+    A refreshed publication manifest is not a change to historical children.
+    Legacy receipts keep their conservative digest gate until ordinary repair
+    creates a scoped proof; no read-time migration or permission is written.
+    """
+    from performance_cache import _digest
+    import data_quality as quality
+    if 'absence_scope' not in proof:
+        return proof.get('absence_digest') is None or proof['absence_digest']==_digest(meta.get('absence_evidence'))
+    try:
+        scope=proof['absence_scope'];spec=proof['inputs'][0]
+        if scope.get('version')!=1 or scope.get('base')!=spec['base_tf']:return False
+        if any(spec['identity'].get(k)!=meta.get(k) for k in quality.IDENTITY):return False
+        stamps=pd.DatetimeIndex(scope['stamps'])
+        if stamps.hasnans or stamps.has_duplicates or stamps.tz is not None:return False
+        start=pd.Timestamp(spec['from']);end=pd.Timestamp(spec['through']).tz_convert(meta['timezone']).tz_localize(None)
+        if any(t<start or t>=end for t in stamps):return False
+        if stamps.empty:return True
+        covered=quality.covered_empty(meta,stamps,scope['base'])
+        return stamps.isin(covered).all()
+    except (KeyError,TypeError,ValueError,IndexError):return False
+
+
 def attach_parent_provenance(store,frame,isin,base):
     """Read-time lineage gate. Child corrections revoke parents without deleting OHLCV."""
     if frame.empty:return frame
@@ -401,7 +426,7 @@ def attach_parent_provenance(store,frame,isin,base):
             current=[_digest(_closed_rows(db,s)) for s in proof['inputs']]
         observed=[float(frame.loc[pd.Timestamp(stamp),k]) for k in quality.FIELDS]
         if (current!=proof['digests'] or observed!=proof['ohlcv'] or
-            (proof.get('absence_digest') is not None and proof['absence_digest']!=_digest(frame.attrs.get('absence_evidence')))):
+            not _parent_absence_valid(proof,frame.attrs)):
             invalid.append(stamp)
         inputs.append(dict(parent_at=stamp,inputs=proof['inputs']))
     frame.attrs['parent_recovery_inputs']=inputs
@@ -527,6 +552,8 @@ def recover_from_children(info,store,meta,base,first,last,now,allow_download=Fal
                     digests[0]=_digest([(str(t),*[float(r[k]) for k in quality.FIELDS]) for t,r in part.iterrows()])
                 proofs[str(stamp)]=dict(inputs=specs,digests=digests,ohlcv=[float(row[k]) for k in quality.FIELDS],
                     absence_digest=_digest(raw.attrs.get('absence_evidence')) if len(missing) else None,
+                    absence_scope=dict(version=1,base=child,stamps=[str(t) for t in missing
+                        if stamp<=t<closing.tz_convert(meta['timezone']).tz_localize(None)]),
                     detected_at=now.isoformat(),basis='complete verified real child coverage; existing calendar aggregation')
             window.attrs.update(parent_recovery_proofs=proofs,auxiliary_children=auxiliary,auxiliary_base=child if auxiliary is not None else None,recovery_method='children:'+child)
             outcome='CANDIDATE'
