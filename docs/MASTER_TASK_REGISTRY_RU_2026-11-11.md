@@ -24517,3 +24517,30 @@ Work2: ограниченный этап сверки NVIDIA/Swiss Re завер
 - #16: issue_id=6084654458; node_id=`I_kwDOUjytzs8AAAABaqx1eg`; locked=false; closed_at=null; draft=not-applicable; html_url=https://github.com/swindler2010/StockMonitor/issues/16
 
 **Ограничение полноты:** Github API предоставляет опубликованное текущее тело и комментарии, но не все предыдущие версии отредактированного текста или локальные бинарные файлы, которые нигде не прикреплены. Сохранено состояние, доступное на момент этой сверки.
+
+
+## XIII. История событий Issues (редактирования заголовков, labels и ссылки-события)
+
+Экспортированы все события GitHub `/issues/{n}/events` по #1–#16; комментарии уже полностью сохранены в V/XI. Эти события дополняют историю и не являются новыми задачами. Для событий cross-reference по `/timeline` полный обход в данном отчёте не заявляется.
+
+| Issue | ID события | Дата UTC | Событие | Инициатор | Дополнительные данные |
+|---:|---:|---|---|---|---|
+| 2 | 34494960043 | 2026-10-28T16:11:35Z | renamed | swindler2010 | rename: v0.17: Expose complete instrument watchlist via MCP Bridge → v0.16 TEST: complete instrument watchlist via MCP Bridge — PARTIAL verification |
+| 2 | 34496468515 | 2026-10-28T16:27:30Z | mentioned | catalog |  |
+| 2 | 34496469182 | 2026-10-28T16:27:30Z | mentioned | persisted |  |
+| 2 | 34496469886 | 2026-10-28T16:27:31Z | subscribed | persisted |  |
+| 5 | 34456070668 | 2026-10-28T09:03:45Z | mentioned | Tinyfish |  |
+| 5 | 34456071362 | 2026-10-28T09:03:45Z | subscribed | Tinyfish |  |
+| 6 | 34496471399 | 2026-10-28T16:27:31Z | mentioned | catalog |  |
+| 6 | 34496472156 | 2026-10-28T16:27:32Z | mentioned | persisted |  |
+| 6 | 34496472818 | 2026-10-28T16:27:32Z | subscribed | persisted |  |
+| 11 | 33310320108 | 2026-10-15T07:53:51Z | renamed | swindler2010 | rename: v0.17 backlog: paper trading, journal, webhooks and AI advisor → v0.16: paper trading after stable EUR candles; v0.17: advanced trading roadmap |
+| 12 | 34496472797 | 2026-10-28T16:27:32Z | mentioned | catalog |  |
+| 12 | 34496473485 | 2026-10-28T16:27:33Z | mentioned | persisted |  |
+| 12 | 34496474094 | 2026-10-28T16:27:33Z | subscribed | persisted |  |
+| 13 | 34496474184 | 2026-10-28T16:27:33Z | mentioned | catalog |  |
+| 13 | 34496474774 | 2026-10-28T16:27:34Z | mentioned | persisted |  |
+| 13 | 34496475377 | 2026-10-28T16:27:34Z | subscribed | persisted |  |
+| 16 | 34505732778 | 2026-10-28T18:11:12Z | renamed | swindler2010 | rename: v0.17: допуск к анализу и торговле при возрасте рыночных данных ≤15 минут → PRIORITY Work №2 · v0.16 TEST: измерение задержки данных и допуск ≤15 минут |
+
+Сводка событий по Issues: #1=0, #2=4, #3=0, #4=0, #5=2, #6=3, #7=0, #8=0, #9=0, #10=0, #11=1, #12=3, #13=3, #14=0, #15=0, #16=1. Бывшие редакции **полных текстов** Issue и комментариев не извлекаются через этот endpoint. Не выдавать данную таблицу за такую историю редактирования.
