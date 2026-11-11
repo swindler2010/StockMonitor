@@ -24814,3 +24814,53 @@ GitHub timeline содержит повторные события коммен�
 | 16 | cross-referenced | 2026-10-28T18:20:13Z | swindler2010 | [14](https://github.com/swindler2010/StockMonitor/issues/14) GLOBAL DEVELOPER RULE — applies to EVERY task: documentation, backups, safe cleanup | — |
 
 Объём прочитанного timeline (включая уже перенесённые comment events): #9=22, #10=6, #11=7, #12=23, #13=224, #14=81, #15=2, #16=11. Некомментарных событий: 33.
+
+
+### XV.3. Дополнительные события PR #17–#18
+
+| PR | Вид | Дата UTC | Автор | Ссылка / SHA |
+|---:|---|---|---|---|
+| 17 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/ff1d53bf2ea0f87847f303c30ce69c38ba89d069 `ff1d53bf2ea0f87847f303c30ce69c38ba89d069` |
+| 17 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/9711c3fd53df0553397a45d09f85604fdaa59b8e `9711c3fd53df0553397a45d09f85604fdaa59b8e` |
+| 17 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/aff4862a2f83fb9f449201e2acc416aa693938cd `aff4862a2f83fb9f449201e2acc416aa693938cd` |
+| 17 | cross-referenced | 2026-11-10T21:29:42Z | swindler2010 | https://github.com/swindler2010/StockMonitor/issues/5 |
+| 17 | cross-referenced | 2026-11-10T22:06:42Z | swindler2010 | https://github.com/swindler2010/StockMonitor/pull/18 |
+| 17 | cross-referenced | 2026-11-11T17:10:36Z | swindler2010 | https://github.com/swindler2010/StockMonitor/issues/13 |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/db82ca858c80f168523e4cfd8310b9334c2fcfe3 `db82ca858c80f168523e4cfd8310b9334c2fcfe3` |
+| 18 | cross-referenced | 2026-11-10T22:08:08Z | swindler2010 | https://github.com/swindler2010/StockMonitor/issues/5 |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/d760f0043c7e229a6343c8e565763b57d05eff80 `d760f0043c7e229a6343c8e565763b57d05eff80` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/04a5e972f376adf87e33789bae3464850d0889ab `04a5e972f376adf87e33789bae3464850d0889ab` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/a1cbf04c7929f0e85b0fb2d6120e192a7a71b763 `a1cbf04c7929f0e85b0fb2d6120e192a7a71b763` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/cd7c3f07ff6fb2fafbe91d330a313ef5d77bf995 `cd7c3f07ff6fb2fafbe91d330a313ef5d77bf995` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/27d98f8b234dd527d216e7fd55ee607db348bf3a `27d98f8b234dd527d216e7fd55ee607db348bf3a` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/3daeb4fb62d16e4890a41ae6cad40ccfa51cbcd7 `3daeb4fb62d16e4890a41ae6cad40ccfa51cbcd7` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/83a9d9ba3b5dc22696e3d9bd367472c9100cd3c6 `83a9d9ba3b5dc22696e3d9bd367472c9100cd3c6` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/599987bcadaa7f69d2fc120289fda38664ee5db3 `599987bcadaa7f69d2fc120289fda38664ee5db3` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/9fe2c5d6b17df582c83ab8fe4c11aa954d25da95 `9fe2c5d6b17df582c83ab8fe4c11aa954d25da95` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/86dc54fb345c6b1c7cd4d48eb6bf107b18f12982 `86dc54fb345c6b1c7cd4d48eb6bf107b18f12982` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/468d8c46c2901f68b390163193acf75aac4fddd3 `468d8c46c2901f68b390163193acf75aac4fddd3` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/cb3fd14cc1ca2d15178355719cdc91ef5850c31a `cb3fd14cc1ca2d15178355719cdc91ef5850c31a` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/e886d6fdb196984b1356d6022ff813982f663247 `e886d6fdb196984b1356d6022ff813982f663247` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/2294bfc553427429180c5cb417cd9f14850f1b28 `2294bfc553427429180c5cb417cd9f14850f1b28` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/af69fb9b965add4aa7632dabb17adf7611cbee19 `af69fb9b965add4aa7632dabb17adf7611cbee19` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/96e9a04ecc3253823ce6b4272108ab858ba4e8d6 `96e9a04ecc3253823ce6b4272108ab858ba4e8d6` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/3fb8102ae7067d358915780769021bae4ca2e232 `3fb8102ae7067d358915780769021bae4ca2e232` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/ead83ae926facb1a07ded90267cb42d166363320 `ead83ae926facb1a07ded90267cb42d166363320` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/a858fbba6780692dd46c458f31e1869682c915aa `a858fbba6780692dd46c458f31e1869682c915aa` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/a79c0412d33b9bd17655170126670d062276eb98 `a79c0412d33b9bd17655170126670d062276eb98` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/9aeb48cdd3a9654ec874281f020870fde324c4e1 `9aeb48cdd3a9654ec874281f020870fde324c4e1` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/b583afa2884bb5c126e0ce2751a1073da88c80ff `b583afa2884bb5c126e0ce2751a1073da88c80ff` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/8ce956fd26c48d623d7b77a95545342b6377524a `8ce956fd26c48d623d7b77a95545342b6377524a` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/47ce1d7aac49182c4fd69072c44884d73b969160 `47ce1d7aac49182c4fd69072c44884d73b969160` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/d82214ef2f7c55778cdc56025a2b769ef9710723 `d82214ef2f7c55778cdc56025a2b769ef9710723` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/d600b6f4284328324c34ea133ebc9f3483574390 `d600b6f4284328324c34ea133ebc9f3483574390` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/ff6a0da130fcafd637042cfb350caf1be9d52fa4 `ff6a0da130fcafd637042cfb350caf1be9d52fa4` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/fbea7a3a24fc7425796c75edc30bb8688598f227 `fbea7a3a24fc7425796c75edc30bb8688598f227` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/047a332a62eccf39446b980a85290730d727ca38 `047a332a62eccf39446b980a85290730d727ca38` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/804ef81314887dfb4c6d9c6879e557fecc31f37e `804ef81314887dfb4c6d9c6879e557fecc31f37e` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/759debcf62cab07fc4f1eb286183dd946c9e07af `759debcf62cab07fc4f1eb286183dd946c9e07af` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/0502090066015fe219b033d498cd1b1d3ea59d8f `0502090066015fe219b033d498cd1b1d3ea59d8f` |
+| 18 | committed | — | — | https://api.github.com/repos/swindler2010/StockMonitor/git/commits/7e1f1eceada977adc55bed40816ccd94b9ffd8f4 `7e1f1eceada977adc55bed40816ccd94b9ffd8f4` |
+| 18 | cross-referenced | 2026-11-11T17:10:36Z | swindler2010 | https://github.com/swindler2010/StockMonitor/issues/13 |
+
+Прочитанные события PR: #17=6, #18=37. Подробные commit SHAs и полные тексты описаний PR сохранены в разделе XIV; код PR не удалялся и не преобразовывался в архив задач.
