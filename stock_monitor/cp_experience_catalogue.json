@@ -12,7 +12,7 @@
       "states": [
         "SLOW_DIAGNOSTICS"
       ],
-      "status": "5 NEW +3 AFFECTED TESTS PASS; WINDOWS PENDING",
+      "status": "5 NEW +3 AFFECTED PASS; WINDOWS FULL CYCLE ACCEPTED; OVERALL SPEED IMPROVEMENT NOT PROVEN",
       "steps": [
         "В snapshot_worker.calculate активировать уже существующий bounded calculation_reuse для DQ и индикаторов.",
         "Ключ включает все OHLCV, identity, evidence, флаги и явное время расчёта. Не кэшировать разрешения или неявное текущее время.",
@@ -21,7 +21,8 @@
       "evidence": [
         "test_snapshot_exact_reuse:5 PASS including53/200 bounded independent instruments, changed OHLCV/identity and real revision rejection",
         "3 directly affected exact-cache negative scenarios PASS",
-        "Single readonly Apple4H comparison on one SQLite read snapshot:10.593s without reuse,8.953s with reuse; outputs identical except5checked_at timestamps. Not a whole-program speed claim."
+        "Single readonly Apple4H comparison on one SQLite read snapshot:10.593s without reuse,8.953s with reuse; outputs identical except5checked_at timestamps. Not a whole-program speed claim.",
+        "Normal startup11Nov12:10:25CET; natural63instrument snapshot ACCEPTED12:17:14,400.906s total/355.031s compute,654dependencies current,17changed instrument results invalidated. No forced Refresh."
       ],
       "implementation": [
         "stock_monitor/snapshot_worker.py:calculate",
