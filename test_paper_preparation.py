@@ -275,5 +275,40 @@ class PreparationTests(unittest.TestCase):
         f.write('gettex_chart:'+f.isin+':15m',saved)
         self.assertEqual(schedule.preparation_chart_due(f.db,now),[])
 
+    def test_new_candles_reassess_before_unchanged_failure_cooldown(self):
+        f=self.f
+        self.assertIsNone(prep.choose(f.db,f.now+60))
+        f.db.execute('INSERT INTO series VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+            (f.isin,'gettex_chart','GETTEX','EUR','AAPL.GTX','15m','2026-11-04 10:15:00',100,102,99,101,20))
+        self.assertEqual(prep.choose(f.db,f.now+60),f.info)
+        self.assertIsNone(prep.choose(f.db,f.now+61))
+
+    def test_unchanged_http_receipt_and_other_stock_do_not_burn_retry(self):
+        f=self.f;saved=fixture.hourly.read(f.db,'gettex_chart:'+f.isin+':15m')
+        f.write('gettex_chart:'+f.isin+':15m',dict(saved,received_at='2026-11-04T09:35Z'))
+        f.db.execute('INSERT INTO series VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+            (self.anchor,'gettex_chart','GETTEX','EUR','NVDA.GTX','15m','2026-11-04 10:15:00',100,102,99,101,20))
+        self.assertIsNone(prep.choose(f.db,f.now+60))
+
+    def test_new_dq_evidence_wakes_but_timestamp_only_does_not(self):
+        f=self.f;key='data_quality:'+f.isin+':AAPL.GTX:15m'
+        f.write(key,dict(state='UNCONFIRMED',checked_at='first'))
+        self.assertEqual(prep.choose(f.db,f.now+60),f.info)
+        f.write(key,dict(state='UNCONFIRMED',checked_at='again'))
+        self.assertIsNone(prep.choose(f.db,f.now+61))
+        f.write(key,dict(state='READY',checked_at='again'))
+        self.assertEqual(prep.choose(f.db,f.now+62),f.info)
+        self.assertNotIn(f.isin,fixture.hourly.read(f.db,fixture.hourly.CONFIG)['identities'])
+        self.assertEqual(fixture.paper.ledger(f.db)['fills'],[])
+
+    def test_legacy_pending_state_gets_one_reassessment_after_restart(self):
+        f=self.f;old=fixture.hourly.read(f.db,prep.STATE);old.pop('retry_inputs');f.write(prep.STATE,old)
+        clone=sqlite3.connect(':memory:');f.db.commit();f.db.backup(clone)
+        try:
+            self.assertEqual(prep.choose(clone,f.now+60),f.info)
+            self.assertIsNone(prep.choose(clone,f.now+61))
+            self.assertEqual(fixture.hourly.read(clone,prep.STATE)['requested_at'],f.now)
+        finally:clone.close()
+
 
 if __name__=='__main__':unittest.main()

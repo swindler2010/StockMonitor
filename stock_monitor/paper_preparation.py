@@ -51,17 +51,33 @@ def candidate_authority(db,isin,identity=None):
     return cfg,exact
 
 
+def retry_inputs(db,isin,identity):
+    """Cheap wake-up token, not an analytical or execution proof."""
+    from paper_hourly import CONFIG
+    scopes=['instrument:'+isin,'setting:'+CONFIG,'setting:paper_epoch',
+        'setting:cp_manual_risk:'+isin,'setting:interval_evidence:'+isin]
+    for base in ('5m','15m','1D'):
+        scopes.extend(['market:'+isin+':'+base,
+            'setting:data_quality:'+isin+':'+str(identity.get('symbol',''))+':'+base])
+    # Source receipts update even without new candles. Only semantic input
+    # revisions (market/DQ/policy) wake the calculation, not HTTP timestamps.
+    rows=dict(db.execute('SELECT scope,revision FROM input_revisions WHERE scope IN ('+
+        ','.join('?' for _ in scopes)+')',scopes))
+    return {s:rows.get(s,0) for s in scopes}
+
+
 def choose(db,now):
     """Persist one candidate and its retry time. Called off the UI thread."""
     from paper_hourly import read,STATUS
     from paper_account import registered_instrument
     cfg,p=policy(db);old=read(db,STATE,{})
-    if old.get('epoch')==cfg['epoch'] and old.get('next_check',0)>now:return None
     active=old.get('isin') if old.get('epoch')==cfg['epoch'] else None
     if active and active not in cfg['identities']:
         try:registered_instrument(db,active)
         except ValueError:active=None
     else:active=None
+    if old.get('epoch')==cfg['epoch'] and old.get('next_check',0)>now:
+        if not active or old.get('retry_inputs')==retry_inputs(db,active,old.get('identity',{})):return None
     if active is None:
         # Pair stability is a scheduling condition, never a permission proof.
         for isin in p['prerequisites']:
@@ -82,6 +98,7 @@ def choose(db,now):
     item=dict(isin=isin,name=info.get('name',isin),epoch=cfg['epoch'],
         identity=saved.get('identity',{}),state='PREPARING',execution_permission=False,
         requested_at=old.get('requested_at',now) if active else now,
+        retry_inputs=retry_inputs(db,isin,saved.get('identity',{})),
         at=now,next_check=now+300,reason='Проверка закрытых 1H/4H/1D и актуальной цены; сделок нет')
     write(db,STATE,item)
     return info
