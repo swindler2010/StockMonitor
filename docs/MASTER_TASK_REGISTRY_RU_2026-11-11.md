@@ -24883,3 +24883,35 @@ GitHub timeline содержит повторные события коммен�
 | 18 | cross-referenced | 2026-11-11T17:10:36Z | swindler2010 | https://github.com/swindler2010/StockMonitor/issues/13 |
 
 Прочитанные события PR: #17=6, #18=37. Подробные commit SHAs и полные тексты описаний PR сохранены в разделе XIV; код PR не удалялся и не преобразовывался в архив задач.
+
+
+## XVI. Завершённое архивирование исторических Issues и очистка активного реестра
+
+**11.11.2026 — административная миграция, НЕ закрытие технических задач.** На момент повторной проверки старые Issues #1–#16 закрыты как `duplicate`/superseded by canonical MASTER: это означает устранение параллельного трекера, а не утверждение, что 16 технических направлений выполнены. **Исторические GitHub-записи не удалены физически**, все original body+713 комментариев доступны через GitHub и дословно перенесены в раздел V, с метаданными в XI–XV. Запрос на безвозвратное удаление Issues не выполнялся: подключённый GitHub-интерфейс позволяет безопасное архивное закрытие, но не имеет операции удаления Issues; а прежние редакции текстов/внешние или локальные бинарные вложения невозможно гарантированно восстановить байт-в-байт из Markdown.
+
+| Исторический Issue | GitHub состояние | Архивное закрытие UTC | Содержание |
+|---:|---|---|---|
+| [#1](https://github.com/swindler2010/StockMonitor/issues/1) | `closed/duplicate` | 2026-11-11T21:04:25Z | Полный оригинальный текст в V, метаданные в XI–XV |
+| [#2](https://github.com/swindler2010/StockMonitor/issues/2) | `closed/duplicate` | 2026-11-11T21:04:46Z | Полный оригинальный текст в V, метаданные в XI–XV |
+| [#3](https://github.com/swindler2010/StockMonitor/issues/3) | `closed/duplicate` | 2026-11-11T21:04:49Z | Полный оригинальный текст в V, метаданные в XI–XV |
+| [#4](https://github.com/swindler2010/StockMonitor/issues/4) | `closed/duplicate` | 2026-11-11T21:04:53Z | Полный оригинальный текст в V, метаданные в XI–XV |
+| [#5](https://github.com/swindler2010/StockMonitor/issues/5) | `closed/duplicate` | 2026-11-11T21:04:56Z | Полный оригинальный текст в V, метаданные в XI–XV |
+| [#6](https://github.com/swindler2010/StockMonitor/issues/6) | `closed/duplicate` | 2026-11-11T21:04:59Z | Полный оригинальный текст в V, метаданные в XI–XV |
+| [#7](https://github.com/swindler2010/StockMonitor/issues/7) | `closed/duplicate` | 2026-11-11T21:05:03Z | Полный оригинальный текст в V, метаданные в XI–XV |
+| [#8](https://github.com/swindler2010/StockMonitor/issues/8) | `closed/duplicate` | 2026-11-11T21:05:07Z | Полный оригинальный текст в V, метаданные в XI–XV |
+| [#9](https://github.com/swindler2010/StockMonitor/issues/9) | `closed/duplicate` | 2026-11-11T21:05:10Z | Полный оригинальный текст в V, метаданные в XI–XV |
+| [#10](https://github.com/swindler2010/StockMonitor/issues/10) | `closed/duplicate` | 2026-11-11T21:05:13Z | Полный оригинальный текст в V, метаданные в XI–XV |
+| [#11](https://github.com/swindler2010/StockMonitor/issues/11) | `closed/duplicate` | 2026-11-11T21:05:17Z | Полный оригинальный текст в V, метаданные в XI–XV |
+| [#12](https://github.com/swindler2010/StockMonitor/issues/12) | `closed/duplicate` | 2026-11-11T21:05:20Z | Полный оригинальный текст в V, метаданные в XI–XV |
+| [#13](https://github.com/swindler2010/StockMonitor/issues/13) | `closed/duplicate` | 2026-11-11T21:05:25Z | Полный оригинальный текст в V, метаданные в XI–XV |
+| [#14](https://github.com/swindler2010/StockMonitor/issues/14) | `closed/duplicate` | 2026-11-11T21:05:28Z | Полный оригинальный текст в V, метаданные в XI–XV |
+| [#15](https://github.com/swindler2010/StockMonitor/issues/15) | `closed/duplicate` | 2026-11-11T21:05:32Z | Полный оригинальный текст в V, метаданные в XI–XV |
+| [#16](https://github.com/swindler2010/StockMonitor/issues/16) | `closed/duplicate` | 2026-11-11T21:05:35Z | Полный оригинальный текст в V, метаданные в XI–XV |
+
+**Проверка после закрытия:** 16/16 Issues `closed/duplicate`, 713/713 уникальных архивных комментариев, 16/16 исходных описаний совпадают с содержимым MASTER, PR #17 и #18 остаются открытыми. **Открытых старых Issues: 0**; оставшиеся незакрытые технические подзадачи ведутся через группы G01–G10 в MASTER, как описано в разделе IX.
+
+**Очистка файлов main:** `docs/STOCK_MONITOR_FULL_AUDIT_2026-10-23_RU.md` удалён из актуальной ветки после дословной проверки архивной копии в разделе X (Git commit `f7b5be41a352ef93d319690aef8c63ed6d4ba44b`; файл восстанавливается через историю Git). `AGENTS.md` (commit `1c95bec69f7ddb10879b261aba15bfb82576868c`) и `README.md` (commit `06bdca6551c7409e1c14acfb6416d08c158b8475`) содержат только указатели на **этот единственный реестр задач**, не отдельный backlog. Удалять AGENTS.md нельзя — он обеспечивает автоматическое обнаружение правил Work.
+
+**Не удалялись:** рабочие PR17/PR18, исходники, тесты, manifests, backups/rollback, данные и Store 0.15, пользовательские PDF-бинарники и внешние ссылки; полный текст их доступных документов перенесён в X/XIV. В PR-ветках старые файлы нужны для сборки/отката, а не выступают конкурирующими списками задач.
+
+**Для ChatGPT/Work дальше:** читать и обновлять только файл `docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md` на `main` как регистр заданий. Не возобновлять Issue-based tracking и не смешивать `closed/duplicate` с реальным `DONE`. Реальный код/Bridge/Windows/тесты читать и проверять по необходимости, сохраняя результаты здесь.
