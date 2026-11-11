@@ -4,6 +4,24 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "preserve_analysis_after_failed_assessment",
+      "title": "Ошибка повторной оценки не стирает проверенные независимые результаты",
+      "sources": ["saved assessment queue"],
+      "states": ["ERROR", "STALE", "EXPIRED", "INPUT_CHANGED"],
+      "status": "ПРОВЕРЕНО ИЗОЛИРОВАННО; RUNTIME ОЖИДАЕТ",
+      "steps": [
+        "При ошибке повторной оценки сохранить прежнюю успешную квитанцию с неизменными закрытыми входами, сроками, identity и разрешениями; записать последнюю ошибку отдельно.",
+        "Каждый потребитель по-прежнему проверяет candidate_state и исполнительные ограничения. Сохранение квитанции не означает действительность или продление допуска.",
+        "Вернуть ошибку существующей очереди, чтобы остались cooldown и повторная попытка. Первый неуспешный расчёт без прежнего результата остаётся ERROR.",
+        "При следующем успешном расчёте заменить квитанцию обычной транзакционной публикацией. История не растёт цепочкой вложенных копий."
+      ],
+      "evidence": [
+        "test_cp_assessment_preserve:4 new PASS; before fix a failed5mrefresh erased still-current1Wproof",
+        "3 affected PASS: changed identity, relevant revision and stale publication rejection"
+      ],
+      "limits": "Не восстанавливать утраченные старые результаты вручную, не скрывать ошибку, не выдавать новый допуск и не менять OHLCV. Изменённые входы и истёкший срок продолжают отзывать независимый контекст."
+    },
+    {
       "id": "assessment_retry_waiting_age",
       "title": "Повторная оценка не вытесняется новыми успешными заявками",
       "sources": ["saved assessment queue"],

@@ -619,13 +619,25 @@ def publish_eligibility(store,info,result):
     if result is None:return None
     with store.connect() as db:
         db.execute('BEGIN IMMEDIATE')
+        saved=result
         if not result.get('error'):
             state=eligibility_state(db,result,pd.Timestamp.now(tz='UTC'))
             if state not in ('CURRENT','EXPIRED'):
                 raise ValueError('ELIGIBILITY_INPUT_CHANGED: '+state)
             result=dict(result,publication_state=state)
+            saved=result
+        else:
+            # A failed refresh is not a replacement calculation. Retain exact
+            # prior evidence: every consumer still validates its own inputs,
+            # expiry and execution guards. Return the error so retry stays due.
+            prior=db.execute('SELECT value FROM settings WHERE key=?',
+                ('cp_eligibility:'+info['isin'],)).fetchone()
+            prior=json.loads(prior[0]) if prior else None
+            if prior and not prior.get('error'):
+                saved=dict(prior,last_failed_attempt={k:result[k] for k in
+                    ('isin','error','checked_at','expires_at') if k in result})
         db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',
-            ('cp_eligibility:'+info['isin'],json.dumps(result,ensure_ascii=False,allow_nan=False)))
+            ('cp_eligibility:'+info['isin'],json.dumps(saved,ensure_ascii=False,allow_nan=False)))
     return result
 
 

@@ -173,6 +173,7 @@ def collect(path,snapshot=None,problem_isin=None,problem_page=0):
                         candidate['trade_blockers']=[*candidate.get('trade_blockers',[]),str(error)]
             live_candidates=[c for c in candidates if c['current_state']=='CURRENT']
             eligibility[isin]=dict(state=status,checked_at=saved.get('checked_at'),expires_at=saved.get('expires_at'),
+                last_failed_attempt=saved.get('last_failed_attempt'),
                 analysis_scope=saved.get('analysis_scope'),
                 error=saved.get('error'),context=saved.get('context'),candidates=live_candidates,
                 historical_candidates=[c for c in candidates if c.get('closed_inputs') and c['current_state']=='EXPIRED'],
@@ -188,6 +189,7 @@ def collect(path,snapshot=None,problem_isin=None,problem_page=0):
                 if approved:
                     shown=(approved.get('result') or {}).get('timeframe_context',{}).get(tf,{})
                 eligibility_rows.append(dict(isin=isin,name=info.get('name',isin),tf=tf,state='CURRENT' if row_valid else status,record_state=status,
+                    last_failed_attempt=saved.get('last_failed_attempt'),
                     identity=approved['identity'] if approved else unit.get('identity',{}),count=shown.get('count',shown.get('closed_bar_count')),first=shown.get('first'),last=shown.get('last'),
                     analysis_scope=saved.get('analysis_scope'),
                     context=approved['context'] if approved else 'full_closed_reference_v1' if full else unit.get('context'),bounded_blockers=unit.get('blockers',[]),
@@ -414,6 +416,10 @@ def show(app):
             scope = row.get('analysis_scope')
             if scope:
                 context_text = tr('Область анализа: последние 5 лет, с ') + str(scope.get('start')) + tr('. Старые дефекты вне области; Max и архив сохранены.\n') + context_text
+            attempt=row.get('last_failed_attempt')
+            if attempt:
+                context_text+='\n'+tr('Последняя повторная оценка не завершена: ')+str(attempt.get('error'))
+                context_text+='\n'+tr('Предыдущие результаты проверяются по прежним данным и срокам; ошибка не продлевает допуск.')
             details.delete('1.0', 'end')
             details.insert('1.0', tr('{p0} · {p1}\n{p2}\n{p3}\nНастоящих свечей в контексте: {p4}\nПричины: ', p0=row['name'], p1=row['tf'], p2=labels.get(status.get('state'), tr('Неизвестно')), p3=context_text, p4=row.get('count')) + '; '.join((tr(eligibility_reason(x)) for x in row.get('blockers', []))) + tr('\nТорговля разрешается только действующим исполнительным контуром; эта панель не снимает ограничения.\n\nТехнические подробности:\n') + json.dumps(row, ensure_ascii=False, indent=2))
             return
