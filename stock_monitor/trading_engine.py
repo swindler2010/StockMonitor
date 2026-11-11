@@ -61,7 +61,7 @@ def facts(closed, support, resistance, stop):
 
 
 def evaluate(contexts, selected_tf, position=None, benchmark=None, required=None):
-    from cp_controls import analysis_quality_allowed, risk_summary, RISK_CONTEXT
+    from cp_controls import analysis_quality_allowed, risk_summary, RISK_CONTEXT, TV_PRICE_MODEL
     required=tuple(required or profile(selected_tf)); benchmark=benchmark or {}
     bull=[]; bear=[]; blockers=[]; warnings=[]; score=0
     def vote(side, code, text, weight):
@@ -120,7 +120,13 @@ def evaluate(contexts, selected_tf, position=None, benchmark=None, required=None
     maximum=3*WEIGHTS['trend']+sum(WEIGHTS[k] for k in ('momentum','rsi','structure','volume','benchmark'))
     strength=round(min(100,100*abs(score)/maximum)) if not blockers else 0
     accepted={tf:risk_summary(contexts[tf]['accepted_risk']) for tf in dict.fromkeys((*required,selected_tf)) if contexts.get(tf,{}).get('accepted_risk')}
-    if accepted:warnings.append('Принят риск оценочных Close: EMA/RSI/MACD используют средние соседей; ATR, объём, уровни и цена исполнения — реальные. Архив DQ не исправлен.')
+    if accepted:
+        if all(r.get('price_model')==TV_PRICE_MODEL for r in accepted.values()):
+            warnings.append('Принят исторический риск пропусков; расчёт только по реальным закрытым свечам. Архив DQ не исправлен.')
+        elif any(r.get('price_estimates_used',0)>0 for r in accepted.values()):
+            warnings.append('Принят риск оценочных Close: EMA/RSI/MACD используют средние соседей; ATR, объём, уровни и цена исполнения — реальные. Архив DQ не исправлен.')
+        else:
+            warnings.append('Принят исторический риск; применение оценочных Close в этом расчёте не подтверждено. Архив DQ не исправлен.')
     return dict(signal=signal,decision=signal,score=score,confidence=strength,
         calculation_context=RISK_CONTEXT if accepted else 'standard',accepted_risks=accepted,
         confidence_meaning='Сила направленных подтверждений, не вероятность прибыли',
