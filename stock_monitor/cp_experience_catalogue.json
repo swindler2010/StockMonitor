@@ -4,6 +4,32 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "fresh_review_durable_assessment_handoff",
+      "title": "Передача свежего подтверждения в существующую очередь анализа",
+      "sources": [
+        "existing fresh feed",
+        "CP assessment worker"
+      ],
+      "states": [
+        "STALE",
+        "EXPIRED",
+        "AWAITING_ASSESSMENT"
+      ],
+      "status": "5NEW +3AFFECTED PASS; WINDOWS PENDING",
+      "steps": [
+        "После requested+fresh сохранять прежний analysis_requested_at и ставить metadata-only cp_assessment.request.",
+        "Не ждать следующего исторического прохода инструмента; не выполнять анализ или историю в свежем writer.",
+        "Существующие deduplication, original request age, retry_at,2priority:1background и строгая публикация продолжают действовать.",
+        "По завершении обычный worker подтверждает только фактически обработанный запрос; новая заявка не означает READY."
+      ],
+      "evidence": [
+        "Reproduced missing assessment request despite fresh review: FAIL before, PASS after",
+        "test_cp_fresh_assessment_request:5newPASS including53/200continuouspriority,duplicatecooldown,restart and realDQ error retained",
+        "test_cp_fresh_completion:3directlyaffectedPASS, heavy stages and history release preserved"
+      ],
+      "limits": "Не новый поток, не обход snapshot/eligibility dispatcher exclusion, не мгновенный результат при занятом worker, не изменение рынка/разрешений/исполнения."
+    },
+    {
       "id": "validated_receipt_renewal_closed_proof",
       "title": "Повторное подтверждение неизменного исторического разрешения",
       "sources": [
@@ -14,7 +40,7 @@
         "STALE",
         "INPUT_CHANGED"
       ],
-      "status": "ПРОВЕРЕНО ТЕСТАМИ; WINDOWS ОЖИДАЕТ",
+      "status": "WINDOWS/MCP ЗАГРУЖЕНО; ЕСТЕСТВЕННОЕ ПОДТВЕРЖДЕНИЕ ОЖИДАЕТ",
       "steps": [
         "Сравнивать полное содержание разрешения, evidence, actor и набор связанных scopes.",
         "Только для effective_accepted TV/reviewed/auto квитанций в расчётном fingerprint заменять номера счётчиков CURRENT; исходные разрешения и SQLite не изменять.",
@@ -24,7 +50,8 @@
       "evidence": [
         "test_cp_receipt_renewal: 8 new PASS including 53/200 separate receipts and strict execution token rejection",
         "test_closed_receipt_metadata: 2 directly affected identity and expiry guards PASS",
-        "Saved NVIDIA four receipts differed only by renewed revision counters; no new owner decision"
+        "Saved NVIDIA four receipts differed only by renewed revision counters; no new owner decision",
+        "11Nov normal restart12:54:11; Windows indicators/VolumeProfile and9preservationchecks confirmed, hourlypairCOREreadyWAITfresh; no overall readiness claim"
       ],
       "limits": "Не создаёт разрешений/свечей/сделок, не скрывает DQ; не продлевает срок действия. Только fingerprint доказанного повторного подтверждения. Runtime PARTIAL."
     },
@@ -38,7 +65,7 @@
         "STALE",
         "INPUT_CHANGED"
       ],
-      "status": "6 NEW +2 AFFECTED PASS; WINDOWS PENDING",
+      "status": "ПРОВЕРЕНО WINDOWS/MCP И ЕСТЕСТВЕННОЙ ОЧЕРЕДЬЮ",
       "steps": [
         "В attach_tv_absence и accepted_gap_input фильтровать квитанции по ISIN, полной identity, базовому TF, archive/state/range до отслеживания их ревизий.",
         "Даже отклонённые совпадающие TV-квитанции остаются зависимостями. Сам grant и политики по-прежнему отслеживаются полностью.",
@@ -47,7 +74,8 @@
       "evidence": [
         "test_cp_receipt_dependencies:6newPASS; unrelated5m receipt→false15m invalidation reproduced before fix",
         "2directly affected original tests PASS:changedOHLCV revokes aggregate;daily/weekly/monthly retain real sums and factualDQ",
-        "Readonly same SQLite snapshot Apple1D1274bars:132dependencies/122TVjobs before;3dependencies/0TVjobs after;sameOHLCV andmetadata exceptchecked_at,wholegrant tracked"
+        "Readonly same SQLite snapshot Apple1D1274bars:132dependencies/122TVjobs before;3dependencies/0TVjobs after;sameOHLCV andmetadata exceptchecked_at,wholegrant tracked",
+        "11Nov normal assessment Apple12:42/12:51; 1W/1M CURRENT with0unrelated15mjobs;1H119relevant preserved"
       ],
       "implementation": [
         "stock_monitor/cp_controls.py:_gap_entry_matches",

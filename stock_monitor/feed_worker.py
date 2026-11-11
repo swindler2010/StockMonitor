@@ -64,9 +64,9 @@ class FeedContext(StockMonitor):
             if requested and (fresh or repair.get('state')=='COMPLETED'):
                 # Keep the lightweight exact-scope risk revalidation above:
                 # new market revisions revoke its old receipts immediately.
-                # Defer only historical reconciliation and the expensive all-TF
-                # assessment to existing history slots. Persist the same request
-                # so a restart cannot lose it; do not publish a readiness result.
+                # Defer historical reconciliation to history slots. Preserve its
+                # request until the owned read worker completes the assessment;
+                # the fresh writer must not calculate or publish readiness.
                 from cp_reconciliation import PROGRESS,read,write
                 with self.store.connect() as db:
                     db.execute('BEGIN IMMEDIATE')
@@ -74,6 +74,11 @@ class FeedContext(StockMonitor):
                     progress['analysis_requested_at']=max(progress.get('analysis_requested_at') or requested,requested)
                     write(db,PROGRESS+info['isin'],progress)
             if requested and fresh:
+                # Queue metadata only. Waiting for this ISIN's history slot used
+                # to leave a working stock stale despite regular fresh feeds.
+                # Existing request/choose keep deduplication, retry and fairness.
+                from cp_assessment import request
+                request(self.store,info['isin'])
                 result['cp_analysis_deferred']=requested
             elif requested:
                 from calculation_window import eligibility_turn
