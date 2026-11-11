@@ -26,6 +26,23 @@ class BudgetTests(unittest.TestCase):
         self.assertFalse(chart.reserve_request(self.f.db,self.now,self.f.isin,'15m'))
         self.assertEqual(self.store.setting('gettex_chart_next_request'),(self.now+pd.Timedelta(minutes=1)).isoformat())
 
+    def test_pending_candidate_reserves_alternating_ordinary_http_slots(self):
+        now=self.now
+        with patch.object(schedule,'operational_chart_due',return_value=[('',self.f.isin,'15m')]),patch.object(schedule,'preparation_chart_due',return_value=[('','CANDIDATE','15m')]):
+            for ordinary in ('CANDIDATE','BACKGROUND','CANDIDATE'):
+                for _ in range(2):
+                    self.assertFalse(chart.reserve_request(self.f.db,now,'CANDIDATE','15m'))
+                    self.assertTrue(chart.reserve_request(self.f.db,now,self.f.isin,'15m'))
+                    now+=pd.Timedelta(minutes=1)
+                if ordinary=='CANDIDATE':
+                    previous=self.store.setting('gettex_chart_next_request')
+                    self.assertFalse(chart.reserve_request(self.f.db,now,'BACKGROUND','15m',recovery=True))
+                    self.assertFalse(chart.reserve_request(self.f.db,now,self.f.isin,'15m'))
+                    self.assertEqual(self.store.setting('gettex_chart_next_request'),previous)
+                self.assertTrue(chart.reserve_request(self.f.db,now,ordinary,'15m'))
+                self.assertFalse(chart.reserve_request(self.f.db,now,ordinary,'15m'))
+                now+=pd.Timedelta(minutes=1)
+
     def test_two_priority_then_background_gets_time_under_53_and_200_jobs(self):
         for size in (53,200):
             self.f.db.execute("DELETE FROM settings WHERE key IN ('gettex_chart_next_request','gettex_chart_request_rotation')")

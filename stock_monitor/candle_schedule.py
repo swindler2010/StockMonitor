@@ -288,6 +288,24 @@ def operational_chart_due(db,now):
   except ValueError:pass
  for p in ledger(db).get('positions',[]):
   if float(p['quantity'])>0:identities[p['isin']]=p['identity']
+ return _identities_chart_due(store,db,identities,now)
+
+
+def preparation_chart_due(db,now):
+ """The one existing sequential candidate, under the same source/calendar gates."""
+ from contextlib import contextmanager
+ from paper_hourly import read
+ from paper_preparation import maintenance
+ class ExistingSnapshot:
+  @contextmanager
+  def connect(self):yield db
+  def setting(self,k,d=None):return read(db,k,d)
+ pending=maintenance(db)
+ return _identities_chart_due(ExistingSnapshot(),db,{pending[0]:pending[1]} if pending else {},now)
+
+
+def _identities_chart_due(store,db,identities,now):
+ from gettex_chart import confirmed_state
  due=[]
  for isin,meta in identities.items():
   if meta.get('source')!='gettex_chart' or meta.get('venue')!='GETTEX' or meta.get('currency')!='EUR':continue
@@ -326,7 +344,7 @@ def fresh_candidate(store,infos,now,focus=None):
  reserved=store.setting('gettex_chart_next_request')
  chart_allowed=not reserved or now>=pd.Timestamp(reserved)
  stats['chart_rate_limited']=not chart_allowed
- candidates=[]
+ candidates=[];chart_candidates=[]
  for info in infos:
   if info.get('kind')=='benchmark':continue
   isin=info['isin'];choices=[]
@@ -393,6 +411,12 @@ def fresh_candidate(store,infos,now,focus=None):
   if trade_choice:last,source,base=trade_choice
   if position_choice and rotation.get('position_streak',0)<2:last,source,base=position_choice
   candidates.append((last,isin,info,source,base,is_focus,bool(position_choice),trade_proof))
+  chart_choices=[x for x in choices if x[1]=='gettex_chart']
+  if chart_choices:
+   chart_choice=next((x for x in chart_choices if x[2]==base),None) or min(chart_choices)
+   chart_proof=trade_proof if trade_proof and trade_proof['identity'].get('source')=='gettex_chart' else None
+   chart_candidates.append((chart_choice[0],isin,info,chart_choice[1],chart_choice[2],is_focus,
+       bool(position_choice and position_choice[1]=='gettex_chart'),chart_proof))
  if not candidates:return None,stats
  oldest=lambda items:min(items,key=lambda x:(x[0],x[1]),default=None)
  chosen=oldest(candidates)
@@ -407,10 +431,26 @@ def fresh_candidate(store,infos,now,focus=None):
  # fresh quote just because its last historical receipt is much older.
  trading=(oldest(x for x in candidates if x[7] and x[7].get('proof_state')!='SEQUENTIAL_PREPARATION')
           or oldest(x for x in candidates if x[7]))
+ preparing=oldest(x for x in candidates if x[7] and x[7].get('proof_state')=='SEQUENTIAL_PREPARATION')
  if slot==0:chosen=position or trading or foreground or chosen
  elif trades and slot==1:chosen=trading or foreground or position or chosen
- elif slot==(2 if trades else 1):chosen=foreground or trading or position or chosen
+ # After two active-stock slots, let the single candidate make progress.
+ # Otherwise continuous quote updates plus visible-chart work can starve it.
+ # The fourth fresh slot and following history turn retain their fair share.
+ elif slot==(2 if trades else 1):chosen=preparing or foreground or trading or position or chosen
  else:chosen=oldest(x for x in candidates if not x[5] and not x[6] and not x[7]) or chosen
+ # File-provider turns may reset the queue while the chart HTTP minute is
+ # occupied. Allocate its actual request budget independently of those turns,
+ # using the existing persisted reservation receipt, not a second queue.
+ budget=store.setting('gettex_chart_request_rotation')
+ if chart_allowed and budget is not None and chart_candidates:
+  with store.connect() as db:urgent={(i,b) for _,i,b in operational_chart_due(db,now)}
+  active=oldest(x for x in chart_candidates if (x[1],x[4]) in urgent)
+  pending=oldest(x for x in chart_candidates if x[7] and x[7].get('proof_state')=='SEQUENTIAL_PREPARATION')
+  ordinary=oldest(x for x in chart_candidates if (x[1],x[4]) not in urgent and x is not pending)
+  if active and budget.get('priority_streak',0)<2:chosen=active
+  elif pending and budget.get('preparation_turn',True):chosen=pending
+  else:chosen=ordinary or pending or active or chosen
  _,isin,info,source,base,is_focus,is_position,trade_proof=chosen
  details=({'priority_reason':'TRADE_CONTEXT_MAINTENANCE','required_tf':trade_proof['required_tf'],
            'strategy':trade_proof['strategy'],'proof_state':trade_proof['proof_state'],'execution_permission':False} if trade_proof else {})

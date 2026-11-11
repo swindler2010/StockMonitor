@@ -632,12 +632,19 @@ def reserve_request(db,now,isin=None,base=None,recovery=False):
     due=scheduler.operational_chart_due(db,now)
     key='gettex_chart_request_rotation'
     row=db.execute('SELECT value FROM settings WHERE key=?',(key,)).fetchone()
-    streak=json.loads(row[0]).get('priority_streak',0) if row else 0
+    prior=json.loads(row[0]) if row else {}
+    streak=prior.get('priority_streak',0)
     priority=not recovery and any((isin,base)==(i,b) for _,i,b in due)
     if due and streak<2 and not priority:return False
+    preparing=scheduler.preparation_chart_due(db,now) if not due or streak>=2 else []
+    preparation=not recovery and any((isin,base)==(i,b) for _,i,b in preparing)
+    # Alternate the ordinary HTTP slot between the one pending candidate and
+    # other archive work. Official-file jobs cannot consume or reset it.
+    if preparing and prior.get('preparation_turn',True) and not preparation:return False
     db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',('gettex_chart_next_request',json.dumps((now+pd.Timedelta(minutes=1)).isoformat())))
     db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',(key,json.dumps(dict(
-        priority_streak=min(2,streak+1) if priority else 0,at=now.isoformat(),isin=isin,base=base,priority=priority))))
+        priority_streak=min(2,streak+1) if priority else 0,at=now.isoformat(),isin=isin,base=base,priority=priority,
+        preparation_turn=False if preparation else True if not priority else prior.get('preparation_turn',True)))))
     return True
 
 

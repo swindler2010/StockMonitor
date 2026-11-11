@@ -177,7 +177,7 @@ class PreparationTests(unittest.TestCase):
         self.assertNotIn(f.isin,fixture.hourly.read(f.db,fixture.hourly.CONFIG)['identities'])
         self.assertEqual(fixture.paper.ledger(f.db)['fills'],[])
 
-    def test_preparation_never_displaces_due_active_quote(self):
+    def test_preparation_never_takes_first_active_quote_slot(self):
         import candle_schedule as schedule
         f=self.f;infos=[f.info,dict(isin=self.anchor,kind='stock',name='NVIDIA')]
         meta=f.cfg['identities'][self.anchor]
@@ -194,6 +194,86 @@ class PreparationTests(unittest.TestCase):
         with patch.object(schedule,'trade_maintenance',return_value=proofs),patch('gettex_chart.confirmed_state',side_effect=lambda i,v:bool(v.get('identity'))),patch.object(schedule,'decision',side_effect=lambda s,i,m,b,n:dict(due=i==f.isin and m['source']=='gettex_chart' and b=='15m',session_open=True)):
             got=schedule.fresh_candidate(store,infos,fixture.pd.Timestamp(f.now,unit='s',tz='UTC'))[0]
             self.assertEqual(got['isin'],f.isin)
+
+
+
+    def test_candidate_gets_bounded_third_slot_under_continuous_pair_updates(self):
+        import candle_schedule as schedule
+        f=self.f;meta=f.cfg['identities'][self.anchor]
+        infos=[f.info,dict(isin=self.anchor,kind='stock',name='NVIDIA')]
+        f.write('gettex_chart:'+self.anchor+':15m',dict(identity=meta,received_at='2026-11-04T09:30Z'))
+        @contextmanager
+        def connect():yield f.db
+        store=SimpleNamespace(connect=connect,setting=lambda k,d=None:fixture.hourly.read(f.db,k,d))
+        proofs={i:[dict(identity=m,required_tf=['15m','1H','4H','1D'],execution_tf=['5m','15m'],strategy='CORE:1',proof_state=s)]
+            for i,m,s in ((f.isin,f.identity,'SEQUENTIAL_PREPARATION'),(self.anchor,meta,'OWNER_HOURLY_MAINTENANCE'))}
+        def due(store,isin,meta,base,now):return dict(due=meta['source']=='gettex_chart' and base=='15m',session_open=True)
+        with patch.object(schedule,'trade_maintenance',return_value=proofs),patch('gettex_chart.confirmed_state',side_effect=lambda i,v:bool(v.get('identity'))),patch.object(schedule,'decision',side_effect=due):
+            for count in (53,200):
+                selections=[]
+                for n in range(count):
+                    f.write(schedule.FRESH_ROTATION,dict(consecutive=n%5))
+                    got,stats=schedule.fresh_candidate(store,infos,fixture.pd.Timestamp(f.now,unit='s',tz='UTC'),dict(isin=self.anchor,timeframe='1H'))
+                    selections.append(got['isin'] if got else None)
+                    if n%5 in (0,1):self.assertEqual(got['isin'],self.anchor)
+                    elif n%5==2:self.assertEqual(got['isin'],f.isin)
+                    elif n%5==4:self.assertIsNone(got);self.assertTrue(stats['history_turn_due'])
+                self.assertGreaterEqual(selections.count(f.isin),count//5)
+        self.assertNotIn(f.isin,fixture.hourly.read(f.db,fixture.hourly.CONFIG)['identities'])
+        self.assertEqual(fixture.paper.ledger(f.db)['fills'],[])
+
+    def test_shared_http_budget_survives_official_file_turns_and_restart(self):
+        import candle_schedule as schedule
+        import gettex_chart as chart
+        f=self.f;meta=f.cfg['identities'][self.anchor]
+        background=dict(isin='BACKGROUND',kind='stock',name='Background')
+        infos=[f.info,dict(isin=self.anchor,kind='stock',name='NVIDIA'),background]
+        for i,m in ((self.anchor,meta),('BACKGROUND',dict(meta,symbol='BG.GTX'))):
+            f.write('gettex_chart:'+i+':15m',dict(identity=m,received_at='2026-11-04T08:00Z'))
+        @contextmanager
+        def connect():
+            with f.db:yield f.db
+        def setting(k,d=None):return fixture.hourly.read(f.db,k,d)
+        store=SimpleNamespace(connect=connect,setting=setting,set_setting=f.write)
+        proofs={i:[dict(identity=m,required_tf=['15m'],execution_tf=[],strategy='CORE:1',proof_state=s)]
+            for i,m,s in ((f.isin,f.identity,'SEQUENTIAL_PREPARATION'),(self.anchor,meta,'OWNER_HOURLY_MAINTENANCE'))}
+        def due(store,isin,meta,base,now):return dict(due=base=='15m' and meta['source']=='gettex_chart',session_open=True)
+        with patch.object(schedule,'trade_maintenance',return_value=proofs),patch('gettex_chart.confirmed_state',side_effect=lambda i,v:bool(v.get('identity'))),patch.object(schedule,'decision',side_effect=due),patch.object(schedule,'operational_chart_due',return_value=[('',self.anchor,'15m')]):
+            for count in (53,200):
+                f.db.execute("DELETE FROM settings WHERE key IN ('gettex_chart_next_request','gettex_chart_request_rotation')")
+                f.db.commit()
+                now=fixture.pd.Timestamp(f.now,unit='s',tz='UTC');seen=[]
+                for n in range(count):
+                    # Shared official-file jobs can exhaust and reset the CP
+                    # turn before the separate chart-provider minute expires.
+                    for _ in range(4):schedule.fresh_finished(store,background,'gettex','SAVED',now)
+                    schedule.history_finished(store,now)
+                    got,_=schedule.fresh_candidate(store,infos,now,dict(isin=self.anchor,timeframe='1H'))
+                    self.assertTrue(chart.reserve_request(f.db,now,got['isin'],'15m'))
+                    self.assertFalse(chart.reserve_request(f.db,now,got['isin'],'15m'))
+                    f.db.commit()
+                    seen.append(got['isin']);now+=fixture.pd.Timedelta(minutes=1)
+                    # The next iteration uses only persisted settings, like restart.
+                    store=SimpleNamespace(connect=connect,setting=setting,set_setting=f.write)
+                self.assertGreaterEqual(seen.count(f.isin),count//6)
+                self.assertGreaterEqual(seen.count('BACKGROUND'),count//6)
+                self.assertEqual(seen[:3],[self.anchor,self.anchor,f.isin])
+        self.assertNotIn(f.isin,setting(fixture.hourly.CONFIG)['identities'])
+        self.assertEqual(fixture.paper.ledger(f.db)['fills'],[])
+
+    def test_preparation_http_due_preserves_cooldown_and_exact_listing(self):
+        import candle_schedule as schedule
+        f=self.f;now=fixture.pd.Timestamp(f.now,unit='s',tz='UTC')
+        saved=fixture.hourly.read(f.db,'gettex_chart:'+f.isin+':15m')
+        saved.update(received_at='2026-11-04T08:00Z',last='2026-11-04 09:00:00')
+        f.write('gettex_chart:'+f.isin+':15m',saved)
+        self.assertTrue(schedule.preparation_chart_due(f.db,now))
+        f.write('cp_source_retry:gettex_chart',(now+fixture.pd.Timedelta(hours=1)).isoformat())
+        self.assertEqual(schedule.preparation_chart_due(f.db,now),[])
+        f.db.execute("DELETE FROM settings WHERE key='cp_source_retry:gettex_chart'")
+        saved['identity']={**saved['identity'],'currency':'USD'}
+        f.write('gettex_chart:'+f.isin+':15m',saved)
+        self.assertEqual(schedule.preparation_chart_due(f.db,now),[])
 
 
 if __name__=='__main__':unittest.main()

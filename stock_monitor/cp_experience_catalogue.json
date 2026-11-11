@@ -668,6 +668,33 @@
         "test_partial_volume_profile.py"
       ],
       "limits": "Профиль распределения по OHLCV является оценкой, не точным биржевым объёмом на каждом ценовом уровне."
+    },
+    {
+      "id": "sequential_candidate_fair_share",
+      "title": "Последовательная подготовка не голодает при постоянных обновлениях рабочих акций",
+      "sources": [
+        "gettex_chart"
+      ],
+      "states": [
+        "STALE",
+        "PENDING"
+      ],
+      "status": "ПРОВЕРЕНО",
+      "steps": [
+        "Сначала два имеющихся слота обновления рабочих акций и открытых позиций.",
+        "Третий слот свежих данных — единственному кандидату последовательной подготовки, если он существует и подошёл срок запроса.",
+        "Четвёртый слот и следующий исторический ход сохраняют обслуживание остальных инструментов.",
+        "Проверять фактически выданный общий HTTP-бюджет: задачи другого источника не сбрасывают его очерёдность.",
+        "После двух оперативных запросов чередовать кандидата и обычную архивную работу через существующую квитанцию резервирования."
+      ],
+      "evidence": [
+        "stock_monitor/candle_schedule.py:fresh_candidate",
+        "test_paper_preparation.py:PreparationTests.test_candidate_gets_bounded_third_slot_under_continuous_pair_updates",
+        "stock_monitor/gettex_chart.py:reserve_request",
+        "test_paper_preparation.py:PreparationTests.test_shared_http_budget_survives_official_file_turns_and_restart",
+        "test_chart_budget_priority.py"
+      ],
+      "limits": "Общие rate limit, cooldown и сроки публикации остаются обязательными. Подготовка не выдаёт разрешение на сделку и не принимает неизвестные пропуски. 53/200 ходов проверяют порядок, а не гарантируют время ответа поставщика."
     }
   ],
   "sources": [
