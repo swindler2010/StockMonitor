@@ -111,6 +111,9 @@ def serve():
                         captured_store.read_cache.assert_current(dependencies)
                     result['_captured_input_revisions']=dict(dependencies)
                 result=validate_snapshot(store,result)
+            elif kind=='paper_hourly':
+                from paper_hourly import calculate_snapshot
+                result=calculate_snapshot(store,values)
             else:
                 with store.read_cache.track_inputs() as dependencies:
                     captured=values.get('instrument_revisions',{})
@@ -128,9 +131,6 @@ def serve():
                     elif kind=='feed':
                         from chart_worker import prepare_feed
                         result=prepare_feed(store,values)
-                    elif kind=='paper_hourly':
-                        from paper_hourly import calculate
-                        result=calculate(store,values)
                     else:raise ValueError('Unknown calculation')
                     store.read_cache.assert_current(dependencies)
                     result['_input_revisions']=dict(dependencies)

@@ -183,6 +183,8 @@ def status(path):
         from paper_hourly import CONFIG,STATUS,read
         config=read(db,CONFIG,{})
         state['automation']={**config,'instruments':{isin:read(db,STATUS+isin,{}) for isin in config.get('identities',{})}}
+        from paper_preparation import STATE
+        state['automation']['preparation']=read(db,STATE,{})
         state['archived_fills']=db.execute('SELECT COUNT(*) FROM paper_fill_archive').fetchone()[0] if db.execute("SELECT 1 FROM sqlite_master WHERE name='paper_fill_archive'").fetchone() else 0
         return state
 

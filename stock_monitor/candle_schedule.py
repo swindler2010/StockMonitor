@@ -177,6 +177,8 @@ def trade_maintenance(store,infos,now):
  from cp_controls import DEMO_INITIALIZATION,DEMO_ALL_INITIALIZATION
  result={}
  with store.connect() as db:
+  from paper_preparation import maintenance
+  preparing=maintenance(db)
   for info in infos:
    if info.get('kind')=='benchmark':continue
    isin=info['isin']
@@ -190,6 +192,10 @@ def trade_maintenance(store,infos,now):
      result.setdefault(isin,[]).append(dict(identity=exact,timeframe='1H',required_tf=['15m','1H','4H','1D'],
        execution_tf=['5m','15m'],strategy='CORE:'+VERSION,proof_state='OWNER_HOURLY_MAINTENANCE',execution_permission=False))
    except ValueError:pass
+   if preparing and preparing[0]==isin:
+    result.setdefault(isin,[]).append(dict(identity=preparing[1],timeframe='1H',
+      required_tf=['15m','1H','4H','1D'],execution_tf=['5m','15m'],
+      strategy='CORE:'+VERSION,proof_state='SEQUENTIAL_PREPARATION',execution_permission=False))
    # Project only positive receipts; avoid decoding each full 11-TF payload.
    rows=db.execute("""SELECT json_extract(s.value,'$.isin','$.execution_version','$.context',
              '$.error','$.expires_at','$._input_revisions'),c.value

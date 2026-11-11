@@ -314,7 +314,7 @@ def _input_tracking(context):
 def _candidate_proof(store, specs, token):
     from performance_cache import capture_closed_inputs,InputRevisionChanged
     with store.connect() as db:
-        db.execute('BEGIN')
+        if not db.in_transaction:db.execute('BEGIN')
         if any((db.execute('SELECT revision FROM input_revisions WHERE scope=?',(k,)).fetchone() or [0])[0]!=v for k,v in token.items()):
             raise InputRevisionChanged('Candidate inputs changed before proof')
         return capture_closed_inputs(db,specs,token)

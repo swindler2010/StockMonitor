@@ -53,7 +53,12 @@ def authority(db, isin, identity=None):
 
 
 def authorize_hourly(db, isin, identity):
-    authority(db, isin, identity)
+    # Historical-risk analysis may examine the one owner-approved preparation
+    # candidate. Execution still requires authority(), which excludes it.
+    try:authority(db, isin, identity)
+    except ValueError:
+        from paper_preparation import candidate_authority
+        candidate_authority(db, isin, identity)
 
 
 def ledger_token(db):
@@ -164,10 +169,16 @@ def calculate(store, values):
         store.read_cache.depend('setting:' + key)
     store.read_cache.depend('instrument:' + info['isin'])
     with store.connect() as db:
-        cfg = authority(db, info['isin'])
+        preparing = values.get('_paper_prepare') is True
+        if preparing:
+            from paper_preparation import candidate_authority, STATE
+            store.read_cache.depend('setting:'+STATE)
+            cfg, identity = candidate_authority(db, info['isin'])
+        else:
+            cfg = authority(db, info['isin'])
+            identity = cfg['identities'][info['isin']]
         position = next((p for p in ledger(db)['positions'] if p['isin'] == info['isin'] and Decimal(p['quantity'])), {})
         position_token = ledger_token(db)
-    identity = cfg['identities'][info['isin']]
     now = pd.Timestamp.now(tz='UTC')
 
     contract=plan('1H')
@@ -181,6 +192,7 @@ def calculate(store, values):
             epoch=cfg['epoch'], checked_at=now.isoformat(),
             expires_at=min(now+pd.Timedelta(seconds=60), context_deadline(identity, '1H', now)).isoformat(),
             proof=proof, required_tf=contract['required_tf'],timeframe_contract=contract))
+    if preparing:result['hourly']['preparation_only']=True
     # Analysis is useful even while prices are stale. Its status cannot place a fill.
     try:
         result['execution_quote'] = fresh_quote(store, info, identity, now)
@@ -189,15 +201,69 @@ def calculate(store, values):
     return result
 
 
-def validate(db, info, result, args, now):
-    """Inside paper_account's BEGIN IMMEDIATE, immediately before execution."""
+def calculate_snapshot(store, values):
+    """One WAL read transaction, then existing exact closed-input validation.
+
+    No database copy or writer lock. Independent DQ receipts can change while
+    reading; they are not inputs of this exact closed context. Any new relevant
+    or unidentified archive problem is checked again by the manual gate.
+    """
+    from contextlib import contextmanager
+    from performance_cache import ReadCache,validate_closed_inputs,InputRevisionChanged
+    from cp_controls import manual_gate
+    def quote_tail(db, result):
+        meta=result['identity'];rows=[]
+        for tf in ('5m','15m'):
+            rows.append((tf,db.execute('SELECT ts,open,high,low,close,volume FROM series WHERE '
+                'isin=? AND source=? AND venue=? AND currency=? AND symbol=? AND base_tf=? '
+                'ORDER BY ts DESC LIMIT 4',(result['isin'],meta['source'],meta['venue'],meta['currency'],meta['symbol'],tf)).fetchall()))
+        return rows
+    captured=copy.copy(store);captured.read_cache=ReadCache(store.path)
+    @contextmanager
+    def connect():yield captured.read_cache.db
+    captured.connect=connect
+    try:
+        db=captured.read_cache.db
+        db.execute('PRAGMA query_only=ON');db.execute('BEGIN')
+        with captured.read_cache.track_inputs() as token:
+            expected=values.get('instrument_revisions',{})
+            captured.read_cache.assert_current(expected);captured.read_cache._record(expected)
+            result=calculate(captured,values)
+            quote_rows=quote_tail(db,result)
+        token=dict(token)
+    finally:captured.read_cache.close()
+    proof=result['hourly']['proof']
+    with store.connect() as db:
+        db.execute('BEGIN')
+        current=validate_closed_inputs(db,proof)
+        # A quote lane can share a market revision with old closed CORE input.
+        # Never rebase its token over a changed/newer quote or invalid tail.
+        if quote_tail(db,result)!=quote_rows:
+            raise InputRevisionChanged('Hourly execution quote changed')
+        # capture_closed_inputs already excludes unrelated DQ reports by exact
+        # ISIN/symbol/base. Preserve every other dependency, notably the quote
+        # lanes, configuration, owner receipts and benchmark provenance.
+        for scope,revision in token.items():
+            if scope in current:continue
+            if scope.startswith('setting:data_quality:'):continue
+            row=db.execute('SELECT revision FROM input_revisions WHERE scope=?',(scope,)).fetchone()
+            if (row[0] if row else 0)!=revision:
+                raise InputRevisionChanged('Hourly input changed: '+scope)
+            current[scope]=revision
+        manual=result['execution_context'].get('manual_risk')
+        if manual is not None and manual_gate(db,result['isin'],result['identity'],'1H',proof)!=manual:
+            raise InputRevisionChanged('Hourly historical-risk permission changed')
+    result['_input_revisions']=current
+    return result
+
+
+def validate_analysis(db, info, result, now, cfg):
+    """Shared closed CORE proof; this function cannot authorize an order."""
     import pandas as pd
     from performance_cache import validate_closed_inputs
     from calculation_window import benchmark_ready
     from cp_controls import manual_gate
-    from paper_account import ledger
     from trading_engine import VERSION as CORE_VERSION, profile
-    cfg = authority(db, info['isin'], result.get('identity'))
     h = result.get('hourly', {});contract = result.get('execution_context', {})
     engine = contract.get('trading_engine', {})
     if h.get('version') != VERSION or h.get('config_digest') != digest(cfg) or h.get('epoch') != cfg['epoch']:
@@ -209,15 +275,8 @@ def validate(db, info, result, args, now):
         raise ValueError('PAPER_STALE_WINDOW')
     if engine.get('status') != 'READY' or not contract.get('analysis_ready'):
         raise ValueError('PAPER_ENGINE_DATA_BLOCKED')
-    protective = None
-    if args.get('_protection'):
-        from paper_protection import decision
-        protective = decision(db, info, result, now)
-        if not protective or protective != args['_protection'] or args.get('side') != 'SELL':
-            raise ValueError('PAPER_PROTECTION_TRIGGER_CHANGED')
-    if engine.get('rules_version') != CORE_VERSION or (not protective and
-            (engine.get('signal') not in ('BUY', 'SELL') or engine['signal'] != args.get('side'))):
-        raise ValueError('PAPER_AUTO_SIGNAL_MISMATCH')
+    if engine.get('rules_version') != CORE_VERSION:
+        raise ValueError('PAPER_AUTO_RULES_CHANGED')
     if engine.get('demo_initialization') and not engine['demo_initialization'].get('consistent'):
         raise ValueError('PAPER_AUTO_SEED_BLOCKED')
     required = set(profile('1H'))
@@ -238,6 +297,25 @@ def validate(db, info, result, args, now):
         raise ValueError('PAPER_AUTO_DQ_BLOCKED')
     if not benchmark_ready(engine.get('benchmark_context', {})):
         raise ValueError('PAPER_AUTO_BENCHMARK_BLOCKED')
+    return manual
+
+
+def validate(db, info, result, args, now):
+    """Inside paper_account's BEGIN IMMEDIATE, immediately before execution."""
+    from trading_engine import VERSION as CORE_VERSION
+    cfg = authority(db, info['isin'], result.get('identity'))
+    if result.get('hourly',{}).get('preparation_only'):
+        raise ValueError('PAPER_PREPARATION_CANNOT_EXECUTE')
+    manual = validate_analysis(db,info,result,now,cfg)
+    engine = result.get('execution_context',{}).get('trading_engine',{})
+    protective = None
+    if args.get('_protection'):
+        from paper_protection import decision
+        protective = decision(db, info, result, now)
+        if not protective or protective != args['_protection'] or args.get('side') != 'SELL':
+            raise ValueError('PAPER_PROTECTION_TRIGGER_CHANGED')
+    if not protective and (engine.get('signal') not in ('BUY','SELL') or engine['signal'] != args.get('side')):
+        raise ValueError('PAPER_AUTO_SIGNAL_MISMATCH')
     size = order_size(db, info, result, args['side'], now)
     if Decimal(str(args.get('quantity'))) != Decimal(str(size['quantity'])):
         raise ValueError('PAPER_AUTO_SIZE_BLOCKED')
@@ -314,7 +392,7 @@ def compact(result):
 class Runtime:
     """One bounded trading job; owned read client, existing Dispatcher and ledger."""
     def __init__(self, app):
-        self.app = app;self.busy = False;self.cursor = 0
+        self.app = app;self.busy = False;self.cursor = 0;self.preparation_after = 0
 
     def start(self):
         self.app.root.after(15000, self.tick)
@@ -325,6 +403,7 @@ class Runtime:
             return
         cfg = app.store.setting(CONFIG, {})
         ids = list(cfg.get('identities', {})) if cfg.get('enabled') else []
+        submitted = False
         if ids and not self.busy and not app.user_dirty:
             isin = ids[self.cursor % len(ids)];self.cursor += 1
             info = next((i for i in app.watchlist if i['isin'] == isin), None)
@@ -334,6 +413,7 @@ class Runtime:
                     timeframe='1H', period='Max', ai_config=copy.deepcopy(app.ai_config),
                     instrument_revisions=app.store.read_cache.token_for(['instrument:'+isin]))
                 self.busy = True
+                submitted = True
 
                 def work():
                     # All computation, proof verification and the write transaction stay off Tk.
@@ -374,4 +454,16 @@ class Runtime:
 
                 if app.job(work, done, failed, lane='trading', key='paper_auto_hourly', isin=isin) is False:
                     self.busy = False
+        # Idle trading slots only. The existing owned client and dispatcher do
+        # one sequential candidate; no new threads, downloads or order path.
+        if (ids and not submitted and not self.busy and not app.user_dirty
+                and cfg.get('automatic_admission',{}).get('enabled')
+                and time.time() >= self.preparation_after):
+            self.busy = True;self.preparation_after = time.time()+60
+            def prepare():
+                from paper_preparation import turn
+                return turn(app)
+            def prepared(_):self.busy = False
+            if app.job(prepare,prepared,prepared,lane='trading',key='paper_preparation') is False:
+                self.busy = False
         app.root.after(15000, self.tick)
