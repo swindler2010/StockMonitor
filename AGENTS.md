@@ -1,21 +1,20 @@
-# Stock Monitor — instructions for development agents
+# Stock Monitor — canonical task entrypoint for Work / ChatGPT
 
-Before starting any work:
-1. Read the current GitHub Issues in this repository, particularly [master registry #13](https://github.com/swindler2010/StockMonitor/issues/13), and relevant issues for the active release. The 12 October 2026 PDF `Stock_Monitor_General_Plan_016_UPDATED_2026-10-12.pdf` is a historical baseline; do not treat its PASS/PARTIAL/OPEN statuses as verified current code status.
-2. Inspect existing code, commits, and tests before making changes. Avoid duplicating work or rewriting functioning modules unnecessarily.
-3. Prioritize v0.16 in this order: (a) finish and verify UI/MCP analytics hang fixes; (b) reliable EUR OHLCV candlesticks from verifiable exchange sources, current-session updates and all agreed timeframe history minima, with source and data-quality checks; (c) after data validation, implement safe paper trading with virtual funds, trade journal, risk controls, and no real orders. This advances the demo-trading scope originally listed under v0.17 issue #11; coordinate issue updates before declaring it implemented.
-4. Complete MCP read access to the entire instrument watchlist independently of analytics readiness, chart history, quotes, and indicators. Implement safe UI controls with state readback.
-5. For each issue, report what changed, tests run, results, blockers, and any regressions. Update the issue's status; close only after acceptance criteria pass. Do not label an issue complete solely because code was changed.
-6. Do not alter the installed Store 0.15 fallback; develop and test v0.16-dev separately. Do not place secrets or account credentials in issues.
-7. If requirements conflict or the data source cannot provide the requested candle depth/freshness, document the limitation and seek a decision rather than silently synthesizing or mixing incompatible data.
+Before accepting or implementing ANY Stock Monitor / CandlePilot task, read the current canonical master task registry from **main**:
 
-GitHub Issues are the living task tracker. This file is a standing workflow instruction, not evidence that any requirement is already implemented.
+- **Single authoritative file:** [docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md](docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md)
+- **Full raw content:** https://raw.githubusercontent.com/swindler2010/StockMonitor/main/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md
+- **GitHub API:** https://api.github.com/repos/swindler2010/StockMonitor/contents/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md
 
-## Backups, regression testing, and repository/workstation hygiene
+Only this MASTER is the task/requirements/status register. It contains complete 16-Issue / 713-comment text history, original agent rules and supplementary reports, historic PDF text, active PR descriptions, semantic alias map, and checked status limitations.
 
-8. Before any substantial or risky change, create a recoverable checkpoint: commit changes to a feature branch and/or make a verified backup of affected configuration, databases, and user data. Record how to restore it. Never overwrite the stable Store 0.15 installation or its data. Backups must not contain exposed secrets.
-9. After each fix, run targeted tests **and** regression tests for dependent features (including app startup, watchlist, quote updates, charts, MCP Bridge, analytics, persistence, and shutdown as relevant). Record pass/fail evidence in the GitHub Issue. Roll back or report regressions rather than silently shipping them.
-10. Keep the repository and development PC clean: periodically inventory obsolete build outputs, temporary logs, caches, abandoned test fixtures, outdated exports, duplicate downloads, unused branches, and superseded working directories. Remove items that are clearly generated, unused, and reproducible; prefer automated ignore rules and documented retention periods. Do not commit local build artifacts or caches.
-11. **Safe deletion policy:** before deleting anything, verify it is not referenced by current code, builds, tests, deployment, documentation, or user workflows; identify the canonical/current replacement; check whether it contains unique user data, credentials, historical evidence, or a required rollback path. Preview proposed deletions (dry run), document the candidates and rationale, and request explicit approval for ambiguous, shared, irreversible, or user-data deletions. Prefer quarantine/archive with a time-limited retention period when uncertain. Never blindly delete databases, backups, release artifacts, historical task records, or the working 0.15 fallback.
-12. GitHub hygiene: close completed Issues with test evidence rather than deleting them; keep the master registry and relevant references intact. Remove stale branches only after verifying they are merged and not needed for rollback. Git history is retained even when files are removed from the latest revision; do not rewrite shared history just to reduce clutter.
-13. When cleaning local folders, restrict changes to confirmed Stock Monitor project-owned paths. Do not delete unrelated personal files or software. For machine-wide cleanup or folders outside the project, present a specific proposed list and obtain approval before acting.
+**MANDATORY workflow**
+1. Read MASTER section **0** and the newest accepted update before acting. Choose exactly one G-ID and preserve every dependent acceptance condition (N/D/T/CP).
+2. Inspect actual code, Git commits, tests and the live Windows TEST/Bridge. Historical PASS, a code change or CORE READY alone is not E2E DONE.
+3. Update only the same MASTER for task progress, decisions, results, evidence, open blockers and version SHA. Never open or maintain another parallel GitHub Issue/backlog, independent task spreadsheet or MASTER file.
+4. Existing GitHub Issues **#1–#16 are historical evidence only**, not the active backlog. Do not write new work there. Keep draft **PR #17 and PR #18**, working code, release/rollback data and branches intact.
+5. Do not permit simultaneous Work1/Work2 edits of the canonical file or shared SQLite; use Git SHA conflict checks and refresh on conflict.
+
+**SAFETY:** Do not overwrite Store 0.15, production/local SQLite, tokens, user data, live brokerage money or trading guards. Confirm GETTEX/EUR source/provenance and closed-bar DQ; Apple/NVIDIA first, Amazon next. No bulk preparation of other instruments. Before any deletion, confirm archive, uses, backup and recovery. Original detailed agent rules are preserved verbatim in MASTER section X.
+
+This AGENTS.md is a **small discovery pointer**, not a second set of tasks.
