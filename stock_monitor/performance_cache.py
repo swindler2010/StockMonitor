@@ -81,7 +81,15 @@ def _setting_value(db, key, start=None):
             # A later HTTP receipt can contain exactly the same candles.
             # Closed OHLCV have their own digest; retain identity, listing
             # status/evidence, quality, archive faults and native-month proof.
-            value={k:v for k,v in value.items() if k not in ('received_at','planned_at','requested_to','receipt','sha256','live_receipt','provisional_only')}
+            # Incremental fetch counts/ranges and receipt paths describe the
+            # HTTP attempt, not the retained series. Unresolved rejected rows
+            # remain in archive_invalid; exact used OHLCV have their own digest.
+            # In particular invalid_receipts grows on every PARTIAL refresh,
+            # even when the original rejected observations have not changed.
+            value={k:v for k,v in value.items() if k not in (
+                'received_at','planned_at','requested_from','requested_to','receipt','sha256',
+                'live_receipt','provisional_only','invalid_receipts','count','added','changed',
+                'input_revisions_before','input_revisions_after')}
             if isinstance(value.get('listing_proof'),dict):
                 value['listing_proof']={k:v for k,v in value['listing_proof'].items() if k!='verified_at'}
         elif key.startswith('benchmark_history:'):
