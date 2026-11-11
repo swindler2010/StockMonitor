@@ -24544,3 +24544,179 @@ Work2: ограниченный этап сверки NVIDIA/Swiss Re завер
 | 16 | 34505732778 | 2026-10-28T18:11:12Z | renamed | swindler2010 | rename: v0.17: допуск к анализу и торговле при возрасте рыночных данных ≤15 минут → PRIORITY Work №2 · v0.16 TEST: измерение задержки данных и допуск ≤15 минут |
 
 Сводка событий по Issues: #1=0, #2=4, #3=0, #4=0, #5=2, #6=3, #7=0, #8=0, #9=0, #10=0, #11=1, #12=3, #13=3, #14=0, #15=0, #16=1. Бывшие редакции **полных текстов** Issue и комментариев не извлекаются через этот endpoint. Не выдавать данную таблицу за такую историю редактирования.
+
+
+## XIV. Снимок двух активных Pull Requests — задачи в MASTER, код остаётся в PR
+
+PR №17 и №18 содержат исходники, тесты и историю коммитов; их **нельзя удалять** в рамках очистки задач, поскольку код пока не слит в main. Рабочие требования и содержимое описаний сохранены ниже; полноценные изменения исходного кода не превращаются в текстовые поручения, а остаются в Git. Состояние зафиксировано на 11.11.2026.
+
+### PR #17 — Синхронизация актуальной Stock Monitor 0.16 TEST: CandlePilot, Bridge/MCP и V2
+
+**URL:** https://github.com/swindler2010/StockMonitor/pull/17
+
+**Статус:** open; draft=true; merged=false; mergeable=null; created=2026-11-10T21:24:06Z; updated=2026-11-10T21:28:45Z; base=main `60073fb8d6f77aaead7aa21b57402361b3b69621`; head=sync/current-016-20261110 `aff4862a2f83fb9f449201e2acc416aa693938cd`; автор=swindler2010; changed_files=271; additions=50131; deletions=1.
+
+**Полный исходный текст описания PR:**
+
+~~~~~markdown
+В main до этой ревизии были только три текстовых файла; исходники рабочей 0.16 отсутствовали. Эта ветка сохраняет прежнюю историю и публикует актуальные CandlePilot, графики/живые свечи, DQ/CORE, Bridge/MCP, неизменённую V1 и отдельную V2 с двумя теневыми портфелями.
+
+**Публикация завершена; общий regression PARTIAL. PR остаётся draft, без слияния.** В дереве 273 файла (258 Python, включая тесты); 271 файл отличается от main. Три коммита текущей датой:
+- код: ff1d53bf2ea0f87847f303c30ce69c38ba89d069;
+- 159 существующих test-модулей и изолированный runner: 9711c3fd53df0553397a45d09f85604fdaa59b8e;
+- документация/проверки/manifest: aff4862a2f83fb9f449201e2acc416aa693938cd.
+
+[Подробная ревизия на русском](https://github.com/swindler2010/StockMonitor/blob/sync/current-016-20261110/docs/CHANGELOG_2026-10-23_to_current.md) • [Проверки и откат](https://github.com/swindler2010/StockMonitor/blob/sync/current-016-20261110/docs/VALIDATION_AND_ROLLBACK_RU.md) • [Все 16 Bridge/MCP-команд](https://github.com/swindler2010/StockMonitor/blob/sync/current-016-20261110/docs/BRIDGE_MCP_CAPABILITIES_RU.md).
+
+Проверено 438 уникальных testcase IDs: **400 PASS / 9 FAIL / 28 ERROR / 1 INTERRUPTED**. V1 hourly19, sizing8, V2 26, Trading Engine31, CP automatic repair13 и связанные guard-сценарии прошли. Старые fixtures и неразобранные assertion-расхождения перечислены; они не скрыты и не исправлялись вне задачи. Полный GUI/провайдерский аудит и новые сделки не запускались. Внешний и локальный runtime MCP не дали подтверждённого health в этой проверке; unit Bridge results отделены.
+
+Согласованные backup основной и shadow SQLite: integrity_check=ok; source rollback ZIP проверен. Все63 инструмента, PAPER account/история и защищённые настройки совпали с backup. Работающие Python-модули не изменены. CP не останавливался: журнал подтвердил продолжение feed обработки. Большие очереди и задержка переоценки остаются известными проблемами.
+
+В GitHub нет SQLite, ключей, личных профилей/разрешений, финансовых журналов и архивов котировок. Все272 записи manifest проверены SHA256 после независимого Git fetch; tree SHA совпал, git fsck прошёл. main остаётся60073fb. Связано с #5; закрытие задачи свечной готовности или активация V2 этой публикацией не заявляется.
+~~~~~
+
+**Коммиты (3):**
+
+- `ff1d53bf2ea0f87847f303c30ce69c38ba89d069` — 2026-11-10T21:15:52Z — sync: publish current 0.16 TEST source without private runtime data  First source publication on top of the existing documentation history. Includes CandlePilot, DQ/CORE, live bars, Bridge/MCP, unchanged V1 and isolated V2 shadow books. Current-date snapshot, not reconstructed historical commits. Owner paths removed from six advisory catalogue refe
+- `9711c3fd53df0553397a45d09f85604fdaa59b8e` — 2026-11-10T21:23:50Z — test: publish existing regression suites and isolated publication runner  159 existing test modules plus a bounded runner. Excludes six files with personal fixture paths and all private market/database artifacts. Current audit: 438 unique cases, 400 PASS, 9 FAIL, 28 ERROR, 1 INTERRUPTED; known failures retained, no artificial green status.
+- `aff4862a2f83fb9f449201e2acc416aa693938cd` — 2026-11-10T21:27:11Z — docs: record 23 Oct–10 Nov revision, checks, Bridge capabilities and rollback  Russian changelog, 16 MCP commands and client limitations, exact 438-case audit outcomes, sanitized file manifest, safe setup and rollback. Preserve known failures and keep PR #17 draft. No market archives, SQLite, credentials or private account records.
+
+**Review-записи:** 0; **inline review comments:** 0. Отдельных review-переписок не найдено.
+
+
+### PR #18 — Work1: изолировать оперативную торговлю от восстановления истории
+
+**URL:** https://github.com/swindler2010/StockMonitor/pull/18
+
+**Статус:** open; draft=true; merged=false; mergeable=true; created=2026-11-10T22:06:41Z; updated=2026-11-11T12:57:21Z; base=sync/current-016-20261110 `aff4862a2f83fb9f449201e2acc416aa693938cd`; head=work1/trading-priority-20261110 `7e1f1eceada977adc55bed40816ccd94b9ffd8f4`; автор=swindler2010; changed_files=74; additions=6204; deletions=220.
+
+**Полный исходный текст описания PR:**
+
+~~~~~markdown
+## Проблема и результат
+
+Оперативные расчёты Apple/NVIDIA задерживались из-за общей очереди восстановления, конкуренции за HTTP-бюджет и повторного отклонения неизменных входных данных. PR использует существующие Dispatcher, SQLite и CORE: выделяет независимое согласованное чтение для часового PAPER, сохраняет приоритет свежих данных и последовательную подготовку одного следующего инструмента.
+
+Реализованы раздельные квитанции fresh/recovery, ограниченное распределение общего HTTP-бюджета, повторная оценка кандидата при изменении нужных данных и общий расчётный контракт 11 TF. Эксперимент исполнения остаётся на 1H с 4H/1D и закрытой ценой 5m/15m. V1-сигналы и риск сохранены; V2 и её портфели остаются теневыми.
+
+Добавлены scoped proofs восстановленных родительских свечей, сохранение пригодных участков графика/Volume Profile, защита пустого контекста от календарных исключений и ограниченная нормализация доказанных дубликатов старой диагностики. Эти исправления выполняются общими механизмами CP; каталог содержит44сценария с доказательствами и ограничениями.
+
+## Проверка
+
+- Ранее подтверждённые адресные тесты очереди53/200, BUY/SELL/stop/target, повторных заявок, restart и отрицательные DQ/identity/revision/benchmark/warmup/freshness/session сохранены; полный повторный аудит не проводился. Сделки тестов выполнялись только в изолированных фикстурах.
+- Последние этапы H–J:14 новых +15 непосредственно затронутых тестов PASS.49 реальных изолированных parent cases прошли recovery с неизменными OHLCV; это не49 исправлений рабочей базы.
+- Windows Save/Close/Restart выполнены штатно; для этапов H–J запуск11.11 в10:20:16 CET. CP без Refresh обновляет данные; боковой объём, уровни, EMA/RSI/MACD/ATR и живая свеча отображаются.
+- CP сам исправил provenance трёх Amazon15m06.11 22:15–22:45. После restart и естественного обновления evidence10:30 proofs остались действительны, OHLCV не изменились. Два legacy-дубликата нормализованы штатной очередью, INVALID сохранён; третий ожидает своей очереди.
+- Восемь минут наблюдения11.11: Apple6 уникальных расчётов mean/max5.771/6.266с; NVIDIA7,3.476/3.828с. Обе CORE READY/WAIT в отдельных разрешённых владельцем контекстах. Это время расчёта, не задержка источника и не глобальная скорость CP.
+- Естественное продолжение10:34–10:40: Apple15m10:15 поступила10:34:22 CET, после чего CP снял прежний PAPER_STALE_QUOTE без изменения freshness. В10:40 Apple/NVIDIA CORE READY/WAIT, цены закрытия10:30/10:35. Новые закрытые1H пересчитаны автоматически. BUY не появился: условия стратегии не выполнены.
+- Основной PAPER stop/target **включён** по ранее утверждённой политике:2ATR/2R, проверенная закрытая5m/15m-цена, прежний PAPER executor. Это модель исполнения по закрытым свечам, не непрерывный биржевой стоп. Конфигурация повторно прочитана; тесты исполнения уже PASS, новых сделок ради проверки нет.
+- Все9 контрольных сравнений инструментов/настроек/PAPER/журнала после restart совпали. Независимые задачи Work2, Store0.15, реальные брокерские операции и V2-активация этим PR не затрагиваются.
+
+## Этап K — самостоятельное продолжение восстановления
+
+[2294bfc](https://github.com/swindler2010/StockMonitor/commit/2294bfc553427429180c5cb417cd9f14850f1b28) устраняет подтверждённый пропуск recovery после local-only аудита: отдельные квитанции восстановления, семантическая привязка адаптера, сохранение cooldown/CAS. Сохранённые GETTEX-chart ряды проверяются по версии валидатора и parent proofs. Health/MCP отделяют текущую область политики от архивов других площадок и удалённых инструментов, без изменения DQ.
+
+11 новых+14 затронутых PASS. Последний штатный restart10:54:28CET; Windows/MCP и12 естественных аудитов подтверждены. Apple1D10:55 audit→recovery WAITING_PROVIDER; источник не обойдён. Apple/NVIDIA снова CORE READY/WAIT со свежими ценами, все9 сравнений сохранности совпали. Новые5m поступают автоматически. Приёмка/ограничения: [af69fb9](https://github.com/swindler2010/StockMonitor/commit/af69fb9b965add4aa7632dabb17adf7611cbee19).
+
+## Этап L — устаревшая диагностика
+
+[96e9a04](https://github.com/swindler2010/StockMonitor/commit/96e9a04ecc3253823ce6b4272108ab858ba4e8d6): CP переносит по одному отчёту удалённого инструмента в неизменяемые квитанции с точным оригиналом. Транзакционная проверка регистрации, CAS, лимит сохранения без уничтожения оригиналов; повреждённые ключи не задерживают других кандидатов. Health/MCP отдельно считают перенесённые отчёты, не выдавая их за восстановление OHLCV.
+
+6 новых+9 связанных PASS. Штатный restart11:06:05CET; Windows/MCP подтвердили счётчик, очередь сама перенесла9 отчётов к11:09:47, все9 оригиналов проверены по SHA256. Все9 сравнений сохранности совпали. Приёмка [3fb8102](https://github.com/swindler2010/StockMonitor/commit/3fb8102ae7067d358915780769021bae4ca2e232). Прежний общий механизм H естественно исправил подтверждения всех46 отмеченных родителей у6 инструментов; это не46 новых OHLCV и не READY всех архивов.
+
+## Этапы M–O — очереди и сохранение результатов
+
+[ead83ae](https://github.com/swindler2010/StockMonitor/commit/ead83ae926facb1a07ded90267cb42d166363320): повторные оценки сравнивают реальное время ожидания, новые заявки не вытесняют старые ERROR бесконечно. 3новых+3затронутых PASS; после штатного restart11:24:09 CP самостоятельно обработал Newmont11:32:12, прежняя ошибка предыдущего вечера заменена новой квитанцией безerror. MCP подтвердил,9сравненийсохранности совпали.
+
+[a858fbb](https://github.com/swindler2010/StockMonitor/commit/a858fbba6780692dd46c458f31e1869682c915aa): ошибочная повторная оценка не стирает прежние независимые доказательства. Они сохраняют исходные сроки/ревизии и все проверки; ошибка видна отдельно, очередь соблюдает retry. 5новых уникальных+3связанных PASS; дополнительный случай успешного reuse снимает только прежнюю ошибку, не продлевая срок.
+
+[a79c041](https://github.com/swindler2010/StockMonitor/commit/a79c0412d33b9bd17655170126670d062276eb98): ограниченный обход официальных GETTEX-файлов продолжает работу после404 с сохраняемым курсором, включая RUNNINGlease.429/Retry-After и остальные ошибки сохраняют остановку. 6новыхPASS;57связанных PASS-исполнений.4прежние ошибки тестовых фикстур отдельно воспроизведены с исходным кодом и описаны в отчёте; полный старый набор не объявляется PASS.
+
+Финальный код9aeb48c загружен штатно11:45:19CET; Windows и MCP проверены,9сравнений сохранности совпали. Nестественный отказ12:17:16 сохранил прежниеchecked_at/expiry с отдельнымlast_failed_attempt; успех12:28 очистил ошибку без продления старого допуска; Oисторический retry нераньше14:12:49CET. Старые404 и неподтверждённые данные не объявляются исправленными. Приёмка [b583afa](https://github.com/swindler2010/StockMonitor/commit/b583afa2884bb5c126e0ce2751a1073da88c80ff). ПриёмкаM и подробности [Issue5](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6793521522).
+
+## Этап P — календарь дневной сверки TV
+
+[8ce956f](https://github.com/swindler2010/StockMonitor/commit/8ce956fd26c48d623d7b77a95545342b6377524a) передаёт timeframe в существующий календарь: исторические дневные задания больше не попадают ошибочно под внутридневные границы. 6 новых PASS; 20 связанных PASS и 3 подтверждённых прежних сбоя фикстур сохранены отдельно. Все31 сохранённое дневное задание проходят readonly-классификацию без исключения, остаются UNCONFIRMED, без новых разрешений.
+
+Windows штатно перезапущен11:59:50CET, MCP нового экземпляра и9сравнений сохранности подтверждены. Естественная повторная сверка по прежнему расписанию нераньше12:49CET; этот runtime-критерий PARTIAL. Исходные свечи не менялись.
+
+## Этап Q — точное повторное использование вычислений
+
+[47ce1d7](https://github.com/swindler2010/StockMonitor/commit/47ce1d7aac49182c4fd69072c44884d73b969160) включает существующий calculation_reuse для общей диагностики. Ключи содержат точные OHLCV, evidence, identity, флаги и время. Все revision/publication guards, bounded cache и разделение snapshot/eligibility сохранены.
+
+5новых+3затронутыхPASS, включая53/200инструментов и отрицательные проверки. Один readonlyApple4H A/B10.593→8.953с, результаты совпали кроме времени проверки; это не общая скорость. Код загружен12:10:25CET, Windows/MCP и9сравнений сохранности подтверждены. Первый естественный цикл ACCEPTED12:17:14CET:400.906с всего/355.031с вычислений,654актуальные зависимости;17изменившихся результатов отозваны. Ускорение полного цикла не подтверждено; это оставшееся ограничение. [Приёмка Q](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6794549574). [Отчёт Q](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6794223121).
+
+## Этап R — зависимости реальных исходных TF
+
+[d600b6f](https://github.com/swindler2010/StockMonitor/commit/d600b6f4284328324c34ea133ebc9f3483574390) устраняет отслеживание квитанций других базовых TF/источников до фильтрации. Совпадающие rejectedTVreceipts, whole-grant/policy и все фактические исходные данные остаются зависимостями. 6новых+2затронутыхPASS. ReadonlyApple1D1274свечи:122лишнихTVjob исключены из этой функции, OHLCV/метаданные неизменны кромеchecked_at. Штатно применено12:32:36CET. Обычная очередь пересчиталаApple12:42:37:1H/1W/1M CURRENT в12:44; у1W/1M0чужих15m-зависимостей, у1H119релевантных. Последующий whole-grant отзыв — отдельная причинаS. [Отчёт R](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6794660173).
+
+## Этап S — повторное подтверждение исторического разрешения
+
+[ff6a0da](https://github.com/swindler2010/StockMonitor/commit/ff6a0da130fcafd637042cfb350caf1be9d52fa4): сравнение сохранённых127Apple/4NVIDIA receipts показало изменения только числовыхinput_revisions. Расчётный fingerprint нормализует их только послеeffective_accepted; все поля решения, evidence и наборscopes остаются строгими. Не меняетБД, разрешения, exactOHLCV,policy,expiry или исполнительныеrawtokens. Старыеproofs требуют штатного пересчёта.
+
+8новых+2затронутыхPASS, включая53/200 и отказexecution. S штатно загружен12:54:11CET; Windows/MCP и9сравнений сохранности подтверждены, часовая параCORE READY/WAIT при свежих ценах12:50. Естественное удержание одинаковых1W/1Mproofs обеих акций послеrenewal подтверждено в26чтениях до13:15CET; реальные15mизменения продолжают отзывать1H. [Отчёт](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6794987064).
+
+## Этап T — своевременная передача заявки на анализ
+
+[fbea7a3](https://github.com/swindler2010/StockMonitor/commit/fbea7a3a24fc7425796c75edc30bb8688598f227) передаёт requested+fresh в существующий cp_assessment.request, вместо ожидания исторического прохода акции. Только запись заявки; тяжёлый анализ, дедупликация, retry и2:1очередь остаются прежними. 5новых+3затронутыхPASS, включая53/200, перезапуск и отрицательные сценарии. Финальный047a332 загружен13:15:58CET; естественныйfreshturn NVIDIA создалзаявку13:17:23 безожиданияисторического прохода.6уникальныхновых+3затронутыхPASS. [Отчёт](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6795252496).
+
+## Статус и откат
+
+**DRAFT / PARTIAL.** Полная историческая готовность всех акций и непрерывная доступность внешних котировок не заявляются. Amazon ожидает подтверждения оставшихся1H/4H-интервалов. Периодические реальные задержки источника сохраняют исполнительную блокировку до свежих данных; старые архивные DQ не превращаются в READY.
+
+Причины, измерения, сохранённые PASS и адресный откат по этапам: [docs/TRADING_ENGINE_PROGRESS_RU.md](docs/TRADING_ENGINE_PROGRESS_RU.md), [итог H–J](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6792376578). SQLite/историю/счёт не откатывать. PR основан на #17, не сливать автоматически.
+
+### T: завершённое внедрение 11Nov13:15–13:19 CET
+
+Финальный код047a332 и runtime804ef813: штатный Save/Close/Restart, Windows график/индикаторы/VolumeProfile, remote MCP и9сравнений сохранности подтверждены. NVIDIA автоматически поставлена в очередь13:17:23.518 послеfreshturn, без ожидания исторического прохода(последний12:55:55.441). T:6новых+3затронутыхPASS, без повторения. S:26естественных чтений подтвердили сохранение прежних1W/1Mproofs обеих акций после повторной валидации разрешений; реальные изменения15m продолжают отзывать1H. В13:16 обе hourlyCOREready/WAIT со свежей13:10котировкой, noquote_blocker. Общиеanalysis1/signal0/trade0; общийPARTIAL. Pдневные2ожидают штатнуюротацию; Oне ранее14:12:49. No new trades, no new permission, no archive rewrite.
+
+## U — неизменная повторная сверка
+
+[759debc](https://github.com/swindler2010/StockMonitor/commit/759debcf62cab07fc4f1eb286183dd946c9e07af): только привязанные current v4 identity-confirmed TV reviews сравниваются без bookkeeping/retry/time/history; timestamp-sensitive evidence_digest заменён существующим полным scoped fingerprint. Decisions, native OHLCV/neighbours, identity, source evidence, policy, unknown fields, expiry and strict execution revisions remain mandatory. Eight new+two affected tests PASS, including53/200 and negative guards. Seven saved real pairs showed identical canonical inputs despite different bookkeeping. Normal Windows restart13:27:32CET, chart/indicators/VolumeProfile and9preservationchecks confirmed; natural retention of two NVIDIA review proofs confirmed13:37:22CET; source/expiry guards still revoke1H. [Issue5](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6795782862). RollbackU to804ef813 via targeted source archive, no SQLite/account rollback.
+
+## V — независимые результаты перед публикацией
+
+[0502090](https://github.com/swindler2010/StockMonitor/commit/0502090066015fe219b033d498cd1b1d3ea59d8f): при поздней raw revision сохраняются неизменные proofs независимых акций; все затронутые становятся INVALIDATED/DATA BLOCKED. Shared benchmark отзывает всех зависимых, unknown/global/unbound scopes и вторая гонка по-прежнему отклоняют публикацию. Metadata-only фильтр в GUI; без OHLCV/индикаторов/ослабления торгового контроля.8новыхPASS,53/200 и реальная SQLite-коррекция междуworker/UI. Доfix runtime485.875с закончился полнымREJECTED, positivefixtureFAIL. Послеfix требуется естественный Windowsцикл, применение начато. [Отчёт](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6796197032). [ПриёмкаU/P](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6796047454). Не импортируетTVцены; отдельная сверкаWork2: [6796151588](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6796151588).
+~~~~~
+
+**Коммиты (34):**
+
+- `db82ca858c80f168523e4cfd8310b9334c2fcfe3` — 2026-11-10T22:06:01Z — Separate trading reads from CP assessment; bound recovery and maintain quote lanes
+- `d760f0043c7e229a6343c8e565763b57d05eff80` — 2026-11-10T22:36:54Z — Separate closed CORE context, bound PAPER protection and operational provider budget
+- `04a5e972f376adf87e33789bae3464850d0889ab` — 2026-11-10T23:00:08Z — Prioritize closed daily trading inputs and record natural CP validation
+- `a1cbf04c7929f0e85b0fb2d6120e192a7a71b763` — 2026-11-11T06:32:23Z — Reuse exact CandlePilot calculations and restore validated partial-history volume profile
+- `cd7c3f07ff6fb2fafbe91d330a313ef5d77bf995` — 2026-11-11T06:48:43Z — Keep closed input proofs stable across GETTEX request bookkeeping
+- `27d98f8b234dd527d216e7fd55ee607db348bf3a` — 2026-11-11T07:14:03Z — Fix accepted-risk explanation and document natural PAPER readiness
+- `3daeb4fb62d16e4890a41ae6cad40ccfa51cbcd7` — 2026-11-11T07:38:01Z — Prepare one PAPER candidate automatically and stabilize closed hourly reads
+- `83a9d9ba3b5dc22696e3d9bd367472c9100cd3c6` — 2026-11-11T08:14:12Z — Fix closed CORE child boundaries and preserve reviewed tail gaps
+- `599987bcadaa7f69d2fc120289fda38664ee5db3` — 2026-11-11T08:37:41Z — fix(cp): preserve sequential candidate share across source rate budgets  Reuse persisted request rotation; keep two operational turns, alternate the single preparation candidate with archive work. Add bounded load and cooldown/identity regressions and reusable CP knowledge.
+- `9fe2c5d6b17df582c83ab8fe4c11aa954d25da95` — 2026-11-11T08:53:34Z — fix(cp): reassess pending admission when required inputs change  Retain cooldown for unchanged failures; reuse input revisions to wake the existing idle trading lane. Persist restart progress and preserve final DQ, CORE and execution guards.
+- `86dc54fb345c6b1c7cd4d48eb6bf107b18f12982` — 2026-11-11T09:07:08Z — fix(candlepilot): scope recovered-parent absence proofs to actual child intervals
+- `468d8c46c2901f68b390163193acf75aac4fddd3` — 2026-11-11T09:14:56Z — fix(chart): keep empty partial contexts unavailable without calendar crashes
+- `cb3fd14cc1ca2d15178355719cdc91ef5850c31a` — 2026-11-11T09:19:59Z — fix(candlepilot): normalize proven legacy diagnostic identities in bounded maintenance
+- `e886d6fdb196984b1356d6022ff813982f663247` — 2026-11-11T09:36:07Z — docs(cp): record autonomous recovery, restart and preservation evidence
+- `2294bfc553427429180c5cb417cd9f14850f1b28` — 2026-11-11T09:53:15Z — fix(candlepilot): preserve recovery after local audit and scope saved diagnostics
+- `af69fb9b965add4aa7632dabb17adf7611cbee19` — 2026-11-11T09:59:16Z — docs: record CandlePilot audit recovery Windows and MCP verification
+- `96e9a04ecc3253823ce6b4272108ab858ba4e8d6` — 2026-11-11T10:05:02Z — fix(candlepilot): archive obsolete diagnostics with durable rollback receipts
+- `3fb8102ae7067d358915780769021bae4ca2e232` — 2026-11-11T10:10:43Z — docs: verify automatic diagnostic retirement and completed parent provenance repairs
+- `ead83ae926facb1a07ded90267cb42d166363320` — 2026-11-11T10:22:31Z — CP: prevent recurring fresh requests from starving due assessment retries
+- `a858fbba6780692dd46c458f31e1869682c915aa` — 2026-11-11T10:30:37Z — CP: retain independently valid analysis evidence when refresh fails
+- `a79c0412d33b9bd17655170126670d062276eb98` — 2026-11-11T10:34:39Z — CP: resume bounded official file rotation past unavailable slices
+- `9aeb48cdd3a9654ec874281f020870fde324c4e1` — 2026-11-11T10:38:50Z — CP: clear failed-attempt diagnostic after validated result reuse
+- `b583afa2884bb5c126e0ce2751a1073da88c80ff` — 2026-11-11T10:48:35Z — Document M-O runtime verification and pending provider-bound acceptance
+- `8ce956fd26c48d623d7b77a95545342b6377524a` — 2026-11-11T10:55:30Z — CP: use the reviewed timeframe for historical daily calendar checks
+- `47ce1d7aac49182c4fd69072c44884d73b969160` — 2026-11-11T11:09:20Z — Reuse exact DQ and indicator calculations in diagnostic snapshots
+- `d82214ef2f7c55778cdc56025a2b769ef9710723` — 2026-11-11T11:25:17Z — Document natural snapshot acceptance and remaining CP limits
+- `d600b6f4284328324c34ea133ebc9f3483574390` — 2026-11-11T11:31:13Z — Scope accepted-gap receipt dependencies to actual source and base timeframe
+- `ff6a0da130fcafd637042cfb350caf1be9d52fa4` — 2026-11-11T11:47:47Z — fix: retain closed analysis across validated receipt renewal
+- `fbea7a3a24fc7425796c75edc30bb8688598f227` — 2026-11-11T12:01:15Z — fix: enqueue assessment after fresh receipt revalidation
+- `047a332a62eccf39446b980a85290730d727ca38` — 2026-11-11T12:12:18Z — fix: resume durable assessment marker after unchanged fresh feed
+- `804ef81314887dfb4c6d9c6879e557fecc31f37e` — 2026-11-11T12:19:56Z — Document natural fresh assessment handoff and Windows verification
+- `759debcf62cab07fc4f1eb286183dd946c9e07af` — 2026-11-11T12:26:32Z — Preserve closed proofs across unchanged verified reconciliation checks
+- `0502090066015fe219b033d498cd1b1d3ea59d8f` — 2026-11-11T12:45:58Z — Retain independently current stocks at final snapshot publication
+- `7e1f1eceada977adc55bed40816ccd94b9ffd8f4` — 2026-11-11T12:56:55Z — fix(cp): preserve exact closed analysis across confirmed GETTEX tail progress
+
+**Review-записи:** 0; **inline review comments:** 0. Отдельных review-переписок не найдено.
+
+
+**Сопутствующие документы, audit и manifest** полностью сохранены в разделе X; PR #18 issue-комментарий сохранён в разделе XI. Приоритет требований: новые решения владельца и текущие секции I–IX, затем архивные PR-описания; фактический статус по live-коду/тестам, не по старым словам PASS.
