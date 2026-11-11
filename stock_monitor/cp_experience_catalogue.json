@@ -814,6 +814,36 @@
         "test_cp_local_completion.LocalCompletion + WorkerRoutes:14 PASS including53/200fairness,revisionrace,freshskip"
       ],
       "limits": "Область политики не подтверждает качество. Удалённые инструменты и чужие площадки не загружать вопреки owner policy. Сохранённые сообщения о rejected source не считать существующими повреждёнными строками без проверки."
+    },
+    {
+      "id": "retire_removed_instrument_diagnostic",
+      "title": "Снять старый отчёт удалённого инструмента с сохранением истории",
+      "sources": [
+        "saved diagnostics"
+      ],
+      "states": [
+        "GAP",
+        "INVALID",
+        "SOURCE_UNAVAILABLE",
+        "SOURCE_GAP",
+        "UNCONFIRMED",
+        "READY"
+      ],
+      "status": "ПРОВЕРЕНО ИЗОЛИРОВАННО; RUNTIME ОЖИДАЕТ",
+      "steps": [
+        "В существующем history writer после NO_MATCH нормализации проверить ограниченные кандидаты data_quality, не более одного переноса за turn.",
+        "BEGIN IMMEDIATE, повторная проверка отсутствия ISIN в instruments, content-addressed receipt с точным before_raw; CAS удаляет только прежний диагностический ключ.",
+        "При лимите4096квитанций оригинал остаётся. Существующая уникальная квитанция не заменяется. Конфликт удаления откатывает и receipt.",
+        "Отдельно показывать число перенесённых в историю отчётов; уменьшение активного счётчика не считать восстановлением свечей.",
+        "Фильтровать форму диагностического ключа до LIMIT8, чтобы повреждённые старые ключи не блокировали валидные записи."
+      ],
+      "evidence": [
+        "test_cp_retired_diagnostics:6 PASS including eight malformed keys cannot starve valid orphan",
+        "test_cp_diagnostic_cleanup:7 related PASS",
+        "test_cp_diagnostic_scopes:2 PASS",
+        "72 real orphan metadata isolated in memory: exact before preserved72/72, live writes0"
+      ],
+      "limits": "Никаких OHLCV/deep archive deletes, HTTP, source switches или новых торговых допусков. Перерегистрированный инструмент защищён транзакцией. Старые отчёты доступны в cp_retired_diagnostic receipts."
     }
   ],
   "sources": [

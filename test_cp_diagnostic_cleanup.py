@@ -9,7 +9,7 @@ from cp_diagnostic_cleanup import turn
 class Memory:
     def __init__(self):
         self.db=sqlite3.connect(':memory:')
-        self.db.executescript('CREATE TABLE settings(key TEXT PRIMARY KEY,value TEXT); CREATE TABLE series(isin,source,venue,currency,symbol,base_tf,ts,close); CREATE TABLE candles(isin,source,base_tf);')
+        self.db.executescript('CREATE TABLE settings(key TEXT PRIMARY KEY,value TEXT); CREATE TABLE instruments(isin TEXT PRIMARY KEY,payload TEXT); CREATE TABLE series(isin,source,venue,currency,symbol,base_tf,ts,close); CREATE TABLE candles(isin,source,base_tf); INSERT INTO instruments VALUES (\'TEST\',\'{}\');')
     @contextmanager
     def connect(self):
         with self.db:yield self.db

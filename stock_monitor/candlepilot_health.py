@@ -25,7 +25,11 @@ def diagnostic_scopes(rows,infos,policy):
 def diagnostic_scope_text(summary):
     groups=summary.get('groups',{})
     return 'Проблемные серии: текущая область {0}; архив других площадок {1}; удалённые инструменты {2}; источник не установлен {3}. Это не торговый допуск.'.format(
-        *(groups.get(k,{}).get('problems',0) for k in ('current_scope','other_venue_archive','removed_instrument','unknown_identity')))
+        *(groups.get(k,{}).get('problems',0) for k in ('current_scope','other_venue_archive','removed_instrument','unknown_identity')))+\
+        '\nСнято в историю отчётов удалённых инструментов: {0}. Это очистка диагностики, не исправление свечей.'.format(summary.get('retired_reports',0))
+
+def retired_diagnostic_count(db):
+    return db.execute("SELECT count(*) FROM settings WHERE key LIKE 'cp_retired_diagnostic:%'").fetchone()[0]
 
 REVIEW_LABELS={
     'AWAITING_USER':'Нужна внешняя сверка; CP продолжает проверку источника',
@@ -110,6 +114,7 @@ def collect(path,snapshot=None,problem_isin=None,problem_page=0):
         infos={k:json.loads(v) for k,v in db.execute('SELECT isin,payload FROM instruments')}
         policy_row=db.execute("SELECT value FROM settings WHERE key='cp_gettex_source_policy'").fetchone()
         diagnostic_policy=json.loads(policy_row[0]) if policy_row else {}
+        retired_reports=retired_diagnostic_count(db)
         prefixes=('history_archive_progress:','data_quality:','interval_evidence:','cp_schedule:','cp_revision:','cp_eligibility:')
         settings={k:json.loads(v) for k,v in db.execute('SELECT key,value FROM settings WHERE '+ ' OR '.join('key LIKE ?' for _ in prefixes),[p+'%' for p in prefixes])}
         rows={};archive=set();success=[];no_trades=set()
@@ -245,6 +250,7 @@ def collect(path,snapshot=None,problem_isin=None,problem_page=0):
 
     ordered=sorted(rows.values(),key=lambda r:(r['name'],r['source'] or '',r['venue'] or '',r['symbol'] or '',r['tf']))
     scope_summary=diagnostic_scopes(ordered,infos,diagnostic_policy)
+    scope_summary['retired_reports']=retired_reports
     slots,unsupported=proof_slots(no_trades)
     result=dict(core=core,recovered_since_tracking=recovered,recovery_historical_total='UNKNOWN',no_trades_confirmed_5m_intervals=slots,no_trades_unquantified_ranges=unsupported,schema=1,generated_at=datetime.now(timezone.utc).isoformat(),instruments=len(infos),archive_series=len(archive),saved_dq_series=len(rows),states=dict(Counter(r['state'] for r in ordered)),rows=ordered,revision_changed_unique_candles=changes,revision_events=events,recovered_unique_candles=None,recovery_reason='Only new proven recovery writes tracked; historical total UNKNOWN; incoming raw rejection repairs not counted before persistence',no_trades_proof_ranges=len(no_trades),no_trades_unit='unique exact identity/start/end evidence ranges, NOT candles; different-sized overlapping ranges not merged',last_success=max(success,default=None),scope='Saved diagnostics only; READY reports are not current trading permission')
     tf_rows=[]

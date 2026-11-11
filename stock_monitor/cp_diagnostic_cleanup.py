@@ -1,14 +1,53 @@
 """Bounded identity repair for duplicate legacy diagnostics; never repairs OHLCV."""
 import json
+import hashlib
 from datetime import datetime,timezone
+RETIRE_RECEIPT_LIMIT=4096
 
 
 def turn(store,info):
-    try:return _turn(store,info)
+    try:
+        result=_turn(store,info)
+        return _retire_orphan(store) if result['state']=='NO_MATCH' else result
     except (ValueError,TypeError,KeyError,AttributeError):
         # The connection context rolls back before this optional maintenance
         # returns. Corrupt legacy metadata must not interrupt the normal feed.
         return {'state':'UNKNOWN','reason':'Malformed legacy diagnostic metadata'}
+
+
+def _retire_orphan(store):
+    """Retire one obsolete diagnostic, preserving exact bytes and all OHLCV."""
+    prefix='data_quality:';receipts='cp_retired_diagnostic:'
+    with store.connect() as db:
+        db.execute('BEGIN IMMEDIATE')
+        rows=db.execute("SELECT s.key,s.value FROM settings s LEFT JOIN instruments i "
+            "ON i.isin=substr(s.key,14,instr(substr(s.key,14),':')-1) "
+            "WHERE s.key LIKE 'data_quality:%' AND i.isin IS NULL AND length(s.value)<=65536 "
+            "AND length(s.key)-length(replace(s.key,':',''))=3 AND s.key NOT LIKE '%::%' AND substr(s.key,-1)<>':' "
+            "ORDER BY s.key LIMIT 8").fetchall()
+        for key,raw in rows:
+            parts=key[len(prefix):].split(':')
+            if len(parts)!=3 or not all(parts):continue
+            isin=parts[0]
+            # Recheck inside the write transaction; a registered stock must
+            # never lose its diagnostic merely because an older snapshot did.
+            if db.execute('SELECT 1 FROM instruments WHERE isin=?',(isin,)).fetchone():continue
+            receipt_key=receipts+hashlib.sha256((key+'\0'+raw).encode()).hexdigest()
+            prior=db.execute('SELECT value FROM settings WHERE key=?',(receipt_key,)).fetchone()
+            if prior:
+                saved=json.loads(prior[0])
+                if saved.get('key')!=key or saved.get('before_raw')!=raw:raise ValueError('Retired receipt mismatch')
+            else:
+                count=db.execute('SELECT count(*) FROM settings WHERE key LIKE ?',(receipts+'%',)).fetchone()[0]
+                if count>=RETIRE_RECEIPT_LIMIT:return {'state':'RECEIPT_LIMIT','reason':'Original diagnostic retained'}
+                saved=dict(key=key,isin=isin,before_raw=raw,retired_at=datetime.now(timezone.utc).isoformat(),
+                    reason='REMOVED_INSTRUMENT',quality_repaired=False,market_data_changed=False)
+                db.execute('INSERT INTO settings VALUES (?,?)',(receipt_key,json.dumps(saved,ensure_ascii=False)))
+            changed=db.execute('DELETE FROM settings WHERE key=? AND value=? AND NOT EXISTS (SELECT 1 FROM instruments WHERE isin=?)',
+                (key,raw,isin)).rowcount
+            if changed!=1:raise ValueError('Diagnostic changed during retirement')
+            return dict(state='RETIRED',key=key,receipt_key=receipt_key,reason='REMOVED_INSTRUMENT',quality_repaired=False,market_data_changed=False)
+    return {'state':'NO_MATCH'}
 
 
 def _turn(store,info):
