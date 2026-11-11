@@ -10611,3 +10611,8717 @@ MCP снова AVAILABLE, instance 2882b660c35db04c48f64731139102e5, failures=0;
 
 **Безопасность:** архив 16 Issues и 713 комментариев не изменялся; старые Issues/PR не закрывались и не удалялись, Store 0.15/рабочая SQLite/брокерские средства/торговые настройки не трогались. Apple/NVIDIA → Amazon последовательно; не готовить все остальные инструменты массово.
 
+
+## X. Полный архив дополнительных документов — исторический контекст (не параллельный реестр)
+
+Все восемь нижеуказанных файлов сохранены по полному тексту; они не являются вторым набором задач. При противоречиях приоритет у актуальных разделов MASTER, проверенных live evidence и более поздних решений владельца. Архивная версия AGENTS.md ниже содержала устаревшее правило вести задачи в Issues; оно отменено единым MASTER. Версии и SHA сохранены для контроля. Исходники, CI и рабочие ветки PR17/18 не удалять.
+
+<details>
+<summary>Архивный документ 1: AGENTS.md (4475 символов)</summary>
+
+**Источник:** https://github.com/swindler2010/StockMonitor/blob/main/AGENTS.md
+
+**Blob SHA:** `c4891d4f94dfe10f5c26bc3b5b9811c85edecaee`
+
+~~~~~markdown
+# Stock Monitor — instructions for development agents
+
+Before starting any work:
+1. Read the current GitHub Issues in this repository, particularly [master registry #13](https://github.com/swindler2010/StockMonitor/issues/13), and relevant issues for the active release. The 12 October 2026 PDF `Stock_Monitor_General_Plan_016_UPDATED_2026-10-12.pdf` is a historical baseline; do not treat its PASS/PARTIAL/OPEN statuses as verified current code status.
+2. Inspect existing code, commits, and tests before making changes. Avoid duplicating work or rewriting functioning modules unnecessarily.
+3. Prioritize v0.16 in this order: (a) finish and verify UI/MCP analytics hang fixes; (b) reliable EUR OHLCV candlesticks from verifiable exchange sources, current-session updates and all agreed timeframe history minima, with source and data-quality checks; (c) after data validation, implement safe paper trading with virtual funds, trade journal, risk controls, and no real orders. This advances the demo-trading scope originally listed under v0.17 issue #11; coordinate issue updates before declaring it implemented.
+4. Complete MCP read access to the entire instrument watchlist independently of analytics readiness, chart history, quotes, and indicators. Implement safe UI controls with state readback.
+5. For each issue, report what changed, tests run, results, blockers, and any regressions. Update the issue's status; close only after acceptance criteria pass. Do not label an issue complete solely because code was changed.
+6. Do not alter the installed Store 0.15 fallback; develop and test v0.16-dev separately. Do not place secrets or account credentials in issues.
+7. If requirements conflict or the data source cannot provide the requested candle depth/freshness, document the limitation and seek a decision rather than silently synthesizing or mixing incompatible data.
+
+GitHub Issues are the living task tracker. This file is a standing workflow instruction, not evidence that any requirement is already implemented.
+
+## Backups, regression testing, and repository/workstation hygiene
+
+8. Before any substantial or risky change, create a recoverable checkpoint: commit changes to a feature branch and/or make a verified backup of affected configuration, databases, and user data. Record how to restore it. Never overwrite the stable Store 0.15 installation or its data. Backups must not contain exposed secrets.
+9. After each fix, run targeted tests **and** regression tests for dependent features (including app startup, watchlist, quote updates, charts, MCP Bridge, analytics, persistence, and shutdown as relevant). Record pass/fail evidence in the GitHub Issue. Roll back or report regressions rather than silently shipping them.
+10. Keep the repository and development PC clean: periodically inventory obsolete build outputs, temporary logs, caches, abandoned test fixtures, outdated exports, duplicate downloads, unused branches, and superseded working directories. Remove items that are clearly generated, unused, and reproducible; prefer automated ignore rules and documented retention periods. Do not commit local build artifacts or caches.
+11. **Safe deletion policy:** before deleting anything, verify it is not referenced by current code, builds, tests, deployment, documentation, or user workflows; identify the canonical/current replacement; check whether it contains unique user data, credentials, historical evidence, or a required rollback path. Preview proposed deletions (dry run), document the candidates and rationale, and request explicit approval for ambiguous, shared, irreversible, or user-data deletions. Prefer quarantine/archive with a time-limited retention period when uncertain. Never blindly delete databases, backups, release artifacts, historical task records, or the working 0.15 fallback.
+12. GitHub hygiene: close completed Issues with test evidence rather than deleting them; keep the master registry and relevant references intact. Remove stale branches only after verifying they are merged and not needed for rollback. Git history is retained even when files are removed from the latest revision; do not rewrite shared history just to reduce clutter.
+13. When cleaning local folders, restrict changes to confirmed Stock Monitor project-owned paths. Do not delete unrelated personal files or software. For machine-wide cleanup or folders outside the project, present a specific proposed list and obtain approval before acting.
+~~~~~
+
+</details>
+
+<details>
+<summary>Архивный документ 2: docs/STOCK_MONITOR_FULL_AUDIT_2026-10-23_RU.md (3495 символов)</summary>
+
+**Источник:** https://github.com/swindler2010/StockMonitor/blob/main/docs/STOCK_MONITOR_FULL_AUDIT_2026-10-23_RU.md
+
+**Blob SHA:** `7b922cfe6df12455eda26529e4f69ae6b0c3f1c8`
+
+~~~~~markdown
+# Stock Monitor 0.16 — аудит на 23.10.2026
+
+Источник: исторический полный реестр 62 задач, 14 дефектов D01–D14, 23 требования N01–N23, этапы 6.1–6.6 (16 октября), отчёт пяти EUR-акций 20–21 октября, GitHub Issue #5 до 23 октября. Это текстовая сводка 52-страничного PDF (4 страницы обновления + 48 страниц исходного реестра), не замена полного приложения.
+
+## DONE / подтверждено в указанном объёме
+- Windows UI, графики 11 TF, индикаторы, SQLite, ранее подтверждённые 6.1–6.3.
+- 19 октября: покрытие маршрутов 54 инструментов, 594 TF, без утверждения, что все истории READY.
+- 20–21 октября: реальные MCP read_analytics пяти EUR-акций; демосчёт EUR 10000 и его интерфейс, сохранность и адресные тесты; 0 fills.
+- Bounded GAP recovery с курсором/cooldown; сохранена проверка идентичности, объёма и OHLC.
+- 21 октября подтверждено вечернее поступление GETTEX EUR, отделённое от GER/Xetra.
+- 22 октября исправлены command_status HTTP400 при потерянном receipt и проблема daily identity для пяти приоритетных акций.
+- 23 октября: evidence-классификация NO_TRADES / GAP / UNCONFIRMED / MARKET_CLOSED / DELAYED; venue calendar; свежие GETTEX свечи имеют приоритет при соответствующем разрешённом источнике. На сохранённом дне 20 октября 124/124 файлов, 219 подтверждённых NO_TRADES 5m и 7 NO_TRADES 15m (перекрывающиеся интервалы), восстановлены 6 агрегатов 1H и 6 агрегатов 4H, 20 сочетаний пяти акций на 4 TF READY только за этот день; 27 новых плюс 2 связанных targeted tests и 35 численных проверок PASS.
+- На 23 октября SQLite integrity=ok, фактически 55 инструментов; не следует снова называть их 54.
+
+## PARTIAL / OPEN / BLOCKED
+- Universal History 6.4 около 70% по старой оценке, 6.5–6.6 OPEN. Полный архив разных площадок НЕ READY.
+- Автоматическое получение interval evidence для новых завершённых сессий ещё не реализовано в полном объёме; проход всей старой истории и полная автоматическая обработка новых инструментов не подтверждены.
+- Недостаточная глубина GETTEX 4H/1D, реальные SOURCE_GAP, SOURCE_UNAVAILABLE, INVALID и старые UNCONFIRMED. Не создавать фиктивные OHLCV.
+- CORE/Trading Engine остаётся WAIT / DATA BLOCKED по существующим качественным, identity и freshness ограничениям. Не снижать пороги ради отметки PASS.
+- Реальный paper BUY→SELL на годных свежих данных не подтверждён; счёт по последним данным EUR 10000, 0 fills, 0 positions.
+- Полный фоновый 54-instrument snapshot 21 октября: первый запуск FAILED/RELEVANT_INPUT_CHANGED, второй RUNNING без подтверждённого итога; полноценный PASS неизвестен.
+- Окно полной диагностики ChatGPT с рекомендациями пока обсуждено, но не подтверждено end-to-end. Разработчику поручать только недостающий интерфейс/передачу данных, а анализ оставлять ChatGPT.
+- Остальные нерешённые исходные задачи UI, новости, fundamentals, performance, полный regression, релиз — не считать закрытыми без доказательств.
+
+## Обязательные правила
+Не повторять подтверждённую работу и старые PASS; сначала checkpoint и Issue #5, затем только PARTIAL/MISSING. Не менять Stock Monitor 0.15, не включать Performance Engine (PAUSED), не торговать реальными средствами, не сбрасывать демосчёт. Не смешивать venue и валюты. Work — программирование и адресные тесты кода, ChatGPT — анализ, аудит отчётов и рекомендации.
+
+## Границы отчёта
+Аудит построен из сохранённых отчётов, PDF и GitHub evidence; самостоятельного нового запуска Windows-программы не было. Запущенная 23 октября работа Work может изменить отдельные статусы после проверки её результатов.
+~~~~~
+
+</details>
+
+<details>
+<summary>Архивный документ 3: docs/BRIDGE_MCP_CAPABILITIES_RU.md (14038 символов)</summary>
+
+**Источник:** https://github.com/swindler2010/StockMonitor/blob/7e1f1eceada977adc55bed40816ccd94b9ffd8f4/docs/BRIDGE_MCP_CAPABILITIES_RU.md
+
+**Blob SHA:** `809b9fc7797b97127a667876a2eca0555a8bbb84`
+
+~~~~~markdown
+# Bridge/MCP: реализованные возможности и границы
+
+GitHub publication audit — Bridge/MCP, 10.11.2026
+Область: только чтение текущих исходников Stock Monitor 0.16 TEST и прежних технических результатов Work2. Рабочая программа, процессы, конфигурация, базы, позиции и исходники не изменены. Новые тесты в этом подзадании НЕ запускались; ниже перечислены доступные безопасные наборы.
+
+АКТУАЛЬНЫЕ КОМПОНЕНТЫ
+В stock_monitor/: mcp_server.py (MCP stdio, API revision 2), bridge.py (loopback HTTP), bridge_queue.py (instance-bound очередь/квитанции), mcp_routes.py (совместимые read-only маршруты), mcp_projection.py (проекции/каталог/архив), mcp_pages.py (ограниченные leases страниц), analytical_read.py (расчёты сохранённых данных), mcp_chart_export.py (вывод существующих индикаторов Desktop), revision_diagnostics.py, freshness_view.py, snapshot_worker.py, commands.py, tunnel_runtime.py. Интеграция: desktop014.py, features.py, compute_process.py, storage.py, paper_account.py и существующие DQ/CORE/HistoryService.
+Фактически работающий TunnelRuntime — stock_monitor/tunnel_runtime.py. СМ/Связь/tunnel_runtime.py является старой копией: нет submit через Dispatcher и более новой проверки health_ready. Не публиковать её как действующую реализацию.
+Исходники MCP используют stdlib. calculated read зависит от общих requirements.txt (pandas/numpy/matplotlib и остальной продукт). Отдельного обязательного FastMCP/uvicorn нет.
+Локальный MCP запускается командой Python: python stock_monitor/mcp_server.py; приложение должно быть открыто. Разработка: python stock_monitor/app.py. paths.py для development использует соседний test-data; Store 0.15 не импортирует. Личный Open_Test_016.cmd привязан к локальному окружению/runtime-tcl/copy_current_data, не является переносимой инструкцией установки.
+
+ВСЕ 16 ОБЪЯВЛЕННЫХ MCP TOOLS
+1. stock_monitor_health — чтение instance_id, версии/scope, capabilities, диагностического pipeline, CP summary, PAPER summary, состояния транспорта. Токен не выводится.
+2. stock_monitor_snapshot — read-only секции snapshot, candlepilot_health, persisted, runtime, freshness. JSON Pointer path, offset, limit<=50, expected_revision. Публикация и current selection/freshness разделены.
+3. stock_monitor_command_status — read-only квитанция из указанного instance, пагинация крупных результатов. После INDETERMINATE читать ту же квитанцию, не создавать повторную команду. Для выполненной PAPER-операции предусмотрен read-back из paper_fills.
+4. stock_monitor_list_instruments — read-only полный сохранённый каталог независимо от ANALYSIS READY; ISIN/источник/площадка/валюта/TF, storage_table, количество/границы архива, сохранённые DQ/identity. Наличие ряда не выдаётся за подтверждённую пригодность.
+5. stock_monitor_revision_diagnostics — read-only события Revision Watcher, journal_id, изменения, затронутые TF, наблюдения пересчёта индикаторов/DQ/сигнала, rejected publications. Отсутствующее наблюдение остаётся NOT_OBSERVED. Без загрузки/пересчёта/записи.
+6. stock_monitor_read_analytics — read-only, асинхронный расчёт уже сохранённых данных без переключения UI/загрузки. Все 11 TF, exact identity, UTC from/to для calculated view, closed_only, limit<=500, offset/revision, include_chart_series. Возвращает OHLCV/CORE-индикаторы/provenance/DQ/настройки/рисунки и при запросе конфигурируемые индикаторы существующим методом Desktop. Volume Profile явно OHLCV-аппроксимация по запрошенной истории, не tick-by-price/не текущая область viewport. view=stored_archive требует точные isin/source/venue/currency/symbol и candles/series; raw timestamps и closed status не объявляются подтверждёнными; UTC range/closed_only отклоняются для raw view.
+7. stock_monitor_decision_journal — read-only сохранённые рекомендации/оценки качества, не брокерские исполнения; фильтр isin, limit<=500.
+8. stock_monitor_refresh — изменение состояния: запрос штатного обновления рыночных данных.
+9. stock_monitor_select — выбор существующей акции, одного из 11 TF и периода; не меняет источник. Последние/month/year/Max проходят действующие aliases.
+10. stock_monitor_set_levels — предложение support/resistance/stop. Локальное подтверждение, актуальность proposal/source/currency и отдельная кнопка «Сохранить». До commit статус AWAITING_SAVE, после сверки COMPLETED/SUPERSEDED.
+11. stock_monitor_add_instrument — добавление проверяемого инструмента в watchlist; ISIN/name/symbol/currency и допустимые listing fields. После сохранения Desktop автоматически start_feed; брокерской заявки нет.
+12. stock_monitor_remove_instrument — удаление из watchlist, сохранение истории/аудита; не действие у брокера.
+13. stock_monitor_update_position — локальные quantity/average_price/stop/target/support/resistance при совместимой валюте. Это запись пользовательской позиции, не PAPER fill и не реальная сделка.
+14. stock_monitor_record_decision — рекомендация BUY/HOLD/SELL/ADD/REDUCE/STOP с причиной и необязательным сценарием. model_quantity относится к отдельной аналитической модели следующего доступного полного bar open без комиссий; её нельзя путать с основным PAPER ledger или двумя V1/V2 shadow books.
+15. stock_monitor_review_decision — добавление аргументированной оценки рекомендации: correct/false/late/early_exit/bad_stop/missed_opportunity/unassessed; оригинал не перезаписывается, оценка не объявляется проверенным финансовым результатом.
+16. stock_monitor_paper_trade — виртуальный EUR BUY/SELL по request_id/isin/quantity, исполнение по закрытой 5m/15m. Никакой связи с реальным брокерским счётом. Устаревшее описание tool упоминает пять акций; actual paper_account.instrument_allowed уже допускает зарегистрированные EUR-акции при выполнении всех остальных условий. Автоматическая V1 по-прежнему определяется отдельной политикой owner approval; MCP-операция не включает V2.
+
+ЗАЩИТЫ
+Loopback 127.0.0.1 с динамическим портом, случайный bearer, запрет Origin, ограничение тела запроса, allowlist методов/типов, без shell/arbitrary code tool. Adapter проверяет test/0.16-dev/mcp_api_revision=2 и адрес loopback.
+Изменяющие/асинхронные запросы привязаны к instance_id, request_id и абсолютному deadline<=120s. Идентичный retry возвращает существующую квитанцию; тот же ID с другими аргументами отклоняется. Очередь ограничена 1024 receipts; просроченная queued работа не исполняется. read_analytics также использует envelope, но не требует разрешения на изменение.
+Изменения требуют mcp_allow_edits и повторной проверки в момент исполнения; пользовательские несохранённые черновики блокируют конфликтующие edits/PAPER. Временные HTTP-неопределённости не трактуются как успех.
+PAPER повторно проверяет input revisions/identity/listing, policy/account epoch, срок расчётного окна, DQ и явно разрешённый исторический контекст, закрытие/валидность OHLCV, EUR, свежесть цены<=900s, открытую сессию, наличие средств/позиции, deadline. Комиссия/спред по существующей политике; транзакция и persistent request id исключают дублирование. Нельзя выдать «все акции торгуются» только по инструментальному allowlist.
+Read-page lease максимум120s/64MiB/16entries относится только к транспортной публикации; не продлевает ANALYSIS/SIGNAL/TRADE READY. Секретные настройки не входят в persisted allowlist.
+Совместимые read-only snapshot aliases: /@catalog, /@persisted, /@freshness, /@receipt/{instance_id}/{command_id}. Это не новый мост и не повторная отправка операции.
+
+НЕ ПУБЛИКОВАТЬ
+СМ/Связь/private/runtime-key.txt; оба profiles/stock-monitor-managed*.yaml (личные tunnel IDs/пути/подключение); generated test-data/bridge.json (bearer/instance/local address); bridge-command-audit.jsonl, runtime locks, пользовательские SQLite/WAL/SHM, stock_monitor.log, snapshots/receipts/financial data. Не публиковать tunnel-client.exe/cloudflared.exe или личные shortcut/config profiles; при необходимости дать инструкцию официальной установки и обезличенный example.
+work2-support-20261028 содержит личные пути, экземпляры, screenshots, живую финансовую диагностику и backup manifests. Использовать для хронологии, не копировать целиком в публичный репозиторий. Личный config.json требует отдельной sanitization-проверки root agent; значения в этом аудите не печатались.
+
+ДОСТУПНЫЕ ИЗОЛИРОВАННЫЕ ТЕСТЫ
+test_mcp_instance.py —16: instance/deadline/idempotency/permission/expiry/capacity/safe audit/authenticated local fake bridge/schema. Использует свои temp dirs и loopback server, не живой bridge.
+test_mcp_readback.py —4: selection invalidation, pending/current readback, одна UI timer/worker, temp bridge.
+test_mcp_diagnostics.py —5: причины DQ/TF, no legacy false signal/no mutations, pipeline stage/sanitized errors, temp bridge/mocks.
+test_store_stale_bridge.py —2: ложный занятый порт и настоящий duplicate-instance; temp fixtures.
+test_snapshot_interleaved.py —6: изолированный temp Store, interleaved snapshots, targeted repair/bounded retries/current revision, no providers.
+test_snapshot_error_stage.py —2: bounded diagnostic location, no local secret/path leakage.
+test_ui_snapshot_cost.py —15 (смежный performance набор): reserve/fairness, deferred card/news, bounded snapshot data, dependency key/partial indicators. Перед запуском root должен проверить целый файл на sandbox-пути.
+Для storage policy направлять tempfile в существующий СМ-Архив и PYTHONDONTWRITEBYTECODE=1; некоторые тесты явно используют dir=Path(__file__).parent, поэтому запускать из контролируемого исходного checkout, а не переносить live data.
+Исторический Work2 report 28Oct фиксирует86 combined+17 transport/revision+3 errors и12 installer/migration PASS, но группы пересекаются. Это сохранённое доказательство, не количество вновь проведённых тестов. Полный API transport tests из review не следует считать присутствующими в root 0.16, если не перенесены отдельно.
+
+ИЗВЕСТНЫЕ ОГРАНИЧЕНИЯ
+1. Крупная секция CP может превысить64MiB и вернуть PAGE_SESSION_TOO_LARGE ещё до JSON pointer expansion. Это подтверждено checkpoint10Nov; nested paging само по себе не устраняет initial lease size. Во время этой ревизии не исправлялось.
+2. Старый клиент ChatGPT может иметь кешированную неполную schema; новые fields/catalog/revision tool подтверждены исходниками, но доступ всех команд конкретного внешнего клиента требует отдельного подтверждения. /@ aliases смягчают различие доступных read schemas.
+3. Смена/expiry input revisions честно отзывают допуск, даже если публикация snapshot/receipt ещё доступна. Транспортная AVAILABLE/COMPLETED не равна ANALYSIS/TRADE READY.
+4. Старые command receipts после restart не все сохраняются; фактически выполненные PAPER fills читаются устойчиво. NOT_FOUND не разрешает автоматический повтор сделки.
+5. V2 и независимые shadow books пока не имеют отдельного MCP API; доступны локальному UI/своей SQLite. Не описывать основной paper_trade как управление V2.
+6. Старая фраза five approved stocks в tool description не соответствует текущему universe; отдельная документационная проблема, исходники не правились.
+7. Обычный source launch переносим через app.py; официальный туннель требует собственного законного подключения/секрета на целевой машине. Из публикации локальных secret profiles это не восстанавливать.
+
+ХРОНОЛОГИЯ ПО СОХРАНЁННЫМ СВИДЕТЕЛЬСТВАМ
+28Oct: Work2 интеграция 37 уникальных файлов, API2/16tools, catalog/archive/provenance/chart export, revision diagnostics, paging/прочтение ошибок; Windows и cloud tests отмечены с конкретными ограничениями. Источник work2-support-20261028/LIVE016_INTEGRATION_REPORT_RU.txt.
+После28Oct: совместимые snapshot read aliases и pinned read leases позволяют доступ через старую schema, latest publication/freshness явны. Точная дата каждого изменения по текущему файлу без Git не доказана.
+03Nov: физический перенос в постоянное СМ; не использовать старые пути из исторических инструкций rollback.
+10Nov: диагностический snapshot остаётся долгим (~5мин), CP detail PAGE_SESSION_TOO_LARGE остаётся известным ограничением; новая V2 добавлена без изменения Bridge/MCP. Новая GitHub ревизия не должна считать эти ограничения устранёнными.
+
+ДОПОЛНЕНИЕ: ТОЧНЫЙ ЗАПУСК / РЕАЛЬНАЯ SCHEMA ПОДКЛЮЧЁННОГО КЛИЕНТА
+STDIO launcher example: command="C:/Path/To/Python/python.exe", args=["C:/Path/To/StockMonitor/stock_monitor/mcp_server.py"]. Это форма настройки клиента, не новый универсальный формат config.json. cwd произвольный, PYTHONPATH не требуется. Сервер не требует API-key env или bridge-url env, он читает generated test-data/bridge.json от открытой программы. paths.py development сам задаёт STOCK_MONITOR_DATA_DIR и игнорирует внешний override этой переменной; для отдельной копии программы используется отдельный sibling test-data. Стандартный Python с Tk не требует личных TCL_LIBRARY/TK_LIBRARY, необходимых существующему локальному окружению.
+Безопасный пример сохранённой настройки chatgpt_tunnel: {"enabled":false,"directory":"C:/StockMonitorConnection","profile":"stock-monitor-managed","alias":"stock-monitor"}. Это только конфигурация Stock Monitor для ранее настроенного официального runtime, а не готовая авторизация. private API key, tunnel_id и официальный profile остаются локальными, secret хранится по file: reference. Не создавать enabled:true без действующего собственного профиля.
+10Nov при просмотре доступной tools metadata текущего ChatGPT plugin найдено15 команд: все перечисленные кроме list_instruments. READ_ONLY надпись в общем описании plugin не доказывает запрета mutations: metadata также содержит add/remove/update/record/review/refresh/select/set_levels/paper_trade. Фактическое право исполнения не проверялось, ни одна команда plugin этим аудитом не вызывалась.
+Доказан schema lag: remote read_analytics не принимает view, closed_only, include_chart_series, storage_table, хотя локальный сервер поддерживает; remote snapshot принимает только snapshot/runtime/candlepilot_health. Через read-only /@catalog, /@persisted, /@freshness доступны предусмотренные совместимые read routes. Этот список различает реализованный protocol от фактически выставленных в клиенте параметров. Обновлять внешнюю интеграцию или схему в этом подзадании не поручено.
+~~~~~
+
+</details>
+
+<details>
+<summary>Архивный документ 4: docs/CHANGELOG_2026-10-23_to_current.md (14484 символов)</summary>
+
+**Источник:** https://github.com/swindler2010/StockMonitor/blob/7e1f1eceada977adc55bed40816ccd94b9ffd8f4/docs/CHANGELOG_2026-10-23_to_current.md
+
+**Blob SHA:** `6318dcf962a3a150e0894a0f68352ed183426662`
+
+~~~~~markdown
+# Stock Monitor 0.16 TEST: изменения 23.10–10.11.2026
+
+Это ревизия действующих исходников и сохранённых свидетельств, а не новый полный
+аудит всех котировок. Публикация не означает, что все акции получили торговый допуск.
+
+## Расхождение с GitHub и достоверность хронологии
+
+До синхронизации `main` указывал на
+[`60073fb`](https://github.com/swindler2010/StockMonitor/commit/60073fb8d6f77aaead7aa21b57402361b3b69621),
+23.10.2026 11:07:55 UTC. В истории четыре коммита; дерево содержит только `AGENTS.md`,
+`README.md` и отчёт `docs/STOCK_MONITOR_FULL_AUDIT_2026-10-23_RU.md`.
+**Исходников приложения в опубликованной версии не было.** Поэтому построчный diff
+между исходным кодом 23 октября и сегодняшним кодом из GitHub восстановить нельзя.
+
+Действующая папка 0.16 также не была Git checkout. Имеющиеся Git-деревья в архиве
+относятся к независимым работам 0.17; они не объявлены историей действующей 0.16.
+Новая ветка `sync/current-016-20261110` продолжает существующую историю `main`.
+Коммиты создаются текущей датой. Даты этапов ниже взяты из checkpoint и сохранённых
+отчётов; точная дата отдельной строки кода, если она не доказана, неизвестна.
+
+## Хронология основных этапов
+
+| Дата свидетельства | Реализованное / подтверждённое | Граница результата |
+|---|---|---|
+| 23.10 | Evidence-классификация NO_TRADES, MARKET_CLOSED, DELAYED, UNCONFIRMED; сохранение доступной глубины при bounded recovery | Результаты контрольного дня не равны исправлению всего архива |
+| 24.10 | Первый универсальный проход 418/418 рядов; инкрементальная очередь, время сохранения свечей, bounded backfill | Ограничения поставщиков и недостаточная глубина остаются видимыми |
+| 24–25.10 | Session-Aware Scheduler, Revision Watcher, CandlePilot Health, отдельные CORE/DQ и счётчики уникальных восстановлений | Watcher не считает отсутствие ответа исправлением; официальные correction/cancel IDs GETTEX не доказаны |
+| 25–26.10 | Smart Eligibility для всех TF; отдельный расчётный контекст, проверка benchmark/прогрева, ревизии и отзыв допуска; системные исправления INPUT_CHANGED/provenance | Пригодность каждого контекста проверяется; историческое исключение не создаёт фактический DQ READY |
+| 26–27.10 | P0/P1: восстановление выбора и агрегации старших TF, закрытые snapshot, scoped dependencies; 539 комбинаций прежнего каталога | Это сохранённая приёмка того каталога, не новый проход текущих инструментов |
+| 27–28.10 | Управление проблемами CP, приоритет конкретной задачи, принятые исторические риски; отдельные GETTEX/EUR ряды за Proxy | Источники и площадки не объединяются незаметно |
+| 28.10 | Интеграция Work2: Bridge/MCP API2, каталог, архив, provenance, индикаторы, журнал ревизий, ограниченная пагинация и read-back | Новая серверная схема не гарантирует обновление схемы каждого клиента |
+| 28.10–03.11 | GETTEX/LSEG и Onvista, агрегация из младших TF, накопление без сокращения длинной истории; каталог опыта CP; TV ASSISTED_ONLY | TV не превращён в неограниченный автоматический API; сторонние права/доступы не обходятся |
+| 03.11 | Проверка выбора истории 57 акций × 11 TF = 627; предпочтение длинного пригодного ряда выбранной площадки | Наличие данных в SQLite не подменяет DQ/прогрев/свежесть |
+| 03–04.11 | Живая свеча, индикаторы на пригодных участках частичной истории, отображение принятых разрывов, уровни поддержки/сопротивления | Формирующаяся свеча остаётся отличимой от закрытой для торговых проверок |
+| 04.11 | Приоритет Apple/NVIDIA, быстрые переключения, порядок акций по готовности; отдельные разрешённые демоконтексты; V1 1H и переменный размер позиции | Закрытые 1H/4H/1D и свежая исполнительная цена обязательны |
+| 04.11 | Подготовка Amazon, адресные исторические ограничения и оценка устойчивости | Amazon не включается в V2 автоматически; готовность источников остаётся отдельным условием |
+| 10.11 | Проверка противоречивых GETTEX-публикаций, статистика сравнения с TV; официальный GETTEX для загрузки/сверки при сохранении длинных графиков | Спорные публикации сохраняют конкретные причины; сходство графиков не доказывает происхождение |
+| 10.11 | Ускорены календарные/evidence-проверки и числовая подготовка графика; пакетная обработка сохранённых публикаций | Полный диагностический проход всё ещё около пяти минут; цель 250 мс для UI не достигнута |
+| 10.11 | Автоматическое планирование адресного recovery, ограничение повторов, повторная аналитика после результата | Не все оставшиеся блокировки исправимы; известны отдельные дефекты очереди, перечисленные ниже |
+| 10.11 | V2: Early Entry, ATR sizing, Smart Exit, два изолированных shadow books и общий execution simulator; Windows deployment и restart | Преимущество V2 по доходности не доказано; основной PAPER executor не переключён на V2 |
+
+Основные поздние свидетельства в Issue #5:
+[числовая подготовка](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6775864831),
+[автоматический recovery](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6777847299),
+[V2](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6778888957).
+Полный исходный checkpoint остаётся локально: он содержит личные пути и рабочую диагностику.
+
+## Состав опубликованного кода
+
+- Windows UI и график: `app`, `desktop014`, `features`, `partial_chart`, `chart_*`,
+  уровни, индикаторы, локализация, сохранение/закрытие и переключение представлений.
+  Имя `desktop014.py` историческое: модуль используется действующей 0.16.
+- Хранение и рынок: `storage`, `history_service`, `history_backfill`, `gettex_history`,
+  `gettex_chart`, `onvista_archive`, `eur_listings`, `intraday`, `timeframes`.
+- CandlePilot: `candlepilot`, `feed_worker`, `candle_schedule`, `cp_controls`,
+  `cp_reconciliation`, `cp_experience`, `candlepilot_health`, timing/revision watcher.
+- Анализ: `analytics`, `data_quality`, `calculation_window`, `trading_engine`,
+  benchmarks, closed-input proof и scoped cache/Dispatcher.
+- PAPER: существующие account/hourly/UI, новая V2, shadow ledger и replay.
+- Bridge/MCP, новости/fundamentals, диагностика и вспомогательные функции —
+  полный текущий набор модулей, без переписывания работающей логики.
+
+Опубликованы закреплённые версии зависимостей; явно добавлены прямые зависимости
+Pillow и python-dateutil, ранее получавшиеся транзитивно. Личные конфиги заменены
+отдельным `config.example.json`; рабочий config не изменён.
+В справочнике опыта CP шесть отображаемых ссылок на личный каталог заменены
+`local-private-evidence/…`; это не разрешения и не изменение OHLCV.
+
+## Состояние свечей, DQ и автономии
+
+CP использует существующую очередь, SQLite, source cooldown и сохранённый прогресс.
+Реальные восстановления, новые загрузки, ревизии и NO_TRADES учитываются раздельно.
+После изменения входов предыдущий допуск отзывается и требуется новая проверка.
+Старое READY не выдаётся за текущий статус.
+
+В последнем сохранённом снимке перед этой ревизией: 63 зарегистрированных инструмента
+(57 акций и 6 benchmarks), 778 диагностических рядов и 661 архивный ряд.
+Это разные единицы измерения. Полный каталог не объявлен READY.
+Падение текущих счётчиков при продолжающемся накоплении связано в том числе с
+инвалидацией ревизий быстрее очереди переоценки; это не доказательство удаления свечей.
+Новую массовую загрузку или повторный полный аудит котировок в этой работе не запускали.
+
+Подтверждённая автономная работа 10.11 до этой ревизии: CP сам спланировал и завершил
+два адресных NO_TRADES-пересмотра с последующей аналитикой; это снятие двух ложных
+классификаций, а не восстановление двух OHLCV. Отдельный пакет официальных публикаций
+дал 73 настоящих OHLCV, что также не равно 73 новым торговым разрешениям.
+
+## V1 и V2
+
+V1 сохранена без изменения торговой логики. Основной вход — закрытая 1H, контекст 4H/1D,
+исполнительные данные 5m/15m. Наличие свечи или SELL без позиции не обязывает делать сделку.
+Авторизация автоматической V1 остаётся в локальных владельческих настройках.
+
+V2 — отдельный эксперимент только для Apple/NVIDIA: стандартный риск до1%, Early до0,5%,
+общий модельный риск до2%, ATR/структурный стоп, RR≥2 после издержек, безубыток +1R,
+частичная фиксация +2R и trailing. Фильтры DQ, identity, ревизий, прогрева и свежести сохранены.
+Два shadow books стартуют с виртуальных 10 000 EUR каждый и ведут независимые балансы,
+позиции, pending decisions, комиссии и журналы. Оба получают один и тот же проверенный
+рыночный вход, но принимают независимые решения. Общая модель исполнения использует
+следующую доступную закрытую 5m/15m свечу и одинаковые издержки.
+
+Shadow SQLite отделена от основного счёта. В shadow path нет вызова основного
+`paper_account.execute` или брокерского API. Исторический replay не пишет в forward books.
+Если пропущен путь цен для сопровождения позиции, `SHADOW_MISSED_EXECUTION_BARS_REPLAY_REQUIRED`
+блокирует дальнейшее моделирование вместо выдуманного исполнения.
+
+Сохранённый исторический опыт 09–10.11: 229 реальных 15m строк, 61 CORE snapshot;
+BUY и модельных сделок не возникло. Profit Factor/expectancy не определены,
+улучшение прибыли V2 не доказано. Этот опыт не повторяли ради публикации.
+26 новых V2-тестов и Windows restart-проверка прежнего этапа сохранены; текущая
+регрессия отдельно проверяет модель и изоляцию. V2 **не включена в основной PAPER-счёт**.
+
+## Bridge/MCP, доступные ChatGPT
+
+Все 16 серверных команд, аргументы, read/write-разделение и ограничения описаны в
+[отдельном реестре](BRIDGE_MCP_CAPABILITIES_RU.md).
+
+Чтение: `health`, `snapshot`, `command_status`, `list_instruments`, `revision_diagnostics`,
+`read_analytics`, `decision_journal`. Изменяющие команды: `refresh`, `select`, `set_levels`,
+`add_instrument`, `remove_instrument`, `update_position`, `record_decision`, `review_decision`,
+`paper_trade` — все с префиксом `stock_monitor_`.
+Изменяющие команды требуют разрешения клиента/владельца и локальных guards;
+публикация кода не включает эти разрешения. `paper_trade` — только виртуальный счёт.
+Существуют read-only aliases `/@catalog`, `/@persisted`, `/@freshness` и receipt.
+
+Подключённый клиент объявляет 15 tools и часть старых параметров: это отставание схемы,
+не отсутствие серверной реализации. Отдельного MCP API двух V2 books пока нет.
+Текущая внешняя health-проверка завершилась сетевым timeout; новый remote MCP PASS
+не заявлен и подключение Work2 не перенастраивалось.
+
+## Проверки, известные проблемы и границы публикации
+
+Результаты текущего запуска, перечень непрошедших тестов и способ повторения:
+[VALIDATION_AND_ROLLBACK_RU.md](VALIDATION_AND_ROLLBACK_RU.md).
+Машинный итог и файловые SHA256 приложены в `regression_results.json` и `publication_manifest.json`.
+
+Нерешённые проблемы не скрываются публикацией:
+
+1. CP: исторический recovery может использовать общий receipt/cooldown свежего маршрута;
+   некоторые старые ручные/TV-заявки не ограничены новым automatic attempt limit;
+   source cooldown способен отложить локальную переоценку уже имеющихся данных.
+   Это сохранённые воспроизводимые дефекты; в задаче синхронизации их не исправляли.
+2. Переоценка готовности отстаёт от новых ревизий; общий snapshot около5мин.
+   Данные могут быть сохранены, а текущий допуск ещё STALE/EXPIRED.
+3. MCP: `PAGE_SESSION_TOO_LARGE` до пагинации для очень большой секции CP;
+   кешированная схема клиента; часть квитанций не переживает restart, поэтому
+   NOT_FOUND не разрешает слепо повторить PAPER-операцию.
+4. В описании `paper_trade` осталась устаревшая фраза про пять акций; фактический
+   universe шире, но каждый исполнительный guard обязателен.
+5. Ряд старых unit fixtures и ожиданий не соответствует текущим контрактам.
+   Все FAIL/ERROR зафиксированы отдельно; полный regression не объявлен PASS.
+6. Настоящие непроверенные интервалы, недостаточная история/прогрев и ограниченная
+   глубина источников остаются ограничениями данных. Нулевой объём сам по себе не NO_TRADES.
+7. V2: пока недостаточно реальных модельных сделок для оценки эффективности;
+   подключение Amazon/других акций и включение V2 в основной счёт не выполнено.
+
+Текущая работа не меняла стратегии, CP queue, права владельца, позиции, Store0.15,
+Scalable Capital или независимые исходники Work2. Performance Engine не запускался.
+Штатный restart не требовался: исполняемые модули не изменены. Windows результаты
+предыдущего этапа не выданы за повторную приёмку этой публикации.
+
+## Что опубликовано и что осталось локально
+
+Опубликовано: текущий исходный код, безопасные примеры конфигурации, существующие
+тесты без личных путей, изолированный runner, документация и обезличенный итог проверок.
+Отдельный коммит исходников:
+[`ff1d53b`](https://github.com/swindler2010/StockMonitor/commit/ff1d53bf2ea0f87847f303c30ce69c38ba89d069).
+
+Локально: SQLite/WAL/SHM, действующие настройки/разрешения/финансовые журналы,
+полные рыночные архивы, Onvista/TV screenshots/exports, секреты/профили туннеля,
+бинарные дистрибутивы и Python environment, полный частный checkpoint,
+адресные rollback ZIP и шесть тестов с личными fixture-путями.
+Исторические вспомогательные audit/repair scripts не объявлены частью приложения.
+Ни одна личная база не попала в Git tree. `.gitignore` использует allowlist и
+отдельные запреты для секретов, runtime данных, архивов, логов и локальных конфигураций.
+
+## Итог публикации
+
+**Исходники синхронизированы; приёмка общего regression — PARTIAL.**
+Создан [draft Pull Request #17](https://github.com/swindler2010/StockMonitor/pull/17)
+в `main`. Слияние не выполнялось. Основная ветка и прежние коммиты сохранены.
+Проверенные деревья GitHub совпали с локальными staged trees по SHA Git.
+
+- [Исходники и безопасная конфигурация — ff1d53b](https://github.com/swindler2010/StockMonitor/commit/ff1d53bf2ea0f87847f303c30ce69c38ba89d069).
+- [Тесты и runner — 9711c3f](https://github.com/swindler2010/StockMonitor/commit/9711c3fd53df0553397a45d09f85604fdaa59b8e).
+- Документационный коммит и последующие уточнения — [полный список коммитов PR](https://github.com/swindler2010/StockMonitor/pull/17/commits).
+
+Аудит безопасности охватил каждое публикуемое содержимое и путь; Python/JSON синтаксис
+проверен. Секреты и личные пути не обнаружены в публикуемой выборке. Это проверка
+определённых шаблонов и состава, а не обещание универсального обнаружения любых секретов.
+Полный состав и SHA256 доступны в `publication_manifest.json`.
+Отчёт о завершении также фиксируется в [Issue #5](https://github.com/swindler2010/StockMonitor/issues/5).
+Правило владельца: каждый следующий завершённый этап сопровождать записью результата
+в GitHub с изменениями, проверками и оставшимися ограничениями.
+~~~~~
+
+</details>
+
+<details>
+<summary>Архивный документ 5: docs/TRADING_ENGINE_PROGRESS_RU.md (84423 символов)</summary>
+
+**Источник:** https://github.com/swindler2010/StockMonitor/blob/7e1f1eceada977adc55bed40816ccd94b9ffd8f4/docs/TRADING_ENGINE_PROGRESS_RU.md
+
+**Blob SHA:** `9e70273b0c96a274d0030af1e1a690c9e7bb384e`
+
+~~~~~markdown
+# Trading Engine: приоритет Apple/NVIDIA, 10.11.2026
+
+Статус задания: **PARTIAL**. Этот этап устраняет задержки оперативного контура;
+полная готовность обеих акций и длительное испытание исполнения ещё не подтверждены.
+База публикации: `aff4862a2f83fb9f449201e2acc416aa693938cd` (PR #17).
+
+## Доказанные причины и исправления
+
+1. `gettex_chart.recovery_download` записывал результат старого исторического
+   запроса в ту же запись расписания, что и получение свежей свечи. Ошибка
+   исторического ответа откладывала свежий запрос. Теперь у recovery отдельная
+   запись в существующем scheduler; общий rate limit и глобальный 429/Retry-After
+   сохранены.
+2. `cp_controls.service_request` прекращал работу до проверки локальных данных,
+   если поставщик находился на cooldown. Теперь разрешена локальная проверка и
+   локальное восстановление, сеть остаётся заблокированной. Неполный локальный
+   результат больше не открывает обход через вспомогательный HTTP endpoint.
+3. Бюджет трёх неудачных попыток распространялся только на новые автоматические
+   запросы. Сохранились старые заявки с десятками попыток. Ограничение действует
+   и для таких заявок; локальная проверка не увеличивает счётчик сетевых попыток.
+   Очередь и исходные доказательства сохраняются.
+4. Тяжёлая оценка всех 11 TF выполнялась внутри единственного feed writer.
+   Теперь writer сохраняет запрос, а отдельный принадлежащий приложению readonly
+   клиент выполняет **тот же** `calculate_eligibility`. Публикация короткая,
+   транзакционная, с повторной проверкой зависимостей. Никакого продления TTL.
+   Запросы переживают перезапуск. Две приоритетные оценки чередуются с фоновой.
+5. Часовой PAPER и shadow использовали клиент постобработки графиков. Теперь
+   они используют собственный общий readonly клиент и lane `trading` того же
+   Dispatcher. Одновременно тяжёлые snapshot/eligibility не запускаются;
+   между ними сохраняется FIFO. V1/V2 используют прежние вычисления и проверки.
+6. Для часового исполнения разрешены цены 5m/15m, но приоритет обслуживания
+   учитывал только 15m и дневную базу. 5m добавлен **как источник цены исполнения**,
+   без превращения в обязательный аналитический TF часовой стратегии.
+7. Свежий маршрут исключал последнюю публикацию, если биржа уже закрылась.
+   Введено ограниченное окно после расчётного времени публикации; ночной
+   бесконечный опрос не разрешён. Торговать при закрытой бирже по-прежнему нельзя.
+8. Закрытие compute-клиента больше не прерывает активный writer. Он завершает
+   операцию, после чего закрывается. Readonly расчёты остаются отменяемыми.
+
+Новые компоненты не загружают рынок самостоятельно и не создают второй архив.
+История, identity, DQ, принимаемые исторические риски и правила сигналов сохранены.
+
+## Адресные проверки
+
+**23 новых теста PASS**:
+
+| Набор | Количество | Что проверено |
+|---|---:|---|
+| `test_trading_repair_isolation` | 6 | Изоляция старого recovery, legacy budget, локальная переоценка, отсутствие ложного recovery count, запрет вспомогательной сети при cooldown, общий 429 |
+| `test_cp_assessment_worker` | 7 | Отложенный расчёт, сохранённая очередь, повтор после сбоя, 53/200 инструментов, отзыв при изменении входов, неизменный expiry, защита нового запроса от старого результата |
+| `test_trading_dispatch` | 5 | Торговая задача при занятом feed/assessment, 53/200 задач, запрет отмены writer, безопасное закрытие, FIFO тяжёлых задач |
+| `test_trading_quote_priority` | 5 | Приоритет 5m-цены, возврат к 15m, запрет другой площадки, rate limit, последняя публикация после закрытия |
+
+Дополнительно прошли 12 непосредственно затронутых проверок существующих наборов:
+две проверки automatic repair, девять repair fairness, один runtime hourly.
+Их mock-контракты обновлены: cooldown разрешает локальную проверку, а попыткой
+считается выход в provider-ветку, а не любое посещение очереди.
+Исправления тестовых фикстур не подменяют результат проверки программы.
+
+Старые полные аудиты, массовые загрузки и неизменённые наборы индикаторов не повторялись.
+Прежние положительные BUY/SELL и V2 stop/target/Smart Exit остаются историческими
+свидетельствами; это не новая приёмка длительной автоматической торговли.
+
+## Windows и MCP
+
+- Выполнены штатные Save/Close/Restart в 22:55 CET. Первый набор изменений
+  загружен в Windows TEST; график NVIDIA, EMA, RSI, MACD, ATR и уровни отображаются.
+  Это визуальное наблюдение, не повторная полная математическая аттестация индикаторов.
+- После запуска появились отдельные завершённые задания `trading`, CP продолжил
+  существующую очередь; ручной Refresh не использовался.
+- Независимый MCP health в 22:58 CET ответил успешно: NVIDIA CORE READY, WAIT,
+  актуальная закрытая цена без quote blocker; Apple DATA BLOCKED и PAPER_BAD_OHLCV.
+  Причина последнего отказа проверена в SQLite: нулевой объём последней 15m-свечи,
+  старый 5m-хвост. Неподтверждённые 1H/4H Apple также не объявлены READY.
+- Сохранены 63 инструмента, их payload, основной PAPER epoch/config и журнал
+  сделок; новых сделок не создано. Store 0.15, брокер и Work2 не изменялись.
+- Контрольный readonly расчёт всех TF NVIDIA занял 37.731 с и корректно отказал
+  при изменении `cp_manual_risk` во время расчёта. Это не PASS готовности NVIDIA
+  по всем TF; запись не публиковалась в рабочую базу.
+- Наблюдаемые длительности завершённых operational trading jobs после запуска:
+  1.937–3.688 с в первых образцах Dispatcher. Это не среднее и не гарантированный
+  максимум. До изменения отдельной метрики trading не было, поэтому процент
+  ускорения не вычисляется. Новая диагностика сохраняет `calculation_seconds`.
+- Полный snapshot по-прежнему может занимать более 300 с; интерфейсные callbacks
+  иногда превышают 250 мс. Эти ограничения не скрыты под заявлением о полной оптимизации.
+
+Ограничение прежнего средства управления окном устранено использованием другого
+доступного интерфейса Windows. Штатные закрытие и запуск в 23:12 CET подтвердили
+загрузку пунктов 6–7, FIFO и метрики. Вмешательство владельца больше не требуется.
+Повторный штатный запуск в 23:28 CET применил общий расчётный контекст и завершение
+старого пересмотра разрешений. Writer ни разу не завершался принудительно.
+
+## Продолжение: общий контекст, PAPER-защита, бюджет поставщика
+
+- Подтверждён отдельный дефект Apple: в старом пересмотре были результаты по всем
+  1 589 исходным разрешениям, исходных действующих разрешений уже не осталось,
+  но новые ревизии рынка снова переводили пересмотр в RUNNING. CP самостоятельно
+  закрыл его в 23:28:41 CET. Это завершение проверки отозванных разрешений,
+  не разрешение новых пробелов и не изменение DQ. Текущая очередь восстановления
+  и все новые независимо выданные разрешения продолжают проверяться.
+- `trading_context` выделяет закрытый расчёт из hourly runner, использует прежние
+  HistoryService, индикаторы и CORE. Все 11 TF поддерживают явные тройки фильтров,
+  выбор графика не меняет фоновые входы. Стандартный профиль 1H/4H/1D сохранён.
+  Сам расчётный контракт не разрешает исполнение: действующий автоматический
+  исполнитель по-прежнему ограничен утверждённым часовым экспериментом.
+- Добавлен отдельный опциональный PAPER Stop Loss / Take Profit, сохраняемый
+  в квитанции новой покупки и восстанавливаемый из прежнего журнала. Стоп основан
+  на существующем ATR/структуре; цель учитывает издержки и 2R. Триггер — цена
+  закрытой проверенной 5m/15m-свечи, исполнение — её Close со стандартными
+  спредом и комиссией. Это **не** моделирование тикового исполнения точно по стопу
+  и не гарантия убытка в пределах расчётного риска. Ранее открытые позиции
+  автоматически не переоснащаются. Опция ещё не включена на основном счёте.
+- V1 CORE и две сравнительные теневые книги не переписаны. V2 Early Entry,
+  BE/partial/trailing остаются только теневыми. Новый защитный выход не выдаёт
+  разрешение при плохом DQ, ревизии, benchmark, прогреве, закрытой сессии или
+  устаревшей цене. WAIT сам по себе не создаёт сделку.
+- Найдена потеря приоритета внутри общего лимита GETTEX Chart: высокий ранг
+  задания не резервировал минутный HTTP-бюджет, который могли постоянно забирать
+  обычные архивные запросы. Добавлено чередование двух оперативных запросов и
+  одного фонового через прежний limiter. Recovery откладывается без расходования
+  попытки HTTP; глобальный лимит и Retry-After сохраняются.
+- После первого успешного HTTP-запроса после закрытия отставший intraday-хвост
+  ранее не получал повторной проверки. Добавлены до четырёх проверок за два часа
+  с сохранением прогресса. Задержка поставщика остаётся UNKNOWN; пустой ответ
+  не становится NO_TRADES. Правки загружены штатным перезапуском в 23:37:49 CET.
+- Дневная свеча также входит в обязательные входы часовой стратегии. Проверка
+  в 23:47 выявила ожидавшую с 23:30:50 повторную загрузку Apple 1D; минутный
+  бюджет резервировался только для 5m/15m. Приоритет распространён на реально
+  отсутствующий закрытый дневной интервал, сохраняя правило двух приоритетных
+  запросов и одного фонового. Формирующийся или уже полученный день не получает
+  этот приоритет. Правка применена штатным запуском в 23:50:19 CET.
+
+Новые адресные тесты: **29 PASS** — завершение пересмотра 4, PAPER-защита 12,
+универсальный контекст 5, бюджет и последние закрытые интервалы 8. Дополнительно
+прошли **14 непосредственно затронутых регрессионных проверок**. Проверены
+синтетические очереди 53/200 задач, BUY/SELL/stop/target, идемпотентность,
+сохранение планов после открытия базы и отрицательные защитные сценарии.
+Все тестовые сделки выполнены только в изолированных фикстурах.
+
+## Наблюдение естественного цикла после внедрения
+
+Без ручного Refresh и без прямой записи рыночных данных из Work:
+
+| Действие CP | Запланировано CET | Ответ получен CET | Фактический результат |
+|---|---|---|---|
+| NVIDIA 5m | 23:38:06.901 | 23:38:08.662 | 4 новые свечи, последний интервал 22:55 |
+| NVIDIA 15m | 23:39:43.061 | 23:39:44.824 | 1 новая свеча, 22:45 |
+| Apple 5m | 23:42:12.398 | 23:42:14.170 | 5 новых свечей, последний интервал 22:40 |
+| Apple 15m | 23:43:49.106 | 23:43:50.620 | ответ без новых/изменённых свечей; отсутствие 22:45 не выдано за NO_TRADES |
+| Apple 1D | 23:50:36.097 | 23:50:37.919 | новая дневная свеча 10 ноября |
+
+Кроме того, в 23:39:46 CP сохранил закрытый день NVIDIA из существующих
+проверенных младших данных. Всего после запуска 23:37:49 зарегистрировано
+**12 новых строк** этих двух инструментов: 9 × 5m, 1 × 15m, 2 × 1D.
+Это накопление нового хвоста, **не 12 восстановленных старых пропусков**:
+счётчик подтверждённых исторических восстановлений в этом наблюдении не вырос.
+
+Восьмиминутный readonly наблюдатель записал завершённые расчёты:
+Apple — 6 образцов, среднее 3.479 с, максимум 6.282 с;
+NVIDIA — 5 образцов, среднее 2.441 с, максимум 3.422 с.
+Это измерения конкретного окна под фоновым CP, не длительный открытый forward
+и не доказательство процентного ускорения относительно прежней версии.
+
+MCP и рабочая SQLite подтвердили NVIDIA CORE READY / WAIT. Новый BUY не создан.
+После прихода Apple 1D исчезла её дневная блокировка; остаются 1H/4H с отсутствующими
+15m-интервалами 10 ноября 22:15 и 22:45. Последняя имеющаяся 15m-свеча 22:30
+имеет нулевой объём. Повторные реальные ответы в 23:56 не добавили эти свечи.
+Официальные execution-time evidence содержат пустые интервалы, однако известное
+расхождение временной привязки vendor-chart не позволяет автоматически объявить
+их эквивалентными. OHLCV и торговые правила не изменялись ради READY.
+
+Последующий расчёт после законной смены ревизии разрешений возобновляется сам.
+Отдельное 90-секундное наблюдение не подтвердило постоянную запись неизменных
+разрешений; дополнительное исключение из проверки ревизий не добавлялось.
+Ночная цена исполнения остаётся PAPER_STALE_QUOTE, а сессия закрыта. Проверка
+в открытой сессии и длительный forward ещё не завершены. Времена ответа API
+не являются временем публикации свечи поставщиком; оно остаётся UNKNOWN.
+
+Контрольные хэши подтвердили неизменность 63 инструментов, основного PAPER,
+журнала/архива, индикаторных настроек и действующих политик источников/риска.
+Служебная строка provider receipt NVIDIA 1D ещё может указывать вчерашнюю дату,
+хотя проверенный агрегированный день уже есть в SQLite; эти показатели не смешаны.
+
+## Что остаётся
+
+- Измерить полный естественный
+  цикл в открытой сессии, включая 5m/15m и формирующиеся старшие свечи.
+- Проверить оставшиеся фактические препятствия Apple после работы исправленного
+  планировщика. Нулевой объём, отсутствие сделок или отсутствие данных нельзя
+  превращать в достоверную цену исполнения.
+- Проверить длительную стабильность сигналов и отзывов, получить среднее/максимум
+  по сохранённым отдельным замерам. Продолжающаяся смена зависимостей не отменяется.
+- Универсальный расчётный контракт всех 11 TF реализован и адресно проверен.
+  Исполняемый автоматический контракт по разрешению владельца остаётся
+  1H + 4H/1D, цена 5m/15m. Проверить сопровождение позиций на естественном
+  открытом потоке; изолированные stop/target/идемпотентность уже PASS.
+- V1 остаётся прежней стратегией. Расчёт размера по ATR уже существовал, но
+  оценка риска сама по себе не является выставленным Stop Loss. Stop/target,
+  partial/BE/trailing реализованы в V2-модели и остаются теневыми. Их преимущества
+  и разрешение на активацию V2 на основном PAPER не предполагаются автоматически.
+- Amazon продолжает существующее восстановление; расширение торгового эксперимента
+  на него и остальные акции не выполнялось.
+
+## 11 ноября: ускорение повторной оценки и боковой объём
+
+Общая задача остаётся **PARTIAL**. Владелец дополнительно поручил ускорить CP,
+поддерживать отдельные планы по акциям, автоматически давать проверенный PAPER-допуск,
+после Apple/NVIDIA перейти к Amazon и восстановить боковой профиль объёма.
+V2 остаётся теневой; новых сделок ради проверки не создавалось.
+
+Подтверждённая лишняя работа: в одной readonly оценке NVIDIA всех 11 TF
+подготовка ряда вызывалась 39 раз, полный DQ-аудит — 381 раз. Подготовка одного
+и того же закреплённого источника обходила существующий кэш. Добавлено повторное
+использование точного ряда через тот же ограниченный ReadCache с воспроизведением
+зависимостей. В одной оценке чистые DQ/индикаторные расчёты используют ключ от
+всех значений, типов, метаданных, флагов и явного расчётного времени. Ключ не
+содержит внутренних изменяемых кэшей pandas. Функция с зависимостью от БД не
+может использовать режим чистого расчёта. Изменение данных/identity/evidence/часов
+даёт другой ключ; финальные ревизионные проверки и исполнительные ограничения
+сохранены. Нового пула загрузчиков, параллельного writer или дубля очереди нет.
+
+В сопоставимом измерении с cProfile на сохранённых данных и одном as-of моменте:
+
+| Показатель | До | После |
+|---|---:|---:|
+| Время одной оценки с профилировщиком | 150,453 с | 100,142 с |
+| Подготовка рядов | 39 | 19 |
+| Фактически выполненные DQ-аудиты | 381 | 154 |
+
+В этом опыте время меньше на 33,4%; это **не обещание такого ускорения всей
+программы или загрузки поставщика**. Сравнение всех 11 TF, индикаторов, условий,
+блокировок и доказательств свечей не нашло различий после исключения времени
+проверки и служебных номеров/хэшей ревизий настроек. Фактические digest входных
+свечей и аналитические результаты также совпали. Живые измерения после внедрения
+и при открытом рынке продолжаются.
+
+Боковой Volume Profile скрывался условием общего `ohlcv_valid=False` у частичной
+истории, хотя worker уже выделил проверенные реальные участки. Теперь визуальный
+профиль использует только строки этих проверенных сегментов, исключает повреждённые
+и неполные непроверенные строки, сохраняет пометку «частичная история». Это прежняя
+OHLCV-оценка распределения объёма, не тиковая статистика и не разрешение торговли.
+Исходные настройки и фактический DQ не изменялись.
+
+**12 новых адресных тестов PASS:** 8 для точного повторного использования,
+включая 53/200 независимых входов, границы кэша, мутации OHLCV/identity/evidence,
+времени, неизменность результатов и запрет DB-зависимостей; 4 для частичного
+Volume Profile, всех 11 TF, исключения плохих строк, сохранения суммы объёма,
+ограничения видимым диапазоном и отсутствия торгового разрешения.
+**11 непосредственно затронутых проверок PASS:** закреплённый контекст/настройки
+(2), ревизионная гонка и отзыв по DQ/identity (2), защиты закреплённого источника
+(7). Один новый тест первоначально обнаружил нестабильный pickle внутреннего
+индекса pandas; исправлен ключ, повторная проверка PASS.
+
+Штатные Save/Close/Restart, без прерывания writer: запуск TEST **07:25:03 CET**.
+В Windows на Apple 4H профиль реально появился; индикаторы и фактическая
+UNCONFIRMED/PARTIAL сохранились. Хэши 63 инструментов, PAPER/архивных таблиц,
+авторизации 1H, эпохи счёта, индикаторных настроек и политик совпали до/после.
+Work №2, Store 0.15 и брокер не изменялись.
+
+Ноль в утренней сводке означал не потерю архива: все общие оценки были неактуальны,
+в том числе из-за смены даты пятилетнего расчётного окна и последующих ревизий.
+В 07:26 независимый MCP уже показывал 4 CURRENT, chart_ready 5, analysis_ready 3,
+signal_ready 1, trade_ready 0. Это наблюдение работы очереди, **не доказательство
+новых торговых допусков от оптимизации**. Отдельный часовой NVIDIA CORE READY/WAIT;
+Apple всё ещё блокируется хвостами 1H/4H за 10 ноября (15m 22:15/22:45, имеющаяся
+22:30 V0). До открытия обе цены исполнения устаревшие. Эти ограничения не сняты
+визуальной правкой или кэшем. Дальнейшая цель — естественная открытая сессия,
+оперативная переоценка и устранение только доказанных исправимых препятствий.
+
+Откат этого этапа: вернуть изменённые исходники к `04a5e972f376adf87e33789bae3464850d0889ab`
+из адресного ZIP или Git; удалить только новый `calculation_reuse.py`, если
+восстановленная версия его уже не импортирует. Делать после штатного закрытия TEST.
+SQLite и пользовательские настройки не заменять; их изменения здесь не требовались.
+
+## 11 ноября: отзыв расчёта из-за служебной квитанции
+
+В `_setting_value` (`performance_cache.py`) доказана ещё одна причина лишнего
+отзыва результатов. При каждом PARTIAL-запросе GETTEX список `invalid_receipts`
+пополняется новым путём, даже когда старые отклонённые записи и сохранённые OHLCV
+не изменились. Диапазон запроса, количество возвращённых строк и счётчики записи
+также описывают отдельный HTTP-ответ, а не входы закрытого расчёта.
+
+Адресное воспроизведение сначала завершилось `Closed input changed:
+setting:gettex_chart:TEST:15m`. Теперь из доказательства закрытого расчёта
+исключены только эти служебные поля. Сами квитанции остаются в базе. Identity,
+подтверждение листинга, качество, отклонённые timestamps, новая неизвестная
+метаинформация и точный digest OHLCV продолжают отзывать результат. Срок действия
+не увеличен; старые доказательства при необходимости проходят одну переоценку.
+
+**5 новых тестов PASS**, включая положительный сценарий неизменного ответа,
+отрицательные identity/quality/OHLCV, сериализацию доказательства и истечение
+срока. Проверенный адресный откат — `performance_cache.py` из `a1cbf04`;
+данные/разрешения не откатывать. Применение через штатный Save/Close/Restart;
+writer дождались, принудительно не завершали.
+
+До второго перезапуска естественный поток уже дал обеим акциям закрытую 5m
+свечу 11.11 07:30–07:35 CET, без ручного Refresh. У Apple запрос начат 07:36:52,
+ответ получен 07:36:54: получение через 1 мин 54 с после закрытия. Время публикации
+поставщиком остаётся UNKNOWN. `PAPER_STALE_QUOTE` снят у обеих автоматически;
+NVIDIA CORE READY/WAIT. Apple ещё блокирует неполный хвост 10.11, поэтому полного
+торгового PASS нет. В Windows живая 4H Apple обновилась данными до 07:42;
+боковой объём сохраняется. Новых сделок нет.
+
+## Точечный откат
+
+Штатно закрыть TEST и дождаться завершения writer. Восстановить только изменённые
+исходники из базового commit `aff4862a2f83fb9f449201e2acc416aa693938cd`
+либо проверенного локального адресного ZIP. Новые `cp_assessment_request:*`
+являются возобновляемыми запросами; старый код их игнорирует, удаление не требуется.
+SQLite, пользовательские настройки, OHLCV и демосчёт не заменять старым снимком.
+История Git сохраняется; `reset --hard` и force push не использовать.
+
+## 11 ноября, открытая сессия: Apple/NVIDIA CORE READY
+
+После открытия обе акции получили новые реальные GETTEX/LSEG 5m/15m без Refresh.
+20-минутное наблюдение: 14 расчётов Apple, среднее 3,475 с / максимум 6,391 с;
+14 NVIDIA, среднее 2,355 с / максимум 3,875 с. Это время вычисления, включая
+запуск, не полная задержка доставки и не обещание для всего списка.
+
+У Apple оставались шесть ещё не проверенных 15m интервалов (2026, Берлин):
+4 ноября 22:45; 6 ноября 21:15; 9 ноября 14:15 и 22:45;
+10 ноября 22:15 и 22:45. В установленном TradingView Desktop GETTEX:APC
+переход к каждому времени выбрал следующую фактически существующую свечу:
+5 ноября 07:30; 6 ноября 21:30; 9 ноября 14:30; 10 ноября 07:30;
+10 ноября 22:30 и 11 ноября 07:30 соответственно. Последняя вечерняя 22:30
+10 ноября имеет нулевой объём и не выдавалась за свежую цену исполнения.
+
+Work выполнил только визуальную сверку этих новых точек и передал наблюдения
+через существующий `register_prior_review`. Шесть точных наблюдений поставлены
+в обычную очередь, прямых OHLCV-записей и прямых торговых разрешений — ноль.
+CandlePilot самостоятельно проверил их привязку к текущим исходным данным и
+применил уже одобренную владельцем политику совпадающего отсутствия в TV.
+Количество актуальных таких наблюдений/принятых интервалов стало 121 вместо115.
+Это **принятый исторический риск**, не подтверждение NO_TRADES и не исправление
+фактического архивного DQ. Визуальная часть остаётся ASSISTED_ONLY; постоянного
+самостоятельного доступа CandlePilot к TradingView не появилось.
+
+После штатной переоценки Apple и NVIDIA: **CORE READY / WAIT**, свежая цена
+исполнения, `quote_blocker=null`. У Apple 1H/4H/1D тренды пригодны для расчёта,
+но нет подтверждённого breakout/retest/reclaim и импульса входа. У NVIDIA
+не выполнено согласование трендов. Сигнал BUY не подменялся, сделок ради PASS нет.
+Это готовность существующего ограниченного демоконтекста, не строгий DQ READY
+полного архива и не гарантия последующего торгового сигнала.
+
+Включён ранее проверенный опциональный PAPER Stop Loss / Take Profit для
+**будущих** покупок существующего 1H-профиля Apple/NVIDIA: стоп по 2ATR/структуре,
+цель 2R с издержками. Триггер — проверенная закрытая 5m/15m цена, исполнение —
+существующая PAPER-модель; это не тиковый стоп и не гарантированная цена выхода.
+Ранее опубликованные тесты BUY/SELL/SL/TP/повторов/запрета по свежести не повторялись.
+V1-входы, размер риска и V2 shadow не изменены. Текущие позиции не переоснащались.
+
+Найдена и исправлена ошибка объяснения в `trading_engine.evaluate`: текст о
+средних соседей выводился для любого принятого пропуска, включая actual-only.
+Теперь пояснение следует фактической модели. **3 новых адресных теста PASS**:
+реальные свечи, применённые/неприменённые оценки, неизменные сигналы и блокировки
+INVALID/STALE. До правки два положительных теста воспроизводили ошибку.
+
+Штатный Save/Close/Restart **08:10:45 CET**, writer завершился сам.
+Windows вновь показывает Apple, боковой Volume Profile, EMA10/30, RSI, MACD,
+ATR, уровни и живую свечу. После запуска обе акции сохранили CORE READY/WAIT;
+новое точное пояснение реально используется. Независимый MCP до перезапуска
+подтвердил оба CORE READY, свежие котировки и включённую PAPER-защиту.
+63 инструмента, счёт, журнал, архив сделок, индикаторные настройки, эпоха и
+политики источника/прогрева совпали по контрольным суммам. В конфигурации PAPER
+добавлен только согласованный protection. Новых сделок нет.
+
+Откат пояснения: `trading_engine.py` из `cd7c3f07ff6fb2fafbe91d330a313ef5d77bf995`.
+Для отмены новой PAPER-защиты убрать только protection после штатной остановки;
+не заменять весь текущий счёт или конфигурацию старой копией. Наблюдения и их
+адресные резервные записи сохранены локально; SQLite/частные журналы в GitHub
+не публикуются. Общее задание остаётся PARTIAL: дальнейшая устойчивость,
+автоматическое последовательное подключение Amazon и оставшиеся функции
+универсального исполнения ещё не объявлены завершёнными.
+
+
+## 11.11.2026 — последовательный автоматический допуск и согласованное чтение
+
+Подтверждённый недостающий путь: Runtime брал только фиксированные
+`paper_auto_1h.identities`; новая готовая акция сама не подключалась. Теперь
+в том же trading worker и Dispatcher проверяется одна следующая акция,
+начиная с Amazon, затем остальные зарегистрированные акции по одной.
+Новая owner-approved политика по умолчанию отсутствует/выключена. В TEST
+она включена согласно прямому поручению владельца об автоматическом допуске.
+
+Подготовка не исполняет заявки и не выдаёт исторических исключений.
+Сначала текущие закрытые 1H/4H/1D, identity GETTEX/EUR, прогрев/benchmark,
+действующие разрешения, ревизии, эпоха счёта и свежая реальная 5m/15m цена.
+WAIT допустим для технического подключения, BUY не подделывается.
+После успешной проверки в одной транзакции добавляется исходная identity
+в существующий часовой режим; следующий обычный цикл заново проверяет
+все условия исполнения. Смена входов отзывает пригодность результата.
+Подготовительный результат нельзя использовать для сделки даже после подключения.
+
+Очередь и cooldown 5 минут сохраняются в settings. В ожидании следующей
+акции CP получает существующий ограниченный приоритет обслуживания,
+без новой очереди загрузки и без потоков на каждую акцию. Текущая пара
+обслуживается первой; кандидат использует свободные слоты. MCP читает
+состояние подготовки через существующую диагностику PAPER.
+
+**12 новых тестов PASS**: положительное подключение WAIT без заявки,
+разделение анализа/исполнения, отрицательные DQ/identity/источник/валюта/
+quote/прогрев/benchmark/seed/ревизии/эпоха/права, restart/cooldown,
+53/200 кандидатов и сохранение обслуживания пары. Из-за выделения общего
+валидатора повторены только непосредственно затронутые 31 тест hourly/
+protection: PASS (BUY/SELL/SL/TP/idempotency и все исполнительные запреты).
+
+После запуска выявлен отдельный воспроизводимый конкурентный сбой:
+`INPUT_CHANGED setting:data_quality:...:<ISIN>:15m` официального ряда
+прерывал расчёт LSEG, когда CP обновлял его между двумя чтениями.
+Часовой worker теперь читает один согласованный SQLite WAL snapshot
+без копирования базы и без блокировки писателя. Перед публикацией
+используется существующий exact closed-input proof. Нужные OHLCV, DQ,
+identity, политика, benchmark и разрешения по-прежнему перепроверяются;
+последние 4 строки обеих котировочных дорожек сравниваются отдельно,
+чтобы новая/испорченная котировка не могла быть пропущена при переносе
+ревизии закрытого CORE. Новый неизвестный дефект перепроверяет manual_gate.
+`_candidate_proof` теперь использует уже открытую read transaction.
+
+**8 новых concurrency-тестов PASS**, включая реальный одновременный
+SQLite writer. Первый прогон выявил только незакрытые соединения тестового
+стенда Windows; после исправления cleanup все 8 проходят. Реальный
+readonly worker также отработал; оставшаяся устарелость 1H/4H не скрывалась.
+
+Откат: адресные резервные ZIP сохранены локально. Удаление только
+`automatic_admission` прекращает подготовку; уже подключённые identities
+удалять отдельно только после проверки новых позиций/журнала. Данные
+SQLite старой копией не заменять. Фактическая открытая приёмка этого этапа
+будет добавлена после естественного цикла TEST; полная готовность Amazon
+пока не заявляется.
+
+
+## 11.11.2026 — граница закрытого CORE и принятый последний child
+
+Подтверждённый дефект: закрытый 4H-контекст сначала проверял весь новый
+15m-хвост, включая ещё формирующийся 4H-период. Новый неизвестный пропуск
+в незакрытом периоде снимал ранее проверенный контекст старых свечей.
+Дополнительно принятый после сверки TV последний child предыдущей сессии
+попадал в STALE, вместо точного отсутствующего интервала обязательного окна.
+
+Исправление универсально в существующем closed CORE: граница по календарю,
+полное обязательное окно children, доказательства по текущему времени,
+финальная агрегация/DQ целевого TF и отдельная актуальная цена исполнения.
+Неизвестный пропуск внутри обязательного окна остаётся блокирующим.
+Данные, история и разрешения не переписываются; графический live-контекст
+не заменён закрытым. Исходные публичные DQ продолжают показывать факты.
+
+8 новых адресных тестов PASS: все intraday границы, 1D и DST, изоляция
+формирующегося 4H, обязательный 1H-пропуск, неполный хвост, INVALID,
+разрешённый последний child и запрещённый сосед. 3 непосредственно
+затронутые проверки прежней TV-агрегации PASS. Это не полный аудит архива.
+Реальный readonly Apple подтвердил устранение ложной 4H-блокировки:
+последний закрытый 4H снова 10.11 19:30; 1D пригоден. Новый 1H-пропуск
+11.11 08:00 оставлен заблокированным до независимой проверки.
+
+Ещё 2 теста подготовки PASS: сохранение точной причины CORE и приоритет
+действующих акций перед кандидатом. 5 затронутых quote-priority PASS.
+Итого для последовательного допуска теперь 14 новых PASS; отдельное
+согласованное чтение — 8; закрытые зависимости — 8. Ранее подтверждённые
+общие наборы не повторялись.
+
+Windows: штатные Save/Close/Restart, загрузка исправлений после 09:02 CET.
+Боковой Volume Profile виден вместе с EMA10/30, RSI, MACD, ATR и уровнями.
+Обозначение частичной истории сохраняется. CP автоматически, без Refresh,
+получил новые Apple 15m в 09:05:09.803 CET (последняя 08:45), NVIDIA 5m
+в 09:06:48.189 CET (последняя 09:00). Это времена получения, публикация
+поставщика отдельно не измерена. Прежние строки архива не удалялись.
+
+Утреннее новое наблюдение TV: Apple 11.11 08:00 отсутствует между 07:45
+и 08:15 на GETTEX:APC/15m/UTC+1. Передано через register_prior_review
+только как ASSISTED_ONLY-диагностика с точным native fingerprint.
+При передаче: RECHECK_QUEUED, candles_written=0, grants_changed=false.
+Последующую проверку и применение действующей политики выполняет CP.
+Это не доказательство NO_TRADES и не импорт OHLCV.
+
+Три проверенных случая добавлены в существующий cp_experience_catalogue:
+закрытые зависимости, согласованное чтение, боковой объём частичного архива.
+Автоматические исправления находятся в рабочих функциях; каталог хранит
+объяснения, ограничения и ссылки на тесты, а не исполняемые указания.
+Уже запущенные процессы подхватят новые справочные записи при следующем
+обычном старте; исправленная рабочая логика уже загружена.
+
+Amazon выбран самой очередью, подготовка пережила штатные перезапуски.
+Он остаётся WAITING; новый допуск не выдаётся до строгой проверки текущих
+1H/4H/1D, benchmark, прогрева, identity и цены. Детальная analysis_reason
+теперь доступна в существующем read-only MCP. Во время проверки сделки
+не создавались. V1-входы/риск неизменны; V2 остаётся shadow.
+
+Откат: предыдущий опубликованный 3daeb4f плюс адресные локальные ZIP
+для closed dependencies, aggregation, permissions и каталога опыта.
+Возвращать только затронутые исходники при штатно закрытом TEST;
+не восстанавливать поверх живой SQLite старый снимок. Подготовку можно
+отключить удалением только automatic_admission, отдельно сохранив
+текущие identities/позиции/журнал. PR остаётся draft без auto-merge.
+Общее задание PARTIAL до подтверждения устойчивого естественного цикла
+и устранения/доказательной классификации всех актуальных блокировок.
+
+
+## 11.11.2026 — ограниченный слот последовательной подготовки
+
+Воспроизведён ещё один системный дефект: при непрерывно готовых к опросу
+Apple/NVIDIA кандидат SEQUENTIAL_PREPARATION не выбирался вообще. Он
+участвовал в обслуживании торговых контекстов, но проигрывал действующим
+акциям, а третий слот занимал открытый график.
+
+Исправлена существующая fresh_candidate: первые два слота сохраняются
+рабочим акциям/позициям; третий получает единственный кандидат, когда его
+запрос допустим. Четвёртый слот остальных акций и следующий ход истории
+сохранены. Новых очередей, потоков по акциям и обходов rate limit нет.
+Проверенная подготовка автоматически добавляет допуск только после
+существующих CORE/benchmark/identity/revisions/freshness-проверок.
+
+Новый тест 53/200 ходов сначала воспроизвёл голодание, затем PASS после
+правки. Связанная проверка первого приоритетного слота PASS; 19 тестов
+существующей справедливой очереди и торгового приоритета PASS. Это
+проверка затронутого планировщика, не повтор общего аудита архивов.
+Случай добавлен в существующий каталог опыта CP с ограничениями и тестом.
+
+Windows Save/Close завершён штатно, дождались отдельного feed writer;
+запуск исправленного TEST 09:23:57 CET. История выбранной Apple 4H,
+боковой объём и индикаторы видны. Amazon остаётся сохранённым кандидатом
+после перезапуска; ручной Refresh не выполнялся. Новые строки OHLCV,
+реальные восстановления, принятые исторические риски и торговые сигналы
+по-прежнему учитываются раздельно.
+
+Контрольные суммы 63 инструментов, PAPER account/fills/archive, epoch,
+индикаторов и политик совпали с исходными. Прежняя PAPER-конфигурация
+равна исходной после исключения явно разрешённого automatic_admission.
+Ошибка промежуточного локального сравнения хэшей была в сериализации
+проверочного скрипта (ensure_ascii/tuple/separators), не в данных; формат
+приведён к исходному. Финансовые значения в GitHub не публикуются.
+
+Результат предыдущего утреннего наблюдения: CP сам перепроверил точный
+Apple 11.11 08:00 в 09:13:02 CET и применил действующую политику владельца.
+В 09:13:35 Apple и в 09:13:50 NVIDIA имели CORE READY/WAIT и свежую цену.
+Это не BUY и не доказательство восстановления отсутствующей свечи.
+После запуска 09:24 transient INPUT_CHANGED при реальном обновлении DQ
+оставлен защитным отклонением; последующая оценка ожидается автоматически.
+
+Откат: адресный ZIP «CP последовательная подготовка слот откат.zip»
+либо возврат только candle_schedule.py, теста и каталога к 83a9d9b.
+Не откатывать базу/прогресс/конфигурацию и не останавливать CP насильно.
+
+
+Дополнительная проверка в Windows обнаружила недостаточность первого
+исправления: за 09:24–09:32 кандидат не получил ни одного chart-запроса,
+хотя первые две квоты регулярно использовались Apple/NVIDIA. Быстрые
+официальные файловые задачи успевали сбросить cp_fresh_rotation до
+освобождения отдельного минутного HTTP-бюджета.
+
+Новый адресный тест воспроизвёл 0 ходов кандидата за 53 цикла. Исправлен
+тот же планировщик и существующая reserve_request: фактически выданные
+HTTP-запросы теперь задают очерёдность независимо от файловых задач.
+Два оперативных запроса сохраняются; следующие обычные квоты чередуются
+между единственным кандидатом и остальным архивом. Очередь, cooldown,
+Retry-After, общий минутный лимит и последующая проверка данных прежние.
+В существующей квитанции сохраняется preparation_turn, поэтому перезапуск
+не теряет очередь. Нет новой системы восстановления или отдельного API.
+
+Четыре новых теста PASS: третий слот, смешанный файловый/HTTP поток
+53/200 циклов с восстановлением состояния, чередование HTTP-квот,
+отказ при cooldown и неверной валюте. 8 ранее существующих непосредственно
+затронутых budget-тестов и 5 quote-priority PASS. Прежние тесты повторялись
+только после изменения связанного общего планировщика.
+
+19 связанных тестов справедливой очереди также PASS после последней правки;
+всего этап F: 4 новых + 32 непосредственно затронутых ранее существующих.
+Финальный Save/Close/Restart 09:35:07 CET применил и исправление общего
+HTTP-бюджета. База и writer завершались штатно, сохранённый кандидат тот же.
+
+Естественный первый результат после применения: Amazon 1D запланирован
+11.11 в 09:35:56.191 CET, получен/сохранён в 09:35:58.309 CET. CP сам
+добавил реальную дневную строку 10.11; added=1, changed=0. Общая квитанция
+сохранила preparation_turn=false, отдавая следующую обычную квоту остальным.
+Это новое поступление, не доказательство исторического восстановления
+или готовности всех TF. Внутридневная обработка продолжается автономно.
+
+
+## 11.11.2026 — переоценка кандидата после новых данных
+
+CP самостоятельно получил также Amazon 15m: plan 09:43:53.860 CET,
+receipt 09:43:56.749; 8 новых реальных строк, 0 изменённых, последняя
+09:15 (закрытие 09:30). Это не время публикации поставщиком — оно неизвестно.
+Вместе с дневной строкой этап дал 9 новых свечей кандидата без ручной загрузки.
+
+Обнаружен следующий дефект планирования: после неудачной подготовки
+фиксированные 300 секунд ожидания действовали и после поступления новых
+свечей. В данном случае результат за 09:43:31 ожидал следующего срока,
+хотя данные появились в 09:43:56. Старый код воспроизведён на реальном
+изменении ревизии в изолированной SQLite: choose возвращал None.
+
+В существующем paper_preparation сохраняются компактные ревизии обязательных
+исходных TF, их DQ, инструмента и разрешений. Значимое изменение направляет
+кандидата на повторную оценку в свободный ход прежней торговой очереди.
+Неизменные данные сохраняют cooldown. Изменение только HTTP-времени или
+другой акции не запускает лишний расчёт. Старая запись без токена один раз
+переоценивается после запуска. Это только сигнал к расчёту: полный CORE,
+benchmark, источник, свежесть цены и ревизии перед допуском сохранены.
+Никакие разрешения или OHLCV этой правкой не создаются.
+
+4 новых адресных теста PASS: новая свеча, неизменный HTTP/другая акция,
+новое DQ-доказательство против простого checked_at, миграция сохранённого
+кандидата после перезапуска. 5 связанных существующих PASS: сохранённый
+cooldown, приоритет пары, свободный слот Runtime и отрицательные проверки
+DQ/прогрева/benchmark/identity/несвежей цены. Наборы загрузки и архивов
+повторно не запускались. Правило добавлено в каталог опыта CP.
+
+15 минут естественного наблюдения предыдущего этапа: Apple 8 успешных
+измеренных расчётов, среднее 5.879 с / максимум 6.172 с; NVIDIA 11,
+3.622 с / 4.938 с. Это время расчёта фона, не задержка рынка и не скорость
+интерфейса. В конце обе CORE READY/WAIT со свежими ценами. Amazon получил
+данные, но оставшиеся исторические UNCONFIRMED и незавершённые проверки
+не превращались в разрешение. Ни одной тестовой сделки на основном счёте.
+
+Откат следующего изменения: paper_preparation.py, его тест и справочная
+запись из 599987b либо «CP новые данные переоценка откат.zip»; текущую базу
+и результаты естественных загрузок сохранить. Общая задача PARTIAL.
+
+Windows: штатный запуск правки переоценки 09:52:02 CET; долгий feed writer
+дождались, принудительное завершение не использовалось.
+
+
+## 11.11.2026 — совместный этап Work 2: доказательства восстановленных родителей
+
+По разрешению владельца Work 2 передал проверенное исправление для общего
+применения и публикации Work 1. Выявлено: attach_parent_provenance сравнивал
+hash всего interval_evidence, поэтому новое checked_at или посторонний
+интервал отзывали доказательство уже восстановленной старшей свечи при
+неизменных исходных и итоговых OHLCV.
+
+Новые proofs фиксируют только отсутствующие младшие интервалы конкретного
+родителя. При чтении они заново проходят прежний covered_empty; digest
+реальных children, OHLCV, identity и атомарные ревизии сохранены. Старый
+receipt автоматически не повышается: его перепроверяет штатный local recovery.
+Проверки отзыва доказательства, конфликтующих сделок/нулевого количества,
+неверной площадки, будущего времени и изменения исходных OHLCV сохранены.
+
+Work 2: 4 новых + 13 затронутых существующих тестов PASS (9.623 с).
+Устаревшая фикстура minuteHTTP теперь передаёт обязательную expected identity,
+чтобы проверять OUTSIDE_BOUNDED после проверки EUR. Work 1 прочитал diff и
+отрицательные сценарии; повторный запуск этих PASS не выполнялся.
+
+Адресные минимальные копии 49 реальных legacy cases: 49/49 прошли прежний
+локальный recovery, получили scoped proof при неизменных OHLCV и HTTP=0.
+Это изолированная проверка, не 49 исправлений в рабочей базе и не устранение
+всех 684 проблемных сохранённых серий. Другие ошибки источников/календарей,
+подтверждённые противоречия и ожидание оценки не снимаются этим исправлением.
+
+Файлы: history_service.py, test_parent_absence_scope.py,
+test_p1_parent_recovery.py, запись parent_scoped_absence в каталоге CP.
+Откат исходников — 9fe2c5d или локальный ZIP подтверждения восстановленных
+свечей; текущую SQLite не заменять. Естественную перепроверку хотя бы одного
+старого случая и его устойчивость к следующему обновлению evidence необходимо
+отделять от уже завершённой изолированной приёмки.
+
+
+Runtime предыдущего этапа: один сохранённый запрос Amazon GETTEX 15m
+06.11 22:15–22:45 поставлен 10:06:04 CET; обычный writer выполнил его
+10:07:02.759–10:07:04.903 (2.144 с). Три parent proof обновлены штатным
+локальным recovery, attempts=0, OHLCV всех трёх свечей неизменны. Проверка
+через load_official подтвердила все три; DQ серии остался UNCONFIRMED из-за
+других интервалов. Это исправление lineage, не три новых восстановленных
+ценовых бара. Последующее естественное обновление evidence ещё ожидается.
+
+## 11.11.2026 — пустой частичный контекст графика
+
+В рабочем журнале подтверждены KeyError timeframe и NaT.normalize из
+partial_chart.display_levels после пустого результата. Изолированный вызов
+bind воспроизвёл оба сбоя. Общий empty guard теперь возвращает отсутствие
+уровней, сохраняя исходный DQ и DATA BLOCKED/WAIT. Непустые проверенные
+участки продолжают давать реальные уровни. Никакого заполнения свечей.
+
+3 новых теста PASS (в том числе все 11 TF, пустой контекст без metadata,
+сохранение SOURCE_UNAVAILABLE), 2 непосредственно затронутых PASS
+(реальные закрытые уровни и отказ при недостаточных/неверных данных).
+Полные предыдущие наборы не повторялись. Применение в Windows ожидается
+следующим согласованным перезапуском. Откат partial_chart.py и записи
+каталога к 86dc54f; новый test_empty_partial_context.py можно убрать.
+
+
+## 11.11.2026 — совместный этап: дубликаты старых DQ-отчётов
+
+Work 2 нашёл три legacy INVALID без identity, дублирующие отчёты тех же
+сохранённых рядов. Новый cp_diagnostic_cleanup нормализует максимум одну
+запись за обычный локальный ход существующего FeedContext; свежая очередь
+цен не вызывает эту работу. Требуются единственная реально сохранённая
+identity и точное соответствие архивному INVALID. Исходные state, issues
+и checked_at сохраняются: устаревший архив не становится новым разрешением.
+Старый отчёт хранится в atomic receipt; запись compare-and-swap.
+
+Повреждённые metadata возвращают UNKNOWN без остановки feed. Неоднозначные
+источники, иные/разрешённые ошибки, более новые отчёты, будущее время и
+неподтверждённые совпадения пропускаются. Ограничение 32 квитанции на ISIN.
+
+7 адресных тестов PASS у Work 2: 6 unit и 1 FeedContext integration.
+Три реальные минимальные изолированные записи NORMALIZED, исходный INVALID
+и рыночные данные сохранены. Это не три исправления качества свечей.
+Work 1 прочитал helper, hook и негативные сценарии без повторения PASS.
+Рабочая миграция запускается только обычным CP после согласованного restart.
+Откат feed_worker.py/catalogue к 468d8c4, убрать два новых файла; при
+необходимости вернуть исходную диагностику из cp_diagnostic_cleanup receipt
+с проверкой неизменности записи. Рабочую SQLite старой копией не заменять.
+
+
+### Итог адресной runtime-проверки 11.11, 10:33 CET
+
+После restart 10:20:16 выполнено восемь минут наблюдения без Refresh и
+ручных загрузок. CP сам нормализовал два старых дублирующихся отчёта
+(10:21:19.924 и 10:24:40.314); исходные INVALID/issues/время сохранены.
+Третий обнаруженный дубликат ожидает своей обычной очереди.
+
+В 10:30:09.387 естественно обновилось interval_evidence Amazon. Повторное
+чтение через штатный load_official в 10:31:43 подтвердило все три parent
+proof 06.11 22:15–22:45: прежние OHLCV и proofs неизменны, новый evidence
+digest не отозвал действительное происхождение. Никакой повторной записи
+этих ценовых свечей не потребовалось. Общая серия осталась UNCONFIRMED
+из-за иных проблем; новых исторических разрешений не создавали.
+
+Все девять контрольных сравнений инструментов, PAPER-данных, журнала и
+настроек совпали после restart (10:32:46). Новых сделок для проверки нет.
+Windows и независимые MCP-read подтвердили работающий TEST и CP ACTIVE.
+У Apple/NVIDIA часовой CORE READY/WAIT; это отдельные разрешённые владельцем
+контексты, не строгий READY всего архива или глобальных 57 оценок.
+В конце у Apple вновь PAPER_STALE_QUOTE: запрос 5m в 10:28 получил UNCHANGED
+с последним реальным баром 10:10 (закрыт 10:15); данные в 10:30 тоже не новее.
+Это зафиксированное ограничение полученного источника, не разрешение
+продлить freshness. CP продолжает допустимые запросы; постоянная свежесть
+всех источников не заявляется. У NVIDIA цена на 10:30, blocker отсутствует.
+
+Дополнение Work2, consistent read 10:30:12 CET: 682 проблемных сохранённых
+серии (461 UNCONFIRMED,109 GAP,49 SOURCE_GAP,55 INVALID,8 SOURCE_UNAVAILABLE),
+92 READY; источники проблем:376 proxy,163 gettex_chart,128 gettex,15 без
+identity. Это исторические серии разных источников, не682 текущие торговые
+ошибки. В54GAP остался текст старого ограничения числа диапазонов, которого
+нет в действующем bounded repair; данные требуют обычной перепроверки,
+а не повторной реализации recovery или удаления действующего GAP.
+Полный приватный индекс остался локальным; новый полный аудит не запускали.
+
+Последние три исправления:14 новых +15 непосредственно затронутых проверок
+PASS. Каталог32сценария с доказательствами и ограничениями; не автоматический
+самопереписыватель программы. Отсутствующие доказательства источника остаются
+явными; дополнительная история/подтверждение неизвестных интервалов не
+заменяются допуском. Общая задача PARTIAL, реализованные общие исправления
+применены, подтверждены и опубликованы.
+
+Измерения этих восьми минут по уникальным часовым расчётам: Apple6,
+среднее5.771с/максимум6.266с; NVIDIA7,среднее3.476с/максимум3.828с.
+Это время фонового расчёта, не задержка рынка, не обещание скорости GUI
+и не доказательство процентного ускорения всего CandlePilot.
+
+
+## K — аудит и восстановление обслуживаются отдельно
+
+Совместный этап Work1/Work2 опубликован в commit 2294bfc (PR #18).
+Подтверждённый дефект: local-only аудит сохранял input revisions, после чего
+обычная очередь пропускала ещё не выполненное recovery без next_retry.
+Воспроизводящий тест сначала FAIL. Теперь recovery_checked_at и привязка
+к подтверждённому адаптеру хранятся отдельно. Появление допустимого адаптера
+возобновляет обслуживание; часы HTTP-опроса не вызывают повторную работу.
+Сохраняются cooldown, точная identity, CAS и одна серия за ход очереди.
+
+Локальная проверка охватывает сохранённые GETTEX-chart/EUR и официальный
+GETTEX, учитывает версию валидатора и parent provenance. Аудитор не делает
+HTTP-запросов, не меняет OHLCV и не выдаёт торговые разрешения. Повторная
+проверка после изменения валидатора идёт постепенно через прежнюю очередь.
+
+Панель и MCP отдельно показывают область действующей политики, архив других
+площадок, удалённые инструменты и неполную identity. Срез 10:30 CET:
+682 проблемных отчёта = 275 + 326 + 71 + 10. Все 54 старых сообщения о лимите
+числа участков принадлежат удалённым инструментам. 31 старый диагноз
+невозможного OHLC относится к отсутствующим exact series, а не доказывает
+наличие повреждённых строк в текущем архиве. Эти записи сохранены.
+
+Проверки: **11 новых + 14 непосредственно затронутых PASS** (9 Reaudit,
+2 Scopes, 14 LocalCompletion/WorkerRoutes). Включены unchanged/restart,
+53/200 fairness, proof-only change, отсутствие адаптера и его появление,
+конкурентный новый аудит, запрет HTTP в local-only и настоящий dq.repair
+с изменёнными данными при действующем cooldown. Ещё 19 импортированных
+проверок были PASS ранее и не посчитаны новыми. Work1 проверил изменения,
+синтаксис/JSON и состав публикации; старые PASS повторно не запускал.
+
+Windows Save/Close/Restart выполнен 11.11 в 10:54:28 CET после завершения
+writer. Панель Health проверена в 10:56: текущая область 275, другие
+площадки 326, удалённые 71, неизвестная identity 9; всего 773 DQ-ряда.
+Независимый MCP вернул те же значения. Изменение числа старых дубликатов
+не объявляется восстановлением ценовых свечей. График Apple 4H, EMA10/30,
+RSI, MACD, ATR, уровни, боковой Volume Profile и живая свеча отображаются.
+Графический фоновый CORE после запуска ожидал расчёт; это отдельно от
+работающего независимого часового PAPER CORE.
+
+Естественная очередь без Refresh уже записала 12 аудитов новой версии.
+Apple GETTEX-chart 1D: аудит 10:55:24.223 → отдельная попытка recovery
+10:55:25.510, WAITING_PROVIDER, разрешённая повторная попытка 10:55:45.714.
+GAP остался фактическим, источник и старые OHLCV не подменены. Все девять
+контрольных сравнений инструментов, PAPER-таблиц и настроек совпали
+в 10:56:43. После restart CP сам получил Apple 5m: план 10:56:16.053,
+приём 10:56:23.120, +2 новых строки/0 изменений, последний бар 10:50;
+NVIDIA 5m: план 10:54:45.715, приём 10:54:56.814, +1/0, последний 10:45.
+Это новые свечи, не исторические восстановления. Время публикации
+поставщиком неизвестно; разница план/приём не объявляется задержкой рынка.
+Часовой CORE обоих инструментов READY/WAIT, свежесть цены проходит.
+Отсутствие BUY объясняется условиями стратегии; новые сделки не создавались.
+
+Прежняя обычная очередь 37 точных диапазонов (46 legacy parent proofs,
+6 инструментов) продолжилась после restart. Срез Work2: 3 COMPLETED,
+23 BLOCKED, 1 RUNNING, 9 QUEUED, 1 SUPERSEDED. Три завершённых диапазона:
+Johnson & Johnson 30.10 22:00, Newmont 30.10 22:00, Siemens Energy
+06.11 22:30–22:45, время Берлина. BLOCKED общей проверки может включать
+другие ошибки серии и не равен отказу исправления каждого parent proof.
+Эти результаты не считаются новыми свечами или полным READY архива.
+
+**Этап K внедрён и проверен; общая задача PARTIAL.** Остальные архивные
+пробелы и ограничения источников остаются видимыми; Amazon продолжает
+штатную подготовку. V1, разрешения, риск и PAPER-защита 2ATR/2R сохранены;
+V2 остаётся теневой. Откат: вернуть только семь путей commit 2294bfc
+к e886d6f либо использовать проверенный адресный ZIP; новые тесты можно
+убрать. Рабочую SQLite старой копией не заменять.
+
+
+## L — снятие устаревшей диагностики удалённых инструментов
+
+Commit 96e9a04, PR #18. По явному поручению владельца проверены 72 старых
+отчёта data_quality по восьми отсутствующим в instruments ISIN: 71 проблема
+и один READY. Общий механизм cp_diagnostic_cleanup переносит максимум один
+такой отчёт за обычный history-turn; оперативная очередь цен это не делает.
+Повторная проверка регистрации и DELETE CAS выполняются внутри транзакции.
+Точный before_raw хранится в квитанции, которую нельзя перезаписать; предел
+4096 квитанций оставляет оригинал на месте. Свечи, архивы, источники и
+торговые разрешения не меняются. Повторное добавление инструмента защищает
+его актуальную диагностику. Откат сохраняет более новые активные отчёты.
+
+При review воспроизведён FAIL: восемь повреждённых ключей перед LIMIT
+блокировали правильного кандидата. Фильтрация формы ключа перенесена до
+LIMIT; повреждённые записи сохраняются, правильные обслуживаются.
+
+**6 новых + 9 связанных тестов PASS**: сохранение оригинала/OHLCV, повторная
+регистрация, лимит квитанций, конфликт DELETE, один перенос за ход,
+идемпотентность, отсутствие starvation из-за повреждённых ключей,
+существующий fresh-skip и согласованность счётчиков. Изолированная проверка
+72 реальных записей в памяти сохранила 72/72 оригинала, live writes 0.
+Максимум memory-turn 0.000884 с не является измерением скорости Windows.
+Work1 проверил код и публикацию без повторения уже пройденных наборов.
+
+Штатный Save/Close/Restart 11.11 в 11:06:05 CET дождался завершения writer.
+Windows Health и независимый MCP в 11:07 показали один перенесённый отчёт
+и явную надпись «очистка диагностики, не исправление свечей». Срез:
+275 текущих проблем, 326 других площадок, 70 удалённых инструментов,
+9 неизвестной identity; 772 DQ-ряда плюс отдельный retired_reports=1.
+
+К 11:08:23 очередь самостоятельно перенесла уже четыре записи:
+AU000000NAB4, official 15m/5m и NAL.F 15m/1D, в 11:06:38.059,
+11:07:31.002, 11:08:03.108 и 11:08:09.416. Для всех четырёх exact-before
+SHA256 совпал с сохранённым BEFORE, активные ключи отсутствуют,
+инструмент не зарегистрирован, quality_repaired/market_data_changed=false.
+Все девять сравнений PAPER-данных, списка и настроек совпали. Остальные
+68 записей продолжают обычную очередь; завершение всех 72 не заявляется.
+Никакой ручной миграции рабочей диагностики не выполняли.
+
+Apple/NVIDIA сохранили независимый часовой CORE READY/WAIT, свежую цену
+закрытия 11:00 и действующую PAPER-защиту 2ATR/2R. Новых сделок для проверки
+не создавали, V2 осталась теневой. Предыдущий прогресс CP после restart
+сохранён. Этот этап не означает восстановления исторических пробелов.
+
+Этап L внедрён; общая задача PARTIAL. Адресный откат: вернуть шесть путей
+commit 96e9a04 к af69fb9 либо использовать проверенный ZIP; новый тест можно
+убрать. При возврате отдельного before_raw сначала проверить отсутствие
+более нового активного отчёта. Рабочую SQLite старым снимком не заменять.
+
+### Естественное завершение прежнего восстановления происхождения
+
+Work2 прочитал шесть затронутых GETTEX-рядов через штатный load_official
+11.11 в 11:06:19 CET: invalid_parent_provenance отсутствует у всех шести
+(Johnson & Johnson, AbbVie, Newmont, Siemens Energy, Duke Energy, Merck).
+Для 46 первоначально отмеченных родительских свечей больше нет прежнего
+дефекта подтверждения. Очередь 37 запросов завершена: 5 COMPLETED,
+31 BLOCKED из-за других ошибок всей серии, 1 SUPERSEDED. Эти статусы нельзя
+приравнивать к результату каждой отдельной parent proof. Это естественная
+работа ранее внедрённого общего исправления H, не ручное изменение свечей
+и не 46 новых OHLCV. READY всех рядов не заявляется. Проверенный локальный
+артефакт содержит нулевые списки оставшихся proof-ошибок всех шести ISIN.
+
+## M — честный порядок повторных оценок Smart Eligibility
+
+Доказан дефект cp_assessment.choose: отсутствующий last_attempt_at считался
+нулём. При постоянном поступлении новых заявок они бесконечно опережали
+старые задачи ERROR, даже после истечения retry_at. В рабочей очереди две
+ошибки INPUT_CHANGED оставались с попытками предыдущего вечера, около
+12 часов, при продолжающейся обработке новых задач. Это отдельная очередь
+общего допуска, а не независимый часовой CORE Apple/NVIDIA.
+
+Минимальное исправление сравнивает last_attempt_at, а для первой попытки —
+requested_at. Сохраняются два приоритетных хода перед обычным, 60 секунд
+после ошибки, сохранение очереди и точные проверки ревизий. Никаких ручных
+правок отдельных акций, TTL, свечей или торговых разрешений.
+
+**3 новых + 3 непосредственно затронутых теста PASS (0.432 с).** До правки
+воспроизведены FAIL старой повторной попытки и сценария непрерывных новых
+заявок 53/200. После правки старая ошибка получает третий ход после двух
+приоритетных. Отдельно проверены retry_at, сохранение очереди после
+повторного открытия и отклонение результата при изменении ревизии.
+Старые общие PASS-наборы и исторический аудит не запускались.
+
+Код проверен; применение в Windows и естественная повторная оценка ещё
+ожидают проверки. Это исправление планирования, не доказательство нового
+ANALYSIS/TRADE READY. Общая задача PARTIAL. Адресный откат: вернуть
+cp_assessment.py, каталог и этот документ к 3fb8102; удалить только новый
+тест test_cp_assessment_retry_fairness.py. Точная исходная копия сохранена
+в адресном ZIP. Рабочую базу старой копией не заменять.
+
+## N — сохранение действующих независимых результатов при ошибке переоценки
+
+Воспроизведена ошибка publish_eligibility: новая квитанция ERROR полностью
+заменяла прежний успешный расчёт. Действительный 1W-контекст терял допуск
+из-за ошибки повторного расчёта 5m, хотя его собственные данные и срок
+не изменились. До исправления положительный тест FAIL, проверка сохранённой
+квитанции ERROR (candidates удалены); два отрицательных сценария PASS.
+
+Теперь при ошибке сохраняется предыдущая квитанция с исходными входами и
+сроками; last_failed_attempt отдельно виден в Health и read-only MCP.
+Очередь получает ошибку и соблюдает прежний retry/cooldown. Следующая
+успешная публикация заменяет квитанцию. Первичная ошибка без предыдущего
+результата остаётся ERROR. Вложенные копии не накапливаются.
+
+**4 новых + 3 затронутых теста PASS (1.422 с).** Проверены независимый
+1W при просроченном 5m, отсутствие trade_ready, неизменные revisions/expiry,
+повторная попытка после cooldown, первый ERROR, следующая успешная
+публикация, отзыв при смене identity и срока и прежний отказ публикации
+устаревшего расчёта. Тестовые OHLCV и разрешения в рабочую базу не записаны.
+
+Код проверен; Windows и естественный повторный сбой ещё ожидают проверки.
+Это не исправление внешних данных и не автоматическое восстановление уже
+утраченных старых расчётов: CP выполняет их повторно сам. Общий статус
+PARTIAL. Адресный откат: вернуть calculation_window.py, candlepilot_health.py,
+каталог опыта и этот документ к ead83ae; удалить только новый
+ test_cp_assessment_preserve.py. Проверенный ZIP сохраняет исходники.
+Базу и счёт не откатывать.
+
+## O — отсутствующий файл GETTEX не блокирует доступные соседние файлы
+
+Work2 воспроизвёл дефект gettex_history.acquire_missing_evidence: первый
+HTTP404 прерывал пачку, следующая попытка снова начинала с того же файла.
+Позднейшие доступные срезы не проверялись. В сохранённых квитанциях было
+19 дат с404/downloaded0; это ещё не доказывает недоступность всех файлов.
+
+Общий загрузчик теперь продолжает после404 внутри прежнего бюджета до8,
+сохраняет курсор стабильного порядка и возвращается к началу после обхода.
+Курсор включён в RUNNING lease доHTTP: review Work1 выявил и устранил потерю
+последнего завершённого шага при аварии до записи результата. Общие
+cooldown/Retry-After сохраняются;429, повреждённыйgzip и другие ошибки
+останавливают пачку.404 не подтверждает NO_TRADES. OHLCV/DQ обрабатываются
+прежним валидатором, разрешения и корректные свечи не меняются.
+
+**6 новых уникальных тестов PASS**, три исходных воспроизвели FAIL доfix:
+404 перед двумя доступными соседями; bounded2 с reopen/cooldown;404→429
+с Retry-After2дня; полный оборот очереди; повреждённыйgzip; прерывание после
+lease с сохранением курсора. Work1 проверил diff без повторения PASS.
+
+Дополнительный прогон дал57 связанных PASS-исполнений, не обязательно
+уникальных тестов, и4 прежних ошибки test_candlepilot.CP. Все4 отдельно
+воспроизведены с исходной acquire_missing_evidence из HEAD: tr undefined
+в test_real_tk_binding_all_states; time undefined в
+ test_dq_block_is_not_worker_malfunction и test_worker_exception_is_error;
+ test_acquired_files_use_existing_classifier_only_when_complete ожидал
+UNCONFIRMED вместоPARTIAL. Это дефекты старых фикстур/ожиданий, не новые
+регрессии; общий прогон не объявляется полностью PASS, несвязанные тесты
+не переписывались.
+
+Статус PARTIAL до внедрения и естественного обращения Windows CP. Откат:
+gettex_history.py, каталог и документ к a858fbb; убрать только новый
+ test_cp_missing_file_rotation.py. Проверенная адресная копия сохранена.
+Существующие файлы доказательств, SQLite и счёт не откатывать.
+
+### Этап M — подтверждение естественной работы
+
+После штатного Save/Close/Restart 11.11 в11:24:09 CET Windows сохранил
+Apple4H/месяц, график, EMA/RSI/MACD/ATR, уровни и боковой объём.
+Очередь без ручного запуска вернулась к Newmont: прежняя ERROR-квитанция
+10.11 в23:04:52 CET заменена результатом проверки 11.11 в11:32:12 CET
+без error. Это подтверждает обслуживание старого retry после приоритетных
+ходов; само по себе не объявляет данные или торговлю READY. Amazon ещё
+ожидает очереди. Длительный общий диагностический расчёт занимал общую
+полосу snapshot/eligibility; оперативный часовой CORE продолжал работать.
+
+В11:33:19 все9 сравнений сохранности инструментов/настроек/PAPER/журнала
+совпали с BEFORE. MCP отдельного часового контура подтвердил Apple/NVIDIA
+CORE READY/WAIT и отсутствие quote_blocker; новых сделок для проверки нет.
+Код M применён и естественный retry подтверждён, общая задача PARTIAL.
+
+### Уточнение N: успешное повторное использование
+
+Дополнительный адресный сценарий воспроизвёл оставшуюся старую ошибку
+в диагностике после успешного reuse текущей квитанции. Успешная публикация
+теперь удаляет только last_failed_attempt; сроки, proof и разрешения не
+меняются. Один новый FAIL→PASS и один затронутый тест сохранения PASS.
+Всего для N5новых уникальных случаев; старые наборы не повторялись.
+
+## Итог внедрения M–O, 11 ноября
+
+Финальный код9aeb48c загружен штатным Save/Close/Restart в11:45:19 CET.
+Windows подтвердил сохранение Apple4H/месяц,293свечей, живого обновления,
+EMA10/30,RSI,MACD,ATR,уровней и Volume Profile. Панель Health работает;
+MCP нового экземпляра читает диагностику. Все9 сравнений сохранности
+списка, настроек, счёта и журналов совпали в11:46:26.
+
+Естественные результаты:
+
+- M: старые задачи снова обслуживаются. Newmont11:32:12CET получил новую
+  оценку без прежнего ERROR; Amazon11:35:37 повторно оценён и честно
+  отклонён при фактическом изменении5m. Apple11:41:43 пересчитан без error.
+  Это результаты автоматической очереди, без ручного запуска по акциям.
+- N: код и поля диагностики применены.5новых уникальных сценариев PASS,
+  но естественное срабатывание ветки сохранения при новом сбое пока
+  не наблюдалось; этот отдельный runtime-критерий PARTIAL. Ошибки в рабочую
+  программу специально не внедряли.
+- O: код применён,6новых PASS. Существующий исторический retry разрешён
+  не раньше14:12:49CET; до него естественный обход404 не заявляется PASS.
+  Cooldown не обходили. Прежний публичный GETTEX endpoint не обещает
+  долгосрочного архива; отсутствие файла не доказывает отсутствие торгов.
+
+Всего M–O14новых уникальных PASS, плюс отдельно указанные связанные
+проверки. Четыре прежние ошибки тестовых фикстур остаются документированы.
+Старый полный аудит/массовые загрузки/прежние общие PASS не повторялись.
+
+MCP11:46:49 после последнего restart: независимый часовой CORE Apple и
+NVIDIA READY/WAIT, quote_blocker отсутствует, новые расчёты11:45:50/59,
+время8.953/3.750с соответственно (единичные измерения, не среднее).
+Стратегия не сформировала вход; новые тестовые сделки не создавались.
+В общей Smart Eligibility в тот же момент analysis/signal/trade=0:
+эти оценки относятся к другому расчётному контексту, их не подменяем
+результатом независимого часового PAPER. Полная готовность всех57 не
+заявляется. Общий диагностический snapshot занимал344.485с и задерживал
+общую eligibility-полосу; это оставшееся ограничение производительности,
+не остановка оперативного CORE.
+
+Amazon продолжает штатную подготовку, исторические275текущих GETTEX-рядов
+не объявлены исправленными. Отдельная разрешённая владельцем работа Work2
+с доказательствами TradingView продолжается и не подменяет исходныйDQ.
+V1,риск,история и счёт сохранены;V2теневая,реального брокера не трогали.
+**Общий статус PARTIAL**, автоматическое продолжение оставлено действующим.
+Адресные исходники/тесты и откат по этапам приведены выше; БД не откатывать.
+
+## P — календарь старых дневных сверок TradingView
+
+Подтверждён дефект cp_reconciliation._classify: при отсутствии native-строк
+в schedule передавалась identity без timeframe. Поэтому дневные сверки
+2018 года ошибочно попадали под ограничение внутридневного календаря2026
+и получали BLOCKED до сравнения сохранённых доказательств.
+
+Минимальное исправление передаёт job['tf'] в существующий schedule.
+Границы календаря, provenance, DQ, OHLCV и торговые разрешения не меняются.
+**6 новых PASS**: daily2018 ABSENT/ZERO_VOLUME (оба доfix ERROR), отказ
+intraday2018 и daily2014, weekly/monthly остаются UNCONFIRMED без DQ-grant.
+Связанный старый прогон23:20PASS и3прежних сбоя. Все3 воспроизведены с
+исходной _classify: interval_evidence revision, ожидание fingerprint2
+вместо4, stale observation None вместоMISSING_IN_BOTH. Полный старый набор
+не объявлен PASS, несвязанные ожидания не менялись. Work1 проверил diff
+и сохранённые результаты, не повторяя пройденные тесты.
+
+На двух точных сохранённых входах Apple GETTEX/EUR1D readonly-классификация
+послеfix:10.05.2018 MISSING_IN_BOTH;11.05.2018 TV_ROW_MISSING_IN_SM при
+наблюденииZERO_VOLUME. Обе observation_current=true,can_affect_dq=false.
+Это устранение ошибки календаря, не добавленные OHLCV и не новое разрешение.
+Визуальные свидетельства сохраняет отдельная разрешённая работа Work2;
+ограничение CSVэкспорта TradingViewBasic не обходится.
+
+Код проверен; Windows применение и очередная естественная сверка пока
+ожидаются. Сохранённый next_check не раньше12:49CET, его не переносили
+ради PASS. Общий статус PARTIAL. Адресный откат: вернуть три исходных
+пути к b583afa и убрать новый test_cp_daily_review_calendar.py; точный
+ZIP проверен. Рабочую БД и сохранённые наблюдения не откатывать.
+
+
+### P — применение и область проверки
+
+Штатный Save/Close/Restart11.11 в11:59:50CET загрузил8ce956f. Windows
+восстановил Apple4H/месяц, EMA/RSI/MACD/ATR, уровни и Volume Profile.
+MCP нового экземпляра доступен, CP ACTIVE;9сравнений сохранности совпали.
+Все31BLOCKED дневное задание у24инструментов проверены только чтением:
+31UNCONFIRMED,0исключений,0can_affect_dq,2актуальных наблюденияTV.
+Это не31исправленная серия и не новые разрешения. Естественная сверка
+двух Apple-периодов ожидает12:49CET; cooldown не переносился.
+[Отчёт P](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6794053387).
+
+## Q — устранение повторных вычислений в общей диагностике
+
+Общий snapshot не включал уже существующее точное повторное использование
+DQ/индикаторов, доступное в CP assess_all. Адресный профиль одного Apple4H
+показал29вызовов DQ audit; тест дважды одинакового входа воспроизвёл лишние
+проверки. snapshot_worker.calculate теперь только включает существующий
+calculation_reuse вокруг прежнего расчёта. Отдельная система, новые потоки,
+ослабление календаря или снятие snapshot/eligibility exclusion не добавлены.
+
+**5новых PASS**: одинаковые проверки выполняются один раз; изменённые
+OHLCV/identity блокируются; реальные ревизии отклоняют результат;53/200
+инструментов независимы и укладываются в существующий лимит кэша; контекст
+освобождается после успеха/ошибки. **3затронутых PASS** проверяют изменения
+evidence/часов, запрет reuse неявного времени и сохранение warmup/DQ.
+Остальные старые PASS не повторялись.
+
+Один сравнительный эксперимент только чтением на одном SQLite read snapshot,
+одинаковое время и Apple4H:10.593с безreuse,8.953с сreuse. Результаты совпали
+полностью, кроме5полей checked_at. Это адресный замер, не процент ускорения
+всей программы. Первое профилирование живой БД правильно отклонило результат
+при естественном изменении DQ; затем сравнение использовало согласованное
+чтение. Никаких записей в рабочую БД/скачиваний/разрешений этот эксперимент
+не делал. Windows применение и длительность полного естественного цикла
+пока PARTIAL.
+
+Адресный rollbackQ: вернуть snapshot_worker.py, каталог и этот документ к
+8ce956f, удалить только новый test_snapshot_exact_reuse.py; проверенныйZIP
+сохранён локально. SQLite и очередь не откатывать.
+
+
+### Q — фактическая Windows/MCP приёмка
+
+47ce1d7 загружен штатным Save/Close/Restart12:10:25CET. Windows сохранил
+Apple4H/месяц, живую свечу, EMA/RSI/MACD/ATR, уровни и боковой объём.
+Счёт/журналы/настройки/инструменты: все9сравнений сохранности совпали12:19:07.
+
+Первый естественный общий цикл63инструментов: старт12:10:33.480, принят
+12:17:14.393;400.906с всего,355.031с вычисления,3.793с ожидания публикации.
+654зависимости подтверждены;17результатов по изменившимся входам корректно
+отозваны. Это не17исправлений или разрешений. Старый замер344.485с и новый
+получены в разных условиях запуска/очереди, поэтому **ускорение полного
+цикла не подтверждено**. Адресный A/B сохраняет самостоятельную силу;
+общая длительность остаётся известным ограничением. Новая сеть/загрузка
+архива не запускалась, CP сохраняет свой штатный цикл.
+
+RemoteMCP один раз вернул connection timeout перед внедрением, следующий
+вызов и итоговое чтение12:19 успешны. В независимом часовом контуре Apple
+и NVIDIA после запуска получили новые CORE READY/WAIT; свежие цены закрытия
+12:15/12:10CET, quote_blocker отсутствует. V1 работает по прежним правилам;
+BUY не сформирован. V2 остаётся теневой. Amazon автоматически пересчитан
+12:13:05, остаётся UNCONFIRMED на1H/4H при актуальной цене. Общая Smart
+Eligibility по57 в12:19 по-прежнему analysis/signal/trade=0; не подменяем
+её независимым часовым контуром.
+
+Дополнительно естественно проявилась ветка N: новый отказ Apple в12:17:16
+из-за реального изменения15m записан отдельным last_failed_attempt, прежние
+checked_at11:54:18/expires12:00/error=null сохранены. Это не продление
+истёкшего допуска. Полного хеша именно этой версии ДО отказа нет; побитовое
+сохранение подтверждено адресными тестами, естественно подтверждены ветка
+и сохранённые времена. Во время цикла NVIDIA также корректно отказала при
+изменении cp_manual_risk, а следующая обычная оценка вернула CORE READY.
+
+Общий статус PARTIAL. P ожидает прежний допустимый retry12:49; O нераньше
+14:12:49CET. Остальные исторические ограничения не объявлены устранёнными.
+Сохранён материал для последующей проверки, являются ли изменения квитанций
+TV семантическими или только служебными; причина ложного отзыва этим чтением
+ещё не доказана, поэтому защитные проверки не менялись. Наблюдатель Q
+завершился сам после первого ACCEPTED, фоновых скриптов проверки не осталось.
+
+
+## R — ложные межтаймфреймовые зависимости квитанций
+
+Найдено по коду и воспроизведено: attach_tv_absence и accepted_gap_input
+отслеживали input_revisions всех квитанций до отбора фактически используемой
+identity/base. Поэтому дневной/недельный расчёт отзывался из-за15m-квитанции,
+которая не участвует в его1D/1W/1M-профиле. Реальная1W-квитанция Apple
+сослалась на изменение job15m за24.09.2026 13:15–13:30.
+
+Минимальное исправление переносит отслеживание после точного отбора ISIN,
+полной identity и базового TF. Отклонённые совпадающие TV-квитанции остаются
+в зависимостях. Whole-grant/policy guards неизменны; ни одно поле самой
+релевантной квитанции не игнорируется. Если родитель построен из5m,
+соответствующие5m-зависимости сохраняются.
+
+**6новых PASS**: независимость чужогоTF, совпадающие/rejected receipts,
+отказ при их изменении, другой поставщик, измененияpolicy/grant, реальные
+5m-дети. **2затронутых PASS**: изменениеOHLCV отзывает агрегацию;
+дневные/недельные/месячные суммы и фактическийDQ остаются прежними.
+
+Сравнение только чтением на одном SQLite snapshot Apple1D:1274свечи,
+132зависимости/122TVjob до;3зависимости/0TVjob после в этой функции.
+OHLCV и метаданные совпали кроме времени проверки. Само разрешение и политики
+по-прежнему входят в зависимости. Внешние загрузка/идентификация/CORE
+сохраняют свои остальные guards; эти числа не относятся ко всему движку.
+Новые разрешения, свечи и сделки не создавались. Windows применение и
+естественный пересчёт пока PARTIAL.
+
+Адресный rollbackR: вернуть cp_controls.py, каталог и документ кd82214e;
+убрать новый test_cp_receipt_dependencies.py. ZIP проверен. БД не откатывать.
+
+
+## R — естественное применение, 11.11.2026
+
+Штатный Save/Close/Restart выполнен в 12:32:36 CET. Windows сохранил
+Apple 4H/месяц, 293 свечи, EMA 10/30, RSI/MACD/ATR, уровни и боковой объём.
+Новый экземпляр подтверждён remote MCP. Обычная очередь пересчитала Apple
+в 12:42:37 и 12:51:28. В 12:44:27 её 1H/1W/1M имели CURRENT. У 1W/1M
+стало 0 чужих 15m-TV-зависимостей вместо 122; у 1H сохранились 119
+релевантных квитанций. В 12:45 срок 1H честно истёк, а 1W/1M ещё были
+CURRENT. В 12:45:47 обновление whole-grant вызвало отдельный отзыв — S ниже.
+Это подтверждает исправление R, но не длительную стабильность всего допуска.
+NVIDIA самостоятельно вернулась из временного UNCONFIRMED в часовой
+CORE READY/WAIT к 12:39, без ручного восстановления.
+
+## S — повторное подтверждение прежнего разрешения
+
+В сохранённых данных 12:24:56–12:46:16 CET все 127 квитанций Apple и 4 NVIDIA
+совпадают целиком, кроме номеров input_revisions. Решения, границы, actor,
+evidence/native_binding и набор scopes те же. CP штатно подтвердил их снова
+после новых данных; прежний whole-grant fingerprint считал обновление
+счётчиков другим содержанием разрешения.
+
+В performance_cache._setting_value только для квитанций, прошедших
+ effective_accepted, расчётный fingerprint заменяет номера scopes на CURRENT.
+Все поля решения и набор scopes остаются строгими. Неподтверждённые и
+неизвестные квитанции сохраняют точные числа. Использованные OHLCV,
+политика, происхождение и исполнительные ревизии проверяются отдельно.
+БД и разрешения не переписываются. Старые proofs требуют штатного пересчёта.
+
+**8 новых PASS:** два положительных подтверждения; изменённая свеча;
+изменённые условия, источник и неизвестное поле; неподтверждённая квитанция
+и отключённая политика; старый proof; строгий отказ исполнения при новой
+ревизии; 53/200 независимых квитанций. **2 затронутых PASS:** identity/evidence
+и expiry. До исправления два положительных сценария дали ERROR. Старый
+proof также не отзывал повторно записанную неподтверждённую квитанцию при
+append за пределами окна. Тест изменённой свечи раньше блокировался по grant,
+после исправления — непосредственно по OHLCV.
+
+Код ff6a0da штатно запущен в 12:54:11 CET. Windows сохранил график,
+индикаторы, уровни и Volume Profile. Remote MCP подтвердил новый экземпляр;
+часовой CORE Apple/NVIDIA READY/WAIT, цены закрытия 12:50, без quote_blocker.
+Все 9 сравнений сохранности совпали в 12:55:21. Естественное удержание proof
+после повторного подтверждения ещё ожидается. Наблюдатель только читает БД
+раз в 45 секунд, без Refresh и изменения очереди.
+
+Rollback S: вернуть performance_cache.py, каталог и документ к d600b6f;
+убрать test_cp_receipt_renewal.py. Адресный ZIP проверен; БД не откатывать.
+
+## T — передача заявки после свежих данных
+
+Воспроизведён дефект передачи: свежий writer записывал analysis_requested_at,
+но не создавал существующий cp_assessment_request. Пересчёт ожидал будущего
+исторического прохода этой акции. NVIDIA сохраняла оценку 10:59:59; заявка
+естественно появилась после исторического прохода в 12:55. Это задержка
+передачи, а не доказательство зависания исполнителя.
+
+В feed_worker.calculate ветка requested+fresh вызывает только
+cp_assessment.request, сохраняя прежнюю отметку. Расчёт не выполняется в
+writer. Dispatcher, пропорция 2 приоритетных/1 обычная, возраст заявки,
+retry 60 секунд и дедупликация остаются прежними. Реальные ограничения
+данных и исполнительные проверки не изменены.
+
+**5 новых PASS:** передача без исторического прохода; повторный запрос
+сохраняет retry и возраст; отсутствие новых доказательств не создаёт
+заявку/READY; восстановление заявки после перезапуска; 53/200 фоновых задач
+получают время при непрерывных свежих приоритетных запросах.
+**3 затронутых PASS:** свежий feed не вызывает архив/расчёт; исторические
+маршруты работают; ошибки источника и качества сохраняются. Положительный
+сценарий воспроизведён как FAIL до исправления.
+
+T пока не загружен в Windows. Эта правка сама по себе не сокращает длительность
+общего snapshot. P: два дневных задания ещё не посещены ротацией после
+разрешённого retry 12:49. O: исторические файлы — не ранее 14:12:49 CET.
+Расписание и cooldown не изменялись. Общий статус PARTIAL.
+
+Rollback T: вернуть feed_worker.py, каталог и документ к ff6a0da; убрать
+ test_cp_fresh_assessment_request.py. Адресный ZIP проверен; БД не откатывать.
+
+
+## S — естественный результат; T — восстановление старой заявки
+
+Обычная очередь пересчитала Apple в13:01:45 и NVIDIA в13:03:08CET.
+В13:06:43 недельный и месячный анализ обеих акций остался CURRENT на тех
+же proof hashes после повторного подтверждения разрешений. Изменившиеся
+15m-входы корректно отозвали1H. В13:05:56 промежуточно недействительная
+квитанция Apple сохранила блокировку; после перепроверки CP прежние1W/1M
+снова стали CURRENT без нового расчёта. Это не отключение контроля ревизий.
+MCP в13:07 показал analysis_ready=3, signal_ready=0, trade_ready=0; общий
+непрерывный допуск не заявляется. Все9сравнений сохранности совпали.
+Первый общий snapshot послеS:445.391с всего,398.156с вычисления,18отзывов
+по изменённым входам,653актуальные зависимости. Ускорение целиком не доказано.
+
+T впервые загружен штатно13:08:30CET. На запуске графический расчёт
+отклонил реальное изменение DQ15m во время чтения; свечи и индикаторы
+сохранились. Это не подтверждение полной аналитической готовности.
+
+Выявлен и закрыт дополнительный случайT: старый analysis_requested_at
+сохранялся после перезапуска, но при UNCHANGED свежем ответе не переносился
+в очередь до следующего изменения разрешений. Fresh turn теперь подбирает
+такую отметку. На версии fbea7a3 новый тест воспроизводит FAIL; исправление
+PASS. Отрицательный случай без отметки и новых доказательств повторно PASS.
+ИтогоT:6уникальных новыхPASS,3затронутыхPASS; один новыйnegative повторён
+по причине изменения ветки. Последние4строки требуют финального запуска.
+Rollback всегоT остаётся кff6a0da по прежнему ZIP.
+
+
+## T — внедрение и естественная передача подтверждены
+
+Финальный код 047a332 штатно запущен 11 ноября в 13:15:58 CET после
+Save/Close и завершения writer. В Windows сохранились Apple 4H, 293 свечи,
+EMA 10/30, RSI, MACD, ATR, уровни и боковой Volume Profile. Новый экземпляр
+подтверждён внешним read-only MCP. Все девять сравнений сохранности счёта,
+инструментов и настроек совпали в 13:16:45.
+
+В 13:17:23.518 NVIDIA получила cp_assessment_request от обычного свежего
+прохода. Её последний исторический проход оставался 12:55:55.441: ожидать
+следующую историческую очередь больше не потребовалось. Ручного Refresh,
+загрузки или вставки заявки не было. Подбор неизменной старой отметки после
+перезапуска отдельно подтверждён новым тестом; этот конкретный runtime-ответ
+также обновил отметку, поэтому не выдаётся за неизменный ответ поставщика.
+
+MCP 13:16:44: часовой CORE Apple/NVIDIA READY, обе стратегии WAIT, котировка
+13:10 CET, quote_blocker отсутствует. Это отдельный оперативный контур;
+общие показатели analysis_ready=1, signal_ready=0, trade_ready=0 не скрываются.
+T обеспечивает доставку заявки, не мгновенное завершение расчёта.
+Все 6 новых и 3 затронутых теста использованы без повторного запуска.
+
+Наблюдатель S завершился: 26 чтений, 12:56–13:15 CET. Недельные/месячные
+proofs Apple/NVIDIA сохранились после подтверждения прежних разрешений;
+при реальных изменениях 15m часовые proofs отзывались. Два дневных задания P
+ещё ждут штатного посещения. Исторический GETTEX retry O не раньше 14:12:49.
+Общий статус PARTIAL; новые свечи/разрешения/сделки этим этапом не создавались.
+Rollback всего T: адресный архив, вернуть feed_worker.py к ff6a0da; убрать
+новый test_cp_fresh_assessment_request.py, вернуть соответствующие записи
+каталога и документации. Базу и работающую очередь не откатывать.
+
+
+## U — служебные поля повторной сверки
+
+Наблюдение сохранённых записей Apple 13:18:41–13:20:40 CET выявило семь
+релевантных 15m-квитанций с прежними observation, fingerprint v4, native
+rows/neighbours и классификацией. Изменились checks/history/retry/время,
+а finding.evidence_digest изменился только вместе со временем проверки
+исходного proof. Полное сравнение JSON отзывает прежний часовой анализ
+даже при неизменном решении. Положительный тест на 804ef813 — ERROR.
+
+performance_cache._setting_value теперь отделяет эти служебные поля только
+для привязанной v4-квитанции с подтверждённой identity/current observation.
+Вместо дублирующего timestamp-sensitive digest используется уже существующий
+полный scoped v4 fingerprint. Изменения решения, identity, наблюдения, строк,
+соседей, неизвестных полей и авторитетных данных сохраняют блокировку.
+Исходная запись не меняется. Старые/unbound/failed квитанции остаются строгими;
+сроки и исполнительные ревизии не меняются, старые proofs требуют пересчёта.
+
+**8 новых уникальных PASS**, включая 53/200 независимых задач, исходные
+OHLCV/evidence, identity/решение, expiry, strict execution, malformed/legacy
+и старый proof. Один negative расширен и повторён после проверки malformed
+формы. **2 непосредственно затронутых PASS**: относящаяся к расчёту квитанция
+и policy/grant продолжают отзывать допуск. Сравнение семи сохранённых реальных
+пар только в памяти: raw различаются 7/7; канонические входы совпадают 7/7.
+Это не семь восстановленных свечей и не новые разрешения.
+
+Код подготовлен; Windows ожидает окончания текущей TV-сверки Work2.
+Rollback U: адресный ZIP до 804ef813, вернуть performance_cache.py, каталог
+и документ; убрать test_cp_review_metadata.py. Базу не откатывать.
+
+
+## U/P — естественная приёмка
+
+U загружен штатно 13:27:32.816 CET. Windows сохранил 293 Apple4H, индикаторы,
+уровни и боковой объём; remote MCP подтвердил новый экземпляр, все9сравнений
+сохранности совпали. Наблюдатель завершил9чтений13:31–13:37. Две квитанции
+NVIDIA15m за25.09.2026 22:15 и27.10.2026 22:45 изменили ревизию58→59
+при неизменном scoped proof расчёта13:27:41. Другая реальная ревизия источника
+и expiry по-прежнему отзывают1H. Все7Apple before/after authoritative hashes
+воспроизведены заменой только checked_at, текущий fingerprint совпал7/7.
+
+CP самостоятельно классифицировал8новыхApple1D-наблюдений13:25:26–13:28:58
+без прежнего календарного исключенияP, с сохранением UNCONFIRMED. Два старых
+задания10–11мая2018ещё ждут очереди. Наблюдения Work2 не импортируют OHLCV.
+Его дополнительная сверка NVIDIA/SwissRe опубликована отдельно: Issue5
+#6796151588. Новые метаданные разрешаются только действующей политикой
+владельца; это не автоматическое подтверждение NO_TRADES или всех рядовREADY.
+
+## V — независимая публикация после поздней ревизии
+
+13:35CET общий snapshot отклонён после485.875с; changed_inputs=[]:
+состояние интерфейса не изменилось, сработала последняя raw revision проверка.
+Worker уже отдельно убрал22изменившихся результата, но следующая ревизия
+до публикации снова отменяла весь отчёт. Положительный тест этого сценария
+на759debc дал FAIL.
+
+В Features.accept_background_snapshot при поздней ревизии существующий
+формат INVALIDATED применяется ко всем зависимым акциям, сохраняя прежние
+proofs и tokens остальных. Shared benchmark отзывает всех его потребителей.
+Legacy, неизвестные/global scopes, отсутствующая привязка или повторная
+гонка сохранённых данных по-прежнему дают полный отказ. Перед publish
+сохранённый token проверяется снова. Никакого изменения DQ, истории, правил
+риска или разрешения исполнения. Убраны устаревшие revision traces затронутых
+акций; диагностика пересобирается из фактически оставшихся результатов.
+
+**8 новых уникальных PASS:** поздняя ревизия одного инструмента; общий
+benchmark; все затронуты→все BLOCKED; legacy/missing/global; draft/identity/
+повторная гонка; прежний INVALIDATED;53/200; реальная in-memory SQLite
+OHLCV-коррекция между worker и UI с валидацией оставшегося exact proof.
+Расширенный negative global-scope повторён после уточнения. Старые наборы
+не запускались. Тест metadata53/200занял0.0019/0.0050с; это не Windows-замер.
+В GUI не добавлены чтение свечей или расчёт индикаторов; отдельно записывается
+publication_invalidation_seconds. Скорость полного snapshot не улучшена
+этой правкой и не объявляется улучшенной.
+
+V подготовлен, требуется штатное применение и естественный цикл.
+Rollback V: вернуть features.py, snapshot_worker.py, каталог и документ
+к759debc по адресному ZIP, убрать новый test_snapshot_publication_isolation.py.
+SQLite/счёт/очередь не откатывать. Общий проект PARTIAL.
+
+
+## W — новый хвост источника и прежний закрытый расчёт
+
+Сохранённые естественные обновления NVIDIA13:35 иApple13:36CET показали,
+что _setting_value включал last транспортного ответа и отличал SAVED от
+UNCHANGED. После добавления следующей свечи отклонялся exact proof прежнего
+закрытого окна, даже при неизменных использованных OHLCV. Положительный
+тест на0502090 завершился InputRevisionChanged.
+
+В performance_cache только confirmed_state GETTEX/EUR получает нормализацию
+этих двух полей для закрытого proof. PARTIAL и качество/ошибки остаются
+отдельными; identity, listing evidence, неизвестные поля, used OHLCV,
+expiry и raw execution revisions сохраняют строгую проверку. Исходные
+настройки и OHLCV не переписываются, старые proofs не мигрируют.
+
+8 новых уникальных PASS. Исправление/удаление/поздняя вставка внутри окна
+по-прежнему блокируют; непроверенный источник тоже.53/200metadata scopes
+0.0034/0.014с — тестовая среда, не Windows. Один новый отрицательный тест
+сначала проверял неполную fixture; исправлен context, затем подтверждён
+именно SMART_EXECUTION_INPUT_CHANGED. Старые PASS не повторялись.
+
+Оба сохранённых before/after теперь совпадают по допустимому содержимому;
+это не новые свечи, разрешения или подтверждение текущей готовности.
+W пока подготовлен. Rollback: адресныйZIP0502090, вернуть performance_cache,
+каталог/документ, убрать test_cp_closed_source_tail.py. SQLite не откатывать.
+~~~~~
+
+</details>
+
+<details>
+<summary>Архивный документ 6: docs/VALIDATION_AND_ROLLBACK_RU.md (7910 символов)</summary>
+
+**Источник:** https://github.com/swindler2010/StockMonitor/blob/7e1f1eceada977adc55bed40816ccd94b9ffd8f4/docs/VALIDATION_AND_ROLLBACK_RU.md
+
+**Blob SHA:** `1437537db0f8d329e3e8243628ac86675cf4549d`
+
+~~~~~markdown
+# Проверка публикации 0.16 TEST и точечный откат
+
+## Результат текущей ревизии
+
+Среда: Windows, Python 3.12.14; runtime dependencies закреплены в requirements.
+Инвентаризированы 165 test-файлов и 1662 test-функции. Выполнены полностью или частично
+41 модуль, 438 уникальных testcase IDs: **400 PASS, 9 FAIL, 28 ERROR, 1 INTERRUPTED**.
+Импортированные повторно базовые классы не увеличивают итог. При FAIL и последующем
+ERROR в cleanup одного теста учитывается худший результат, а не два теста.
+124 файла не запускались в рамках ограниченной публикационной проверки;
+GUI/провайдерские/приватные fixture-сценарии не объявлены пройденными.
+
+**Общий regression PARTIAL. Pull Request должен остаться draft, без автоматического merge.**
+Известные ошибки тестов и недоказанные расхождения продукта не исправлялись ради зелёного отчёта.
+
+| Проверенная область | Уникальные успешные сценарии |
+|---|---:|
+| Существующая V1 hourly | 19 |
+| Динамический размер V1, дополнительно | 8 |
+| V2 и изоляция двух shadow books | 26 |
+| Trading Engine / обязательные guards | 31 |
+| CP automatic repair, синтетические fixtures | 13 |
+| CP fairness | 8 |
+| Устойчивость ранее рассмотренных проблем | 17 |
+| CP source acceptance | 11 |
+| Revision Watcher | 13 |
+| Health completion | 5 |
+| Snapshot interleaving | 6 |
+| Snapshot error diagnostics | 2 |
+| Stale Bridge protection | 2 |
+
+Это выборка областей из общего итога, не дополнительное количество тестов.
+Проверены положительные и отрицательные сценарии: EUR/source/identity, закрытие свечей,
+ревизии, устаревание, DQ/benchmark/прогрев, лимиты риска и средств, независимые балансы,
+журналы и atomic rollback, одинаковая модель исполнения, отсутствие дублирования.
+
+Длинный синтетический scheduler-сценарий завершился за154,610с:2047 предотвращённых
+повторных попыток и297 исторических проходов. Это измерение test-fixture; оно не
+является доказательством экономии HTTP-запросов в работающей программе.
+
+## Непрошедшие проверки
+
+Точные IDs, статусы и причины находятся в [regression_results.json](regression_results.json).
+Ни один FAIL/ERROR не скрыт общим PASS. Основные группы:
+
+- Старые заглушки `Memory`/`Store` не содержат `connect`/`read_cache`; Desktop stub —
+  `drafts`; старый callback не принимает `lane`. Эти тесты требуют обновления fixtures.
+- Часть старых provider fixtures не содержит подтверждённого EUR-listing и закономерно
+  отклоняется новой обязательной identity-проверкой. Саму проверку не отключали.
+- Ожидания 1m против нынешнего приоритета15m, GAP против прежнего INVALID,
+  последовательность `classify`/`history_files`, сегментация индикаторов и полосы разрывов
+  расходятся с актуальными контрактами. Для некоторых новая политика подтверждена кодом;
+  остальные требуют отдельной проверки, не объявлены автоматически устаревшими тестами.
+- Требуют разбирательства: две recovery-попытки вместо одной, `NaT.normalize` в сценарии
+  venue lock, assertion об одном MCP busy worker, проверка рекурсивного seed, вернувшая READY.
+  Побитовое требование в `bounded_features` остаётся в коде; причина последнего assertion
+  (fixture/reference/rounding или продукт) ещё не доказана. Guard не ослаблялся.
+- Два cleanup завершились WinError32 из-за незакрытых временных SQLite; исходные
+  assertion/fixture-причины сохранены локально. Это не повреждение рабочей базы.
+- Один integration-тест намеренно остановлен защитой test harness до запуска subprocess.
+  Пять Health cases сначала были ошибочно отклонены URI-path защитой harness; после
+  исправления **только harness** адресно перепроверены5/5PASS.
+- Один `history_backfill` case прерван при ограничении времени helper; он не PASS.
+
+Девять локальных partial-chart cases читали сохранённые архивные fixtures. Они не
+публикуются и исключены из default runner. Два real-recovery fixture cases также NOT RUN.
+Нет нового общего аудита рыночного архива, сетевых загрузок или тестовых сделок на счёте.
+
+## Повторение изолированного regression
+
+```powershell
+.\.venv\Scripts\python.exe run_regression.py --root . --artifacts <existing-temporary-directory>
+```
+
+Укажите существующий каталог для временных тестовых файлов, не `test-data`.
+На компьютере владельца материалы испытаний направляются в постоянный СМ-Архив.
+Runner не открывает GUI, блокирует внешнюю сеть, subprocess и SQLite вне временной
+области; допускает только loopback-серверы, созданные самим тестовым процессом.
+Опция `--modules` позволяет адресный запуск. При FAIL/ERROR выход ненулевой.
+Сохраняются `run_regression.json` и `.txt`; это локальные артефакты, не данные счёта.
+
+Default runner не включает длительную старую симуляцию, private fixtures и subprocess
+integration. Поэтому его количество тестов не обязано совпадать с объединённой
+438-case ревизией выше. Не запускайте blanket discover на рабочей папке.
+
+## Сохранность и текущая Windows/MCP-проверка
+
+- Перед публикацией создана согласованная SQLite online backup основной и shadow баз;
+  обе `integrity_check=ok`. Предыдущая backup упакована с проверкой SHA256 содержимого ZIP.
+- Локальный source rollback ZIP содержит297 исходных файлов/контрольных материалов;
+  каждая запись сравнена с оригиналом по SHA256. В GitHub этот частный ZIP не включён.
+- Все63 instrument records, основной PAPER account, fills и archived fills совпали
+  с backup. `paper_auto_1h`, выбор графика, глобальные индикаторы и priority policy
+  сохранены. Это также сохраняет идентификаторы/источники Apple, NVIDIA и подготовку Amazon.
+- Исполняемые Python-модули совпадают с before. Изменение существующего JSON ограничено
+  шестью справочными evidence paths, без изменения данных/разрешений/прогрева.
+- Действующие Windows-процессы не останавливались. CP продолжает штатную работу;
+  новый Save/Close/Restart для публикации не выполнялся и не требовался.
+- Журнал Dispatcher 22:21:32–22:21:37 CET показывает completed1353→1355,
+  работающие feed_update/feed_analysis, sqlite_busy=false. Это подтверждение обработки,
+  а не заявление об исправлении новых акций. Ожидание старейшей задачи около40мин
+  остаётся проблемой производительности; publication audit её не устранял.
+- Windows deployment/restart V2 предыдущего этапа сохраняется как ранее выполненное
+  свидетельство; новым Windows E2E этого коммита не называется.
+- Новая внешняя MCP health попытка: timeout. Прямая локальная adapter health попытка
+  также вернула недоступность. Полный runtime MCP PASS этой ревизией **не подтверждён**.
+  Изолированные Bridge-тесты отделены от этих внешних/рабочих результатов.
+- Store0.15, broker account, Work2 процессы и Performance Engine не изменялись.
+
+## Откат
+
+Публикация находится в отдельной ветке, `main` не изменён. Для отказа от неё достаточно
+не сливать PR; force-push/reset существующей истории не нужны.
+
+В действующей программе нет нового функционального Python-кода от этой задачи.
+При необходимости вернуть локальные справочные пути — восстановить **только**
+`stock_monitor/cp_experience_catalogue.json` из проверенного локального
+`GitHub исходники до публикации.zip`, предварительно проверив, что после публикации
+не было новой правки этого файла. Не заменять весь source tree старой копией.
+
+Базы не заменять резервной копией ради отката документации/Git. Они продолжают
+накапливать свечи. Если потребуется отдельное восстановление БД после реальной аварии:
+штатно Save/Close TEST, сохранить текущую согласованную копию, проверить integrity
+целевой backup, восстановить именно нужную базу с учётом WAL/SHM и открыть TEST.
+Старый snapshot нельзя незаметно ставить поверх новых OHLCV/позиционных журналов.
+
+Новые docs, example и runner не используются рабочим приложением. Личный config,
+локальный AGENTS.md и runtime профили остаются локальными; Git index не заменяет
+их удалёнными файлами. Нормализация CRLF→LF в Git не меняет Python-логику.
+
+Три собственных временных каталога failed-test cleanup сохранены в архиве:
+автоматическая политика инструментов отклонила удаление. Они исключены из Git.
+~~~~~
+
+</details>
+
+<details>
+<summary>Архивный документ 7: docs/publication_manifest.json (62198 символов)</summary>
+
+**Источник:** https://github.com/swindler2010/StockMonitor/blob/7e1f1eceada977adc55bed40816ccd94b9ffd8f4/docs/publication_manifest.json
+
+**Blob SHA:** `944f75a1813841569100173cebaea08ccf318c70`
+
+~~~~~json
+{
+  "schema": 1,
+  "baseline_commit": "60073fb8d6f77aaead7aa21b57402361b3b69621",
+  "source_commit": "ff1d53bf2ea0f87847f303c30ce69c38ba89d069",
+  "test_commit": "9711c3fd53df0553397a45d09f85604fdaa59b8e",
+  "pull_request": "https://github.com/swindler2010/StockMonitor/pull/17",
+  "hash_semantics": "SHA256 of exact Git blob bytes; CRLF-normalized where applicable. This manifest excludes itself to avoid a recursive hash.",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "git_blob": "e5536aa13076ec296b210609c08d27ea82c3d45e",
+      "sha256": "b55af79b76add0dc1881a08417258a85a126108d9a9edbcb6e34cceaddf42f90",
+      "bytes": 83
+    },
+    {
+      "path": ".gitignore",
+      "git_blob": "7741547dd0ae413b5b9316a5c6c4b78fcbaeca97",
+      "sha256": "14388731e717958fbab521a77aa63be785d9c15fe4657c27ffa2519b630d4714",
+      "bytes": 1261
+    },
+    {
+      "path": "AGENTS.md",
+      "git_blob": "c4891d4f94dfe10f5c26bc3b5b9811c85edecaee",
+      "sha256": "9c7739e8fd5ee6a99f60361f26872479f08f8b00fb4c64b69252bc5a85979300",
+      "bytes": 4477
+    },
+    {
+      "path": "README.md",
+      "git_blob": "2724d8f39f325baa5681912c94cb1c88e5386924",
+      "sha256": "f6c926937c5f1fd69eddb21f285e039571b7ac8ed8222136b3867eae6351c8ac",
+      "bytes": 4015
+    },
+    {
+      "path": "docs/BRIDGE_MCP_CAPABILITIES_RU.md",
+      "git_blob": "809b9fc7797b97127a667876a2eca0555a8bbb84",
+      "sha256": "fd37354ed990e5c970ebd1ee608b19c5d262439d1206595bb39f69e9c54db7c8",
+      "bytes": 20476
+    },
+    {
+      "path": "docs/CHANGELOG_2026-10-23_to_current.md",
+      "git_blob": "6318dcf962a3a150e0894a0f68352ed183426662",
+      "sha256": "0dc885ad0caa8a946517151e92765dc1a17b6136cb5c87fe9e049d762adf16ce",
+      "bytes": 22863
+    },
+    {
+      "path": "docs/STOCK_MONITOR_FULL_AUDIT_2026-10-23_RU.md",
+      "git_blob": "7b922cfe6df12455eda26529e4f69ae6b0c3f1c8",
+      "sha256": "c049255a3a9b68fe5bc0bf6c0693e6395311866aafc563720cfca7b378f318cd",
+      "bytes": 5484
+    },
+    {
+      "path": "docs/VALIDATION_AND_ROLLBACK_RU.md",
+      "git_blob": "1437537db0f8d329e3e8243628ac86675cf4549d",
+      "sha256": "ae07ce9efbfd9de495d8567a54a51235b48aa93179f160c3d3469ff3d70e235e",
+      "bytes": 12439
+    },
+    {
+      "path": "docs/regression_results.json",
+      "git_blob": "c5e73f346f8816f425dcfd871a8a20337110f1d6",
+      "sha256": "6cf13682e75416c8d6fabde4317b9f19b3bbc4ffd28ebfc4e7e6a1bb196fc1e3",
+      "bytes": 149111
+    },
+    {
+      "path": "requirements.txt",
+      "git_blob": "691aa989c9b34283308fa653406f30d2ae3185f2",
+      "sha256": "8a0ffb7540040977b534a7720b76b757704d4807d43c8561280d9b6bace2f70b",
+      "bytes": 210
+    },
+    {
+      "path": "run_regression.py",
+      "git_blob": "c8199dd28e18fca3aaaae34144066e21a1e958b4",
+      "sha256": "f0845b95939dd3e28612a1f2dc63fcfdcba8609c900d4869f77229c48f348b5e",
+      "bytes": 7954
+    },
+    {
+      "path": "stock_monitor/ai_service.py",
+      "git_blob": "ac2548bd31fc09e5562ad3d034c47c460d0bd514",
+      "sha256": "46131941b235738b27cce9c85b11df7d279a637606e35d21481b8a5df6fcb3f2",
+      "bytes": 7813
+    },
+    {
+      "path": "stock_monitor/analytical_read.py",
+      "git_blob": "dedb23bb617b2fd0235c1b27526c009a319cdeb4",
+      "sha256": "0b6bea815195f7c4a28d54e887ff9582772d5beb2b278ab5db335c8076805dc1",
+      "bytes": 9233
+    },
+    {
+      "path": "stock_monitor/analytics.py",
+      "git_blob": "d711a7f3e486b10d3bf955d9a692831f9ebe78e5",
+      "sha256": "87e57031fafa5c6bc9ea550d06ba4d5bd58521537ab50be1798248b4177e53b3",
+      "bytes": 25327
+    },
+    {
+      "path": "stock_monitor/app.py",
+      "git_blob": "645fb2338196109dca95b2b136f11c857a8bbc0a",
+      "sha256": "378d9f4de5c36109cda5612e26391ad9df1752fdbdff758d680fad5b2da73c1f",
+      "bytes": 42760
+    },
+    {
+      "path": "stock_monitor/benchmark_display.py",
+      "git_blob": "2d4a5fb8250722cca82c2e014ee96f6e899f43fd",
+      "sha256": "b20f143670518799f4344fcab4090293742662ba7d643116419221b358c7b0e1",
+      "bytes": 1808
+    },
+    {
+      "path": "stock_monitor/benchmark_ui.py",
+      "git_blob": "13dfc6c52f4572c2459decb314177654cc84a137",
+      "sha256": "738b42b494b072d723686ecf517ae1e78ee3b57ac34f4a069eaae09b9f698b40",
+      "bytes": 14053
+    },
+    {
+      "path": "stock_monitor/benchmarks.py",
+      "git_blob": "7578d0167ae6e78124776613459318687d2d3d9e",
+      "sha256": "5e0afd1d77d77387d85084cd44cc7e70d3fd3b84d33853482e0e27c76e0e3533",
+      "bytes": 10612
+    },
+    {
+      "path": "stock_monitor/bridge.py",
+      "git_blob": "8c6e05d7dbb5b46e1531c6a28ea4be609e2e09c3",
+      "sha256": "c6b06fcf8477a66bddd082403bb719453af8ec87817082866c58301372f5fe85",
+      "bytes": 15753
+    },
+    {
+      "path": "stock_monitor/bridge_queue.py",
+      "git_blob": "d8b1125678b02a5c614f23f075a2e4d839a0af36",
+      "sha256": "f5c889b172df5f147e2306b2dd69993258dfa1aede7585f9e4d559c4252ba5ba",
+      "bytes": 8043
+    },
+    {
+      "path": "stock_monitor/broker.py",
+      "git_blob": "93377e774b2b14cba12084883efd677544f1a306",
+      "sha256": "647610b838f04b0bb6e0fb4a87bff9009cfe7de38ce5c489c90ef1d427188ec2",
+      "bytes": 1535
+    },
+    {
+      "path": "stock_monitor/calculation_window.py",
+      "git_blob": "8bb7098949a43cc10111f72a811bc6b29e310ab0",
+      "sha256": "0863a70744eddc50cc2d80bdb3596b06471f100ff9231d1cddeb7bf43611bb6b",
+      "bytes": 59223
+    },
+    {
+      "path": "stock_monitor/candle_impact.py",
+      "git_blob": "1c78b015f11406e10cae587d1a17d8e05dec4a6a",
+      "sha256": "cded66dd7a2f103e8432e4fc5e75ebc86cf93302c93545f93e00becc2d9e9e8e",
+      "bytes": 5665
+    },
+    {
+      "path": "stock_monitor/candle_schedule.py",
+      "git_blob": "bafcd9912b176063f8828358d78de2180060ec6d",
+      "sha256": "76a5fecfdcba9fe29374dc704346a1cd76ea28351d48ee4ce813259d0247f77f",
+      "bytes": 23218
+    },
+    {
+      "path": "stock_monitor/candle_timing.py",
+      "git_blob": "597a3b4b0cc754d0f88aa66f5a24439346a5ac10",
+      "sha256": "861484834f0936147485585e144ee44c0b4c44245dd557ae0eb45924cb800cd4",
+      "bytes": 6242
+    },
+    {
+      "path": "stock_monitor/candlepilot.py",
+      "git_blob": "fc3595d92e3cb41a23d39ea8896f6ce0700a18ec",
+      "sha256": "9421adcc517fd348a21f50e5dcbe8de3c8ceabcf4dc3ade9fc6d14da6696338e",
+      "bytes": 627
+    },
+    {
+      "path": "stock_monitor/candlepilot_health.py",
+      "git_blob": "6268f590bf4eb3d96c745cb95abc39f02d0c0eed",
+      "sha256": "246134e9385798a4707b53356080cf7fc92a68d9956e37539fc46e935a8c17bd",
+      "bytes": 56628
+    },
+    {
+      "path": "stock_monitor/card_view.py",
+      "git_blob": "5a1ce6b49d3687184aed1da02bf7765da5c15956",
+      "sha256": "bc8a5c6f68a9778badb0f8ab2b0d4e5a1ba2dcd31ee22b4b17c3784815fe645f",
+      "bytes": 5193
+    },
+    {
+      "path": "stock_monitor/chart_indicators.py",
+      "git_blob": "2f0d81199275c69d19f6a46464265dcb25105f26",
+      "sha256": "33e92a53ff4d5ff008b651efb07657b1922f3d241ec7fe16fdd68c5722b456dd",
+      "bytes": 13590
+    },
+    {
+      "path": "stock_monitor/chart_locale.py",
+      "git_blob": "e8cce1fe52db5ddcf4b1f98e11dd5330112f3029",
+      "sha256": "4a8006d6f47a78a1f2221cd13fae4a40c1954c5ae2ca0379a4a0f8763ac2e879",
+      "bytes": 422
+    },
+    {
+      "path": "stock_monitor/chart_modes.py",
+      "git_blob": "574a93972b6578c1ff0741585d1394d26b5f40f3",
+      "sha256": "1b5db2ebf6462cc45e958f8fa2f28ef0376c21a7fefee629f3870be810c8e80c",
+      "bytes": 5386
+    },
+    {
+      "path": "stock_monitor/chart_overlay.py",
+      "git_blob": "afaf2d09ae0c87cb87840320314b13d0dd96041e",
+      "sha256": "d5d48d4c76c5125fb04aad8dac05d144d9a268b69920284f0ef470a18b36d965",
+      "bytes": 2215
+    },
+    {
+      "path": "stock_monitor/chart_periods.py",
+      "git_blob": "ec8fe66e3b07d92da9460ed5fdb8f91e79cd4d96",
+      "sha256": "6f2e44f4891f8bb71bdac65cdf1b5457e702a3bda374ce9b1d80f6b3b2a1d0ff",
+      "bytes": 643
+    },
+    {
+      "path": "stock_monitor/chart_worker.py",
+      "git_blob": "5c191c1047e5824fe7f366f9556e0a81a696065a",
+      "sha256": "ad07de75c43a536bce6ee46f0884d5197e7e807219c8568f7e54ae8f6c95c41b",
+      "bytes": 8388
+    },
+    {
+      "path": "stock_monitor/commands.py",
+      "git_blob": "c4ad902ffd686e4d53907cedbc2e344ac89a2f46",
+      "sha256": "06fd08e64689858737e1adf7dc196ac82b1b634a15bbf84f77abde7b458cb5a3",
+      "bytes": 11397
+    },
+    {
+      "path": "stock_monitor/compute_process.py",
+      "git_blob": "0ad7fbc0f4807ec1a1ce883a900c2b391c21ae88",
+      "sha256": "86d85458d68218fe9fd6099f12b3540b61d5b7f16dff233a731faa9c7d9117f4",
+      "bytes": 7405
+    },
+    {
+      "path": "stock_monitor/config.example.json",
+      "git_blob": "16a4129b510512ec4276b67a4cc7f9c3c82f9c4c",
+      "sha256": "494f267087e341e2422f3f5bc5902c8df1f005f63c2854be9e5e757037cff3a0",
+      "bytes": 571
+    },
+    {
+      "path": "stock_monitor/cp_controls.py",
+      "git_blob": "eb533e8ef0f1f12b8dc2fbde226cf0e8e5b6130f",
+      "sha256": "208f7fc94e1f9b1153ac19234ec70a07bd897a5d32fd4574ca74b2a1c8bc4565",
+      "bytes": 84055
+    },
+    {
+      "path": "stock_monitor/cp_experience.py",
+      "git_blob": "ff507254f522469ce4f70ad476455bc6645a271f",
+      "sha256": "603fd31e58ae35b7bc52145b6a9753afd23e232d177bfa11c41da97102c1132f",
+      "bytes": 23390
+    },
+    {
+      "path": "stock_monitor/cp_experience_catalogue.json",
+      "git_blob": "a48d5887cbf3c0839b2db1c7eea80c9b8b4ac9b7",
+      "sha256": "7b06134ca602d5ce80d9683c635d30000dd2d852a22b401e35f7622dc2e34f09",
+      "bytes": 63202
+    },
+    {
+      "path": "stock_monitor/cp_reconciliation.py",
+      "git_blob": "99d36591e92da23349c868ffb7ded63d6b896e69",
+      "sha256": "20734341dbf994f6de69f368d3a2cba3a7fee14a1be5141ea6b6e47d229078f7",
+      "bytes": 48394
+    },
+    {
+      "path": "stock_monitor/data_quality.py",
+      "git_blob": "873c9d62ac2dea044296f3dc008b59102cdddf8c",
+      "sha256": "6b7c3902d0068bb7ee2f1e1e0336064354ab439a60352df4b70eaf8b717027e8",
+      "bytes": 54358
+    },
+    {
+      "path": "stock_monitor/decision_results.py",
+      "git_blob": "61bf3fc8f442275c8aeb5400a96d62208fbac0ce",
+      "sha256": "78dbde1846fcea2417e95d9367889318fd7602967e5ade8f3e0c45fda182ca49",
+      "bytes": 9259
+    },
+    {
+      "path": "stock_monitor/delivery_observations.py",
+      "git_blob": "65ce27ae86bd4b2cf475e84aa09126a149bfc5bd",
+      "sha256": "31da5de180a0121128e65cc31db483c9d97c8ef7b7d9935aa8f3dd5513258021",
+      "bytes": 6989
+    },
+    {
+      "path": "stock_monitor/desktop014.py",
+      "git_blob": "c41a6a815334efea0e5052d1b34d13e16a34d06a",
+      "sha256": "304f976f26d04c540fcd65426c02bc23e74287e5355998fc240e0d3015508bef",
+      "bytes": 111303
+    },
+    {
+      "path": "stock_monitor/diagnostic_display.py",
+      "git_blob": "70fec68902df47fe11dfa638e59082977e8cd96f",
+      "sha256": "8c85e6c12a1357b438c10e15885ecceaf2254833202e51f27c43cad989b27eed",
+      "bytes": 1589
+    },
+    {
+      "path": "stock_monitor/dividends.py",
+      "git_blob": "2fa980a5c54e625b00a2af2ac21dcbe2f3049920",
+      "sha256": "10d652c865b46219c3c0398c3797e2bded91dc30eec96a8d3299f241087819ff",
+      "bytes": 3758
+    },
+    {
+      "path": "stock_monitor/drawing_actions.py",
+      "git_blob": "cd799576fa035da9075d87d09ed58cdab6d56dc6",
+      "sha256": "1b045da40e5df9f9635919157bac2df0b9f8e20f4acc4576e14bac53709acd3e",
+      "bytes": 8003
+    },
+    {
+      "path": "stock_monitor/eur_listings.py",
+      "git_blob": "2bc4f66316d1cba5a7faf731720981b22de15d36",
+      "sha256": "480261986d3895f840b434351443360efdf65d38dd669e00d9d9901cc0a828d7",
+      "bytes": 14771
+    },
+    {
+      "path": "stock_monitor/extras016.py",
+      "git_blob": "ab573a1c2b683ff71d6d4ee5b30ede66415a5360",
+      "sha256": "a519a9ee4f79b46dbbe239867fc925113f1f0cfbf85ba0733b234b2b391ef850",
+      "bytes": 7629
+    },
+    {
+      "path": "stock_monitor/features.py",
+      "git_blob": "c5a684a338233f162b2c5caa57e9fae51da22ae9",
+      "sha256": "0fa87bb6ce95b731b44d7159f9d76980177bf65b4bf44c586233034789c81c90",
+      "bytes": 65960
+    },
+    {
+      "path": "stock_monitor/feed_worker.py",
+      "git_blob": "52f8f2ca03096cfcff3e91ecd4e2da05378510b7",
+      "sha256": "bc2a087e7dea092ce10a934f89e0974f2a2af462224f153fe68e2e82cef7c70d",
+      "bytes": 8242
+    },
+    {
+      "path": "stock_monitor/financial_format.py",
+      "git_blob": "45676cbe16c5923aae48b91db92dba72337de476",
+      "sha256": "b1c0f932a2fc90af5b9ed2cff8d550cd90e11c50ab0375bf93a022e3d39046c9",
+      "bytes": 2082
+    },
+    {
+      "path": "stock_monitor/freshness_panel.py",
+      "git_blob": "5f70fd5716c527c60b3fbc62b3d6713b6c87cc12",
+      "sha256": "e6761cfa9838256df25d826a11b490105b98742910ce216e979f6752418d86fd",
+      "bytes": 5195
+    },
+    {
+      "path": "stock_monitor/freshness_runtime.py",
+      "git_blob": "6eda822e451ea37ed8cba000399bdd5c7b4cdc5c",
+      "sha256": "89644fc4b56d1af673d778988cfee50f1a3b3b0054c73b616072004194c4887d",
+      "bytes": 4033
+    },
+    {
+      "path": "stock_monitor/freshness_view.py",
+      "git_blob": "077a12c24f82c5eaf55453f415586ead5588bf41",
+      "sha256": "64eb5e5da11335d88bd4000d3c8a065d0e6515f6936b5dd0d9e9a5b2d968d223",
+      "bytes": 8442
+    },
+    {
+      "path": "stock_monitor/fundamentals_panel.py",
+      "git_blob": "a6f89734914f7dad64a9a57abc0e5081f2d03b9d",
+      "sha256": "2fe1b14be0a003b0ac480e32a9effdc0a032318e51db701ac06908519d597b06",
+      "bytes": 9124
+    },
+    {
+      "path": "stock_monitor/fundamentals_view.py",
+      "git_blob": "c96ff29cc52d866f325e425a0d9adec2b07de1dc",
+      "sha256": "5fbf66c814675539c329bdedfa1ac47c4128e5696abe4b40fdec5d583366e9a5",
+      "bytes": 10850
+    },
+    {
+      "path": "stock_monitor/gettex_chart.py",
+      "git_blob": "210a6460134c885af5e9799002686c2604e2ea75",
+      "sha256": "b05a2ff9bbd465c0d22ee1b07991ec77f8870e7dbc46caeaa7ae24e071f71afe",
+      "bytes": 61975
+    },
+    {
+      "path": "stock_monitor/gettex_history.py",
+      "git_blob": "0777b487834952f6e614952f241bb4354c59f797",
+      "sha256": "4f5699a8b1bed44fd8122bcc6a5d92bc089897c7d144dcdb3a241a662cf0292a",
+      "bytes": 48071
+    },
+    {
+      "path": "stock_monitor/history_backfill.py",
+      "git_blob": "d51beb2921be8fc967566bd803160a88958e0130",
+      "sha256": "cd2e1225a63754afe702d9d27a40c19f66012ce6f43805621068bc47cf447661",
+      "bytes": 23396
+    },
+    {
+      "path": "stock_monitor/history_service.py",
+      "git_blob": "f739846b99382343e99c6370af79c3087c77637b",
+      "sha256": "61aee471a1ca5c0ad14ce58cb89d560663114de1b0a803eae8371dbbd1555999",
+      "bytes": 36364
+    },
+    {
+      "path": "stock_monitor/i18n.py",
+      "git_blob": "f47d5267126b2c004240dd8ca847a4ef19f6eab8",
+      "sha256": "6506a553d87aa39ec74ad56ffb40b38fdf704d9aa30428549cfcfa7f79b0ade8",
+      "bytes": 3975
+    },
+    {
+      "path": "stock_monitor/intraday.py",
+      "git_blob": "548002716ea164b57875442301f29fb51c83b571",
+      "sha256": "967e0f60c6b00948bc4de0e7d617241b9f0c78611e91d4e3e800a7e1d7299c3e",
+      "bytes": 7653
+    },
+    {
+      "path": "stock_monitor/journal_presentation.py",
+      "git_blob": "7550aa0c1cb69ca37260c4757dd014c9ccddfba8",
+      "sha256": "7d8821025293b5bfd2c9b6ca33297c81541331b39b32da99e9ef0913f70c37ee",
+      "bytes": 2284
+    },
+    {
+      "path": "stock_monitor/localized_widgets.py",
+      "git_blob": "5cbaea7cda5b7905ba1837935333076415d79ddd",
+      "sha256": "9536034b185a52741d853faf7804d37265d4aff00d10d0c64b6f02fdfdec7d6b",
+      "bytes": 3122
+    },
+    {
+      "path": "stock_monitor/logos016.py",
+      "git_blob": "739c676cafcd84daff5a95754d8b1ed4fbc7cd3c",
+      "sha256": "44bc2e2bc1145fedcadcd73ac36b55718c841235e49573beb5a2e7aa7a3870fa",
+      "bytes": 5568
+    },
+    {
+      "path": "stock_monitor/market.py",
+      "git_blob": "e59f95c27a99104e60ce3121470067982f8d2a61",
+      "sha256": "1df867a1c39ca8a7534b82fa5f26dc7ad9b060bb0e71c1d053db6398ff693bc0",
+      "bytes": 6910
+    },
+    {
+      "path": "stock_monitor/mcp_chart_export.py",
+      "git_blob": "b8e9e25d438f4a9cd55f35e7866a76a68a2c059f",
+      "sha256": "c9ec58c941c3504c55bbda82b49961cc58a4842eb5a601b849b9af3b425ac5e3",
+      "bytes": 2202
+    },
+    {
+      "path": "stock_monitor/mcp_pages.py",
+      "git_blob": "b64443c3a0f2cee6e6721daad78214f776924c9d",
+      "sha256": "fa3bb4903f47b19c53e88caaf913bc9faa26c55a63590eb09d86343b6f597524",
+      "bytes": 2000
+    },
+    {
+      "path": "stock_monitor/mcp_projection.py",
+      "git_blob": "425a862273bad442cc5f243e3f8a2ea7dfbeb8f2",
+      "sha256": "40a8d2d72eee838fcb3261668cbfb1a5528928621779d7b2d9c804cbfc1f1679",
+      "bytes": 12898
+    },
+    {
+      "path": "stock_monitor/mcp_routes.py",
+      "git_blob": "4ac4e07d97861230395c06e562278159d2943e56",
+      "sha256": "ddb9b039f35d2c26964702276978a7e8e5fbeafc27042462c6ddbf40e39c6bfd",
+      "bytes": 2560
+    },
+    {
+      "path": "stock_monitor/mcp_server.py",
+      "git_blob": "fbfddd9295fa9095ddaa7cc79cbfd8190b0d99a6",
+      "sha256": "9cb73f85ca2a4a503538d795aa9b2011924c8e1f177cf1fddf4776039c6ba6c9",
+      "bytes": 17276
+    },
+    {
+      "path": "stock_monitor/model_ledger.py",
+      "git_blob": "bad9648f81a27ed8e0bbfe50e4200183b3429480",
+      "sha256": "086376aac1dade498a78fa2e68ba82a15533a8e0dfde3dce37343e17037c848c",
+      "bytes": 6647
+    },
+    {
+      "path": "stock_monitor/news_engine.py",
+      "git_blob": "017a4e29e28e6a612c3b8b75e38b0aab44b5b826",
+      "sha256": "271c9551391981dcf8f7f856a5b5a34c699452faab44bc6c4675cccde44cd69d",
+      "bytes": 10991
+    },
+    {
+      "path": "stock_monitor/news_http.py",
+      "git_blob": "56a4bf0b36db9b1a9de63c5d60b3f153ba1e4592",
+      "sha256": "dfd76a4939f2aeb1c69ed4a195cf44ca438226baebb1011dc23df1ad87fe1c17",
+      "bytes": 4125
+    },
+    {
+      "path": "stock_monitor/news_identity.py",
+      "git_blob": "a51b4ebab44e16cf86ca69735c8ba30919030bc4",
+      "sha256": "168dc756b26ea42731c71a7df60b9afb96880807d41bb593305e27246d9e6d6e",
+      "bytes": 3563
+    },
+    {
+      "path": "stock_monitor/news_panel.py",
+      "git_blob": "920e075499f992069201828dbc74e5dd2273df19",
+      "sha256": "c9c573b77e37e5d80521b75552ccd155e6010ef522f5607bbcd3aa3e74a5af16",
+      "bytes": 6747
+    },
+    {
+      "path": "stock_monitor/news_runtime.py",
+      "git_blob": "4920a0e07b626bbbff4bc8c47334e6da2996365b",
+      "sha256": "fa22d837f11944ae06aea73d67f23a136cce69328e4d394dd26e0f2e2efdeded",
+      "bytes": 3865
+    },
+    {
+      "path": "stock_monitor/news_view.py",
+      "git_blob": "35bc977a8246d44aa39dde5c61a361cf587bcb45",
+      "sha256": "09b21adb3f2c5675cc5af6f4587df45ee75db5f035ed6d8efb3204a6d1ebeef2",
+      "bytes": 1921
+    },
+    {
+      "path": "stock_monitor/onvista_archive.py",
+      "git_blob": "c7137acfe1f94c05ad8795d012091c6c9bdd4ccb",
+      "sha256": "732450852fc219c648cc9ed76fe4ad905cb53d9b8626da964c716585396ab032",
+      "bytes": 10324
+    },
+    {
+      "path": "stock_monitor/paper_account.py",
+      "git_blob": "5275c958abb7cff0e8a75dcca5c014f20302270a",
+      "sha256": "d52cdce4f2d5229f21e05bcae64e4951aba4ff2264c9de9a1c8a069ea3c2b109",
+      "bytes": 17873
+    },
+    {
+      "path": "stock_monitor/paper_hourly.py",
+      "git_blob": "47eeb6dcf041cda369624dbe9d7ccd0406221a7f",
+      "sha256": "9a71d5994cf393431d5ca9267958ab5f11c1a1185fd449a27ed478097b8a450b",
+      "bytes": 19404
+    },
+    {
+      "path": "stock_monitor/paper_strategy_replay.py",
+      "git_blob": "358960995d9af60563e63adafc0bc8c0cb6f805c",
+      "sha256": "e814d4c267c1017d701a539ba1dc611f20306e66fc5b2e8336ed61d85c9a51b1",
+      "bytes": 7534
+    },
+    {
+      "path": "stock_monitor/paper_strategy_shadow.py",
+      "git_blob": "d72d2fcb4a037a9dcf767824369f2828ea51c22a",
+      "sha256": "0f85f3c58ae7acd5a43be98c64e45828a70abafbe58e31bf0860989e4dbb47e7",
+      "bytes": 17603
+    },
+    {
+      "path": "stock_monitor/paper_strategy_v2.py",
+      "git_blob": "2aaf375e391dc05ae6f9a7214241644e355ea211",
+      "sha256": "2d5b95baa490f46a834d8fa6ad6b975313dbaadc0ebe8428b66b804c1440db5f",
+      "bytes": 15467
+    },
+    {
+      "path": "stock_monitor/paper_view.py",
+      "git_blob": "a96c4c1edd6bc24ad99ffb295715157b09eed647",
+      "sha256": "e5a1ee4a749f48c0a7add59d9aadb81799a6be4279fa745772d127deb4e07256",
+      "bytes": 8266
+    },
+    {
+      "path": "stock_monitor/partial_chart.py",
+      "git_blob": "47c317751a981a5c5ef278d45b5c7fc984e36e0d",
+      "sha256": "249a351d21700572724aa8ba6667cd057a93f7756ac13508bae6bf58101377d3",
+      "bytes": 38364
+    },
+    {
+      "path": "stock_monitor/paths.py",
+      "git_blob": "cbeba16a0eeb98e2e147eddadbeb51502f186c9a",
+      "sha256": "7452490b5cdb510582859b9ffddbbdd21792f2ee1a6e0888aed911c5f7e0bfee",
+      "bytes": 2461
+    },
+    {
+      "path": "stock_monitor/performance_cache.py",
+      "git_blob": "223b4c1d6d0564dc86311aace5d8772db0284c82",
+      "sha256": "b98255cb1a8cf0fac8d55a3b6305d539bc082dfa90b18620585136d5e39c30f4",
+      "bytes": 15986
+    },
+    {
+      "path": "stock_monitor/performance_dispatcher.py",
+      "git_blob": "b5d391fd6e722a6e3205fccc60d6345fbddb817e",
+      "sha256": "c8121204473c4e11a0974672da8300fd0613b795b10e1c92afbe24fcf6360b99",
+      "bytes": 9278
+    },
+    {
+      "path": "stock_monitor/recovery_bundle.py",
+      "git_blob": "f172e3331836b3f4e1d27eadce69e9cbdc274fb4",
+      "sha256": "40425a79b13853d11756785e6542852fde1ab68e492ea5b37acc3ad25865f9f0",
+      "bytes": 9859
+    },
+    {
+      "path": "stock_monitor/requirements.txt",
+      "git_blob": "c65650b6a6119bdc78daae94bd19cb7188401b89",
+      "sha256": "5700ac2d694c1b8aeb6f4f6e2b00f2d113d31355030916b54b8614be5fc2fbb3",
+      "bytes": 134
+    },
+    {
+      "path": "stock_monitor/revision_diagnostics.py",
+      "git_blob": "8e5b05d5f36e0caa164ba78104924470f94cd65a",
+      "sha256": "75826e1d37baf1d2ac0ced48ff3246bc36ce815d118909045fa33d745933af59",
+      "bytes": 8582
+    },
+    {
+      "path": "stock_monitor/revision_watcher.py",
+      "git_blob": "290c3414df60afc9d56c62d0f15bacc955836cc5",
+      "sha256": "28aec89b136636d5d4bb909d0ff64ded4f28128b6a3d95f87f838a2632efbf5d",
+      "bytes": 7259
+    },
+    {
+      "path": "stock_monitor/ruler.py",
+      "git_blob": "501ca55f5af1dac9dac58627cd6bad24fd74978b",
+      "sha256": "c96b35b9952f80289f617f08da9aa6721cae9f4edfe20e14e848e71d5aca2390",
+      "bytes": 385
+    },
+    {
+      "path": "stock_monitor/save_exit.py",
+      "git_blob": "ba3a85027f2fc4b33becc5ccceb62399b6fe1ba2",
+      "sha256": "db4db54d00afd0581f7e3e84341baf147f587d2142d6ac6ae744b27ea39cc89b",
+      "bytes": 4774
+    },
+    {
+      "path": "stock_monitor/significant_levels.py",
+      "git_blob": "5a1c58c633442599c110f43ee72c8c2b194d3c71",
+      "sha256": "f59feb3ae342bfa3eba35161bf51642e9b8bf8ed33236df5c0bafa6c4961db94",
+      "bytes": 2409
+    },
+    {
+      "path": "stock_monitor/snapshot_worker.py",
+      "git_blob": "1f9f75cfce9427f3bf2935c8d48d9c4acdd2d37b",
+      "sha256": "533b77e3595c793e26eb73ddc94d93c127c5479f94e5f616d1807bc946f95ac0",
+      "bytes": 24909
+    },
+    {
+      "path": "stock_monitor/storage.py",
+      "git_blob": "753c31f6279a2accc33f66fb680584fbfc315ee7",
+      "sha256": "2ac614e5044e20064a374515eefe1886a92724e8ceb5ace26f33dc2d39920e24",
+      "bytes": 14370
+    },
+    {
+      "path": "stock_monitor/store_release.py",
+      "git_blob": "2f9f3c76509670c9b17d1910eccad93b21920e7f",
+      "sha256": "b1e10e6d4ce13dd3abdf0b0753229199e98eecdb12cb8d200682fd68f65f8aeb",
+      "bytes": 5589
+    },
+    {
+      "path": "stock_monitor/test_apple_analysis_timeframes.py",
+      "git_blob": "861f37038ac148b1fa66c59b731d9e46b65f5162",
+      "sha256": "7c46a9fb8f2d0da3d2da7d9741983ce67642d03eebc6a805eb8495803e01a0f5",
+      "bytes": 9175
+    },
+    {
+      "path": "stock_monitor/test_apple_demo_seed.py",
+      "git_blob": "27ebb88cf17fff6148ca47e329492c7c750e6fda",
+      "sha256": "03b180dec3722cf6582035ee514e82d7ce266072e072716cf9822d5c705b21db",
+      "bytes": 4664
+    },
+    {
+      "path": "stock_monitor/test_apple_feature_reason.py",
+      "git_blob": "34211c9ec9746b58dd1ef65e32bd9bdfd68e1609",
+      "sha256": "ca0841162988a0f2ea947da270977d0ebf8fb1485ffda30c1c3103b594ae80ea",
+      "bytes": 1916
+    },
+    {
+      "path": "stock_monitor/test_apple_intraday_evidence.py",
+      "git_blob": "87a4331c7860b328d2fa5aeee25291a66d1d5453",
+      "sha256": "f929c6a7fdf73ea3fca97582e34eedf68e486f9d493b15649e1e7196fde11609",
+      "bytes": 3944
+    },
+    {
+      "path": "stock_monitor/test_apple_monthly_warmup.py",
+      "git_blob": "370a355e0296c546a9bb2333f37ab7594b8d4c5d",
+      "sha256": "ccb16801ff06f74d75710575f7f6e19531623a12ed1491e99d9429e63b95731d",
+      "bytes": 8298
+    },
+    {
+      "path": "stock_monitor/test_chart_fast28.py",
+      "git_blob": "c1172a0e20936a3bcd30d14621f21481ef1fcebb",
+      "sha256": "22278015c4ce48d4c4dec9d661082d0fc52893c341fa7a7d336d5f87cc449204",
+      "bytes": 7827
+    },
+    {
+      "path": "stock_monitor/test_cp_acquisition_order.py",
+      "git_blob": "0bb31feaaa3c477fe72bb16ee67796727a9ecfba",
+      "sha256": "04b6dcb8493ffde1f094ed9f7046d05a1edaff53616aabba92fede3927769ef9",
+      "bytes": 3708
+    },
+    {
+      "path": "stock_monitor/test_cp_demo_priority.py",
+      "git_blob": "b9e8402d5befa7ec6bb09c1cdc4d848f786e1795",
+      "sha256": "1c9637e7c2ae0eebbf1a1c617f46f4cb09080df4886e5695a3f05678d62ea9ac",
+      "bytes": 5737
+    },
+    {
+      "path": "stock_monitor/test_cp_focus_base.py",
+      "git_blob": "d2b7c3ee1fb086cb8fc8b674f0a835a3ee65404d",
+      "sha256": "2e2e73ef514c912c2c405cd172993a6d1cc715a879c09cd9ab165dd186937d2f",
+      "bytes": 2071
+    },
+    {
+      "path": "stock_monitor/test_cp_fresh_completion.py",
+      "git_blob": "0cb078f41047bdf936bb0a80be641cd93fe4fbed",
+      "sha256": "d8477488bc0ba90476dbc952b329cac24f5a9571b2f104a98765f835ffd5ce64",
+      "bytes": 6489
+    },
+    {
+      "path": "stock_monitor/test_cp_fresh_fair_share.py",
+      "git_blob": "f9b5ea061f9d1d9bcf3662e873501a4fc8038d18",
+      "sha256": "bad25fcc16c9064dbe67aeccce1eaeb6652ab7f94263317c2d578d58d963ff75",
+      "bytes": 3986
+    },
+    {
+      "path": "stock_monitor/test_cp_history_slot_release.py",
+      "git_blob": "32e786400c9a8ccbfd172bec8658e52eb26d8188",
+      "sha256": "d4596d2c98b14573e6fca9978a55565d518375463d321b6baa48d45f6a1180c1",
+      "bytes": 1894
+    },
+    {
+      "path": "stock_monitor/test_cp_improve28.py",
+      "git_blob": "9317de05803f7f20e7525bf42e2dd26826e69aeb",
+      "sha256": "d48a94a91d2115159e04f63ddae7460ef9e5af02344faf3f028862b344e2d105",
+      "bytes": 13880
+    },
+    {
+      "path": "stock_monitor/test_cp_reserved_base.py",
+      "git_blob": "5b36c056b79905a04765fea6332b7c9cf20e72ba",
+      "sha256": "6cec770ed89e8cd02ab2d92efca567f5c613fcbd0102980a7e6a4a891f354fd1",
+      "bytes": 3273
+    },
+    {
+      "path": "stock_monitor/test_cp_reviewed_ranges.py",
+      "git_blob": "131cc7fe304711432f465fdba6aa8b580be60769",
+      "sha256": "9cf8b19f21f276501bd5319c34ef0c77cf183610096ecefb73de576dbb721db6",
+      "bytes": 3919
+    },
+    {
+      "path": "stock_monitor/test_cp_trade_priority.py",
+      "git_blob": "44c57513ff2997cf54bcbf663984d1dedcb65859",
+      "sha256": "0964d9b1a8acc187b5e377a1ca0d5ccc32c947bfbceaa9db719e388efdc069eb",
+      "bytes": 8472
+    },
+    {
+      "path": "stock_monitor/test_demo_dependency_pin.py",
+      "git_blob": "f10bf76fd04031268eb20469c2e6a6b0baafd712",
+      "sha256": "cf9519a6c8de1e59c796ca48cf8b585a150fbf1a530367ba62b54760c23e9d5a",
+      "bytes": 4989
+    },
+    {
+      "path": "stock_monitor/test_display_history_depth.py",
+      "git_blob": "2a7d88e257db088e60d1b7068fbfc40566112e3a",
+      "sha256": "ecf844aae0d1132fd7f42f284f82f43d4d206c6c37c86d1085721a83b64e4cf6",
+      "bytes": 14941
+    },
+    {
+      "path": "stock_monitor/test_gettex_chart.py",
+      "git_blob": "44285c20942b9b2d464cb10b1e4cb784dd768e0f",
+      "sha256": "95461caa91b8c36224c5ea2ca6960c540b914f76e7a965fadb2cad5c2e02816d",
+      "bytes": 10315
+    },
+    {
+      "path": "stock_monitor/test_gettex_chart_daily.py",
+      "git_blob": "28741c2bba64b992c53cb65ffd24c08ef1ff071e",
+      "sha256": "8b3934407316bb73b362bfb7e2126c7e1ad7f04907f06aadf137f63572bb40ff",
+      "bytes": 8873
+    },
+    {
+      "path": "stock_monitor/test_gettex_daily_2021.py",
+      "git_blob": "efb3b4b271d31925c62aeb060f3fc888000fe79a",
+      "sha256": "611764bff817e7056873b598642f25091137586982c71263bdbe3ee9f4e75643",
+      "bytes": 5613
+    },
+    {
+      "path": "stock_monitor/test_gettex_minute.py",
+      "git_blob": "ae2b0c7324719d4f5f9ad7c985648cbc3f8a4289",
+      "sha256": "fee5ace43d79a3a64c6fd9e2c039ad8884c546cd46567167c835bc3a80a22853",
+      "bytes": 4632
+    },
+    {
+      "path": "stock_monitor/test_gettex_only30.py",
+      "git_blob": "51280b497d7e3c698ca6fe2b3e6f3bdedc244950",
+      "sha256": "11793b20ce2ba48a7d25962fa7cbcf848ebc253f305f3f1b420edcf4a7d5b571",
+      "bytes": 4429
+    },
+    {
+      "path": "stock_monitor/test_paper_valuation.py",
+      "git_blob": "ae83f4bae1cd05c145e4a1919803891d87cff1a6",
+      "sha256": "41e4881c6ab4f9280522be1aff421fe092e47a7d0458c7cfaa135291f571633c",
+      "bytes": 7573
+    },
+    {
+      "path": "stock_monitor/test_reviewed_entry_source.py",
+      "git_blob": "1897f6ffd38aea71d92ebda1be719407993b0e74",
+      "sha256": "91422dda33bc5a1867b180eed141cd0381152f55f300d77e6be2d7f731321edd",
+      "bytes": 2360
+    },
+    {
+      "path": "stock_monitor/text_menu.py",
+      "git_blob": "6ebbdfce00e4903c05acf25310adaae2ca26f217",
+      "sha256": "8b04e109cf1a0ac52d8e07085ebeb1904285efb3d97c4fb46c95b80147fcccf8",
+      "bytes": 967
+    },
+    {
+      "path": "stock_monitor/themes.py",
+      "git_blob": "c7cc6a2653d53283e943008025314f5bb5574c3e",
+      "sha256": "1f10e1e9adaa629fd68fce2bd5e23c2d107cd5a88667d80cb64eb7daa1221c57",
+      "bytes": 401
+    },
+    {
+      "path": "stock_monitor/timeframes.py",
+      "git_blob": "e66561f0be3013b3867f4163c5871060c3fe95ea",
+      "sha256": "e12cd97acde496be78e313c92a9370d05e6bc710b2d9531dab707c8254455f80",
+      "bytes": 19605
+    },
+    {
+      "path": "stock_monitor/trading_engine.py",
+      "git_blob": "d5c4923b578f33c024040a43d5eef99c3671c022",
+      "sha256": "77d515698c028ab37d8985b8a29e17408519d386f9c17e48d90f3a182d9202c2",
+      "bytes": 11370
+    },
+    {
+      "path": "stock_monitor/trading_view.py",
+      "git_blob": "1af1c243c202e1048bdf9a6e383772d6a42bf1e6",
+      "sha256": "32cd6d68c36139a33505e0037cb332ec741bdb96719c47480402a05af8eece0b",
+      "bytes": 4803
+    },
+    {
+      "path": "stock_monitor/tunnel_runtime.py",
+      "git_blob": "d7aecdf250a4f3dabaf735c5a4a4830bef0c0417",
+      "sha256": "33ff37677af207c3d63e319daa2fe8b00b2c6be64efe4de02690509a0663b5f9",
+      "bytes": 7792
+    },
+    {
+      "path": "stock_monitor/ui_messages.json",
+      "git_blob": "cd26220319b943ab7261abd3104b38f4d9197961",
+      "sha256": "676d6a095344e08f51b67a166e28305540c730151ef932a18e7351710a7148a0",
+      "bytes": 174276
+    },
+    {
+      "path": "stock_monitor/ui_performance.py",
+      "git_blob": "616a156613bca833bf5b60ee194a3057cf27a611",
+      "sha256": "3b79621d40a79c81a6ee44c028d50c11ee410eac2356107a133d59de27ec8075",
+      "bytes": 3908
+    },
+    {
+      "path": "stock_monitor/ui_rendered_messages.py",
+      "git_blob": "6cd3d9c0fe8468db17213c772a50b5e7ce546e64",
+      "sha256": "49dc59da39a927ec30ee50b300a54d3790d802316339a1a4371814517b3eed81",
+      "bytes": 2280
+    },
+    {
+      "path": "stock_monitor/updater.py",
+      "git_blob": "e32fd8748918a9d2a424bb74c5d29f331d196a2f",
+      "sha256": "f3369b6cd321df2d9d211880ac60532d0425e51d4121179036b3e6fd60a7ff60",
+      "bytes": 5061
+    },
+    {
+      "path": "stock_monitor/watchlist_order.py",
+      "git_blob": "b9b2f2aa2afa0fad2fb07a129ea91134b4e36702",
+      "sha256": "2e25d610ddb678b63fe151bb495490c9004089a73ebca0f1564b9512e6570460",
+      "bytes": 9002
+    },
+    {
+      "path": "test_admission_dependency_scope.py",
+      "git_blob": "9acdf2ddf93933a1e8ecb3d0cffdb2d747062475",
+      "sha256": "c37d21c8a664fd4b34fef8752347d9fa500ebd152f6b6f9bb2b5e8e263d47ff0",
+      "bytes": 6094
+    },
+    {
+      "path": "test_analytical_read.py",
+      "git_blob": "539ba3c9849fb512aadaed8957f2b3f68ddeb83a",
+      "sha256": "9588c40eafa9b1b6ef1808a9c2de386ba634ae6401ae18ff0c0237c95723383c",
+      "bytes": 4432
+    },
+    {
+      "path": "test_analytics_retention.py",
+      "git_blob": "41d06bd60b172008856f5bd0a0d76660a29b6bf1",
+      "sha256": "ddd8e4a014b510eb4073ce5bc391cb559a61aa4ec13341d4b284e1bbc38b7b73",
+      "bytes": 2211
+    },
+    {
+      "path": "test_apple_policy_handoff.py",
+      "git_blob": "59e9cf8082c3c57f76171e5af9a9e83de7e44ce1",
+      "sha256": "fd44109e4b838dfe490ec99d506acfd7f2b14001694c88723394ffc170325210",
+      "bytes": 6760
+    },
+    {
+      "path": "test_benchmarks.py",
+      "git_blob": "1c724c6fcecd3d87d522f6bdfdcf4cb32c04caab",
+      "sha256": "2ea04b80b8578e876ea839c59dabcabee75d0f1a63535ce1024695bfe55580c3",
+      "bytes": 14643
+    },
+    {
+      "path": "test_cached_quotes.py",
+      "git_blob": "af6d96c14616611fb3735388fee2685c76badfbd",
+      "sha256": "85f762cdfa36acb648577f953fb4389d5fbd85e72cae5c7b94deace82819b283",
+      "bytes": 5123
+    },
+    {
+      "path": "test_candle_schedule.py",
+      "git_blob": "9200a82333e74895f93ba903bcdc39ee604f8a7a",
+      "sha256": "df20894dbedfda22c58e84209599555ef3678c012fa9c9c25050a7bf34fb05d8",
+      "bytes": 10270
+    },
+    {
+      "path": "test_candle_timing.py",
+      "git_blob": "de37d4aac4219becc302a7bf0a2146b3f2c6870f",
+      "sha256": "66c8ef4379396d081f5f05fd1eb177dd5815ba8300262800d20c261054e0294f",
+      "bytes": 4912
+    },
+    {
+      "path": "test_candlepilot.py",
+      "git_blob": "5f9559f42749d6bec661132bf1355f1f3febc2f4",
+      "sha256": "da908a0a33be6c073b8a598c32400a0033331fdadbdcd0e3cec9f1ab2e74a0ca",
+      "bytes": 8418
+    },
+    {
+      "path": "test_candlepilot_health.py",
+      "git_blob": "485abb838c5c94e0987d7538ffc139d19be0aba6",
+      "sha256": "15f7bab2a3413cb716eb66e9ea4341d36fbc4a3907c079740290cd77889b3aad",
+      "bytes": 3262
+    },
+    {
+      "path": "test_chart_p0.py",
+      "git_blob": "950149b1791b566269d1363df86df9c49e4ab2c0",
+      "sha256": "7297a71d83e93ed66737ed5ef3bef90c9b3a6e4db4ec98336378cc78f1ac6b80",
+      "bytes": 4809
+    },
+    {
+      "path": "test_chart_switch_speed.py",
+      "git_blob": "07f8f1acd78d686397947fde44410aa52a15dc91",
+      "sha256": "9db32ce1bab682c80badddce1e4bce926302aab9c1342a92b93da77a2c412b4a",
+      "bytes": 10695
+    },
+    {
+      "path": "test_chart_worker.py",
+      "git_blob": "850728c3508e250810b1565695165f9092483647",
+      "sha256": "7f2711076dc51b8534c823b845b49fa9ca9fa7464ebe9a0a4d5472f5d80253c4",
+      "bytes": 4258
+    },
+    {
+      "path": "test_cp_accepted_analysis.py",
+      "git_blob": "84d2e3c134e1cff10ad610e115366f2dcd85e0e8",
+      "sha256": "7805d3fe92997aaa556cf0854f3736f6a8dd28a14bb553a1812212c6ebc24d4a",
+      "bytes": 8592
+    },
+    {
+      "path": "test_cp_adaptive_recovery.py",
+      "git_blob": "fe26f93d5ba8da5fcca277d43417a51eb06d5a35",
+      "sha256": "eb1fdef90147f478bf6acc949c35b4b09fa7d8f93399ac89ad4e71139a393d3b",
+      "bytes": 14438
+    },
+    {
+      "path": "test_cp_archive_prefix02.py",
+      "git_blob": "c1adb4bab85112f5c7977be2a4ccc761dd4e9879",
+      "sha256": "c773793d9f2f2644900a3533d5afad4b9f66154538b8113505c2e71dc097578e",
+      "bytes": 7636
+    },
+    {
+      "path": "test_cp_automatic_repair.py",
+      "git_blob": "79f95c36d38c73d8b5dde896d4ae3925078d696a",
+      "sha256": "6172072caf8cdfbc06c303ce255813d09e9b57bdc14e881a9bfdddc40263e7db",
+      "bytes": 16532
+    },
+    {
+      "path": "test_cp_autonomy.py",
+      "git_blob": "19b3aef86c6eea302a6aaffead33f9bbfd5e95ed",
+      "sha256": "a1657c95e4090b2d06d4c16e7d302b94613040f7396962d2cfb16366ebecdd7b",
+      "bytes": 10889
+    },
+    {
+      "path": "test_cp_autonomy02.py",
+      "git_blob": "551038741a37286c5f76202ce0dbe2c1567b19e7",
+      "sha256": "996fcb0287f6b282a00fd15aa1844e4fa488b716fd5a1ea4d7c4f6821ef94fa1",
+      "bytes": 17908
+    },
+    {
+      "path": "test_cp_controls.py",
+      "git_blob": "11cda25eae71017aae927456f2f317b845741fb2",
+      "sha256": "9c1a1cd021650dba219191150109f5219cd7c69b7708a0614e8c2b9ef334c92c",
+      "bytes": 12919
+    },
+    {
+      "path": "test_cp_empty_context.py",
+      "git_blob": "57c34c60e992401d4177a053ff28a6a41a56dcb7",
+      "sha256": "9304944b060b61f0f29a081de51b21bd1066fb3863c1ff487037b0df664bd62a",
+      "bytes": 4900
+    },
+    {
+      "path": "test_cp_experience.py",
+      "git_blob": "562a2c26bc35f96cf14159b3e6bdfc3e9cfe8495",
+      "sha256": "982ea1e74967cc0aebeab71ba00aeb9cde891b3c5ccc33a2947d36d11cbbe99e",
+      "bytes": 9629
+    },
+    {
+      "path": "test_cp_failure_learning.py",
+      "git_blob": "9bb24925d9047f400f14705e43acb951a607c7a8",
+      "sha256": "555519ad458ce794d4f4df82160d534514c862797aea167f9e1ed31f4bad8546",
+      "bytes": 5827
+    },
+    {
+      "path": "test_cp_fresh_daily_tail.py",
+      "git_blob": "cdfc2bf27c08d2d271b393ca6acde66d630586a6",
+      "sha256": "2f84d8325e4a711b6a6359423e9ce9332a5c332d423fef96bd9641ab8b1494fc",
+      "bytes": 8429
+    },
+    {
+      "path": "test_cp_full_execution.py",
+      "git_blob": "594c7fdd4d32e23974684f30ba035e423396c0e5",
+      "sha256": "b2abde6475d06754b2ddcc3293d87ea0fe983ae8f04a0579dfec0ae9383abec9",
+      "bytes": 14266
+    },
+    {
+      "path": "test_cp_gettex_universe.py",
+      "git_blob": "1268de5a0a838b2f0ad46a79b713799ea09ec29d",
+      "sha256": "7a4728d1561c0b9c2802e2f5fe3278fceb5c67bd7a701bb41f10ae1a4033a957",
+      "bytes": 11078
+    },
+    {
+      "path": "test_cp_health_completion.py",
+      "git_blob": "3e31deb5edf087c918a30a84d74c52944f2f6fc9",
+      "sha256": "e051b0c131d741574801936afc5e47732730105d9b03ef636896605c5604ca62",
+      "bytes": 3254
+    },
+    {
+      "path": "test_cp_local_completion.py",
+      "git_blob": "08d37d7e1c49f856d33dd8f52f40ececc95b747a",
+      "sha256": "8a8ce496b9879b2da5467364b6feb06753d8e02268832466b3cec81564aa08f2",
+      "bytes": 9003
+    },
+    {
+      "path": "test_cp_nine_tf.py",
+      "git_blob": "d078f01e8fa917924876c3d3bcd5f557627770c5",
+      "sha256": "132a4c4e92e00435ff915b033e84d4380f99dbe28ee2d563155249883fdca54f",
+      "bytes": 16171
+    },
+    {
+      "path": "test_cp_observation_content.py",
+      "git_blob": "0e29a8a8908fa7c950f661656089d6a345be90c6",
+      "sha256": "dfda09dae8c8b369886a6e800c1594bc6ccdbec0eba1bba91d88396ef273f93d",
+      "bytes": 3454
+    },
+    {
+      "path": "test_cp_observation_priority.py",
+      "git_blob": "6aa761b30c017ce3f4dd11cf7f3bfab6a5a577ca",
+      "sha256": "f3aa8c7bb57cf7c19f6f1298fba53ced2be6a8184f4484cd0394f479c13ab271",
+      "bytes": 6280
+    },
+    {
+      "path": "test_cp_planner_dispatch.py",
+      "git_blob": "16b8a92e2a325c10614eb8d77513cc807e16060c",
+      "sha256": "1a167e49a0a3af7317cc95c0a237d2a33c9db20bfbecd5c47c57588fedfab633",
+      "bytes": 3772
+    },
+    {
+      "path": "test_cp_reconciliation.py",
+      "git_blob": "f80611249d38784cf35d06eb4b7b7f5af1526685",
+      "sha256": "964eb75e5dc1353c76f02e3d16de62656ec87e5fd999523b2ef1e4ca0397cc21",
+      "bytes": 14378
+    },
+    {
+      "path": "test_cp_recovery_preflight.py",
+      "git_blob": "29b0e8eaf07caf5683a4ce2b75a772786b27a9e4",
+      "sha256": "2360a0cb540ffdba32bf81d3a0a580f862d5b9b2c0007e05cf86d56d8a7eaaa2",
+      "bytes": 4557
+    },
+    {
+      "path": "test_cp_recovery_route.py",
+      "git_blob": "7279482054fb5567423d91de56ed20400204df4e",
+      "sha256": "65c078c7414783c9bd321007122007c9e0b06757b4e5fb33139cb42947b149d8",
+      "bytes": 7968
+    },
+    {
+      "path": "test_cp_repair_fairness.py",
+      "git_blob": "75d0e48ba97862968f1e9afaedb8442c19b87a83",
+      "sha256": "b3f0575a9e1bc2d8137026739f99aa3e982f63f14b7867316282c6848a3f79bb",
+      "bytes": 9158
+    },
+    {
+      "path": "test_cp_review_stability.py",
+      "git_blob": "19fad44f6454bda8d4a8bb044c88c35c708f20f4",
+      "sha256": "011082055146186ce8c6d56a8d8434e99140d62907362da7bdefb49535c8b17a",
+      "bytes": 13729
+    },
+    {
+      "path": "test_cp_reviewed_risk.py",
+      "git_blob": "b8fd3cfb32e42fc25cf686a313fd8c2fb50a029d",
+      "sha256": "36ca3026bcd724c52a4e1a89996f877bbb700dfa619c6bddd26248a8a158665e",
+      "bytes": 14772
+    },
+    {
+      "path": "test_cp_source_acceptance.py",
+      "git_blob": "768fa3a6c2b09e523dfc59a3c65b7afb6a5e28c0",
+      "sha256": "64789a3802359018bdc3c9f6d75c7312f593b0209a75784226ae6af65b74bb44",
+      "bytes": 6665
+    },
+    {
+      "path": "test_cp_tv_batch.py",
+      "git_blob": "c0e891362b9a628a8a346b228e9f0012e8879aab",
+      "sha256": "9186aa6d1d356eda92153eb474830ca49c38cce017bbd6d22e9e3fbf4a22a8a8",
+      "bytes": 10667
+    },
+    {
+      "path": "test_cp_tv_receipts.py",
+      "git_blob": "b878634bcdab92f54498dc0b4a188e6056e6cf0f",
+      "sha256": "632f36716defad8ad9efdfbfd7941e0f1019b698a02b815cf9f7149043f5b475",
+      "bytes": 3442
+    },
+    {
+      "path": "test_cp_tv_risk.py",
+      "git_blob": "3e4c643cf2847ff794a9c7d8a5ea4499e4c1e487",
+      "sha256": "83fc8d3626ac1ec4d06cc3c92d8522413ea4a5c34009308b5937108731971f84",
+      "bytes": 9560
+    },
+    {
+      "path": "test_daily_live_slot.py",
+      "git_blob": "6390ac27b5fef5e9f237f3e0d7b59d395b301434",
+      "sha256": "d8b54520757768503213b6d452954b327441a298c36271bbbbbbd77f51cc5bef",
+      "bytes": 5813
+    },
+    {
+      "path": "test_daily_normalization.py",
+      "git_blob": "3441b80ffb423b7dcf2fbcee9be75e278457052a",
+      "sha256": "25cb2b3fd6bc829893fa7db7da04231f151af1de9e2152c48edbe54bfa3867ea",
+      "bytes": 2085
+    },
+    {
+      "path": "test_data_quality.py",
+      "git_blob": "bbbd6c43ed33e1223e7488d4d390b606b231d8df",
+      "sha256": "f5948187b40480286cd6100db5cf69fa3d5796268312c17b5dc93902d1f7bc7f",
+      "bytes": 11031
+    },
+    {
+      "path": "test_demo_money_tolerance.py",
+      "git_blob": "d211a9e1909bf793f93a6e84878c320914d903b4",
+      "sha256": "98cc85799fa1ca7f782f0d0641e72fb521d2d9053dcb39f41425d6f97ef81374",
+      "bytes": 4971
+    },
+    {
+      "path": "test_eur_listings.py",
+      "git_blob": "94ad090a2a44c845fcd40b0f129c2b883cd2a50e",
+      "sha256": "5260593e34e76febf19aadf77509c75194e0c91c5f4a16fd6a61d1c6638ee345",
+      "bytes": 8208
+    },
+    {
+      "path": "test_evidence_batch_cost.py",
+      "git_blob": "2a5a59434bfcb49a5099ab0ac65985e075d08cb9",
+      "sha256": "0b122d39a589b1ae27344601bf9548da15635691588c729c63a08763f88fb417",
+      "bytes": 7066
+    },
+    {
+      "path": "test_exchange_interruption.py",
+      "git_blob": "1d7559dccb6ee2bc786c31470a683d0d95a255a9",
+      "sha256": "e3b55078d04f63e9f21e412b4b4359f121fc80ea575f55f608336d7b5dcbd7a5",
+      "bytes": 7948
+    },
+    {
+      "path": "test_extras016.py",
+      "git_blob": "a734b0d20365b159c8584f7071406d434bd1ef97",
+      "sha256": "7fd4c7c3d0d093e8e4da310452c559fe578501ceabe4df03e1f320da81f5a15e",
+      "bytes": 6666
+    },
+    {
+      "path": "test_feed_telemetry.py",
+      "git_blob": "585e361e998c00ad5cce85a014918e85c97c2520",
+      "sha256": "d08d4f4f769e97376e77f326369e4ec489b6ecf1aa5af10367aaf88b4ab6397f",
+      "bytes": 3742
+    },
+    {
+      "path": "test_frankfurt_cached.py",
+      "git_blob": "068798dd75c0ead0407c73c851912b009ca423fd",
+      "sha256": "5e7f6f96f41bea7d151325dddf447b0936e95014b2b3f03e1d3b714bda5ae776",
+      "bytes": 4530
+    },
+    {
+      "path": "test_fresh_route_upgrade.py",
+      "git_blob": "7d20a84181b38e9152ca5d7ad7b8cfbc04aaa5a5",
+      "sha256": "4c25d41fcb0dd12adc91e8619dca86b38242efe708c62e07744ab160875e5c4b",
+      "bytes": 2842
+    },
+    {
+      "path": "test_gettex_cached_batch.py",
+      "git_blob": "02bb58a2817f7f165f7c3e8ca27debf67431444b",
+      "sha256": "a22ba438c2925f3fd3669826fb2f485b0ecef63bff8916c660b448438963bd66",
+      "bytes": 7242
+    },
+    {
+      "path": "test_gettex_daily_calendar02.py",
+      "git_blob": "eeb73f713dcdbb6370bf8dcc1cbefa8d7ad7d358",
+      "sha256": "546af86a43ea5a25a429fe5cbc67be4e4367ad6386e34b51dd3236d5e011c997",
+      "bytes": 2920
+    },
+    {
+      "path": "test_gettex_live_evidence.py",
+      "git_blob": "ba2a4109e886898be2d5f77d2d8ec93d0a00ef35",
+      "sha256": "aecebee9faf3008df781eb008a9bcf90b4294aebbfb5603057438276836ea42f",
+      "bytes": 11744
+    },
+    {
+      "path": "test_gettex_partial_evidence.py",
+      "git_blob": "7bec45e1dbfa88854bdee2f3ac42a1b6f1d33f2d",
+      "sha256": "4fb5f10ea2e40692c4289d68a7fda1e9e6f8d06888d3a32599fdbfaa8dfef293",
+      "bytes": 8799
+    },
+    {
+      "path": "test_gettex_primary29.py",
+      "git_blob": "5c60be644f7b026df5a88e8691d23cc863ec1259",
+      "sha256": "e8d5cfef05b3f39ca59f2067a0c863de4de946eaa5c0908bca0ebcc351e32cd0",
+      "bytes": 6826
+    },
+    {
+      "path": "test_gettex_publication_recheck.py",
+      "git_blob": "40ae4855405e2add049456366de04c17c5ef40fe",
+      "sha256": "711cdf873698fca494a8d52558abd0a9aaf8762b4eb08d457a4964e33e8afa7a",
+      "bytes": 13090
+    },
+    {
+      "path": "test_history_backfill.py",
+      "git_blob": "42a44507e37a6adf36ab0839c70caf893da27cfe",
+      "sha256": "dea43908c6486262a729bca9c60c2d4e293b1c6713a17b993ead5b4fec161b53",
+      "bytes": 5891
+    },
+    {
+      "path": "test_history_depth.py",
+      "git_blob": "cdeb6462e4c2ebd03b7a5b2fa1051c0a3636f48e",
+      "sha256": "03c092216bfa233cd81afe1a91ebbb07c758f1d9f9577b3ac953298537c02dec",
+      "bytes": 7028
+    },
+    {
+      "path": "test_identity_resolver.py",
+      "git_blob": "a5979f538e82c7abb6225273b6cf53f405185f1e",
+      "sha256": "b282aee9c211579237f20939abde1deb2c2a61b24abb90ae012d25a59a2671bb",
+      "bytes": 3498
+    },
+    {
+      "path": "test_incoming_dq_reason.py",
+      "git_blob": "d98ae910e4167855b074101b0e59a49844b28edb",
+      "sha256": "c3ac2b9a50032524ad77992cc161a33b52d0c4067d276bd16d975596c6a9d397",
+      "bytes": 1487
+    },
+    {
+      "path": "test_input_revisions.py",
+      "git_blob": "24c8cfc3dc1c9be7f995a026eadb3a9191aac6c5",
+      "sha256": "215c6438a17476dabf1b1ce56c58e01751abcfed226f177b742c1cb4a795d37b",
+      "bytes": 5849
+    },
+    {
+      "path": "test_intraday_normalization.py",
+      "git_blob": "93c5bb708e16247082555c07f2f844adba0cdb6e",
+      "sha256": "088c7892e39459cbe77a456acf9da009c440c60a9062a6c6a18531be4228f13c",
+      "bytes": 11375
+    },
+    {
+      "path": "test_legacy_frankfurt.py",
+      "git_blob": "75be90b4a124376107eed1b04ba4d7ae48deecc6",
+      "sha256": "b657ffb706fd0984f1948f3670850a0c7c17d3802ab35acf824295cb03305480",
+      "bytes": 1349
+    },
+    {
+      "path": "test_live_candle.py",
+      "git_blob": "57a79331b577859f67c0a6da3545b36875d6f841",
+      "sha256": "5e0816dc2211147780d0031f1503348edb4eb190e72429b1f663b3fa10cbd374",
+      "bytes": 19159
+    },
+    {
+      "path": "test_local_recovery_cooldown30.py",
+      "git_blob": "506831ad5bd01579fb397dbae78cd5a7064cff86",
+      "sha256": "01897877c6bc0eb6549a8c32b9ef22bce9e7efccccf26ce8233588dfb91250e4",
+      "bytes": 6649
+    },
+    {
+      "path": "test_mcp_diagnostics.py",
+      "git_blob": "30e018c37ff2eb5d908b41a84ff73c18c24d9e56",
+      "sha256": "4767ef3c67bf2143f893e05c94c3c7089424a7112a7925bd11044c1dabba208e",
+      "bytes": 3351
+    },
+    {
+      "path": "test_mcp_instance.py",
+      "git_blob": "21f3d8e62a388842eb850c75812ba3d06157e8f9",
+      "sha256": "84cc647feff3a2030838eb19396fcc741cd28bf59369d1e074a5088b797718c5",
+      "bytes": 6151
+    },
+    {
+      "path": "test_mcp_readback.py",
+      "git_blob": "92e488ef3838612c6429c132e9fbecade4ca22a7",
+      "sha256": "d35d08a64c36a14e088e15a8715f581543f046d44b7f9831c580f51378608eed",
+      "bytes": 2651
+    },
+    {
+      "path": "test_native_reject_scope.py",
+      "git_blob": "aaf9c98fb1e7d36d17d2d8bd2ae9de2fbf684331",
+      "sha256": "fc1e4551605065c77be652589d6ad8740dd48bb220e396ec8c8c47eeccf3ff36",
+      "bytes": 4468
+    },
+    {
+      "path": "test_numeric_metadata_cost.py",
+      "git_blob": "31fc0a920475dbe768d1edc16e1939721273fdc7",
+      "sha256": "5792d6968680dd81e139e294c9dc117ca65d793bee5a0553da3db6665e736b9b",
+      "bytes": 6438
+    },
+    {
+      "path": "test_onvista_archive28.py",
+      "git_blob": "cbdad6759087bad17d05c38681d22f7ff286743d",
+      "sha256": "f03b8120cd0e4245a1c2d68cd253e0ebf8b2946b7f77ecd01cbbed6268d96f72",
+      "bytes": 7197
+    },
+    {
+      "path": "test_onvista_binding28.py",
+      "git_blob": "bb72c05bd4d3ff8e9f9d691f74f121536d5989b7",
+      "sha256": "cf9f0d84cc2db1020c3867a973c3c16b7b9c5991bc737a5afdbda6c7b56e0391",
+      "bytes": 6068
+    },
+    {
+      "path": "test_p1_closed_context.py",
+      "git_blob": "7f31457650b86cf081febeab385249982901b0ba",
+      "sha256": "79dbf3b69141a052c7ed0d0b2fde86fd3679b6fa976c6290c94118f14b105ed8",
+      "bytes": 2125
+    },
+    {
+      "path": "test_p1_closed_snapshot.py",
+      "git_blob": "30aefdf928b599304fb492fb367c1b684c33421c",
+      "sha256": "f737ffa18a753d16c892b9e40b10c74f53fa04fc895b9971981fc4c2fd80e835",
+      "bytes": 11751
+    },
+    {
+      "path": "test_p1_five_year_scope.py",
+      "git_blob": "cb9383e075edc070ccdec103a03be4995a7dba3b",
+      "sha256": "1157728d0bff856b36cdefbf8a8ddb140d1b5c74630835732b78159e1921cf86",
+      "bytes": 6835
+    },
+    {
+      "path": "test_p1_frankfurt_session.py",
+      "git_blob": "9a29e8865c7ce946c9b5ae89d858c2e5cb1acf7e",
+      "sha256": "4828af1f2aec265071af5fb719b24b47cd5e97cc1c9e8d8eba1f68b0e25574cf",
+      "bytes": 4947
+    },
+    {
+      "path": "test_p1_parent_recovery.py",
+      "git_blob": "d9fff38d8441854b34afc32ad4fc017bed18b1e7",
+      "sha256": "30fdd6d744082b29aa34276625799ee64a38dd1dd1c359b6ada193ededb17049",
+      "bytes": 11530
+    },
+    {
+      "path": "test_p1_reference_binding.py",
+      "git_blob": "fef93bfa167d7fb7a7701663d630f02625bb765c",
+      "sha256": "eb509ff46de70adb3313a1319e3afe89357f9a30ce4c12e9e65282ec7b4bc43b",
+      "bytes": 5255
+    },
+    {
+      "path": "test_p1_systemic26.py",
+      "git_blob": "a2c88cf7720fffcd0cd8de61abecfbde471f9cc4",
+      "sha256": "6e909f3b4a7e52c45f8b838c9e87c4e53e2e9b97946b04854529fe88edb4cabe",
+      "bytes": 11908
+    },
+    {
+      "path": "test_p1_watchlist_save.py",
+      "git_blob": "fa89c729be42cce22454b7f736b0538f62284abe",
+      "sha256": "ad382127023e9553d7fe23773947b752f9985361f0eea8ae2188e12a3e918b2d",
+      "bytes": 4222
+    },
+    {
+      "path": "test_p2_restart_contract.py",
+      "git_blob": "190ca4625a01289bc6b06c9dcb96df83dda562ca",
+      "sha256": "daec2b6cfd950a0944122d65c5e5c1e85a89ef6729724e48086953952877cec6",
+      "bytes": 6641
+    },
+    {
+      "path": "test_paper_hourly.py",
+      "git_blob": "d687b9d012f7c325fac280c8bdaa81524bc7d45c",
+      "sha256": "ab45d91c746c05cca4ebdb0f18510ba5a068134c179de50895c8176a931f7e45",
+      "bytes": 12572
+    },
+    {
+      "path": "test_paper_sizing.py",
+      "git_blob": "95c386563bd4874eb7e06604b9be9cc8014d6bbe",
+      "sha256": "39d9baf26a29dfec0f220cc0290d7f922f309534c85b9917976d752c7f9698e6",
+      "bytes": 6368
+    },
+    {
+      "path": "test_paper_strategy_v2.py",
+      "git_blob": "fe899125f6e40a61cda9be1ce4e01ac4a76681fc",
+      "sha256": "27888feb94143810bfff97e61e85b01c4fca29cbf66cbe08aad12d0d7171d416",
+      "bytes": 12766
+    },
+    {
+      "path": "test_paper_universe.py",
+      "git_blob": "7b095c7c37247c476068e6f31d81bf313bbf838d",
+      "sha256": "6982fc2bab8211d4419d01a23b271d560171435a0bc6bd27100bc8325f12a900",
+      "bytes": 9791
+    },
+    {
+      "path": "test_partial_accepted_bands.py",
+      "git_blob": "b034d93f13380514343365046de7dafb4319cfd1",
+      "sha256": "73c75387e1ed7eb6f4514a9a96eb46f130c664e7e6ac6ac93b2599ac7d830705",
+      "bytes": 7833
+    },
+    {
+      "path": "test_partial_accepted_indicators.py",
+      "git_blob": "797ad7ef0c66c13860e37ab6129063eb76783d9e",
+      "sha256": "04677f3eb82fca0e0fb2a22dd45b67adc9fee1a43d60d7f5a321cd98e52b3dac",
+      "bytes": 5306
+    },
+    {
+      "path": "test_partial_chart.py",
+      "git_blob": "7a344f056240c0d7442878f1833c0aaa77e166c9",
+      "sha256": "5f7130d63896e9a9c38645f3667e9395747154af5f0c6e2ff7dcf0fb83ffc651",
+      "bytes": 5765
+    },
+    {
+      "path": "test_partial_display_levels.py",
+      "git_blob": "ade01665fdf95cb4cf42e4424f3308595471f9ff",
+      "sha256": "79f3baea0f11e110d1cc7180c2c735a8751948632509e9e607c18e0ee19bf58a",
+      "bytes": 5104
+    },
+    {
+      "path": "test_partial_independent_core.py",
+      "git_blob": "0887310acc0ac08e020a78c3f78b4c705cbee0f9",
+      "sha256": "d4ce80726ddfe8fb48c6f805cd09513c89a1851b079196f1eab4db2e5796f313",
+      "bytes": 2374
+    },
+    {
+      "path": "test_partial_indicators.py",
+      "git_blob": "59e2832574b277b961372739b1bb2caade6910b6",
+      "sha256": "4f093f76a3d24f3ce4dc4f4e5ad358ebf36bc971adcdf671e13d4385211f921a",
+      "bytes": 10221
+    },
+    {
+      "path": "test_partial_periods.py",
+      "git_blob": "2a8d2eeb30a30a51523db6933885111094c8ff72",
+      "sha256": "cf7f76b2974ab1ffa5c772e863fdadf6139e7e1b129178c5c2b16e2cf7477c39",
+      "bytes": 5186
+    },
+    {
+      "path": "test_performance.py",
+      "git_blob": "a1c3d403dba62eb717eb90b005d250fb5fee87c5",
+      "sha256": "aaeee9bed0e836241ffe3342362d0df5f434f5aacf94ae948a426880a0be69c5",
+      "bytes": 5225
+    },
+    {
+      "path": "test_performance_dispatcher.py",
+      "git_blob": "c80fca23c751bcd83684b108ff252aa558356432",
+      "sha256": "b2297c47afa7dabf95742196709e62343995ac32b26fa304051be778a4401e24",
+      "bytes": 6961
+    },
+    {
+      "path": "test_performance_poll.py",
+      "git_blob": "01eca8503972155c01eaebf1eeb31ea2b5d205f1",
+      "sha256": "fc200779ef66abd23dd587d8581ac9d420a30c8a874bb4a6fa3108f5c4a3a0cf",
+      "bytes": 1950
+    },
+    {
+      "path": "test_performance_render.py",
+      "git_blob": "37e2e284978a74fdfba6e27e809d41238feb1240",
+      "sha256": "1b58a85058cacf3e7dd3eaa639faa7118de33d831fc6c15cbe7374a8e0f3cb4e",
+      "bytes": 2943
+    },
+    {
+      "path": "test_performance_scoped.py",
+      "git_blob": "577d5447c1099ee583b79873a2f9190625492471",
+      "sha256": "5dd9627d47ced0267cff55956556de2c8fe94f59dabd6bf648d8e58eec160cc2",
+      "bytes": 4046
+    },
+    {
+      "path": "test_performance_volume.py",
+      "git_blob": "5fa0cd8e368fb57da146ee2fb70d5726d963ce34",
+      "sha256": "d318c3d1c6df5ab672a47854301946f5c0a2b85dbc13314d3034a4447a302eb1",
+      "bytes": 1547
+    },
+    {
+      "path": "test_proxy_auto28.py",
+      "git_blob": "7c0830e464d48bf64a4f87fe5e8a44162805e14c",
+      "sha256": "c1f56793d14b502fd9e53043108ce9dd696818885ef7395ba539fdda5c99bf53",
+      "bytes": 5962
+    },
+    {
+      "path": "test_proxy_depth28.py",
+      "git_blob": "7b6ae9778bca06d14810b575d393b1436c76885f",
+      "sha256": "3489d1089627b3a6a67216d80f2619592e0b258fdf41746bc83dcc70c0eab653",
+      "bytes": 3080
+    },
+    {
+      "path": "test_proxy_session28.py",
+      "git_blob": "298495c57678e6fa1fc4d384360e1f68237a43ec",
+      "sha256": "0524fdbb0aa5f24e31d4a0bd89ac927c3d7e10f7f6d430be90eb7a0a83563f01",
+      "bytes": 9482
+    },
+    {
+      "path": "test_rejected_history_retry.py",
+      "git_blob": "d07b85053444e059c390d12762727f2aa963f49d",
+      "sha256": "82400f7bea671d07573ccd310f0d53b28b1d7b83acbc15a5e5f4b01de7f2dabe",
+      "bytes": 2924
+    },
+    {
+      "path": "test_review_native_discrepancy.py",
+      "git_blob": "50b7e5509c95888829017df989ef12468aaa7296",
+      "sha256": "e13285dfb8e95bcc1fa27f4866f211c6050489196ac8a41058fd34d838eb167d",
+      "bytes": 3667
+    },
+    {
+      "path": "test_review_queue_rotation.py",
+      "git_blob": "807cbc91aa095affd4a4f9ee4cb682e66f17aaf9",
+      "sha256": "5c54fefb8ff4f81cb8b5cfc4cb158a6cc08272b192c129d6093a5baf28eaa8c4",
+      "bytes": 2848
+    },
+    {
+      "path": "test_review_recovery_route.py",
+      "git_blob": "dd116d80f2172d6dde8726fbdf39acb9f97ceb2e",
+      "sha256": "834b27eb35e3093d7f0320f7a60b51c6427b63040874777ab483a71199405406",
+      "bytes": 5929
+    },
+    {
+      "path": "test_revision_metadata.py",
+      "git_blob": "44a2d4c7f254cf93fbd9a5d0c001d52b05f80bbf",
+      "sha256": "34974de8758440421d47ed3afc4f65a1fbee3d2f47b341614f83f1895f82a3f5",
+      "bytes": 3921
+    },
+    {
+      "path": "test_revision_watcher.py",
+      "git_blob": "247baf80231a7eb360e05fc2baf4f8ea53e7cf34",
+      "sha256": "77885dcad4bdb7cd0a6e1062be08ee7ef0974228001c69c499245f3ef674d79b",
+      "bytes": 6615
+    },
+    {
+      "path": "test_risk_boundary30.py",
+      "git_blob": "2e0b35e66e684d0cac40c7f193404926a79668c0",
+      "sha256": "5e529bb4aa1ae03901090ce403cc1dcb96ecb81131299cda2a86fd89dfd2263b",
+      "bytes": 4145
+    },
+    {
+      "path": "test_save_exit.py",
+      "git_blob": "c0a3b43ce8d7527d9a9a24bc7e4ba8f141daf396",
+      "sha256": "c799318ac65e23850dea572b59cc9e1f61e3d9948b6db015c633bb857fc3895d",
+      "bytes": 4840
+    },
+    {
+      "path": "test_smart_code26.py",
+      "git_blob": "12e32b82b267572ef64c4e745e02bf1370b57639",
+      "sha256": "15beba227c1fc8588f1bbf78c43937e93f03944a36abbbaba9d9eb2bfa01ce74",
+      "bytes": 4651
+    },
+    {
+      "path": "test_smart_eligibility.py",
+      "git_blob": "f1a75b7efd8f1bdba02663f9fd64f2fcd473e489",
+      "sha256": "8557f26b9f08593fe132fc985ef517448fb761b29d5760e5aa8d845b3c5ac909",
+      "bytes": 5008
+    },
+    {
+      "path": "test_smart_execution.py",
+      "git_blob": "6230eab83a5513e81268e2df2afdf31143aee2e0",
+      "sha256": "9e60adb886cfbd5d7865ba9c2601d0cf767668545a401cfb35d9f4dba6987b18",
+      "bytes": 9007
+    },
+    {
+      "path": "test_smart_queue.py",
+      "git_blob": "172ce0332f21ddfd9971f3b005dae73da1c2d878",
+      "sha256": "62e8ddb2b56f40e71a85cc9ad7ddc8e93cb03495c9f33da966bb3809516054bb",
+      "bytes": 4193
+    },
+    {
+      "path": "test_smart_refresh_boundary.py",
+      "git_blob": "da2b190188c23c351e083774a031e2748358b3d3",
+      "sha256": "4de2c4e5ca6e29e0950509f588281f596f67a7dd1dc8d096a473e8a183bf4bf4",
+      "bytes": 2966
+    },
+    {
+      "path": "test_snapshot_error_stage.py",
+      "git_blob": "8a0dbb7663be64913640c7640e95d2eccfa797ff",
+      "sha256": "b9eba64753c06d2780c6805ca0fd8023f52bca2d1ad625e0806f150d46b6ad75",
+      "bytes": 1065
+    },
+    {
+      "path": "test_snapshot_interleaved.py",
+      "git_blob": "669167346be705e600044b00093d18e10e39933a",
+      "sha256": "e5e417d41805e44602d685fa94c2370a734467202a6a46c247a2dd41a3d35e3c",
+      "bytes": 5415
+    },
+    {
+      "path": "test_source_gap.py",
+      "git_blob": "113d7d6d6e36daa80e859c6e95e053cff4c06e01",
+      "sha256": "acb6fc2201100d0158821be266afd819371c893327e5f6204f1a2aa3b9aed380",
+      "bytes": 5577
+    },
+    {
+      "path": "test_store_instance.py",
+      "git_blob": "7c3f1d881782f38a159be3ef9f8c3fe4392a8343",
+      "sha256": "e943f58c8558d34de00feaf36860be3eeddea0dd0e933905e496c91da60720b5",
+      "bytes": 2384
+    },
+    {
+      "path": "test_store_stale_bridge.py",
+      "git_blob": "bb1b9eaa3e025f30a7c03456b0ea0fe99e0936f4",
+      "sha256": "0c3f0567426c88533fdf94bdbf9f1fb3d9ffa4571362a8e6c5bec1b69af00bbf",
+      "bytes": 1618
+    },
+    {
+      "path": "test_timeframes.py",
+      "git_blob": "6c859b7f01cf2661b53a5d6e67f948c1597457ed",
+      "sha256": "61aa1d23e23aea602c0cc82d2dfd94fb33ed614edc3361e4c41e744bfe5e1ecd",
+      "bytes": 10526
+    },
+    {
+      "path": "test_trading_background.py",
+      "git_blob": "e4fc443eaf3896eeeb77268772f2753f27ea6a3c",
+      "sha256": "c501aee452e6ba8e137cf4fb31fedd7bd76e9a802f6db5aba2e1c66c15f7c6c5",
+      "bytes": 9455
+    },
+    {
+      "path": "test_trading_engine.py",
+      "git_blob": "6d2afb952366e667a5d4f20c8ea49b4a1e0cb4bb",
+      "sha256": "0a08cab17fb7c8b38b2da577e986aae37652464edd981b6f057990e59c552c31",
+      "bytes": 10002
+    },
+    {
+      "path": "test_trading_view.py",
+      "git_blob": "cfa03947b6d86b67cefbc8281357a46c75112d27",
+      "sha256": "895111136a47b3cdab0719b4a741db3b1a1e3306d0a9b2d8bb852fdf29e407f5",
+      "bytes": 5216
+    },
+    {
+      "path": "test_tunnel_freshness.py",
+      "git_blob": "0df88097217bdf06f7f9a4a66891a0ee53d696c8",
+      "sha256": "18dfdacba6bc30fecb9aa97b32119ed73bc9e5f2ecaa5a40bfb7c8a443e0e7aa",
+      "bytes": 1030
+    },
+    {
+      "path": "test_tv_accepted_display.py",
+      "git_blob": "386fb351a91e982126201da407be73ae6b920e34",
+      "sha256": "a9fb36ad6b93c097c66ecddcf3ae91d3ce8d9ff4c5c1c83890af50eea35991b0",
+      "bytes": 9126
+    },
+    {
+      "path": "test_ui016.py",
+      "git_blob": "3d0d91e9f1e52568de90e6749241e831b1c7bcfd",
+      "sha256": "0157548adc2f969214e05dcfddf8dea763f8a2a55a89d490cffe0ab1ba80e5f9",
+      "bytes": 1580
+    },
+    {
+      "path": "test_ui_performance.py",
+      "git_blob": "aac68c721f52de56c96e8cbd657a9dca899e081b",
+      "sha256": "be2bf0676411ed0c999c74f19526c03e71d7cf5934b69c3716dd4b609d948aee",
+      "bytes": 9613
+    },
+    {
+      "path": "test_ui_snapshot_cost.py",
+      "git_blob": "80764246ad5c6118e67ea2a0311889a9e3f8cd5a",
+      "sha256": "8eaebe3d4b9d9b39bc2fa5e933672b8ba3bdad938eac5cf1567af5e60ef3d454",
+      "bytes": 13865
+    },
+    {
+      "path": "test_universal23.py",
+      "git_blob": "4f94156dc473a1edb4153efa958b81a46ef47f68",
+      "sha256": "0d5fb3dd4b0b81e08cc84c5039de1ff1613dbc26fc7e2ff558eda0717b6bdabf",
+      "bytes": 17311
+    },
+    {
+      "path": "test_universal_history.py",
+      "git_blob": "b2cbdaf62e5c846409202a9d49ebe1426be795fa",
+      "sha256": "8d89587c9769974845262e066c4369a400cdb7298542327202159cdd2ef588b9",
+      "bytes": 7843
+    },
+    {
+      "path": "test_watchlist_order.py",
+      "git_blob": "01df7438fb77b57c8b04ded5dda9d5f7eac621d2",
+      "sha256": "ce986c9b66df87234171e66b47590eb6d237f21536ccc88507a781402277fe16",
+      "bytes": 4342
+    },
+    {
+      "path": "tunnel_setup.py",
+      "git_blob": "a128279b43589776948b9f4bb131a6f25ed41085",
+      "sha256": "7b81c24b50cb1fbd39680d4ab0a77adfb64f9c3eda9888b815c7b0c1e2d52403",
+      "bytes": 4799
+    }
+  ],
+  "checks": {
+    "files": 272,
+    "python_syntax": 258,
+    "json_parse": 4,
+    "secret_and_private_path_patterns": "PASS",
+    "forbidden_runtime_paths": "PASS"
+  },
+  "local_only": [
+    "live SQLite/WAL/SHM and financial ledgers",
+    "provider archives and private evidence",
+    "owner config, permissions, tunnel profiles/keys",
+    "six private-fixture test files",
+    "full private checkpoint and rollback archives",
+    "local owner-specific AGENTS.md override",
+    "Python environment and build binaries"
+  ]
+}
+~~~~~
+
+</details>
+
+<details>
+<summary>Архивный документ 8: docs/regression_results.json (148975 символов)</summary>
+
+**Источник:** https://github.com/swindler2010/StockMonitor/blob/7e1f1eceada977adc55bed40816ccd94b9ffd8f4/docs/regression_results.json
+
+**Blob SHA:** `c5e73f346f8816f425dcfd871a8a20337110f1d6`
+
+~~~~~json
+{
+  "generated_at": "2026-11-10T21:13:40.938986+00:00",
+  "inventory": [
+    {
+      "path": "stock_monitor/test_apple_analysis_timeframes.py",
+      "test_functions": 12,
+      "flags": [
+        "archive_reference",
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_apple_demo_seed.py",
+      "test_functions": 8,
+      "flags": [
+        "archive_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_apple_feature_reason.py",
+      "test_functions": 4,
+      "flags": [
+        "archive_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_apple_intraday_evidence.py",
+      "test_functions": 6,
+      "flags": [
+        "archive_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_apple_monthly_warmup.py",
+      "test_functions": 12,
+      "flags": [
+        "archive_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_chart_fast28.py",
+      "test_functions": 8,
+      "flags": [
+        "archive_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_cp_acquisition_order.py",
+      "test_functions": 7,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_cp_demo_priority.py",
+      "test_functions": 9,
+      "flags": [],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "stock_monitor/test_cp_focus_base.py",
+      "test_functions": 4,
+      "flags": [],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "stock_monitor/test_cp_fresh_completion.py",
+      "test_functions": 6,
+      "flags": [],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "stock_monitor/test_cp_fresh_fair_share.py",
+      "test_functions": 6,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "stock_monitor/test_cp_history_slot_release.py",
+      "test_functions": 4,
+      "flags": [],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "stock_monitor/test_cp_improve28.py",
+      "test_functions": 15,
+      "flags": [
+        "archive_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_cp_reserved_base.py",
+      "test_functions": 5,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "stock_monitor/test_cp_reviewed_ranges.py",
+      "test_functions": 7,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "stock_monitor/test_cp_trade_priority.py",
+      "test_functions": 13,
+      "flags": [],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "stock_monitor/test_demo_all_warmup.py",
+      "test_functions": 26,
+      "flags": [
+        "absolute_path",
+        "archive_reference",
+        "memory_sqlite"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_demo_dependency_pin.py",
+      "test_functions": 7,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_display_history_depth.py",
+      "test_functions": 22,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "stock_monitor/test_gettex_chart.py",
+      "test_functions": 14,
+      "flags": [
+        "archive_reference",
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_gettex_chart_daily.py",
+      "test_functions": 9,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_gettex_daily_2021.py",
+      "test_functions": 9,
+      "flags": [
+        "archive_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_gettex_minute.py",
+      "test_functions": 6,
+      "flags": [
+        "archive_reference",
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_gettex_only30.py",
+      "test_functions": 6,
+      "flags": [
+        "network_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_paper_valuation.py",
+      "test_functions": 11,
+      "flags": [
+        "archive_reference",
+        "memory_sqlite"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_reviewed_entry_source.py",
+      "test_functions": 3,
+      "flags": [],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_admission_dependency_scope.py",
+      "test_functions": 9,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_admission_expiry.py",
+      "test_functions": 9,
+      "flags": [
+        "absolute_path",
+        "archive_reference",
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_analytical_read.py",
+      "test_functions": 8,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_analytics_retention.py",
+      "test_functions": 4,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_apple_policy_handoff.py",
+      "test_functions": 9,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_benchmarks.py",
+      "test_functions": 16,
+      "flags": [
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cached_quotes.py",
+      "test_functions": 7,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_candle_schedule.py",
+      "test_functions": 21,
+      "flags": [
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_candle_timing.py",
+      "test_functions": 7,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_candlepilot.py",
+      "test_functions": 15,
+      "flags": [
+        "network_reference",
+        "temporary_directory",
+        "gui_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_candlepilot_health.py",
+      "test_functions": 8,
+      "flags": [
+        "live_path_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_chart_p0.py",
+      "test_functions": 8,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_chart_switch_speed.py",
+      "test_functions": 13,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_chart_worker.py",
+      "test_functions": 5,
+      "flags": [
+        "temporary_directory",
+        "gui_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_closed_period_scope.py",
+      "test_functions": 8,
+      "flags": [
+        "absolute_path",
+        "archive_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_accepted_analysis.py",
+      "test_functions": 13,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_adaptive_recovery.py",
+      "test_functions": 23,
+      "flags": [
+        "network_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_archive_prefix02.py",
+      "test_functions": 9,
+      "flags": [
+        "archive_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_automatic_repair.py",
+      "test_functions": 15,
+      "flags": [
+        "archive_reference",
+        "network_reference",
+        "memory_sqlite"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_cp_autonomy.py",
+      "test_functions": 10,
+      "flags": [
+        "network_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_autonomy02.py",
+      "test_functions": 22,
+      "flags": [
+        "archive_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_controls.py",
+      "test_functions": 19,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_empty_context.py",
+      "test_functions": 5,
+      "flags": [
+        "archive_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_experience.py",
+      "test_functions": 14,
+      "flags": [
+        "network_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_failure_learning.py",
+      "test_functions": 9,
+      "flags": [
+        "network_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_fresh_daily_tail.py",
+      "test_functions": 7,
+      "flags": [
+        "archive_reference",
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_full_execution.py",
+      "test_functions": 12,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_gettex_universe.py",
+      "test_functions": 19,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_health_completion.py",
+      "test_functions": 5,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_cp_local_completion.py",
+      "test_functions": 14,
+      "flags": [
+        "network_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_nine_tf.py",
+      "test_functions": 23,
+      "flags": [
+        "archive_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_observation_content.py",
+      "test_functions": 6,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_observation_priority.py",
+      "test_functions": 9,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_planner_dispatch.py",
+      "test_functions": 5,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_reconciliation.py",
+      "test_functions": 23,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_recovery_preflight.py",
+      "test_functions": 6,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_recovery_route.py",
+      "test_functions": 2,
+      "flags": [
+        "archive_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_repair_fairness.py",
+      "test_functions": 8,
+      "flags": [
+        "network_reference",
+        "memory_sqlite"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_cp_review_stability.py",
+      "test_functions": 17,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_cp_reviewed_risk.py",
+      "test_functions": 22,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_source_acceptance.py",
+      "test_functions": 7,
+      "flags": [],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_cp_tv_batch.py",
+      "test_functions": 20,
+      "flags": [
+        "network_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_tv_receipts.py",
+      "test_functions": 5,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_tv_risk.py",
+      "test_functions": 16,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_daily_live_slot.py",
+      "test_functions": 8,
+      "flags": [],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_daily_normalization.py",
+      "test_functions": 5,
+      "flags": [],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_data_quality.py",
+      "test_functions": 25,
+      "flags": [
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_demo_money_tolerance.py",
+      "test_functions": 8,
+      "flags": [
+        "archive_reference",
+        "memory_sqlite"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_eur_listings.py",
+      "test_functions": 15,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_evidence_batch_cost.py",
+      "test_functions": 11,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_exchange_interruption.py",
+      "test_functions": 15,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_extras016.py",
+      "test_functions": 11,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_feed_telemetry.py",
+      "test_functions": 5,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_frankfurt_cached.py",
+      "test_functions": 5,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_fresh_route_upgrade.py",
+      "test_functions": 4,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_gettex_cached_batch.py",
+      "test_functions": 12,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_gettex_daily_calendar02.py",
+      "test_functions": 4,
+      "flags": [
+        "archive_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_gettex_live_evidence.py",
+      "test_functions": 16,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_gettex_partial_evidence.py",
+      "test_functions": 12,
+      "flags": [
+        "network_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_gettex_primary29.py",
+      "test_functions": 8,
+      "flags": [
+        "archive_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_gettex_publication_recheck.py",
+      "test_functions": 22,
+      "flags": [
+        "network_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_health_readiness_meaning.py",
+      "test_functions": 5,
+      "flags": [
+        "absolute_path",
+        "archive_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_history_backfill.py",
+      "test_functions": 11,
+      "flags": [
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_history_depth.py",
+      "test_functions": 11,
+      "flags": [
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_identity_resolver.py",
+      "test_functions": 12,
+      "flags": [
+        "network_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_incoming_dq_reason.py",
+      "test_functions": 3,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_input_revisions.py",
+      "test_functions": 10,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_intraday_normalization.py",
+      "test_functions": 24,
+      "flags": [
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_legacy_frankfurt.py",
+      "test_functions": 3,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_live_candle.py",
+      "test_functions": 25,
+      "flags": [
+        "archive_reference",
+        "memory_sqlite"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_local_recovery_cooldown30.py",
+      "test_functions": 8,
+      "flags": [
+        "archive_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_mcp_diagnostics.py",
+      "test_functions": 5,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_mcp_instance.py",
+      "test_functions": 16,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_mcp_readback.py",
+      "test_functions": 4,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_native_reject_scope.py",
+      "test_functions": 9,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_numeric_metadata_cost.py",
+      "test_functions": 10,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_onvista_archive28.py",
+      "test_functions": 9,
+      "flags": [
+        "archive_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_onvista_binding28.py",
+      "test_functions": 7,
+      "flags": [
+        "archive_reference",
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_p1_closed_context.py",
+      "test_functions": 5,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_p1_closed_snapshot.py",
+      "test_functions": 13,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_p1_five_year_scope.py",
+      "test_functions": 6,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_p1_frankfurt_session.py",
+      "test_functions": 7,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_p1_parent_recovery.py",
+      "test_functions": 13,
+      "flags": [
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_p1_reference_binding.py",
+      "test_functions": 4,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_p1_systemic26.py",
+      "test_functions": 16,
+      "flags": [
+        "live_path_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_p1_watchlist_save.py",
+      "test_functions": 9,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_p2_restart_contract.py",
+      "test_functions": 5,
+      "flags": [
+        "subprocess",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_paper_hourly.py",
+      "test_functions": 19,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_paper_sizing.py",
+      "test_functions": 8,
+      "flags": [
+        "network_reference"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_paper_strategy_v2.py",
+      "test_functions": 26,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_paper_universe.py",
+      "test_functions": 12,
+      "flags": [
+        "archive_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_partial_accepted_bands.py",
+      "test_functions": 10,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_partial_accepted_indicators.py",
+      "test_functions": 4,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_partial_chart.py",
+      "test_functions": 9,
+      "flags": [
+        "indirect_private_fixture_via_partial_chart_REGISTRY"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "9 cases executed against existing read-only pinned archived fixtures; excluded from portable default runner (no source/database write)"
+    },
+    {
+      "path": "test_partial_display_levels.py",
+      "test_functions": 7,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_partial_independent_core.py",
+      "test_functions": 4,
+      "flags": [],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_partial_indicators.py",
+      "test_functions": 18,
+      "flags": [],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_partial_periods.py",
+      "test_functions": 5,
+      "flags": [
+        "archive_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_performance.py",
+      "test_functions": 7,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_performance_dispatcher.py",
+      "test_functions": 10,
+      "flags": [
+        "subprocess",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_performance_poll.py",
+      "test_functions": 3,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_performance_render.py",
+      "test_functions": 3,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_performance_scoped.py",
+      "test_functions": 8,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_performance_volume.py",
+      "test_functions": 2,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_prior_review_binding.py",
+      "test_functions": 11,
+      "flags": [
+        "absolute_path",
+        "archive_reference",
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_proxy_auto28.py",
+      "test_functions": 9,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_proxy_depth28.py",
+      "test_functions": 4,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_proxy_session28.py",
+      "test_functions": 12,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_rejected_history_retry.py",
+      "test_functions": 4,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_review_native_discrepancy.py",
+      "test_functions": 6,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_review_queue_rotation.py",
+      "test_functions": 4,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_review_recovery_route.py",
+      "test_functions": 9,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_revision_metadata.py",
+      "test_functions": 5,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_revision_watcher.py",
+      "test_functions": 13,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_risk_boundary30.py",
+      "test_functions": 6,
+      "flags": [
+        "archive_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_save_exit.py",
+      "test_functions": 10,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_seed_proof_status.py",
+      "test_functions": 5,
+      "flags": [
+        "absolute_path",
+        "archive_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_smart_code26.py",
+      "test_functions": 10,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_smart_eligibility.py",
+      "test_functions": 10,
+      "flags": [],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_smart_execution.py",
+      "test_functions": 16,
+      "flags": [
+        "archive_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_smart_queue.py",
+      "test_functions": 9,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_smart_refresh_boundary.py",
+      "test_functions": 5,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_snapshot_error_stage.py",
+      "test_functions": 2,
+      "flags": [],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_snapshot_interleaved.py",
+      "test_functions": 6,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_source_gap.py",
+      "test_functions": 9,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_store_instance.py",
+      "test_functions": 0,
+      "flags": [
+        "subprocess",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_store_stale_bridge.py",
+      "test_functions": 2,
+      "flags": [
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_timeframes.py",
+      "test_functions": 18,
+      "flags": [
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_trading_background.py",
+      "test_functions": 12,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_trading_engine.py",
+      "test_functions": 31,
+      "flags": [],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_trading_view.py",
+      "test_functions": 10,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_tunnel_freshness.py",
+      "test_functions": 4,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_tv_accepted_display.py",
+      "test_functions": 14,
+      "flags": [
+        "archive_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_ui016.py",
+      "test_functions": 0,
+      "flags": [
+        "gui_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_ui_performance.py",
+      "test_functions": 9,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_ui_snapshot_cost.py",
+      "test_functions": 15,
+      "flags": [
+        "live_path_reference",
+        "temporary_directory",
+        "memory_sqlite"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_universal23.py",
+      "test_functions": 25,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_universal_history.py",
+      "test_functions": 10,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_watchlist_order.py",
+      "test_functions": 5,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    }
+  ],
+  "inventory_summary": {
+    "files": 165,
+    "root_files": 139,
+    "source_subdirectory_files": 26,
+    "static_test_functions": 1662
+  },
+  "unique_counts": {
+    "PASS": 400,
+    "FAIL": 9,
+    "ERROR": 28,
+    "INTERRUPTED": 1
+  },
+  "unique_cases": [
+    {
+      "test": "test_candle_schedule.Schedule.test_aged_feed_jobs_200",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_aged_feed_jobs_53",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_benchmark_existing_cadence_preserved",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_daily_not_rechecked_every_fifteen_minutes",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_dst_spring_and_autumn",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_existing_proxy_sync_skips_unchanged_bases",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "EUR_HISTORY_IDENTITY_REQUIRED: stock history blocked before download"
+      ]
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_failed_closed_day_check_resumes",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_fresh_work_precedes_bounded_history_in_existing_feed",
+      "status": "FAIL",
+      "observations": [
+        "FAIL"
+      ],
+      "issues": [
+        "Lists differ: ['fresh_gettex', 'fresh_proxy', 'classify', 'history_files', 'history_audit'] != ['fresh_gettex', 'fresh_proxy', 'history_files', 'classify', 'history_audit']\n\nFirst differing element 2:\n'classify'\n'history_files'\n\n- ['fresh_gettex', 'fresh_proxy', 'classify', 'history_files', 'history_audit']\n?                                ------------\n\n+ ['fresh_gettex', 'fresh_proxy', 'history_files', 'classify', 'history_audit']\n?                                                  ++++++++++++\n"
+      ]
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_gettex_429_no_inner_retries",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_gettex_slice_and_delay",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_identical_closed_interval_suppressed_until_recheck",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_long_run_all_base_tf_and_history_turns",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_no_polling_active",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_partial_last_bar_and_before_publish",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_proxy_and_benchmark_share_429_gate",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "EUR_HISTORY_IDENTITY_REQUIRED: no confirmed stock listing before request"
+      ]
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_restart_suppression_and_failed_work_retry",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_retry_after_shared_all_tf",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_revision_change_is_valid_reason",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_us_early_close",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_weekend_and_holiday",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_xetra_not_gettex_evening",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_automatic_repair.AutomaticRepair.test_53_and_200_stocks_get_regular_repair_slots_without_owner_lane_flood",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_automatic_repair.AutomaticRepair.test_actual_5m_dependency_allowed_but_foreign_benchmark_not_planned",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_automatic_repair.AutomaticRepair.test_bounded_scan_rotates_more_than_four_terminal_ranges",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_automatic_repair.AutomaticRepair.test_completed_repair_requests_existing_analysis_without_manual_refresh",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_automatic_repair.AutomaticRepair.test_daily_subset_is_revalidated_and_changed_identity_or_resolved_range_skipped",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_automatic_repair.AutomaticRepair.test_fresh_route_neither_plans_nor_consumes_repairs",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_automatic_repair.AutomaticRepair.test_identity_window_and_optional_tfs_never_create_permissions",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_automatic_repair.AutomaticRepair.test_manual_request_priority_and_automatic_regular_turn_alternation",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_automatic_repair.AutomaticRepair.test_retry_after_blocks_network_without_consuming_attempt",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_automatic_repair.AutomaticRepair.test_revoked_source_policy_does_not_execute_saved_automatic_request",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_automatic_repair.AutomaticRepair.test_saved_blocked_dependency_enters_existing_queue_without_user_button",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_automatic_repair.AutomaticRepair.test_three_failed_attempts_then_wait_for_new_evidence_or_weekly_due",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_automatic_repair.AutomaticRepair.test_unchanged_terminal_restart_and_unrelated_tail_do_not_repeat",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_demo_priority.DemoPriority.test_53_200_load_two_demo_contexts_do_not_starve_history_or_others",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_demo_priority.DemoPriority.test_actual_unique_required_tfs_accepted_for_automatic_context_too",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_demo_priority.DemoPriority.test_bad_context_source_dependency_and_blocked_do_not_promote",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_demo_priority.DemoPriority.test_expiry_market_revision_requeues_without_extending_permission",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_demo_priority.DemoPriority.test_future_stock_enters_automatically_and_ready_stocks_rotate",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_demo_priority.DemoPriority.test_owner_revocation_or_identity_revision_removes_priority",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_demo_priority.DemoPriority.test_position_demo_chart_background_history_all_keep_slots",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_demo_priority.DemoPriority.test_reopened_rotation_keeps_next_background_slot",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_demo_priority.DemoPriority.test_wait_demo_precedes_different_open_chart_without_grant",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_focus_base.FocusBase.test_cooldown_preserves_alternative_minute_and_background_slot",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_focus_base.FocusBase.test_display_dependencies_follow_tf_without_optional_5m",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_focus_base.FocusBase.test_due_displayed_base_before_forming_minute_after_other_stock",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_focus_base.FocusBase.test_forming_minute_when_closed_base_not_due",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_fresh_completion.FreshCompletion.test_acquisition_exception_is_not_a_success",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_fresh_completion.FreshCompletion.test_continuous_53_and_200_stock_load_retains_history_and_background",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_fresh_completion.FreshCompletion.test_deferred_request_survives_reload_and_history_finishes_it",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_fresh_completion.FreshCompletion.test_failed_or_rate_limited_fresh_result_does_not_clear_diagnostics",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_fresh_completion.FreshCompletion.test_fresh_acquisition_never_enters_archive_or_full_assessment",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_fresh_completion.FreshCompletion.test_history_routes_still_process_review_and_requested_assessment",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_fresh_fair_share.FairLiveTurn.test_long_load_53_and_200_stocks_has_no_live_source_starvation",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_fresh_fair_share.FairLiveTurn.test_no_position_or_focus_still_services_all_stocks",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_fresh_fair_share.FairLiveTurn.test_position_focus_and_background_each_get_one_live_turn",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_fresh_fair_share.FairLiveTurn.test_rate_reservation_still_prevents_chart_request",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_fresh_fair_share.FairLiveTurn.test_rotation_reloaded_from_saved_state_keeps_background_slot",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_fresh_fair_share.FairLiveTurn.test_two_stocks_do_not_create_an_empty_background_slot",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_health_completion.Completion.test_all_tf_unknown_and_core_revision",
+      "status": "PASS",
+      "observations": [
+        "ERROR",
+        "PASS_AFTER_HARNESS_FIX"
+      ],
+      "issues": [],
+      "superseded_harness_error": "SQLite file: URI was not decoded by initial harness; corrected guard, same code, test passed"
+    },
+    {
+      "test": "test_cp_health_completion.Completion.test_failed_provider_not_recovered",
+      "status": "PASS",
+      "observations": [
+        "ERROR",
+        "PASS_AFTER_HARNESS_FIX"
+      ],
+      "issues": [],
+      "superseded_harness_error": "SQLite file: URI was not decoded by initial harness; corrected guard, same code, test passed"
+    },
+    {
+      "test": "test_cp_health_completion.Completion.test_invalid_and_rollback",
+      "status": "PASS",
+      "observations": [
+        "ERROR",
+        "PASS_AFTER_HARNESS_FIX"
+      ],
+      "issues": [],
+      "superseded_harness_error": "SQLite file: URI was not decoded by initial harness; corrected guard, same code, test passed"
+    },
+    {
+      "test": "test_cp_health_completion.Completion.test_no_count_for_tail_or_valid_change",
+      "status": "PASS",
+      "observations": [
+        "ERROR",
+        "PASS_AFTER_HARNESS_FIX"
+      ],
+      "issues": [],
+      "superseded_harness_error": "SQLite file: URI was not decoded by initial harness; corrected guard, same code, test passed"
+    },
+    {
+      "test": "test_cp_health_completion.Completion.test_real_recovery_once_and_reopen",
+      "status": "PASS",
+      "observations": [
+        "ERROR",
+        "PASS_AFTER_HARNESS_FIX"
+      ],
+      "issues": [],
+      "superseded_harness_error": "SQLite file: URI was not decoded by initial harness; corrected guard, same code, test passed"
+    },
+    {
+      "test": "test_cp_history_slot_release.HistorySlotRelease.test_already_released_work_does_not_rewrite_progress",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_history_slot_release.HistorySlotRelease.test_completed_nonfetch_history_routes_release_live_slot",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_history_slot_release.HistorySlotRelease.test_failed_work_does_not_claim_finished_history",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_history_slot_release.HistorySlotRelease.test_fresh_route_never_releases_history_requirement",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_repair_fairness.RepairFairness.test_legacy_attempt_time_survives_cooldown_only_visit",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_repair_fairness.RepairFairness.test_long_queue_rotates_actual_attempts_without_touching_waits_or_completed",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_repair_fairness.RepairFairness.test_mixed_legacy_and_new_receipts_keep_alternating_after_failed_attempts",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_repair_fairness.RepairFairness.test_persisted_priority_survives_reopen_including_interrupted_request",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_repair_fairness.RepairFairness.test_provider_wait_is_not_an_attempt_and_identity_change_still_rejected",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_repair_fairness.RepairFairness.test_real_order_repro_unattempted_range_precedes_repeated_empty_reply",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_repair_fairness.RepairFairness.test_retry_after_is_not_bypassed_and_read_does_not_change_queue",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_repair_fairness.RepairFairness.test_service_records_actual_attempt_and_preserves_unresolved_dq",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_reserved_base.ReservedBase.test_exact_reserved_base_despite_oldest_and_foreground_streak",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_reserved_base.ReservedBase.test_global_rate_reservation_still_prevents_request",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_reserved_base.ReservedBase.test_ordinary_history_turn_keeps_oldest_after_two_preferences",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_reserved_base.ReservedBase.test_reservation_no_longer_due_does_not_fetch_another_base",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_reserved_base.ReservedBase.test_reserved_base_cooldown_does_not_fall_back",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.NormalTurn.test_existing_legacy_grant_survives_migration_not_changed_market_data",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.NormalTurn.test_native_revision_during_calculation_cannot_publish_receipt",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.NormalTurn.test_normal_turn_migrates_and_readonly_health_reports_once",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.NormalTurn.test_owner_disabled_or_invalid_scope_cannot_be_admitted",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.ReviewStability.test_calendar_month_recheck_persists_without_grant_or_reference_extension",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.ReviewStability.test_calendar_month_uses_month_end_and_ui_keeps_unknown_explicit",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.ReviewStability.test_display_settings_do_not_invalidate_exact_market_review",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.ReviewStability.test_legacy_already_stale_review_is_not_revived",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.ReviewStability.test_legacy_retained_binding_requires_exact_pre_migration_inputs",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.ReviewStability.test_legacy_v3_migrates_only_when_exact_old_binding_is_proven",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.ReviewStability.test_matching_absence_is_diagnostic_not_ohlcv_or_no_trades",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.ReviewStability.test_native_changes_identity_and_evidence_still_invalidate",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.ReviewStability.test_open_and_multibar_ranges_do_not_become_single_closed_samples",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.ReviewStability.test_present_is_not_claimed_equal_and_changed_input_is_not_counted",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.ReviewStability.test_statistics_deduplicate_and_keep_isin_source_tf_separate",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.ReviewStability.test_tv_grant_binding_ignores_drawings_but_not_native_rows",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.ReviewStability.test_v2_binding_migration_keeps_old_evidence_timestamp_guard",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_reviewed_ranges.ReviewedRanges.test_any_restored_bar_within_range_invalidates_scope",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_reviewed_ranges.ReviewedRanges.test_consecutive_missing_range_binds_without_writing_prices",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_reviewed_ranges.ReviewedRanges.test_following_session_neighbour_is_part_of_binding",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_reviewed_ranges.ReviewedRanges.test_identity_and_invalid_quality_remain_blocked",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_reviewed_ranges.ReviewedRanges.test_neighbour_revision_changes_binding_unrelated_tail_does_not",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_reviewed_ranges.ReviewedRanges.test_reversed_timezone_or_unaligned_scope_rejected",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_reviewed_ranges.ReviewedRanges.test_unconfirmed_listing_rejected",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_source_acceptance.SourceAcceptance.test_changed_policy_during_calculation_cannot_publish_acceptance",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_source_acceptance.SourceAcceptance.test_explicit_review_beyond_page_is_served_with_background_53_200",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_source_acceptance.SourceAcceptance.test_invalid_gap_incomplete_and_stale_observation_not_accepted",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_source_acceptance.SourceAcceptance.test_lseg_wrong_currency_venue_symbol_and_disabled_not_admitted",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_source_acceptance.SourceAcceptance.test_normal_turn_marks_valid_official_difference_weekly_without_grant",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_source_acceptance.SourceAcceptance.test_revocation_removes_advisory_acceptance",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_source_acceptance.SourceAcceptance.test_weekly_migration_persists_and_does_not_extend_observation",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_trade_priority.TradePriority.test_53_and_200_continuous_ready_load_does_not_starve_background",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_trade_priority.TradePriority.test_expiry_or_market_change_means_recheck_not_permission",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_trade_priority.TradePriority.test_no_priority_for_blocked_analysis_only_or_wrong_currency",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_trade_priority.TradePriority.test_no_ready_preserves_existing_three_live_slots",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_trade_priority.TradePriority.test_pending_archive_request_cannot_consume_fresh_price_turn",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_trade_priority.TradePriority.test_policy_or_identity_revision_revokes_priority",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_trade_priority.TradePriority.test_position_ready_focus_background_then_history",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_trade_priority.TradePriority.test_priority_metadata_survives_existing_worker_route",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_trade_priority.TradePriority.test_rate_limit_and_source_cooldown_not_bypassed",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_trade_priority.TradePriority.test_ready_stock_precedes_focus_without_open_position",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_trade_priority.TradePriority.test_required_daily_tail_and_exact_provider_before_optional_5m",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_trade_priority.TradePriority.test_restart_keeps_background_slot_and_read_only_evidence",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_trade_priority.TradePriority.test_unknown_strategy_signal_or_other_provider_is_not_promoted",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_daily_live_slot.DailyLiveSlot.test_53_and_200_daily_tails_share_live_and_history_slots",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_daily_live_slot.DailyLiveSlot.test_already_present_closed_day_not_promoted_or_rewritten",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_daily_live_slot.DailyLiveSlot.test_closed_session_waits_for_publication_boundary",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_daily_live_slot.DailyLiveSlot.test_rate_reservation_source_and_unit_cooldowns_remain",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_daily_live_slot.DailyLiveSlot.test_real_missing_closed_daily_tail_is_selected",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_daily_live_slot.DailyLiveSlot.test_rotation_resumes_without_repeating_saved_day",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_daily_live_slot.DailyLiveSlot.test_unconfirmed_wrong_currency_or_venue_never_promoted",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_daily_live_slot.DailyLiveSlot.test_waiting_publication_budget_is_not_bypassed",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_daily_normalization.Tests.test_impossible_ohlc_is_not_repaired_by_normalization",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_daily_normalization.Tests.test_only_holiday_clones_excluded_and_diagnosed",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_daily_normalization.Tests.test_real_trade_or_different_quote_on_closed_day_still_invalid",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_daily_normalization.Tests.test_unknown_calendar_and_duplicates_remain_for_dq",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_daily_normalization.Tests.test_zero_volume_trading_day_is_preserved",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_atomic_bounded_recovery_preserves_healthy",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "[WinError 32] Процесс не может получить доступ к файлу, так как этот файл занят другим процессом: '<temporary-test-directory>\\\\stock_monitor.sqlite3'"
+      ],
+      "underlying_assertion": "Expected one recovery request; observed two. Windows cleanup error masked assertion."
+    },
+    {
+      "test": "test_data_quality.Tests.test_dst_nonexistent",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_dst_sessions",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_duplicates",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_empty",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_failed_new_source_blocks_healthy_cached_signals",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "[WinError 32] Процесс не может получить доступ к файлу, так как этот файл занят другим процессом: '<temporary-test-directory>\\\\stock_monitor.sqlite3'"
+      ],
+      "underlying_assertion": "Legacy Desktop014 stub missing drafts attribute. Windows cleanup error masked error."
+    },
+    {
+      "test": "test_data_quality.Tests.test_failed_recovery_preserves_cache",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_gaps_only_missing_ranges",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_gettex_published_calendar",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_gettex_recovery_download_filters_file_ranges",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_gettex_recovery_updates_only_official_table",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_holiday_short_session",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_identity_and_mixed_rows",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_impossible_ohlc",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_no_calendar_not_ready",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_off_session",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_order",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_prices_volume_nan",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_quality_blocks_signals",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_raw_duplicate_recovery_is_bounded",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_ready_weekend_no_false_stale",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_retry_cooldown",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_stale",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_timezone_listing_mismatch",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_zero_and_outlier_are_visible",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_cache_53_and_200_jobs_bounded_with_actual_selected_frames",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'connect'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_chart_and_mcp_share_partial_projection_without_core_or_writes",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'connect'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_confirmed_gettex_wins_over_longer_separate_reserve",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'read_cache'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_incomplete_children_do_not_become_complete_aggregate",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'read_cache'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_long_partial_daily_wins_over_short_valid_without_clearing_invalid",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'read_cache'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_long_partial_render_keeps_all_breaks_with_bounded_artist_count",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_longest_requested_tf_can_come_from_five_minutes",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'read_cache'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_max_does_not_shorten_selected_archive",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'read_cache'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_max_preserves_older_verified_periods_over_denser_recent_archive",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'read_cache'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_mcp_partial_indicator_values_are_not_filled_across_holes",
+      "status": "FAIL",
+      "observations": [
+        "FAIL"
+      ],
+      "issues": [
+        "np.False_ is not true"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_no_unconfirmed_or_dollar_fallback_when_no_candidates",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_old_weeks_and_months_use_derived_provenance_and_exclude_bad_period",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'read_cache'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_persisted_global_invalid_is_not_hidden_by_localized_damage",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'read_cache'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_relevant_revision_invalidates_display_without_settings_or_writes",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'connect'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_revision_during_projection_rejected_by_existing_publication_guard",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'connect'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_source_outage_retains_verified_saved_rows_and_trade_block",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'read_cache'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_source_outage_without_damaged_rows_has_complete_display_metadata",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'read_cache'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_unlocalized_invalid_is_not_displayed_as_valid",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_unproven_historical_aggregate_still_rejected",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_unsaved_venue_lock_is_honored_by_chart_mcp_and_cache",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'NaTType' object has no attribute 'normalize'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_visible_gap_metadata_satisfies_existing_windows_binding",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'read_cache'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_wrong_currency_or_isin_or_venue_never_wins",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_history_backfill.Tests.test_empty_incremental_is_not_identity_failure",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_history_backfill.Tests.test_full_then_incremental",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_history_backfill.Tests.test_hourly_maximum_is_separate_from_15m",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_history_backfill.Tests.test_identity_change_preserves_history",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_history_backfill.Tests.test_incomplete_not_ready",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_history_backfill.Tests.test_indicators_weekly_monthly_use_full_sqlite_history",
+      "status": "INTERRUPTED",
+      "observations": [
+        "INTERRUPTED"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_history_depth.DepthTests.test_daily_default_has_no_twenty_year_cutoff",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "EUR_HISTORY_IDENTITY_REQUIRED: no confirmed stock listing before request"
+      ]
+    },
+    {
+      "test": "test_history_depth.DepthTests.test_empty_initial_download_is_not_complete_and_cools_down",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_history_depth.DepthTests.test_explicit_repair_range_is_not_expanded",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "EUR_HISTORY_IDENTITY_REQUIRED: no confirmed stock listing before request"
+      ]
+    },
+    {
+      "test": "test_history_depth.DepthTests.test_gettex_display_never_borrows_proxy_complete_history",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_history_depth.DepthTests.test_hourly_aggregation_dst_early_close_and_ohlcv",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_history_depth.DepthTests.test_hourly_derivatives_use_deepest_compatible_base",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_history_depth.DepthTests.test_intraday_defaults_request_full_retention",
+      "status": "ERROR",
+      "observations": [
+        "ERROR",
+        "INTERRUPTED"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_history_depth.DepthTests.test_more_than_twenty_years_is_preserved",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_history_depth.DepthTests.test_proxy_display_preserves_its_own_daily_and_intraday_coverage",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_history_depth.DepthTests.test_rate_limit_has_no_busy_retry",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "EUR_HISTORY_IDENTITY_REQUIRED: no confirmed stock listing before request"
+      ]
+    },
+    {
+      "test": "test_history_depth.DepthTests.test_unknown_source_display_does_not_claim_proxy_coverage",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_input_revisions.InputRevisionTests.test_benchmark_and_settings_reads_are_dependencies",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_input_revisions.InputRevisionTests.test_cached_frame_replays_its_read_dependencies",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_input_revisions.InputRevisionTests.test_instrument_position_change_rejects",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_input_revisions.InputRevisionTests.test_journal_and_unrelated_settings_do_not_cancel_engine",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_input_revisions.InputRevisionTests.test_other_instrument_candles_and_unused_tf_do_not_cancel",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_input_revisions.InputRevisionTests.test_other_instrument_does_not_cancel_engine",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_input_revisions.InputRevisionTests.test_real_worker_publication_ignores_journal_but_checks_dependencies",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "AUDIT_FORBIDS_NON_TEMP_WRITE"
+      ],
+      "classification": "NOT RUN to completion: subprocess integration was intentionally blocked by harness (no child started). Not an application defect."
+    },
+    {
+      "test": "test_input_revisions.InputRevisionTests.test_same_value_and_rollback_do_not_invalidate",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_input_revisions.InputRevisionTests.test_used_identity_and_dq_change_rejects",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_input_revisions.InputRevisionTests.test_used_ohlcv_change_rejects",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.ChartGuards.test_53_200_updates_apply_only_current_request_and_reject_closed_window",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.ChartGuards.test_analysis_receives_closed_rows_only",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.ChartGuards.test_chart_marks_live_and_delayed_without_new_gap_band",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.ChartGuards.test_feed_refreshes_only_selected_chart_and_never_closing_window",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.ChartGuards.test_native_receipt_revision_invalidates_cached_live_view",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.ChartGuards.test_preliminary_indicators_move_without_changing_confirmed_decision",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.ChartGuards.test_provisional_receipt_does_not_invalidate_closed_core_but_quality_does",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.LiveTail.test_all_eleven_tf_from_actual_minute_children",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.LiveTail.test_completed_native_bar_wins_over_lower_tf_preview",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.LiveTail.test_delay_keeps_last_values_and_never_promotes_by_clock",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.LiveTail.test_first_parent_does_not_wait_for_closed_parent_history",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.LiveTail.test_interior_gap_remains_blocked_display_tail_only",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.LiveTail.test_live_update_keeps_same_slot_and_all_older_rows",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.LiveTail.test_no_provider_join_for_onvista_daily",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.LiveTail.test_no_real_data_no_invented_candle",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.LiveTail.test_week_and_month_preserve_previous_daily_volume",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.LiveTail.test_wrong_identity_or_invalid_ohlcv_is_rejected",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.MinuteScheduler.test_53_200_jobs_keep_minutes_positions_and_history_fair",
+      "status": "FAIL",
+      "observations": [
+        "FAIL"
+      ],
+      "issues": [
+        "'1m' not found in {'15m'}"
+      ]
+    },
+    {
+      "test": "test_live_candle.MinuteScheduler.test_minute_bootstrap_respects_retry_and_global_rate_reservation",
+      "status": "FAIL",
+      "observations": [
+        "FAIL"
+      ],
+      "issues": [
+        "'15m' != '1m'\n- 15m\n?  -\n+ 1m\n"
+      ]
+    },
+    {
+      "test": "test_live_candle.MinuteScheduler.test_restart_preserves_fairness_position",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.Receipts.test_bad_envelope_not_accepted_for_live",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.Receipts.test_first_forming_only_fetch_persists_evidence_not_ohlcv",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.Receipts.test_forming_kept_only_in_explicit_display_decode",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.Receipts.test_receipt_pinned_time_hash_and_no_sqlite_write",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.Receipts.test_retained_forming_receipt_survives_later_response_without_tail",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_mcp_diagnostics.DiagnosticsTests.test_blocked_tf_links_evidence_not_invented_provider_failure",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_mcp_diagnostics.DiagnosticsTests.test_missing_engine_does_not_use_legacy_buy",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_mcp_diagnostics.DiagnosticsTests.test_no_new_signal_or_mutation",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_mcp_diagnostics.DiagnosticsTests.test_pipeline_available_without_full_snapshot",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_mcp_diagnostics.DiagnosticsTests.test_worker_exception_is_classified_without_secret_text",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "DiagnosticsTests.test_worker_exception_is_classified_without_secret_text.<locals>.<lambda>() got an unexpected keyword argument 'lane'"
+      ]
+    },
+    {
+      "test": "test_mcp_readback.ReadbackTests.test_new_accepted_analytics_replace_pending",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_mcp_readback.ReadbackTests.test_repeated_commands_keep_one_timer_and_one_busy_worker",
+      "status": "FAIL",
+      "observations": [
+        "FAIL"
+      ],
+      "issues": [
+        "Duplicate worker"
+      ]
+    },
+    {
+      "test": "test_mcp_readback.ReadbackTests.test_same_selection_does_not_destroy_completed_snapshot",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_mcp_readback.ReadbackTests.test_switch_removes_old_ready_analytics_immediately",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_p1_watchlist_save.WatchlistSave.test_actual_save_exit_path_keeps_unchanged_instrument_revisions",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_p1_watchlist_save.WatchlistSave.test_actual_save_exit_real_change_and_order_remain_atomic",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_p1_watchlist_save.WatchlistSave.test_duplicate_isin_rolls_back",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_p1_watchlist_save.WatchlistSave.test_invalid_payload_does_not_partially_save",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_p1_watchlist_save.WatchlistSave.test_order_change_is_preserved_without_false_revisions",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_p1_watchlist_save.WatchlistSave.test_real_identity_or_position_change_revokes_only_affected",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_p1_watchlist_save.WatchlistSave.test_remove_add_preserve_other_revisions",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_p1_watchlist_save.WatchlistSave.test_settings_write_failure_rolls_back_instruments_and_retains_drafts",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_p1_watchlist_save.WatchlistSave.test_unchanged_save_keeps_revisions_and_receipt_current",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_benchmark_and_quantity",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_disabled_authority",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_dq_blocked",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_expired_context",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_fresh_quote_does_not_replace_latest_invalid_or_stale",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_hourly_buy_sell_fees_spread_and_duplicate",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_hourly_maintenance_scope_and_pause_without_permission",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_legacy_execution_requires_new_epoch",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_missing_owner_risk_receipt_blocks_hourly_manual",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_no_wait_orders",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_position_and_one_bar_cap",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_reset_archives_receipt_and_never_replays",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_revision_changed",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_runtime_respects_cooldown_restart_and_close",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_seed_instability",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_stale_quote_and_zero_volume",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_unconfirmed_without_grant",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_warmup_not_proven",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_wrong_source_currency_and_other_stock",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_sizing.SizingTests.test_allocation_commission_and_no_averaging",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_sizing.SizingTests.test_bad_volatility_and_unaffordable_quote",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_sizing.SizingTests.test_dynamic_buy_full_sell_and_roundtrip_costs",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_sizing.SizingTests.test_quantity_tampering_and_signal_guards",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_sizing.SizingTests.test_runtime_uses_variable_quantity_and_deduplicates",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_sizing.SizingTests.test_stale_invalid_identity_and_changed_revision_block",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_sizing.SizingTests.test_target_and_size_display_without_promise",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_sizing.SizingTests.test_unauthorized_sizing_policy_and_sell_without_holding",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.GuardTests.test_closed_dependency_revision_rejected",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.GuardTests.test_dq_identity_benchmark_warmup_and_expiry",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.GuardTests.test_open_bar_and_future_signal_blocked",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.GuardTests.test_quote_revision_rejected",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.GuardTests.test_stale_price_blocked",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.GuardTests.test_valid_wait_is_analyzable_without_forcing_buy",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_atomic_guard_failure_rolls_back_both",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_bad_or_future_execution_bar_rejected",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_breakeven_partial_and_trailing",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_early_positive_without_volume_120",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_entry_filters_and_reward_preserved",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_fill_rr_includes_costs",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_independent_books_same_cost_model_and_restart",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_metrics_profit_fees_drawdown",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_missing_execution_bar_is_not_silently_skipped",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_next_bar_only_and_no_duplicate",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_one_share_arms_trailing_without_inventing_fraction",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_proof_revision_revokes_even_if_terminal_facts_equal",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_revision_cancels_pending_fill",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_risk_half_cash_and_aggregate_caps",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_stop_first_and_gap_execution",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_unstable_seed_and_bad_core_blocked",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_v1_no_new_smart_stops",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_v1_signal_preserved_standard_and_sell",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_v1_sizing_parity_with_unchanged_implementation",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_variant_decisions_are_independent",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_chart.Tests.test_changed_archive_is_rejected_before_ui_publication",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_chart.Tests.test_confirmed_archive_load_has_no_store_writes",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_chart.Tests.test_existing_chart_worker_binds_preview_without_trading_analysis",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_chart.Tests.test_global_identity_error_not_convertible_to_preview",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_chart.Tests.test_identity_currency_hash_and_pinned_source_fail_closed",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_chart.Tests.test_line_breaks_and_candle_gap_bands_without_fake_rows",
+      "status": "FAIL",
+      "observations": [
+        "FAIL"
+      ],
+      "issues": [
+        "0 != 7"
+      ]
+    },
+    {
+      "test": "test_partial_chart.Tests.test_normal_history_and_other_tf_untouched",
+      "status": "FAIL",
+      "observations": [
+        "FAIL"
+      ],
+      "issues": [
+        "Expected 'setting' to not have been called. Called 1 times.\nCalls: [call('gettex_chart:US79466L3024:15m', {})]."
+      ]
+    },
+    {
+      "test": "test_partial_chart.Tests.test_preview_cannot_reuse_buy_or_enable_indicators",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_chart.Tests.test_real_two_archives_preserve_exact_rows_identity_and_invalid",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_independent_core.PartialIndependentCore.test_actual_core_block_and_fault_do_not_enable_display_archive",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_independent_core.PartialIndependentCore.test_approved_independent_core_does_not_clear_chart_dq",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_independent_core.PartialIndependentCore.test_no_policy_no_independent_evaluation",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_independent_core.PartialIndependentCore.test_revision_change_rejected_instead_of_published",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_accepted_absence_does_not_invent_or_split",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_all_eleven_timeframes_and_instruments_use_same_real_segments",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_bind_preserves_dq_wait_core_and_original_inputs",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_chart_worker_prepares_settings_without_core",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_custom_chart_periods_and_fixed_core_are_separate",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_does_not_use_interpolated_accepted_risk_price",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_duplicate_unsorted_timestamps_fail_closed",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_each_indicator_has_own_warmup",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_empty_short_and_all_invalid_are_safe",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_first_warmed_rsi_is_visible_as_point",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_identity_source_currency_fail_closed",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_invalid_ohlcv_resets_without_rewriting_it",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_live_updates_only_preview_not_closed_values",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_live_with_wrong_identity_and_interior_incomplete_excluded",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_native_listing_proof_carries_isin_without_top_level_alias",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_plot_break_keeps_first_real_value",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_provenance_and_rejected_rows_reset",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_renderer_uses_worker_columns_and_breaks",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_rejected_history_retry.Tests.test_changed_significant_diagnosis_gets_short_retry",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_rejected_history_retry.Tests.test_other_timeframe_not_suppressed",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_rejected_history_retry.Tests.test_transient_outage_not_daily_blocked",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_rejected_history_retry.Tests.test_two_identical_rejections_then_no_download_after_restart",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_reviewed_entry_source.ReviewedEntrySource.test_reviewed_provider_is_expected_instead_of_proxy",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_reviewed_entry_source.ReviewedEntrySource.test_unapproved_or_revoked_pin_does_not_override_preference",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_reviewed_entry_source.ReviewedEntrySource.test_wrong_dependent_source_currency_or_venue_still_block",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_revision_watcher.Watcher.test_bad_ohlcv_and_dq_preserved",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_revision_watcher.Watcher.test_changed_only_row_and_journal_survives_restart",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_revision_watcher.Watcher.test_derived_and_indicator_cache_invalidated",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_revision_watcher.Watcher.test_forming_only_rows_not_requested",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_revision_watcher.Watcher.test_gettex_not_patched_over_old_trades",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_revision_watcher.Watcher.test_journal_failure_rolls_back_candle",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_revision_watcher.Watcher.test_missing_provider_does_not_change_dq",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_revision_watcher.Watcher.test_relevant_race_rejects_old_result",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_revision_watcher.Watcher.test_shifted_timestamp_no_deletion",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_revision_watcher.Watcher.test_source_cooldown_no_request",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_revision_watcher.Watcher.test_unchanged_no_write_or_revision",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_revision_watcher.Watcher.test_unconfirmed_listing_no_network",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_revision_watcher.Watcher.test_wrong_identity_currency_venue_source",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_save_exit.Tests.test_cancel",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_save_exit.Tests.test_clean_exit",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_save_exit.Tests.test_discard",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_save_exit.Tests.test_normalized_loading_is_clean",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_save_exit.Tests.test_save",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_save_exit.Tests.test_save_failure_keeps_drafts_and_db",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_save_exit.Tests.test_selection_without_data",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_save_exit.Tests.test_setting_revert_and_all_keys",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_save_exit.Tests.test_system_writes_still_persist",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_save_exit.Tests.test_watchlist_remove_detected_and_saved",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_smart_eligibility.BoundedEligibility.test_actual_invalid_ohlcv_stays_blocked",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_smart_eligibility.BoundedEligibility.test_all_eleven_no_automatic_trade",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_smart_eligibility.BoundedEligibility.test_bad_identity_and_currency",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_smart_eligibility.BoundedEligibility.test_derived_provenance_required",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_smart_eligibility.BoundedEligibility.test_exact_reference_and_archive_unchanged",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_smart_eligibility.BoundedEligibility.test_real_calendar_and_quality_path",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_smart_eligibility.BoundedEligibility.test_real_stale_reference_does_not_get_ready",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_smart_eligibility.BoundedEligibility.test_recursive_seed_difference_blocks",
+      "status": "FAIL",
+      "observations": [
+        "FAIL"
+      ],
+      "issues": [
+        "True is not false"
+      ]
+    },
+    {
+      "test": "test_smart_eligibility.BoundedEligibility.test_short_warmup_blocks",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_smart_eligibility.BoundedEligibility.test_unconfirmed_window_and_reference_block",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_snapshot_error_stage.ErrorStageTests.test_bounded_trace",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_snapshot_error_stage.ErrorStageTests.test_nested_guard_location_preserves_reason_without_locals",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_snapshot_interleaved.InterleavedTests.test_concurrent_record_read_retries_only_that_record",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_snapshot_interleaved.InterleavedTests.test_concurrent_record_read_retry_exhaustion_is_bounded",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_snapshot_interleaved.InterleavedTests.test_engine_failure_aborts_without_next_instrument",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_snapshot_interleaved.InterleavedTests.test_only_changed_instrument_repaired_and_parent_token_clean",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_snapshot_interleaved.InterleavedTests.test_real_snapshot_interleaves_and_keeps_order",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_snapshot_interleaved.InterleavedTests.test_shared_dependency_repair_is_bounded",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_store_stale_bridge.Tests.test_real_duplicate_still_stops_before_writes",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_store_stale_bridge.Tests.test_reused_destination_port_does_not_block_start",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_all_periods_preserved",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_early_close_and_holiday",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_europe_dst",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_explicit_identity_required",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_five_minute_watermark_survives_restart",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_forming_is_not_closed",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_gettex_0730_2300_all_intraday_counts_and_clipped_close",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_gettex_dst_weekends_and_holidays",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_indicators_recalculate",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_intraday_survives_daily_failure",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Store' object has no attribute 'connect'"
+      ]
+    },
+    {
+      "test": "test_timeframes.Tests.test_journal_resolves_new_periods",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_ohlcv",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_partial_closed_session_invalid",
+      "status": "FAIL",
+      "observations": [
+        "FAIL"
+      ],
+      "issues": [
+        "'GAP' != 'INVALID'\n- GAP\n+ INVALID\n"
+      ]
+    },
+    {
+      "test": "test_timeframes.Tests.test_selected_period_persists",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_session_break_is_not_crossed",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_sliced_endpoints",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_two_three_hour_sessions",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_us_dst",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_bearish_sell_and_oversold_no_buy",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_benchmark_score_not_order",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_confirmed_entry_buy",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_deterministic_input_unchanged",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_duplicate_input_returns_structured_wait",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_extended_no_buy",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_features_bullish_bearish_range",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_forming_extreme_does_not_change_facts",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_full_ohlcv_pipeline_buy",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_full_pipeline_bad_quality_blocks",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_full_pipeline_breakout_needs_volume_and_closed_bar",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_full_pipeline_identity_blocks",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_higher_bearish_veto",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_internal_partial_excluded_before_indicators",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_invalid_benchmark_excluded",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_medium_bearish_veto",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_missing_tf_blocked",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_momentum_deterioration",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_overbought_trend_not_sell",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_oversold_recovery_requires_reclaim_and_mtf",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_position_changes_only_hold_wait",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_profile_has_three_distinct_tf",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_quality_gate_each_tf_and_state",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_range_position_layer",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_retest_entry",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_standalone_does_not_invent_other_timeframes",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_support_break_hold_to_sell",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_unconfirmed_volume_veto",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_unreliable_volume_explicit",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_volume_average_excludes_current",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_without_trigger_wait",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    }
+  ],
+  "excluded": {
+    "test_cp_automatic_repair.AutomaticRepair.test_saved_real_gettex_missing_row_is_recovered_once_then_warmup_stays_blocked": "requires private archived real-candle fixture",
+    "test_cp_automatic_repair.AutomaticRepair.test_changed_inputs_during_real_recovery_prevent_ohlcv_write": "requires private archived real-candle fixture",
+    "test_history_backfill": "PARTIAL: helper stopped after scheduler long scenario completed, during weekly/monthly full-history test; not rerun during publication audit"
+  },
+  "findings": [
+    {
+      "area": "V1 / V2 / CORE guards",
+      "result": "V1 19 unique cases; dynamic sizing8 additional; V2 26; TradingEngine31 PASS. Independent shadow balances/logs, revision/source/freshness/risk guards tested in memory."
+    },
+    {
+      "area": "Current CandlePilot repair",
+      "result": "13 synthetic automatic-repair; 8 fairness; 17 review stability; 11 source-acceptance cases PASS. Two archived real-repair tests NOT RUN."
+    },
+    {
+      "area": "Scheduler",
+      "result": "Legacy long scenario completed154.610s:2047 suppressed repeated unit attempts,297 history turns; totalmodule18PASS,1FAIL,2ERROR. This is synthetic measured result, not production speed claim."
+    },
+    {
+      "area": "Legacy fixtures",
+      "result": "Missing Memory.connect/read_cache and Desktop014.drafts, obsolete EUR identity fixtures and job(lane=...) signature cause multiple errors; fix tests separately before asserting release regression PASS."
+    },
+    {
+      "area": "Unresolved assertion differences",
+      "result": "1m vs preferred15m source selection; GAP vs old INVALID label; one vs two recovery calls; classify/history_files order; recursive seed acceptance; gap-band/indicator semantics; one MCP busy-worker assertion. These are not all proven product defects."
+    },
+    {
+      "area": "Recursive seed",
+      "result": "bounded_features source still requires exact tail indicator/fact equality; legacy test changes the oldest row and expects rejection but returned READY. Needs bounded reproduction of fixture reference/rounding before classifying safety defect; no relaxation performed."
+    },
+    {
+      "area": "Publication scope",
+      "result": "No live DB, provider requests, production account operations, GUI or app restart. One subprocess integration blocked before child launch. Nine archived read-only partial-chart cases used local pinned fixtures and are not portable."
+    }
+  ],
+  "run_boundary": "22 original groups completed before helper stopped during history_backfill; remaining short groups resumed. No completed PASS test deliberately repeated. Duplicate imported testcase IDs in first phase counted once in unique totals.",
+  "reproducibility": "Current audit includes nine read-only private fixture cases and separately measured long scheduler test; portable default omits these. No live account/provider writes."
+}
+~~~~~
+
+</details>
+
