@@ -825,20 +825,28 @@ def _covered(ranges, approved):
         if i<0 or a>b or b>ends[i]:return False
     return True
 
+def _gap_entry_matches(entry, isin, identity, base):
+    p=entry.get('problem',{})
+    return (p.get('isin')==isin and p.get('kind')=='archive' and p.get('tf')==base
+            and p.get('identity')==identity and p.get('state') in ('GAP','UNCONFIRMED','SOURCE_GAP')
+            and bool(p.get('range')))
+
+
 def attach_tv_absence(store, frame, isin, base):
     """Current owner receipts, separate from exchange-proven NO_TRADES.
 
-    No OHLCV or DQ writes. Track even rejected receipts so cached display and
-    analysis cannot outlive a changed observation, policy, identity or revision.
+    No OHLCV or DQ writes. Track even rejected matching receipts so cached
+    display/analysis cannot outlive relevant evidence. Other bases/listings
+    are not inputs; changes to the grant itself remain strictly tracked.
     """
     frame.attrs.pop('tv_accepted_absence',None)
     key='cp_manual_risk:'+isin
     for scope in ('setting:'+key,'setting:'+TV_POLICY):store.read_cache.depend(scope)
     grant=store.setting(key,{})
-    for entry in grant.get('accepted',{}).values():
-        if entry.get('actor')==TV_ACTOR:
-            for scope in entry.get('input_revisions',{}):store.read_cache.depend(scope)
     identity={k:frame.attrs.get(k) for k in IDENTITY}
+    for entry in grant.get('accepted',{}).values():
+        if entry.get('actor')==TV_ACTOR and _gap_entry_matches(entry,isin,identity,base):
+            for scope in entry.get('input_revisions',{}):store.read_cache.depend(scope)
     if identity.get('venue')!='GETTEX' or identity.get('currency')!='EUR':return frame
     with store.connect() as db:accepted=effective_accepted(db,isin,grant)
     ranges=[];ids=[]
@@ -934,10 +942,9 @@ def accepted_gap_input(store,info,frame,base,now):
     approved=[];ids=[];tv_ids=[];reviewed_ids=[]
     for pid,entry in accepted.items():
         if not instrument_allowed(info):continue
-        for scope in entry.get('input_revisions',{}):store.read_cache.depend(scope)
         p=entry.get('problem',{})
-        if (p.get('isin')==info['isin'] and p.get('kind')=='archive' and p.get('tf')==base
-                and p.get('identity')==identity and p.get('state') in ('GAP','UNCONFIRMED','SOURCE_GAP') and p.get('range')):
+        if _gap_entry_matches(entry,info['isin'],identity,base):
+            for scope in entry.get('input_revisions',{}):store.read_cache.depend(scope)
             approved.append(p['range']);ids.append(pid)
             if entry.get('actor') in (TV_ACTOR,REVIEWED_ACTOR):tv_ids.append(pid)
             if entry.get('actor')==REVIEWED_ACTOR:reviewed_ids.append(pid)

@@ -4,6 +4,37 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "grant_receipts_exact_base_dependencies",
+      "title": "Зависимости разрешений отслеживаются по используемому базовому ряду",
+      "sources": [
+        "saved owner-reviewed receipt"
+      ],
+      "states": [
+        "STALE",
+        "INPUT_CHANGED"
+      ],
+      "status": "6 NEW +2 AFFECTED PASS; WINDOWS PENDING",
+      "steps": [
+        "В attach_tv_absence и accepted_gap_input фильтровать квитанции по ISIN, полной identity, базовому TF, archive/state/range до отслеживания их ревизий.",
+        "Даже отклонённые совпадающие TV-квитанции остаются зависимостями. Сам grant и политики по-прежнему отслеживаются полностью.",
+        "Если старший TF реально использует5m, отслеживать5m-квитанции. Изменение OHLCV, нужной квитанции или политики по-прежнему отзывает допуск."
+      ],
+      "evidence": [
+        "test_cp_receipt_dependencies:6newPASS; unrelated5m receipt→false15m invalidation reproduced before fix",
+        "2directly affected original tests PASS:changedOHLCV revokes aggregate;daily/weekly/monthly retain real sums and factualDQ",
+        "Readonly same SQLite snapshot Apple1D1274bars:132dependencies/122TVjobs before;3dependencies/0TVjobs after;sameOHLCV andmetadata exceptchecked_at,wholegrant tracked"
+      ],
+      "implementation": [
+        "stock_monitor/cp_controls.py:_gap_entry_matches",
+        "stock_monitor/cp_controls.py:attach_tv_absence",
+        "stock_monitor/cp_controls.py:accepted_gap_input"
+      ],
+      "limitations": [
+        "Does not normalize or ignore any fields of a relevant receipt.",
+        "Whole-grant or actual input changes still require reassessment. No archive DQ or permission changed; natural all-TF readiness still requires validation."
+      ]
+    },
+    {
       "id": "snapshot_exact_calculation_reuse",
       "title": "Общая диагностика повторно использует только точные вычисления",
       "sources": [
