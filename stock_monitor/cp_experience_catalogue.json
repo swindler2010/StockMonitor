@@ -13,7 +13,7 @@
         "UNCONFIRMED",
         "SOURCE_GAP"
       ],
-      "status": "ПРОВЕРЕНО ИЗОЛИРОВАННО; RUNTIME ОЖИДАЕТ",
+      "status": "WINDOWS ЗАГРУЖЕНО; PROVIDER COOLDOWN",
       "steps": [
         "Только HTTP404 отдельного файла допускает переход к следующему независимому файлу внутри прежнего бюджета до8.",
         "Сохранять file_cursor в стабильном порядке файлов сессии и в RUNNING lease до запроса; после restart и cooldown продолжать обход.",
@@ -22,7 +22,8 @@
       ],
       "evidence": [
         "test_cp_missing_file_rotation:6 new PASS; first404 before two available neighbours, bounded cursor restart/cooldown,429RetryAfter,wrap,corruptgzip,interruptedlease",
-        "57 related test executions PASS;4 unrelated baseline failures reproduced against original function and documented separately"
+        "57 related test executions PASS;4 unrelated baseline failures reproduced against original function and documented separately",
+        "11Nov final code loaded; earliest historical retry14:12:49CET, no bypass and no natural rotation PASS before receipt"
       ],
       "limits": "Не обещает доступность отсутствующих архивов. Недоступные файлы остаются в квитанции unavailable_files. Не увеличивает общий бюджет и не запускает повторную массовую загрузку."
     },
@@ -38,7 +39,7 @@
         "EXPIRED",
         "INPUT_CHANGED"
       ],
-      "status": "ПРОВЕРЕНО ИЗОЛИРОВАННО; RUNTIME ОЖИДАЕТ",
+      "status": "WINDOWS/MCP ЗАГРУЖЕНО; ЕСТЕСТВЕННЫЙ СБОЙ ОЖИДАЕТ",
       "steps": [
         "При ошибке повторной оценки сохранить прежнюю успешную квитанцию с неизменными закрытыми входами, сроками, identity и разрешениями; записать последнюю ошибку отдельно.",
         "Каждый потребитель по-прежнему проверяет candidate_state и исполнительные ограничения. Сохранение квитанции не означает действительность или продление допуска.",
@@ -49,7 +50,8 @@
       "evidence": [
         "test_cp_assessment_preserve:4 new PASS; before fix a failed5mrefresh erased still-current1Wproof",
         "3 affected PASS: changed identity, relevant revision and stale publication rejection",
-        "Follow-up:1 new FAIL before/PASS after for successful reuse;1 directly affected preservation test PASS;5 new unique cases total"
+        "Follow-up:1 new FAIL before/PASS after for successful reuse;1 directly affected preservation test PASS;5 new unique cases total",
+        "Final normal restart11Nov11:45:19CET; Health UI/MCP loaded;9preservation comparisons true; natural error branch not observed yet"
       ],
       "limits": "Не восстанавливать утраченные старые результаты вручную, не скрывать ошибку, не выдавать новый допуск и не менять OHLCV. Изменённые входы и истёкший срок продолжают отзывать независимый контекст."
     },
