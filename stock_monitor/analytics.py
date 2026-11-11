@@ -232,6 +232,9 @@ def _demo_seed_trials(closed, info, now, enriched, result):
         limitation='Bounded seed sensitivity only; original DQ and any explicitly accepted historical gaps retained; no market-data certification')
 
 
+from calculation_reuse import exact as _exact_calculation
+
+@_exact_calculation
 def _safe_features(frame, info, now, prove_scope=False, demo_initialization=False):
     """Unverified input produces a structured blocked result, never an order."""
     try:

@@ -238,14 +238,15 @@ class ReadCache:
     def version(self):
         with self.lock:return self.db.execute('PRAGMA data_version').fetchone()[0]
 
-    def get(self,key,loader,*,scoped=False,inputs=None,category=None):
+    def get(self,key,loader,*,scoped=False,inputs=None,category=None,content_addressed=False):
         if category not in (None,'analytics'):raise ValueError('Unknown cache category')
+        if content_addressed and (scoped or inputs):raise ValueError('Pure calculation cannot use database dependencies')
         items=self.analytics_items if category=='analytics' else self.items
         limit=self.analytics_limit if category=='analytics' else self.limit
         with self.lock:
             version=self.version()
             cached=items.get(key)
-            if cached is not None and (self.current(cached[2]) if scoped and cached[2] else cached[0]==version):
+            if cached is not None and ((content_addressed and not cached[2]) or (self.current(cached[2]) if scoped and cached[2] else cached[0]==version)):
                 self._record(cached[2]);items.move_to_end(key)
             else:cached=None
         # Cached objects are private immutable copies. Copying large frames and
@@ -254,10 +255,13 @@ class ReadCache:
         with self.track_inputs() as dependencies:
             if inputs:self._record(inputs)
             result=loader()
+        # Only exact, fully serialized pure-function inputs may outlive an
+        # unrelated database commit. Any actual DB dependency rejects this path.
+        if content_addressed and dependencies:raise ValueError('Pure calculation read database dependencies')
         saved=copy.deepcopy(result)
         with self.lock:
             # Never cache a read that overlaps a commit.
-            if (self.current(dependencies) if scoped and dependencies else version==self.version()):
+            if content_addressed or (self.current(dependencies) if scoped and dependencies else version==self.version()):
                 items[key]=(version,saved,dict(dependencies));items.move_to_end(key)
                 while len(items)>limit:items.popitem(last=False)
         return result

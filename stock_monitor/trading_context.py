@@ -46,7 +46,7 @@ def calculate(store,values,identity,contract,position,now):
 
         def frame_for(self,instrument,tf):
             return self.closed_frame(instrument,
-                Desktop014._frame_uncached(self,instrument,tf,required_identity=identity),tf)
+                self.pinned_frame(instrument,tf,identity),tf)
 
     context=ClosedContext();context.store=store
     for key,value in values.items():

@@ -347,6 +347,12 @@ def _owner_analysis_candidate(context, info, tf, now):
 
 def assess_all(context, info, now, benchmark=None):
     """Read-only automatic assessment in the existing snapshot worker scope."""
+    from calculation_reuse import using
+    with using(getattr(getattr(context,'store',None),'read_cache',None)):
+        return _assess_all(context,info,now,benchmark)
+
+
+def _assess_all(context, info, now, benchmark=None):
     from analytics import TIMEFRAMES
     from trading_engine import evaluate, profile, VERSION
     from paper_account import instrument_allowed
@@ -394,7 +400,7 @@ def assess_all(context, info, now, benchmark=None):
                 key=(tuple(identity.get(k) for k in IDENTITY),t)
                 if key not in aligned_cache:
                     with _input_tracking(context) as aligned_token:
-                        frame=Desktop014._frame_uncached(context,info,t,required_identity=identity)
+                        frame=context.pinned_frame(info,t,identity)
                         row=bounded_features({**state,'expected_identity':identity},frame,t,now)
                     row['_input_revisions']=dict(aligned_token)
                     aligned_cache[key]=(row,frame)

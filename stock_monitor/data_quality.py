@@ -416,6 +416,9 @@ def ranges(stamps,expected):
         else:out.append([stamp,stamp])
     return [[str(a),str(b)] for a,b in out]
 
+from calculation_reuse import exact as _exact_calculation
+
+@_exact_calculation
 def audit(frame,base,expected=None,now=None,check_stale=True):
     meta=dict(frame.attrs);issues=[];warnings=[];bad=[];global_invalid=False
     # Audit numeric views, not pandas' repeated deep copies of archive evidence.

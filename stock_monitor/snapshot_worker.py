@@ -46,11 +46,25 @@ class SnapshotContext:
             if hasattr(self,'used_closed_keys'):self.used_closed_keys.add(key)
         return data
 
+    def pinned_frame(self,info,tf,identity):
+        """Same exact prepared series across this calculation's TF candidates.
+
+        Return independent copies and replay every captured dependency through
+        ReadCache. closed_frame still registers each caller's actual proof.
+        """
+        state=json.dumps(self.user_state(info),sort_keys=True,default=str)
+        key=('pinned_frame_v1',info['isin'],tf,tuple(sorted(identity.items())),state,
+            str(getattr(self,'analysis_at','')),bool(getattr(self,'five_year_scope',False)),
+            int(time.time()//60) if not hasattr(self,'analysis_at') else None)
+        return self.store.read_cache.get(key,
+            lambda:Desktop014._frame_uncached(self,info,tf,required_identity=identity),
+            scoped=True,inputs=self.store.read_cache.token_for(['instrument:'+info['isin']]))
+
     def frame_for(self,info,tf):
         from cp_controls import reviewed_entry_identity
         required=reviewed_entry_identity(self.store,info,tf)
         if required:
-            return self.closed_frame(info,Desktop014._frame_uncached(self,info,tf,required_identity=required),tf)
+            return self.closed_frame(info,self.pinned_frame(info,tf,required),tf)
         return self.closed_frame(info,Desktop014.frame_for(self,info,tf),tf)
     def _frame_uncached(self,info,tf):
         if info.get('kind')=='benchmark':return BenchmarkMixin._frame_uncached(self,info,tf)
@@ -103,7 +117,7 @@ class SnapshotContext:
         for interval in dict.fromkeys((tf,*required,'1D')):
             try:
                 if approved_analysis:
-                    frames[interval]=self.closed_frame(info,Desktop014._frame_uncached(self,info,interval,required_identity=policy['identity']),interval)
+                    frames[interval]=self.closed_frame(info,self.pinned_frame(info,interval,policy['identity']),interval)
                 else:
                     frames[interval]=self.frame_for_entry(info,interval,frames[tf]) if interval!=tf and tf in frames else self.frame_for(info,interval)
             except ValueError as error:

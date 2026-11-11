@@ -191,6 +191,19 @@ def draw_partial(app, full, visible, s, muted, blue):
             ax.text(.5,.5,'Недостаточен прогрев непрерывного участка',transform=ax.transAxes,ha='center',color=muted,fontsize=8)
 
 
+def volume_profile_rows(frame, analytical_ohlcv_valid=False):
+    """Visual volume from validated rows, independent of trading admission."""
+    if analytical_ohlcv_valid:return frame
+    status=frame.attrs.get('partial_indicators',{})
+    if (not frame.attrs.get('partial_chart',{}).get('display_only')
+            or status.get('basis')!='SEGMENT_LOCAL_REAL_OHLCV'
+            or status.get('blocked_reason') or 'chart_segment' not in frame):
+        return None
+    # Worker-produced segment membership already validates real OHLCV,
+    # identity, timestamps and parent provenance, including a marked live tail.
+    return frame.loc[frame.chart_segment.gt(0)]
+
+
 def volume_profile(frame, bins=24):
     """Approximation: distribute each candle's volume uniformly across its range.
 

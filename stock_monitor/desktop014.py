@@ -795,18 +795,22 @@ class Desktop014:
             self.ax_price.set_ylim(low-padding,high+padding)
         if self.user_view:self.ax_price.set_xlim(self.user_view[0]);self.ax_price.set_ylim(self.user_view[1])
         render_timing.mark('labels_limits')
-        if settings['Volume Profile'] and result.get('ohlcv_valid',False):
+        from chart_indicators import volume_profile_rows
+        profile_rows=volume_profile_rows(visible,result.get('ohlcv_valid',False)) if settings['Volume Profile'] else None
+        if profile_rows is not None and not profile_rows.empty:
+            profile_title='Volume Profile\nоценка OHLCV'+('\nчастичная история' if frame.attrs.get('partial_chart') else '')
             self.profile_axis=self.ax_price.inset_axes([1.03,0,.16,1],sharey=self.ax_price)
             self.profile_axis.set_facecolor(BG)
             self.profile_axis.tick_params(colors=MUTED,labelsize=6,labelleft=False)
-            self.profile_axis.set_title('Volume Profile\nоценка OHLCV',color=TEXT,fontsize=7)
+            self.profile_axis.set_title(profile_title,color=TEXT,fontsize=7)
             def update_profile(axis):
                 left,right=axis.get_xlim()
                 portion=visible.iloc[max(0,int(np.ceil(left))):min(len(visible),int(np.floor(right))+1)]
+                portion=volume_profile_rows(portion,result.get('ohlcv_valid',False))
                 prices,volumes,widths=volume_profile(portion)
                 self.profile_axis.clear();self.profile_axis.set_facecolor(BG)
                 self.profile_axis.barh(prices,volumes,height=widths*.9,color=BLUE,alpha=.6)
-                self.profile_axis.set_title('Volume Profile\nоценка OHLCV',color=TEXT,fontsize=7)
+                self.profile_axis.set_title(profile_title,color=TEXT,fontsize=7)
                 self.profile_axis.tick_params(colors=MUTED,labelsize=6,labelleft=False)
                 self.profile_axis.set_ylim(axis.get_ylim())
             update_profile(self.ax_price)
