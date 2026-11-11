@@ -787,6 +787,33 @@
         "СМ-Архив/CP устаревшие дубликаты проверка.json: 3 реальные записи в изолированной памяти"
       ],
       "limits": "Убирается только дублирование диагностики. Архив не считается новой проверкой DQ. OHLCV, время ошибки, допуски и fresh-price slots не меняются. Не удалять актуальные ошибки. В TEST подтверждены две естественные нормализации с сохранением исходного INVALID; ещё одна найденная запись ожидает очереди."
+    },
+    {
+      "id": "archive_reaudit_scope_version",
+      "title": "Перепроверка сохранённой диагностики в действующей области",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "GAP",
+        "INVALID",
+        "UNCONFIRMED"
+      ],
+      "status": "ПРОВЕРЕНО ИЗОЛИРОВАННО; RUNTIME ОЖИДАЕТ",
+      "steps": [
+        "Разделять текущую область политики, архив других площадок, удалённые инструменты и неопределённую identity; не выдавать архивные ошибки за текущий торговый допуск.",
+        "В существующем serial history turn перепроверять один изменённый зарегистрированный GETTEX/EUR ряд, включая gettex_chart.",
+        "Сохранять версию правил аудита и зависимость от parent_provenance: изменение правил или proof при неизменном OHLCV требует новой проверки.",
+        "Не загружать сеть, не чинить OHLCV и не выдавать допуски из локального аудитора. Существующая очередь выполняет адресные восстановления отдельно.",
+        "Отдельно отмечать recovery_checked_at и валидность exact listing/наличие адаптера. Локальный audit не расходует pending recovery; future next_retry сохраняется. CAS не перезаписывает новый audit после recovery."
+      ],
+      "evidence": [
+        "test_cp_diagnostic_scopes.Scopes:2 PASS",
+        "test_cp_archive_reaudit.Reaudit:9 PASS (including reproduced FAIL then PASS for consumed recovery; real dq.repair cooldown)",
+        "test_cp_local_completion.LocalCompletion + WorkerRoutes:14 PASS including53/200fairness,revisionrace,freshskip"
+      ],
+      "limits": "Область политики не подтверждает качество. Удалённые инструменты и чужие площадки не загружать вопреки owner policy. Сохранённые сообщения о rejected source не считать существующими повреждёнными строками без проверки."
     }
   ],
   "sources": [
