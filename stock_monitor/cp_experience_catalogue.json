@@ -15,17 +15,19 @@
         "EXPIRED",
         "AWAITING_ASSESSMENT"
       ],
-      "status": "5NEW +3AFFECTED PASS; WINDOWS PENDING",
+      "status": "6 NEW +3 AFFECTED PASS; FINAL WINDOWS APPLY PENDING",
       "steps": [
         "После requested+fresh сохранять прежний analysis_requested_at и ставить metadata-only cp_assessment.request.",
         "Не ждать следующего исторического прохода инструмента; не выполнять анализ или историю в свежем writer.",
         "Существующие deduplication, original request age, retry_at,2priority:1background и строгая публикация продолжают действовать.",
-        "По завершении обычный worker подтверждает только фактически обработанный запрос; новая заявка не означает READY."
+        "По завершении обычный worker подтверждает только фактически обработанный запрос; новая заявка не означает READY.",
+        "После перезапуска fresh turn подбирает уже сохранённый analysis_requested_at даже при неизменном ответе источника; не создаёт READY и не сбрасывает retry."
       ],
       "evidence": [
         "Reproduced missing assessment request despite fresh review: FAIL before, PASS after",
         "test_cp_fresh_assessment_request:5newPASS including53/200continuouspriority,duplicatecooldown,restart and realDQ error retained",
-        "test_cp_fresh_completion:3directlyaffectedPASS, heavy stages and history release preserved"
+        "test_cp_fresh_completion:3directlyaffectedPASS, heavy stages and history release preserved",
+        "Extra pending-marker restart case: reproduced FAIL on fbea7a3, PASS after; no-new-evidence negative rerun PASS"
       ],
       "limits": "Не новый поток, не обход snapshot/eligibility dispatcher exclusion, не мгновенный результат при занятом worker, не изменение рынка/разрешений/исполнения."
     },
@@ -40,7 +42,7 @@
         "STALE",
         "INPUT_CHANGED"
       ],
-      "status": "WINDOWS/MCP ЗАГРУЖЕНО; ЕСТЕСТВЕННОЕ ПОДТВЕРЖДЕНИЕ ОЖИДАЕТ",
+      "status": "ПРОВЕРЕНО WINDOWS/MCP И ЕСТЕСТВЕННЫМ ПОДТВЕРЖДЕНИЕМ",
       "steps": [
         "Сравнивать полное содержание разрешения, evidence, actor и набор связанных scopes.",
         "Только для effective_accepted TV/reviewed/auto квитанций в расчётном fingerprint заменять номера счётчиков CURRENT; исходные разрешения и SQLite не изменять.",
@@ -51,7 +53,8 @@
         "test_cp_receipt_renewal: 8 new PASS including 53/200 separate receipts and strict execution token rejection",
         "test_closed_receipt_metadata: 2 directly affected identity and expiry guards PASS",
         "Saved NVIDIA four receipts differed only by renewed revision counters; no new owner decision",
-        "11Nov normal restart12:54:11; Windows indicators/VolumeProfile and9preservationchecks confirmed, hourlypairCOREreadyWAITfresh; no overall readiness claim"
+        "11Nov normal restart12:54:11; Windows indicators/VolumeProfile and9preservationchecks confirmed, hourlypairCOREreadyWAITfresh; no overall readiness claim",
+        "11Nov13:06:43 both Apple/NVIDIA1W/1M CURRENT on identical proof hashes after grant counters1915→1919 and1223→1225; changed15m inputs still revoke1H; transient invalid receipt stays blocked until revalidated"
       ],
       "limits": "Не создаёт разрешений/свечей/сделок, не скрывает DQ; не продлевает срок действия. Только fingerprint доказанного повторного подтверждения. Runtime PARTIAL."
     },

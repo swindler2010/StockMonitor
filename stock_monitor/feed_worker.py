@@ -58,6 +58,10 @@ class FeedContext(StockMonitor):
             from cp_controls import reviewed_risk_turn
             result['cp_reviewed_risk']=reviewed_risk_turn(self.store,info)
             requested=result['cp_reviewed_risk'].get('analysis_requested_at') or result['cp_tv_risk'].get('analysis_requested_at') or result.get('cp_reconciliation',{}).get('analysis_requested_at')
+            if fresh and not requested:
+                # Resume an already durable request after restart, including an
+                # unchanged provider reply. Only the read worker acknowledges it.
+                requested=self.store.setting('cp_reconciliation_progress:'+info['isin'],{}).get('analysis_requested_at')
             repair=result.get('cp_priority') or {}
             if repair.get('state')=='COMPLETED':
                 requested=max(requested or '',repair['finished_at'])

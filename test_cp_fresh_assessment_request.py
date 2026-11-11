@@ -47,6 +47,13 @@ class FreshAssessmentRequest(unittest.TestCase):
   self.assertEqual(worker.choose(other.db),ctx.store.setting(worker.PREFIX+'A'))
   self.assertIn('analysis_requested_at',other.setting('cp_reconciliation_progress:A'))
   self.assertIsNone(other.setting('cp_eligibility:A'))
+ def test_pending_marker_after_restart_queues_even_without_new_revision(self):
+  ctx=self.context();marker='2026-11-04T12:00Z'
+  ctx.store.set_setting('cp_reconciliation_progress:A',{'analysis_requested_at':marker})
+  self.feed(ctx,requested=False)
+  self.assertIsNotNone(ctx.store.setting(worker.PREFIX+'A'))
+  self.assertEqual(ctx.store.setting('cp_reconciliation_progress:A')['analysis_requested_at'],marker)
+  self.assertIsNone(ctx.store.setting('cp_eligibility:A'))
  def test_53_and_200_background_jobs_progress_with_fresh_priority_requests(self):
   for count in (53,200):
    with self.subTest(count=count):
