@@ -15,7 +15,7 @@
         "EXPIRED",
         "AWAITING_ASSESSMENT"
       ],
-      "status": "6 NEW +3 AFFECTED PASS; FINAL WINDOWS APPLY PENDING",
+      "status": "ПРОВЕРЕНО WINDOWS/MCP; ЕСТЕСТВЕННАЯ ПЕРЕДАЧА ЗАЯВКИ ПОДТВЕРЖДЕНА",
       "steps": [
         "После requested+fresh сохранять прежний analysis_requested_at и ставить metadata-only cp_assessment.request.",
         "Не ждать следующего исторического прохода инструмента; не выполнять анализ или историю в свежем writer.",
@@ -27,7 +27,8 @@
         "Reproduced missing assessment request despite fresh review: FAIL before, PASS after",
         "test_cp_fresh_assessment_request:5newPASS including53/200continuouspriority,duplicatecooldown,restart and realDQ error retained",
         "test_cp_fresh_completion:3directlyaffectedPASS, heavy stages and history release preserved",
-        "Extra pending-marker restart case: reproduced FAIL on fbea7a3, PASS after; no-new-evidence negative rerun PASS"
+        "Extra pending-marker restart case: reproduced FAIL on fbea7a3, PASS after; no-new-evidence negative rerun PASS",
+        "11Nov13:15:58 CET final047a332 normal restart; fresh NVIDIA request13:17:23.518 despite last history turn12:55:55.441; no manual refresh. Nine preservation checks PASS; both hourly CORE READY/WAIT with fresh13:10 quote at13:16:44. Existing all-TF worker still bounded and may wait for snapshot."
       ],
       "limits": "Не новый поток, не обход snapshot/eligibility dispatcher exclusion, не мгновенный результат при занятом worker, не изменение рынка/разрешений/исполнения."
     },
