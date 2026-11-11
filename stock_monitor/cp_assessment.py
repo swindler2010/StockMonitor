@@ -30,7 +30,9 @@ def choose(db,now=None):
     streak=read(db,CURSOR,0)
     # Two priority turns, then oldest ordinary request. No all-stock fan-out.
     preferred=[r for r in pending if (r['isin'] in priority)==(streak<2)]
-    return min(preferred or pending,key=lambda r:(r.get('last_attempt_at',0),r['requested_at'],r['isin']))
+    # Compare actual waiting age. A missing last_attempt_at is not time zero:
+    # recurrent new requests must not permanently outrank an older due retry.
+    return min(preferred or pending,key=lambda r:(r.get('last_attempt_at',r['requested_at']),r['requested_at'],r['isin']))
 
 
 def finish(store,item,result=None,error=None):

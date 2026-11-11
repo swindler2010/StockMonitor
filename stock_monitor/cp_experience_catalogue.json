@@ -4,6 +4,23 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "assessment_retry_waiting_age",
+      "title": "Повторная оценка не вытесняется новыми успешными заявками",
+      "sources": ["saved assessment queue"],
+      "states": ["ERROR", "STALE", "INPUT_CHANGED"],
+      "status": "ПРОВЕРЕНО ИЗОЛИРОВАННО; RUNTIME ОЖИДАЕТ",
+      "steps": [
+        "В существующей последовательной очереди сравнивать последнее фактическое ожидание: last_attempt_at либо requested_at для ещё не выполненной заявки.",
+        "Не считать отсутствующую попытку временем ноль: иначе новые заявки постоянно вытесняют старые ошибки.",
+        "Сохранить retry_at, два приоритетных хода перед обычным и строгую проверку входных ревизий перед публикацией."
+      ],
+      "evidence": [
+        "test_cp_assessment_retry_fairness:3 new PASS; reproduced starvation FAIL before fix; recurring53/200requests",
+        "test_cp_assessment_worker:3 affected PASS; priority fairness, persisted retry and revision-change rejection"
+      ],
+      "limits": "Повторная попытка не гарантирует READY. Реальное изменение входных данных и недостаток доказательств продолжают блокировать публикацию; TTL и торговые разрешения не меняются."
+    },
+    {
       "id": "real_children",
       "title": "Восстановить родительскую свечу из реальных младших",
       "sources": [],
