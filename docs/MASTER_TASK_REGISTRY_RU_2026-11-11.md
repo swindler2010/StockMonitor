@@ -24472,3 +24472,48 @@ Work2: ограниченный этап сверки NVIDIA/Swiss Re завер
 ~~~~~
 
 **Итог сверки:** 713/713 текстов Issues сохранены и повторно сопоставлены, плюс 1/1 PR-комментарий. Архив не содержит данных о бинарных вложениях, если они находятся только на локальном ПК или в сторонних сервисах.
+
+
+## XII. Полные метаданные 16 исторических Issues (GitHub snapshot до архивного закрытия)
+
+Полные тела всех Issues и всех комментариев находятся в разделе V; таблица добавляет метаданные, не показанные в старом текстовом архиве. Состояния на момент фиксации — **OPEN**; это статусы GitHub-записей, не техническая готовность задач. Все Issues №1–16 остаются доступными в истории GitHub.
+
+| № | Заголовок | Автор | Открыт UTC | Обновлён UTC | Состояние | Комментариев | Labels | Assignees | Milestone | Источник |
+|---:|---|---|---|---|---|---:|---|---|---|---|
+| 1 | Fix synchronization conflict when old and new Stock Monitor run simultaneously | swindler2010 | 2026-10-05T15:16:58Z | 2026-10-28T09:38:16Z | open | 4 | — | — | — | [#1](https://github.com/swindler2010/StockMonitor/issues/1) |
+| 2 | v0.16 TEST: complete instrument watchlist via MCP Bridge — PARTIAL verification | swindler2010 | 2026-10-15T07:10:50Z | 2026-10-28T16:27:28Z | open | 7 | — | — | — | [#2](https://github.com/swindler2010/StockMonitor/issues/2) |
+| 3 | v0.16 blocker: stabilize MCP analytics snapshot and prevent endless invalidation | swindler2010 | 2026-10-15T07:14:09Z | 2026-10-26T22:07:54Z | open | 4 | — | — | — | [#3](https://github.com/swindler2010/StockMonitor/issues/3) |
+| 4 | v0.16 blocker: fix UI hangs, source switching and watchlist add verification | swindler2010 | 2026-10-15T07:14:11Z | 2026-10-28T13:06:26Z | open | 4 | — | — | — | [#4](https://github.com/swindler2010/StockMonitor/issues/4) |
+| 5 | v0.16: complete universal EUR OHLCV history and Data Quality E2E | swindler2010 | 2026-10-15T07:14:13Z | 2026-11-11T12:58:01Z | open | 325 | — | — | — | [#5](https://github.com/swindler2010/StockMonitor/issues/5) |
+| 6 | v0.16: finish MCP read access to charts, indicators, quotes, news and portfolio | swindler2010 | 2026-10-15T07:14:15Z | 2026-10-28T16:27:29Z | open | 16 | — | — | — | [#6](https://github.com/swindler2010/StockMonitor/issues/6) |
+| 7 | v0.16: safe MCP UI controls, state confirmation and cloud connection | swindler2010 | 2026-10-15T07:14:17Z | 2026-10-26T20:25:09Z | open | 5 | — | — | — | [#7](https://github.com/swindler2010/StockMonitor/issues/7) |
+| 8 | v0.16: news engine, translated headlines and fallback sources | swindler2010 | 2026-10-15T07:14:18Z | 2026-10-28T13:06:27Z | open | 5 | — | — | — | [#8](https://github.com/swindler2010/StockMonitor/issues/8) |
+| 9 | v0.17 backlog: language RU/DE/EN, fundamentals presentation and logos | swindler2010 | 2026-10-15T07:14:20Z | 2026-10-28T17:54:15Z | open | 19 | — | — | — | [#9](https://github.com/swindler2010/StockMonitor/issues/9) |
+| 10 | v0.17 backlog: single-instance windows and chart drawing UX | swindler2010 | 2026-10-15T07:14:22Z | 2026-10-28T13:06:28Z | open | 3 | — | — | — | [#10](https://github.com/swindler2010/StockMonitor/issues/10) |
+| 11 | v0.16: paper trading after stable EUR candles; v0.17: advanced trading roadmap | swindler2010 | 2026-10-15T07:14:24Z | 2026-10-28T16:11:38Z | open | 3 | — | — | — | [#11](https://github.com/swindler2010/StockMonitor/issues/11) |
+| 12 | v0.16 release gate and v0.17 architecture/backup roadmap | swindler2010 | 2026-10-15T07:14:25Z | 2026-10-28T17:58:41Z | open | 17 | — | — | — | [#12](https://github.com/swindler2010/StockMonitor/issues/12) |
+| 13 | MASTER REGISTRY: 62 legacy tasks, D01–D14, N01–N23 and v0.16→0.17 status | swindler2010 | 2026-10-15T07:14:39Z | 2026-11-11T17:10:35Z | open | 217 | — | — | — | [#13](https://github.com/swindler2010/StockMonitor/issues/13) |
+| 14 | GLOBAL DEVELOPER RULE — applies to EVERY task: documentation, backups, safe cleanup | swindler2010 | 2026-10-15T07:55:39Z | 2026-11-10T11:45:36Z | open | 76 | — | — | — | [#14](https://github.com/swindler2010/StockMonitor/issues/14) |
+| 15 | v0.17 backlog: selectable EUR exchanges and maximum free candle history | swindler2010 | 2026-10-18T18:44:35Z | 2026-10-28T16:09:24Z | open | 0 | — | — | — | [#15](https://github.com/swindler2010/StockMonitor/issues/15) |
+| 16 | PRIORITY Work №2 · v0.16 TEST: измерение задержки данных и допуск ≤15 минут | swindler2010 | 2026-10-28T18:03:10Z | 2026-10-30T07:56:51Z | open | 8 | — | — | — | [#16](https://github.com/swindler2010/StockMonitor/issues/16) |
+
+**Идентификаторы GitHub issue (для точной обратной связи):**
+
+- #1: issue_id=5714542738; node_id=`I_kwDOUjytzs8AAAABVJ0Akg`; locked=false; closed_at=null; draft=not-applicable; html_url=https://github.com/swindler2010/StockMonitor/issues/1
+- #2: issue_id=5861789001; node_id=`I_kwDOUjytzs8AAAABXWPNSQ`; locked=false; closed_at=null; draft=not-applicable; html_url=https://github.com/swindler2010/StockMonitor/issues/2
+- #3: issue_id=5861831441; node_id=`I_kwDOUjytzs8AAAABXWRzEQ`; locked=false; closed_at=null; draft=not-applicable; html_url=https://github.com/swindler2010/StockMonitor/issues/3
+- #4: issue_id=5861831807; node_id=`I_kwDOUjytzs8AAAABXWR0fw`; locked=false; closed_at=null; draft=not-applicable; html_url=https://github.com/swindler2010/StockMonitor/issues/4
+- #5: issue_id=5861832235; node_id=`I_kwDOUjytzs8AAAABXWR2Kw`; locked=false; closed_at=null; draft=not-applicable; html_url=https://github.com/swindler2010/StockMonitor/issues/5
+- #6: issue_id=5861832705; node_id=`I_kwDOUjytzs8AAAABXWR4AQ`; locked=false; closed_at=null; draft=not-applicable; html_url=https://github.com/swindler2010/StockMonitor/issues/6
+- #7: issue_id=5861833047; node_id=`I_kwDOUjytzs8AAAABXWR5Vw`; locked=false; closed_at=null; draft=not-applicable; html_url=https://github.com/swindler2010/StockMonitor/issues/7
+- #8: issue_id=5861833416; node_id=`I_kwDOUjytzs8AAAABXWR6yA`; locked=false; closed_at=null; draft=not-applicable; html_url=https://github.com/swindler2010/StockMonitor/issues/8
+- #9: issue_id=5861833705; node_id=`I_kwDOUjytzs8AAAABXWR76Q`; locked=false; closed_at=null; draft=not-applicable; html_url=https://github.com/swindler2010/StockMonitor/issues/9
+- #10: issue_id=5861834113; node_id=`I_kwDOUjytzs8AAAABXWR9gQ`; locked=false; closed_at=null; draft=not-applicable; html_url=https://github.com/swindler2010/StockMonitor/issues/10
+- #11: issue_id=5861834530; node_id=`I_kwDOUjytzs8AAAABXWR_Ig`; locked=false; closed_at=null; draft=not-applicable; html_url=https://github.com/swindler2010/StockMonitor/issues/11
+- #12: issue_id=5861834889; node_id=`I_kwDOUjytzs8AAAABXWSAiQ`; locked=false; closed_at=null; draft=not-applicable; html_url=https://github.com/swindler2010/StockMonitor/issues/12
+- #13: issue_id=5861837628; node_id=`I_kwDOUjytzs8AAAABXWSLPA`; locked=false; closed_at=null; draft=not-applicable; html_url=https://github.com/swindler2010/StockMonitor/issues/13
+- #14: issue_id=5862345152; node_id=`I_kwDOUjytzs8AAAABXWxJwA`; locked=false; closed_at=null; draft=not-applicable; html_url=https://github.com/swindler2010/StockMonitor/issues/14
+- #15: issue_id=5912869638; node_id=`I_kwDOUjytzs8AAAABYG87Bg`; locked=false; closed_at=null; draft=not-applicable; html_url=https://github.com/swindler2010/StockMonitor/issues/15
+- #16: issue_id=6084654458; node_id=`I_kwDOUjytzs8AAAABaqx1eg`; locked=false; closed_at=null; draft=not-applicable; html_url=https://github.com/swindler2010/StockMonitor/issues/16
+
+**Ограничение полноты:** Github API предоставляет опубликованное текущее тело и комментарии, но не все предыдущие версии отредактированного текста или локальные бинарные файлы, которые нигде не прикреплены. Сохранено состояние, доступное на момент этой сверки.
