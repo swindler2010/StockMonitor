@@ -292,6 +292,15 @@ def diagnostic_detail(stock):
             'upstream_root_cause':'UNCONFIRMED' if causes else 'No blocking cause established by this snapshot'}
 
 def calculate(store,values,last_client):
+    # Reuse the same bounded pure-calculation cache as CP assessment. Exact
+    # OHLCV, evidence and as-of clocks remain part of every calculation key;
+    # revision tracking and final snapshot validation still run below.
+    from calculation_reuse import using
+    with using(store.read_cache):
+        return _calculate(store,values,last_client)
+
+
+def _calculate(store,values,last_client):
     context=SnapshotContext()
     for key,value in values.items():setattr(context,key,Value(value) if key in ('symbol','timeframe','period') else value)
     context.store=store;context.bridge=SimpleNamespace(last_client=last_client)

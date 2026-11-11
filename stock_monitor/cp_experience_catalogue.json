@@ -4,6 +4,35 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "snapshot_exact_calculation_reuse",
+      "title": "Общая диагностика повторно использует только точные вычисления",
+      "sources": [
+        "saved same-provider OHLCV"
+      ],
+      "states": [
+        "SLOW_DIAGNOSTICS"
+      ],
+      "status": "5 NEW +3 AFFECTED TESTS PASS; WINDOWS PENDING",
+      "steps": [
+        "В snapshot_worker.calculate активировать уже существующий bounded calculation_reuse для DQ и индикаторов.",
+        "Ключ включает все OHLCV, identity, evidence, флаги и явное время расчёта. Не кэшировать разрешения или неявное текущее время.",
+        "Сохранять все revision guards, конечную проверку публикации и запрет одновременного snapshot/eligibility."
+      ],
+      "evidence": [
+        "test_snapshot_exact_reuse:5 PASS including53/200 bounded independent instruments, changed OHLCV/identity and real revision rejection",
+        "3 directly affected exact-cache negative scenarios PASS",
+        "Single readonly Apple4H comparison on one SQLite read snapshot:10.593s without reuse,8.953s with reuse; outputs identical except5checked_at timestamps. Not a whole-program speed claim."
+      ],
+      "implementation": [
+        "stock_monitor/snapshot_worker.py:calculate",
+        "stock_monitor/calculation_reuse.py:using"
+      ],
+      "limitations": [
+        "Overall57-stock cycle speed must be measured separately in running Windows.",
+        "No new recovery, DQ permission, HTTP request or trading rule change."
+      ]
+    },
+    {
       "id": "daily_review_timeframe_calendar",
       "title": "Дневная сверка TV использует уже проверенный дневной календарь",
       "sources": [
@@ -12,7 +41,7 @@
       "states": [
         "BLOCKED"
       ],
-      "status": "6 NEW TESTS PASS; WINDOWS PENDING",
+      "status": "6 NEW TESTS PASS; WINDOWS APPLIED; NATURAL REVIEW PENDING 12:49 CET",
       "steps": [
         "Передавать timeframe задания в существующий timeframes.schedule; чистая identity его не содержит.",
         "Сохранить прежние границы подтверждённых календарей: старый intraday и дневные периоды до подтверждённой истории отклоняются.",
@@ -21,7 +50,8 @@
       "evidence": [
         "test_cp_daily_review_calendar:6 PASS; two exact historical daily failures reproduced before fix",
         "Existing test_cp_reconciliation:20 PASS,3 failures reproduced against HEAD _classify; not full suite PASS",
-        "Two saved daily review inputs reclassified read-only with current binding; natural runtime awaits existing next_check"
+        "Two saved daily review inputs reclassified read-only with current binding; natural runtime awaits existing next_check",
+        "Windows normal restart11Nov11:59:50CET; MCP and9preservation checks confirmed;31saved daily jobs readonly UNCONFIRMED,0can_affect_dq,not31resolved"
       ],
       "limits": "Не расширяет календарь и не подтверждает native 1W/1M provenance. Не обеспечивает TV export/import. Старые BLOCKED задания сохраняют next_check; не ускорять ради отчёта."
     },
