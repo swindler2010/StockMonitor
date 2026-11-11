@@ -94,6 +94,18 @@ def _setting_value(db, key, start=None):
                 value['listing_proof']={k:v for k,v in value['listing_proof'].items() if k!='verified_at'}
         elif key.startswith('benchmark_history:'):
             value={k:v for k,v in value.items() if k!='attempted_at'}
+        elif key.startswith('cp_manual_risk:'):
+            # The CP writer may reconfirm the SAME decision after a later bar
+            # or transport receipt. Compare its contents and bound scope set,
+            # not the numeric counters of an independently validated renewal.
+            # Invalid receipts keep their exact counters; unknown actors and
+            # every other grant/evidence field remain strict. Used OHLCV,
+            # policies and execution tokens retain their separate guards.
+            from cp_controls import effective_accepted,TV_ACTOR,REVIEWED_ACTOR,AUTO_ACTOR
+            for pid,entry in effective_accepted(db,key.split(':',1)[1],value).items():
+                token=entry.get('input_revisions')
+                if entry.get('actor') in (TV_ACTOR,REVIEWED_ACTOR,AUTO_ACTOR) and token:
+                    value['accepted'][pid]={**entry,'input_revisions':{scope:'CURRENT' for scope in token}}
     return value
 
 

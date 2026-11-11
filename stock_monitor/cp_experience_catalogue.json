@@ -4,6 +4,31 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "validated_receipt_renewal_closed_proof",
+      "title": "Повторное подтверждение неизменного исторического разрешения",
+      "sources": [
+        "CP owner risk receipts",
+        "SQLite closed input proof"
+      ],
+      "states": [
+        "STALE",
+        "INPUT_CHANGED"
+      ],
+      "status": "ПРОВЕРЕНО ТЕСТАМИ; WINDOWS ОЖИДАЕТ",
+      "steps": [
+        "Сравнивать полное содержание разрешения, evidence, actor и набор связанных scopes.",
+        "Только для effective_accepted TV/reviewed/auto квитанций в расчётном fingerprint заменять номера счётчиков CURRENT; исходные разрешения и SQLite не изменять.",
+        "Неподтверждённые квитанции, новые условия/источник/policy и изменения реальных используемых OHLCV сохраняют отзыв.",
+        "Старые proofs не мигрировать; обычный CP повторяет расчёт. Исполнительные raw revision/freshness/risk проверки неизменны."
+      ],
+      "evidence": [
+        "test_cp_receipt_renewal: 8 new PASS including 53/200 separate receipts and strict execution token rejection",
+        "test_closed_receipt_metadata: 2 directly affected identity and expiry guards PASS",
+        "Saved NVIDIA four receipts differed only by renewed revision counters; no new owner decision"
+      ],
+      "limits": "Не создаёт разрешений/свечей/сделок, не скрывает DQ; не продлевает срок действия. Только fingerprint доказанного повторного подтверждения. Runtime PARTIAL."
+    },
+    {
       "id": "grant_receipts_exact_base_dependencies",
       "title": "Зависимости разрешений отслеживаются по используемому базовому ряду",
       "sources": [
