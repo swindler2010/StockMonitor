@@ -1,0 +1,4098 @@
+{
+  "Язык интерфейса": {
+    "en": "Interface language",
+    "de": "Sprache der Benutzeroberfläche"
+  },
+  "Выбор языка сохраняется сразу и применяется при следующем запуске.": {
+    "en": "Your language choice is saved immediately and applies on the next start.",
+    "de": "Die Sprachauswahl wird sofort gespeichert und beim nächsten Start angewendet."
+  },
+  "Не удалось сохранить язык. Повторите попытку.": {
+    "en": "The language could not be saved. Try again.",
+    "de": "Die Sprache konnte nicht gespeichert werden. Versuchen Sie es erneut."
+  },
+  "Язык сохранён. Изменение вступит в силу при следующем запуске.": {
+    "en": "Language saved. The change applies on the next start.",
+    "de": "Sprache gespeichert. Die Änderung gilt beim nächsten Start."
+  },
+  "Настройки": {
+    "en": "Settings",
+    "de": "Einstellungen"
+  },
+  "Параметры": {
+    "en": "Preferences",
+    "de": "Optionen"
+  },
+  "Оформление": {
+    "en": "Appearance",
+    "de": "Darstellung"
+  },
+  "Программа": {
+    "en": "Application",
+    "de": "Programm"
+  },
+  "Файл": {
+    "en": "File",
+    "de": "Datei"
+  },
+  "Вид": {
+    "en": "View",
+    "de": "Ansicht"
+  },
+  "Данные": {
+    "en": "Data",
+    "de": "Daten"
+  },
+  "Вид и график": {
+    "en": "View and chart",
+    "de": "Ansicht und Chart"
+  },
+  "Уведомления": {
+    "en": "Notifications",
+    "de": "Benachrichtigungen"
+  },
+  "Уведомления Windows": {
+    "en": "Windows notifications",
+    "de": "Windows-Benachrichtigungen"
+  },
+  "Сохранить": {
+    "en": "Save",
+    "de": "Speichern"
+  },
+  "Отмена": {
+    "en": "Cancel",
+    "de": "Abbrechen"
+  },
+  "Закрыть": {
+    "en": "Close",
+    "de": "Schließen"
+  },
+  "Применить": {
+    "en": "Apply",
+    "de": "Anwenden"
+  },
+  "Добавить": {
+    "en": "Add",
+    "de": "Hinzufügen"
+  },
+  "Удалить": {
+    "en": "Remove",
+    "de": "Entfernen"
+  },
+  "Изменить": {
+    "en": "Edit",
+    "de": "Bearbeiten"
+  },
+  "Обновить": {
+    "en": "Refresh",
+    "de": "Aktualisieren"
+  },
+  "Новости": {
+    "en": "News",
+    "de": "Nachrichten"
+  },
+  "Портфель": {
+    "en": "Portfolio",
+    "de": "Portfolio"
+  },
+  "Индикаторы": {
+    "en": "Indicators",
+    "de": "Indikatoren"
+  },
+  "Рисование": {
+    "en": "Drawing tools",
+    "de": "Zeichenwerkzeuge"
+  },
+  "Индикаторы выбранной акции": {
+    "en": "Indicators for the selected stock",
+    "de": "Indikatoren der ausgewählten Aktie"
+  },
+  "Связь с Codex": {
+    "en": "Connect to Codex",
+    "de": "Verbindung mit Codex"
+  },
+  "Подключение Codex": {
+    "en": "Codex connection",
+    "de": "Codex-Verbindung"
+  },
+  "Обновить программу": {
+    "en": "Update application",
+    "de": "Programm aktualisieren"
+  },
+  "ИИ и диагностика": {
+    "en": "AI and diagnostics",
+    "de": "KI und Diagnose"
+  },
+  "Импорт базы": {
+    "en": "Import database",
+    "de": "Datenbank importieren"
+  },
+  "Создать резервную копию": {
+    "en": "Create backup",
+    "de": "Sicherung erstellen"
+  },
+  "Удалить выбранную акцию": {
+    "en": "Remove selected stock",
+    "de": "Ausgewählte Aktie entfernen"
+  },
+  "Ошибка": {
+    "en": "Error",
+    "de": "Fehler"
+  },
+  "Предупреждение": {
+    "en": "Warning",
+    "de": "Warnung"
+  },
+  "Подключение": {
+    "en": "Connection",
+    "de": "Verbindung"
+  },
+  "Управление через MCP": {
+    "en": "MCP controls",
+    "de": "Steuerung über MCP"
+  },
+  "Разрешить MCP сохранять изменения в программе": {
+    "en": "Allow MCP to save changes in the application",
+    "de": "MCP erlauben, Änderungen im Programm zu speichern"
+  },
+  "Разрешить подключённому MCP менять список акций, позиции и журнал рекомендаций? Это не даёт доступа к сделкам у брокера.": {
+    "en": "Allow the connected MCP to change the watchlist, positions and recommendation journal? This does not grant access to broker trades.",
+    "de": "Dem verbundenen MCP erlauben, die Beobachtungsliste, Positionen und das Empfehlungsjournal zu ändern? Dies gewährt keinen Zugriff auf Brokertransaktionen."
+  },
+  "Дополнительный API": {
+    "en": "Additional API",
+    "de": "Zusätzliche API"
+  },
+  "Анализ через API": {
+    "en": "Analysis via API",
+    "de": "Analyse über API"
+  },
+  "ИИ / Codex • связь и диагностика": {
+    "en": "AI / Codex • connection and diagnostics",
+    "de": "KI / Codex • Verbindung und Diagnose"
+  },
+  "Тёмная": {
+    "en": "Dark",
+    "de": "Dunkel"
+  },
+  "Светлая": {
+    "en": "Light",
+    "de": "Hell"
+  },
+  "Последние": {
+    "en": "Recent",
+    "de": "Zuletzt"
+  },
+  "месяц": {
+    "en": "month",
+    "de": "Monat"
+  },
+  "6 месяцев": {
+    "en": "6 months",
+    "de": "6 Monate"
+  },
+  "год": {
+    "en": "year",
+    "de": "Jahr"
+  },
+  "2 года": {
+    "en": "2 years",
+    "de": "2 Jahre"
+  },
+  "5 лет": {
+    "en": "5 years",
+    "de": "5 Jahre"
+  },
+  "Объём": {
+    "en": "Volume",
+    "de": "Volumen"
+  },
+  "Средний объём": {
+    "en": "Average volume",
+    "de": "Durchschnittliches Volumen"
+  },
+  "Относительный объём": {
+    "en": "Relative volume",
+    "de": "Relatives Volumen"
+  },
+  "Уровни анализа": {
+    "en": "Analysis levels",
+    "de": "Analyseniveaus"
+  },
+  "недостаточно истории": {
+    "en": "insufficient history",
+    "de": "unzureichende Historie"
+  },
+  "нет данных": {
+    "en": "no data",
+    "de": "keine Daten"
+  },
+  "Далее": {
+    "en": "Next",
+    "de": "Weiter"
+  },
+  "Назад": {
+    "en": "Back",
+    "de": "Zurück"
+  },
+  "Цена": {
+    "en": "Price",
+    "de": "Kurs"
+  },
+  "Количество": {
+    "en": "Quantity",
+    "de": "Anzahl"
+  },
+  "Валюта": {
+    "en": "Currency",
+    "de": "Währung"
+  },
+  "Источник": {
+    "en": "Source",
+    "de": "Quelle"
+  },
+  "Период": {
+    "en": "Period",
+    "de": "Zeitraum"
+  },
+  "Биржа": {
+    "en": "Exchange",
+    "de": "Börse"
+  },
+  "Дата": {
+    "en": "Date",
+    "de": "Datum"
+  },
+  "Время": {
+    "en": "Time",
+    "de": "Uhrzeit"
+  },
+  "Рынок и экономика": {
+    "en": "Markets and economy",
+    "de": "Märkte und Wirtschaft"
+  },
+  "Новости — оригинальные материалы": {
+    "en": "News — original articles",
+    "de": "Nachrichten — Originalartikel"
+  },
+  "Оригинал": {
+    "en": "Original",
+    "de": "Original"
+  },
+  "Номер новости": {
+    "en": "Article number",
+    "de": "Artikelnummer"
+  },
+  "Загрузка…": {
+    "en": "Loading…",
+    "de": "Wird geladen…"
+  },
+  "Загрузка...": {
+    "en": "Loading…",
+    "de": "Wird geladen…"
+  },
+  "Предыдущее обновление ещё выполняется": {
+    "en": "The previous refresh is still running",
+    "de": "Die vorherige Aktualisierung läuft noch"
+  },
+  "Укажите вторую точку.": {
+    "en": "Select the second point.",
+    "de": "Wählen Sie den zweiten Punkt."
+  },
+  "Удалить выбранный объект": {
+    "en": "Delete selected object",
+    "de": "Ausgewähltes Objekt löschen"
+  },
+  "Горизонтальная линия": {
+    "en": "Horizontal line",
+    "de": "Horizontale Linie"
+  },
+  "Вертикальная линия": {
+    "en": "Vertical line",
+    "de": "Vertikale Linie"
+  },
+  "Линия тренда": {
+    "en": "Trend line",
+    "de": "Trendlinie"
+  },
+  "Луч": {
+    "en": "Ray",
+    "de": "Strahl"
+  },
+  "Зона": {
+    "en": "Zone",
+    "de": "Zone"
+  },
+  "Настройки графика. Сценарии используют EMA 10/30,\nRSI/ATR 14, MACD 12/26/9 и средний объём 20.": {
+    "en": "Chart settings. Scenarios use EMA 10/30,\nRSI/ATR 14, MACD 12/26/9 and average volume 20.",
+    "de": "Charteinstellungen. Szenarien verwenden EMA 10/30,\nRSI/ATR 14, MACD 12/26/9 und Durchschnittsvolumen 20."
+  },
+  "Несколько индикаторов можно включать одновременно. Настройки сохраняются локально.": {
+    "en": "Multiple indicators can be enabled together. Settings are stored locally.",
+    "de": "Mehrere Indikatoren können gleichzeitig aktiviert werden. Die Einstellungen werden lokal gespeichert."
+  },
+  "Источник: {p0}": {
+    "en": "Source: {p0}",
+    "de": "Quelle: {p0}"
+  },
+  "Реальные OHLCV CSV": {
+    "en": "Real OHLCV CSV",
+    "de": "Reale OHLCV-CSV-Daten"
+  },
+  "NO DATA • Никаких тестовых свечей и торговых сигналов.": {
+    "en": "NO DATA • No test candles or trading signals.",
+    "de": "NO DATA • Keine Testkerzen oder Handelssignale."
+  },
+  "NO DATA • Подключите реальные OHLCV. Тестовые свечи удалены.": {
+    "en": "NO DATA • Connect real OHLCV data. Test candles have been removed.",
+    "de": "NO DATA • Reale OHLCV-Daten verbinden. Testkerzen wurden entfernt."
+  },
+  "Недостаточно данных для {p0}. Источник содержит {p1}.": {
+    "en": "Insufficient data for {p0}. The source contains {p1}.",
+    "de": "Unzureichende Daten für {p0}. Die Quelle enthält {p1}."
+  },
+  "Таймфрейм CSV": {
+    "en": "CSV timeframe",
+    "de": "CSV-Zeitrahmen"
+  },
+  "Какой таймфрейм у файла? 15m / 30m / 1H / 4H / 1D / 1W": {
+    "en": "What is the file's timeframe? 15m / 30m / 1H / 4H / 1D / 1W",
+    "de": "Welchen Zeitrahmen hat die Datei? 15m / 30m / 1H / 4H / 1D / 1W"
+  },
+  "Портфель Scalable": {
+    "en": "Scalable portfolio",
+    "de": "Scalable-Portfolio"
+  },
+  "Добавить акцию": {
+    "en": "Add stock",
+    "de": "Aktie hinzufügen"
+  },
+  "Импорт OHLCV CSV": {
+    "en": "Import OHLCV CSV",
+    "de": "OHLCV-CSV importieren"
+  },
+  "Период графика:": {
+    "en": "Chart period:",
+    "de": "Chartzeitraum:"
+  },
+  "Логика проверки": {
+    "en": "Validation logic",
+    "de": "Prüflogik"
+  },
+  "Позиция и уровни": {
+    "en": "Position and levels",
+    "de": "Position und Kursniveaus"
+  },
+  "Уровень пользователя": {
+    "en": "User level",
+    "de": "Benutzerdefiniertes Kursniveau"
+  },
+  "Площадка": {
+    "en": "Venue",
+    "de": "Handelsplatz"
+  },
+  "Площадка данных для {p0}:": {
+    "en": "Data venue for {p0}:",
+    "de": "Datenhandelsplatz für {p0}:"
+  },
+  "Ошибка данных": {
+    "en": "Data error",
+    "de": "Datenfehler"
+  },
+  "Линейка: удерживайте левую кнопку и перемещайте мышь. Отпустите, чтобы убрать измерение.": {
+    "en": "Ruler: hold the left mouse button and move the mouse. Release to clear the measurement.",
+    "de": "Lineal: Linke Maustaste gedrückt halten und die Maus bewegen. Loslassen, um die Messung zu entfernen."
+  },
+  "Индикаторы • все акции": {
+    "en": "Indicators • all stocks",
+    "de": "Indikatoren • alle Aktien"
+  },
+  "Изменения сохранены": {
+    "en": "Changes saved",
+    "de": "Änderungen gespeichert"
+  },
+  "Сохранить изменения?": {
+    "en": "Save changes?",
+    "de": "Änderungen speichern?"
+  },
+  "Сохранить пользовательские изменения?\nДа — сохранить; Нет — не сохранять; Отмена — продолжить работу.": {
+    "en": "Save user changes?\nYes — save; No — do not save; Cancel — continue working.",
+    "de": "Benutzeränderungen speichern?\nJa — speichern; Nein — nicht speichern; Abbrechen — weiterarbeiten."
+  },
+  "Реальный портфель": {
+    "en": "Real portfolio",
+    "de": "Reales Portfolio"
+  },
+  "Демосчёт": {
+    "en": "Demo account",
+    "de": "Demokonto"
+  },
+  "Решения ChatGPT — журнал": {
+    "en": "ChatGPT decisions — journal",
+    "de": "ChatGPT-Entscheidungen — Journal"
+  },
+  "Не удалось обновить программу": {
+    "en": "Application update failed",
+    "de": "Programmaktualisierung fehlgeschlagen"
+  },
+  "Обновление Stock Monitor": {
+    "en": "Stock Monitor update",
+    "de": "Stock Monitor aktualisieren"
+  },
+  "Акции ▾": {
+    "en": "Stocks ▾",
+    "de": "Aktien ▾"
+  },
+  "Линейка": {
+    "en": "Ruler",
+    "de": "Lineal"
+  },
+  "Обновить данные": {
+    "en": "Refresh data",
+    "de": "Daten aktualisieren"
+  },
+  "Сбросить масштаб": {
+    "en": "Reset zoom",
+    "de": "Zoom zurücksetzen"
+  },
+  "По умолчанию": {
+    "en": "Default",
+    "de": "Standard"
+  },
+  "Валюта позиции и пользовательских уровней": {
+    "en": "Currency of the position and user levels",
+    "de": "Währung der Position und benutzerdefinierten Kursniveaus"
+  },
+  "Дивиденды по позиции: дата сумма валюта, одна выплата на строку": {
+    "en": "Position dividends: date amount currency, one payment per line",
+    "de": "Dividenden der Position: Datum Betrag Währung, eine Zahlung pro Zeile"
+  },
+  "Все выплаты за время этой позиции внесены (суммы после налогов)": {
+    "en": "All payments during this position have been entered (after-tax amounts)",
+    "de": "Alle Zahlungen während dieser Position sind erfasst (Beträge nach Steuern)"
+  },
+  "Изменить выбранную позицию": {
+    "en": "Edit selected position",
+    "de": "Ausgewählte Position bearbeiten"
+  },
+  "P/L — оценка по последней свече указанного источника, без комиссий. Не отчёт брокера.": {
+    "en": "P/L is an estimate based on the selected source's latest candle, excluding fees. This is not a broker statement.",
+    "de": "P/L ist eine Schätzung anhand der letzten Kerze der angegebenen Quelle, ohne Gebühren. Dies ist keine Brokerabrechnung."
+  },
+  "Рекомендации, не сделки. Оценки качества записываются отдельно; фактическая прибыль не предполагается.": {
+    "en": "Recommendations, not trades. Quality assessments are recorded separately; actual profit is not assumed.",
+    "de": "Empfehlungen, keine Transaktionen. Qualitätsbewertungen werden separat erfasst; ein tatsächlicher Gewinn wird nicht vorausgesetzt."
+  },
+  "Сегодня записано {p0}, оценено {p1}. В последних 500: {p2} записей, {p3} оценок.\nСреднее направление сценария: {p4} %. Это не доходность портфеля.": {
+    "en": "Recorded today: {p0}; reviewed: {p1}. Last 500: {p2} records, {p3} reviews.\nAverage scenario direction: {p4} %. This is not portfolio performance.",
+    "de": "Heute erfasst: {p0}; bewertet: {p1}. Letzte 500: {p2} Einträge, {p3} Bewertungen.\nDurchschnittliche Szenariorichtung: {p4} %. Dies ist keine Portfoliorendite."
+  },
+  "Предложение Codex": {
+    "en": "Codex proposal",
+    "de": "Codex-Vorschlag"
+  },
+  "Изолированная рабочая версия. Публикация и установка отключены.": {
+    "en": "Isolated development version. Publishing and installation are disabled.",
+    "de": "Isolierte Entwicklungsversion. Veröffentlichung und Installation sind deaktiviert."
+  },
+  "Обновление MSIX": {
+    "en": "MSIX update",
+    "de": "MSIX-Aktualisierung"
+  },
+  "Это локальный прототип упаковки. Канал Store ещё не подключён. Установщик GitHub здесь не запускается.": {
+    "en": "This is a local packaging prototype. The Store channel is not connected yet. The GitHub installer is not launched here.",
+    "de": "Dies ist ein lokaler Paketierungsprototyp. Der Store-Kanal ist noch nicht verbunden. Das GitHub-Installationsprogramm wird hier nicht gestartet."
+  },
+  "Установлена актуальная версия 0.15": {
+    "en": "The current version 0.15 is installed",
+    "de": "Die aktuelle Version 0.15 ist installiert"
+  },
+  "Обновление": {
+    "en": "Update",
+    "de": "Aktualisierung"
+  },
+  "Объект удалён. Нажмите «Сохранить», чтобы сохранить изменения.": {
+    "en": "Object removed. Click Save to save the changes.",
+    "de": "Objekt entfernt. Klicken Sie auf Speichern, um die Änderungen zu speichern."
+  },
+  "Позиция": {
+    "en": "Position",
+    "de": "Position"
+  },
+  "Пользовательские настройки сохранены.": {
+    "en": "User settings saved.",
+    "de": "Benutzereinstellungen gespeichert."
+  },
+  "Проверка обновлений программы…": {
+    "en": "Checking for application updates…",
+    "de": "Programmaktualisierungen werden gesucht…"
+  },
+  "Stock Monitor • ИИ и диагностика": {
+    "en": "Stock Monitor • AI and diagnostics",
+    "de": "Stock Monitor • KI und Diagnose"
+  },
+  "Локальный снимок для диагностики и будущего клиента": {
+    "en": "Local snapshot for diagnostics and a future client",
+    "de": "Lokaler Snapshot für Diagnose und einen zukünftigen Client"
+  },
+  "ИИ: запрос к сервису…": {
+    "en": "AI: requesting service…",
+    "de": "KI: Dienst wird angefragt…"
+  },
+  "Подключение ИИ": {
+    "en": "AI connection",
+    "de": "KI-Verbindung"
+  },
+  "Поиск и добавление акции": {
+    "en": "Find and add a stock",
+    "de": "Aktie suchen und hinzufügen"
+  },
+  "Позиция, уровни и источники": {
+    "en": "Position, levels and sources",
+    "de": "Position, Kursniveaus und Quellen"
+  },
+  "Резервная копия базы": {
+    "en": "Database backup",
+    "de": "Datenbanksicherung"
+  },
+  "База v0.10: user_data/stock_monitor.sqlite3": {
+    "en": "v0.10 database: user_data/stock_monitor.sqlite3",
+    "de": "Datenbank v0.10: user_data/stock_monitor.sqlite3"
+  },
+  "Scalable: чтение позиций…": {
+    "en": "Scalable: reading positions…",
+    "de": "Scalable: Positionen werden gelesen…"
+  },
+  "Несохранённые изменения": {
+    "en": "Unsaved changes",
+    "de": "Nicht gespeicherte Änderungen"
+  },
+  "Сохранить пользовательские линии и настройки перед выходом?": {
+    "en": "Save user lines and settings before exiting?",
+    "de": "Benutzerlinien und Einstellungen vor dem Beenden speichern?"
+  },
+  "Папка настроенного туннеля (с tunnel-client и profiles)": {
+    "en": "Configured tunnel folder (containing tunnel-client and profiles)",
+    "de": "Ordner des eingerichteten Tunnels (mit tunnel-client und profiles)"
+  },
+  "Загрузка свежих новостей…": {
+    "en": "Loading recent news…",
+    "de": "Aktuelle Nachrichten werden geladen…"
+  },
+  "Открыть оригинал": {
+    "en": "Open original",
+    "de": "Original öffnen"
+  },
+  "Номер новости (1–{p0}):": {
+    "en": "Article number (1–{p0}):",
+    "de": "Artikelnummer (1–{p0}):"
+  },
+  "Источник обновлений": {
+    "en": "Update source",
+    "de": "Aktualisierungsquelle"
+  },
+  "GitHub: владелец/репозиторий с релизами Stock Monitor.\nУкажите только свой доверенный репозиторий:": {
+    "en": "GitHub: owner/repository with Stock Monitor releases.\nEnter only a repository you trust:",
+    "de": "GitHub: Eigentümer/Repository mit Stock-Monitor-Releases.\nGeben Sie nur ein vertrauenswürdiges Repository an:"
+  },
+  "Загрузка и проверка установщика…": {
+    "en": "Downloading and verifying the installer…",
+    "de": "Installationsprogramm wird heruntergeladen und geprüft…"
+  },
+  "Ключ": {
+    "en": "Key",
+    "de": "Schlüssel"
+  },
+  "Сохранённый ключ удалён. Ключ из переменной OPENAI_API_KEY, если задан, остаётся доступен.": {
+    "en": "Saved key removed. The key in OPENAI_API_KEY, if set, remains available.",
+    "de": "Gespeicherter Schlüssel entfernt. Ein in OPENAI_API_KEY gesetzter Schlüssel bleibt verfügbar."
+  },
+  "Список": {
+    "en": "List",
+    "de": "Liste"
+  },
+  "Оставьте хотя бы одну акцию.": {
+    "en": "Keep at least one stock.",
+    "de": "Mindestens eine Aktie muss erhalten bleiben."
+  },
+  "Убрать {p0} из списка? История останется в локальной базе.": {
+    "en": "Remove {p0} from the list? Its history will remain in the local database.",
+    "de": "{p0} aus der Liste entfernen? Der Verlauf bleibt in der lokalen Datenbank erhalten."
+  },
+  "Данные: LOADING • история нового инструмента загружается": {
+    "en": "Data: LOADING • loading the new instrument's history",
+    "de": "Daten: LOADING • Historie des neuen Instruments wird geladen"
+  },
+  "Резервная копия базы сохранена.": {
+    "en": "Database backup saved.",
+    "de": "Datenbanksicherung gespeichert."
+  },
+  "Добавить историю из этой базы и перенести из неё позиции и уровни? Текущая база будет сохранена в резервную копию.": {
+    "en": "Add history from this database and transfer its positions and levels? The current database will be backed up.",
+    "de": "Historie aus dieser Datenbank hinzufügen und ihre Positionen und Kursniveaus übernehmen? Die aktuelle Datenbank wird gesichert."
+  },
+  "Импортировано инструментов: {p0}. Резервная копия: {p1}": {
+    "en": "Instruments imported: {p0}. Backup: {p1}",
+    "de": "Importierte Instrumente: {p0}. Sicherung: {p1}"
+  },
+  "{p0}: цена достигла сохранённого стопа. Проверьте карточку и свежесть данных.": {
+    "en": "{p0}: the price reached the saved stop. Check the company card and data freshness.",
+    "de": "{p0}: Der Kurs hat den gespeicherten Stopp erreicht. Prüfen Sie die Unternehmenskarte und die Datenaktualität."
+  },
+  "Загрузка карточки…": {
+    "en": "Loading company card…",
+    "de": "Unternehmenskarte wird geladen…"
+  },
+  "Официальный Scalable CLI (не системный Windows sc.exe)": {
+    "en": "Official Scalable CLI (not the Windows system sc.exe)",
+    "de": "Offizielle Scalable-CLI (nicht die Windows-Systemdatei sc.exe)"
+  },
+  "Scalable: позиции получены. Откройте карточку / Scalable.": {
+    "en": "Scalable: positions received. Open the company card / Scalable.",
+    "de": "Scalable: Positionen empfangen. Öffnen Sie die Unternehmenskarte / Scalable."
+  },
+  "Параметры индикаторов и рисунки сохраняются для выбранной акции кнопкой «Сохранить». Тема сохраняется сразу.": {
+    "en": "Indicator parameters and drawings for the selected stock are saved with Save. The theme is saved immediately.",
+    "de": "Indikatorparameter und Zeichnungen der ausgewählten Aktie werden mit Speichern gesichert. Das Design wird sofort gespeichert."
+  },
+  "Автоматическое подключение": {
+    "en": "Automatic connection",
+    "de": "Automatische Verbindung"
+  },
+  "Использовать этот ранее настроенный туннель при запуске Stock Monitor? Доступ будет соответствовать его существующему профилю.": {
+    "en": "Use this previously configured tunnel when Stock Monitor starts? Access will follow its existing profile.",
+    "de": "Diesen bereits eingerichteten Tunnel beim Start von Stock Monitor verwenden? Der Zugriff entspricht seinem vorhandenen Profil."
+  },
+  "Настроить автозапуск туннеля ChatGPT": {
+    "en": "Configure ChatGPT tunnel startup",
+    "de": "Autostart des ChatGPT-Tunnels einrichten"
+  },
+  "Источник выбирается явно на графике. При ошибках или короткой истории приложение не переключает валюту и площадку автоматически.": {
+    "en": "The source is selected explicitly on the chart. Errors or short history do not trigger automatic currency or venue changes.",
+    "de": "Die Quelle wird im Chart ausdrücklich ausgewählt. Bei Fehlern oder kurzer Historie werden Währung und Handelsplatz nicht automatisch gewechselt."
+  },
+  "Рыночная история сохраняется автоматически. Кнопка «Сохранить» относится к пользовательской разметке и настройкам.": {
+    "en": "Market history is saved automatically. Save applies to user annotations and settings.",
+    "de": "Markthistorie wird automatisch gespeichert. Speichern betrifft Benutzerzeichnungen und Einstellungen."
+  },
+  "Применить и сохранить": {
+    "en": "Apply and save",
+    "de": "Anwenden und speichern"
+  },
+  "Пользовательская разметка": {
+    "en": "User annotations",
+    "de": "Benutzerzeichnungen"
+  },
+  "Цена или дата/время (ГГГГ-ММ-ДД ЧЧ:ММ)": {
+    "en": "Price or date/time (YYYY-MM-DD HH:MM)",
+    "de": "Kurs oder Datum/Uhrzeit (JJJJ-MM-TT HH:MM)"
+  },
+  "Удалить все": {
+    "en": "Delete all",
+    "de": "Alle löschen"
+  },
+  "Автоматические уровни показаны полупрозрачно. Пользовательские линии — ярким голубым пунктиром.": {
+    "en": "Automatic levels are translucent. User lines are shown as bright blue dashes.",
+    "de": "Automatische Kursniveaus sind halbtransparent. Benutzerlinien erscheinen hellblau gestrichelt."
+  },
+  "Сначала укажите тикер карточки в настройках инструмента.": {
+    "en": "First enter the company-card ticker in the instrument settings.",
+    "de": "Geben Sie zuerst den Ticker der Unternehmenskarte in den Instrumenteinstellungen an."
+  },
+  "Новости обновлены": {
+    "en": "News refreshed",
+    "de": "Nachrichten aktualisiert"
+  },
+  "Копировать команду подключения": {
+    "en": "Copy connection command",
+    "de": "Verbindungsbefehl kopieren"
+  },
+  "Новых стабильных версий нет.": {
+    "en": "No new stable versions are available.",
+    "de": "Keine neuen stabilen Versionen verfügbar."
+  },
+  "Доступна {p0} из {p1}.\nСкачать и запустить установку? Данные и настройки сохранятся.": {
+    "en": "{p0} is available from {p1}.\nDownload and run the installer? Data and settings will be retained.",
+    "de": "{p0} ist von {p1} verfügbar.\nHerunterladen und Installation starten? Daten und Einstellungen bleiben erhalten."
+  },
+  "Настройки ИИ": {
+    "en": "AI settings",
+    "de": "KI-Einstellungen"
+  },
+  "Экспорт снимка": {
+    "en": "Export snapshot",
+    "de": "Snapshot exportieren"
+  },
+  "Запросить анализ": {
+    "en": "Request analysis",
+    "de": "Analyse anfordern"
+  },
+  "Локальная диагностика запускается вместе с программой.\nOpenAI или совместимый сервис требуют доступной модели. Запросы могут быть платными.": {
+    "en": "Local diagnostics start with the application.\nOpenAI or a compatible service requires an available model. Requests may incur charges.",
+    "de": "Die lokale Diagnose startet mit dem Programm.\nOpenAI oder ein kompatibler Dienst benötigt ein verfügbares Modell. Anfragen können kostenpflichtig sein."
+  },
+  "API-ключ (пусто = сохранить существующий; хранится с защитой Windows)": {
+    "en": "API key (empty = keep existing; protected by Windows)",
+    "de": "API-Schlüssel (leer = vorhandenen behalten; durch Windows geschützt)"
+  },
+  "В сервис отправляются выбранные свечи, источники и индикаторы списка акций. Ответ сохраняется локально. ИИ не выполняет сделки и команды.": {
+    "en": "Selected candles, sources and watchlist indicators are sent to the service. The response is saved locally. AI does not execute trades or commands.",
+    "de": "Ausgewählte Kerzen, Quellen und Indikatoren der Beobachtungsliste werden an den Dienst gesendet. Die Antwort wird lokal gespeichert. Die KI führt keine Transaktionen oder Befehle aus."
+  },
+  "ИИ": {
+    "en": "AI",
+    "de": "KI"
+  },
+  "Дождитесь текущего запроса.": {
+    "en": "Wait for the current request to finish.",
+    "de": "Warten Sie, bis die aktuelle Anfrage abgeschlossen ist."
+  },
+  "Удалить сохранённый ключ": {
+    "en": "Delete saved key",
+    "de": "Gespeicherten Schlüssel löschen"
+  },
+  "Поиск по названию, тикеру или ISIN. Для GETTEX нужен ISIN; EUR proxy указывается отдельно.": {
+    "en": "Search by name, ticker or ISIN. GETTEX requires an ISIN; the EUR proxy is specified separately.",
+    "de": "Nach Name, Ticker oder ISIN suchen. GETTEX benötigt eine ISIN; der EUR-Proxy wird separat angegeben."
+  },
+  "Выберите результат Search и дождитесь подтверждения identity. Изменённые поля нужно подтвердить заново.": {
+    "en": "Select a search result and wait for identity confirmation. Modified fields require confirmation again.",
+    "de": "Wählen Sie ein Suchergebnis und warten Sie auf die Identitätsbestätigung. Geänderte Felder müssen erneut bestätigt werden."
+  },
+  "Такая акция или название уже есть.": {
+    "en": "This stock or name already exists.",
+    "de": "Diese Aktie oder dieser Name ist bereits vorhanden."
+  },
+  "Найти": {
+    "en": "Find",
+    "de": "Suchen"
+  },
+  "Пересчитать и сохранить автоматический стоп": {
+    "en": "Recalculate and save the automatic stop",
+    "de": "Automatischen Stopp neu berechnen und speichern"
+  },
+  "Копия": {
+    "en": "Copy",
+    "de": "Kopie"
+  },
+  "Выберите другой файл.": {
+    "en": "Select another file.",
+    "de": "Wählen Sie eine andere Datei."
+  },
+  "Карточка": {
+    "en": "Company card",
+    "de": "Unternehmenskarte"
+  },
+  "Укажите Yahoo тикер карточки в «Позиция и уровни».": {
+    "en": "Enter the Yahoo company-card ticker in Position and levels.",
+    "de": "Geben Sie den Yahoo-Ticker der Unternehmenskarte unter Position und Kursniveaus an."
+  },
+  "Получить данные карточки": {
+    "en": "Fetch company-card data",
+    "de": "Daten der Unternehmenskarte abrufen"
+  },
+  "Scalable: чтение": {
+    "en": "Scalable: read",
+    "de": "Scalable: Lesen"
+  },
+  "Разметка": {
+    "en": "Annotations",
+    "de": "Zeichnungen"
+  },
+  "Укажите корректную положительную цену или дату.": {
+    "en": "Enter a valid positive price or date.",
+    "de": "Geben Sie einen gültigen positiven Kurs oder ein Datum an."
+  },
+  "Обновления": {
+    "en": "Updates",
+    "de": "Aktualisierungen"
+  },
+  "Значения": {
+    "en": "Values",
+    "de": "Werte"
+  },
+  "Карточка сохранена": {
+    "en": "Company card saved",
+    "de": "Unternehmenskarte gespeichert"
+  },
+  "Подготовка графика и Relative Performance…": {
+    "en": "Preparing chart and relative performance…",
+    "de": "Chart und relative Performance werden vorbereitet…"
+  },
+  "Benchmark:": {
+    "en": "Benchmark:",
+    "de": "Vergleichsindex:"
+  },
+  "Исполнение — через существующий paper_trade. Отказы доступны в квитанциях команд; отдельный журнал отказов счёта не сохраняется.": {
+    "en": "Execution uses the existing paper_trade. Rejections appear in command receipts; no separate account rejection journal is stored.",
+    "de": "Die Ausführung erfolgt über das vorhandene paper_trade. Ablehnungen stehen in den Befehlsquittungen; ein separates Ablehnungsjournal des Kontos wird nicht gespeichert."
+  },
+  "Обновить демосчёт": {
+    "en": "Refresh demo account",
+    "de": "Demokonto aktualisieren"
+  },
+  "Сохранить изменения перед выходом?": {
+    "en": "Save changes before exiting?",
+    "de": "Änderungen vor dem Beenden speichern?"
+  },
+  "Ошибка сохранения": {
+    "en": "Save error",
+    "de": "Fehler beim Speichern"
+  },
+  "Изменения не сохранены. Программа остаётся открытой.\n{p0}": {
+    "en": "Changes were not saved. The application remains open.\n{p0}",
+    "de": "Änderungen wurden nicht gespeichert. Das Programm bleibt geöffnet.\n{p0}"
+  },
+  "Candles": {
+    "ru": "Свечи",
+    "en": "Candles",
+    "de": "Kerzen"
+  },
+  "Line": {
+    "ru": "Линия",
+    "en": "Line",
+    "de": "Linie"
+  },
+  "Bars": {
+    "ru": "Бары",
+    "en": "Bars",
+    "de": "Balken"
+  },
+  "Candles + Close line": {
+    "ru": "Свечи + линия закрытия",
+    "en": "Candles + Close line",
+    "de": "Kerzen + Schlusskurslinie"
+  },
+  "GETTEX — исходная площадка": {
+    "en": "GETTEX — original venue",
+    "de": "GETTEX — ursprünglicher Handelsplatz"
+  },
+  "История другой площадки — proxy": {
+    "en": "History from another venue — proxy",
+    "de": "Historie eines anderen Handelsplatzes — Proxy"
+  },
+  "Горизонтальный уровень": {
+    "en": "Horizontal level",
+    "de": "Horizontales Kursniveau"
+  },
+  "Нет реальных данных": {
+    "en": "No real data",
+    "de": "Keine realen Daten"
+  },
+  "1 месяц": {
+    "en": "1 month",
+    "de": "1 Monat"
+  },
+  "1 год": {
+    "en": "1 year",
+    "de": "1 Jahr"
+  },
+  "DEMO удалено • загрузите OHLCV выбранной площадки": {
+    "en": "DEMO removed • load OHLCV from the selected venue",
+    "de": "DEMO entfernt • OHLCV des ausgewählten Handelsplatzes laden"
+  },
+  "Сигналы отключены, пока нет реальных данных.": {
+    "en": "Signals are disabled until real data is available.",
+    "de": "Signale sind deaktiviert, solange keine realen Daten vorliegen."
+  },
+  "не указана": {
+    "en": "unspecified",
+    "de": "nicht angegeben"
+  },
+  "недоступен": {
+    "en": "unavailable",
+    "de": "nicht verfügbar"
+  },
+  "Поддержка": {
+    "en": "Support",
+    "de": "Unterstützung"
+  },
+  "Сопротивление": {
+    "en": "Resistance",
+    "de": "Widerstand"
+  },
+  "Позиция / P&L": {
+    "en": "Position / P&L",
+    "de": "Position / P&L"
+  },
+  "Недостаточно данных для таймфрейма": {
+    "en": "Insufficient data for the timeframe",
+    "de": "Unzureichende Daten für den Zeitrahmen"
+  },
+  "нужно ≥30 свечей": {
+    "en": "at least 30 candles required",
+    "de": "mindestens 30 Kerzen erforderlich"
+  },
+  "Последняя свеча: ": {
+    "en": "Latest candle: ",
+    "de": "Letzte Kerze: "
+  },
+  " Стоп: ": {
+    "en": " Stop: ",
+    "de": " Stopp: "
+  },
+  "; риск до стопа: ": {
+    "en": "; risk to stop: ",
+    "de": "; Risiko bis zum Stopp: "
+  },
+  " от цены. Данные: ": {
+    "en": " of the price. Data: ",
+    "de": " des Kurses. Daten: "
+  },
+  ". Решение требует проверки человеком.": {
+    "en": ". The decision requires human review.",
+    "de": ". Die Entscheidung muss von einem Menschen geprüft werden."
+  },
+  "GETTEX временно недоступен": {
+    "en": "GETTEX temporarily unavailable",
+    "de": "GETTEX vorübergehend nicht verfügbar"
+  },
+  " шт. / ": {
+    "en": " units / ",
+    "de": " Stück / "
+  },
+  " • локальный архив": {
+    "en": " • local archive",
+    "de": " • lokales Archiv"
+  },
+  " • доступный архив/proxy сохранён": {
+    "en": " • available archive/proxy retained",
+    "de": " • verfügbares Archiv/Proxy erhalten"
+  },
+  "Нет столбца ": {
+    "en": "Missing column ",
+    "de": "Fehlende Spalte "
+  },
+  "CandlePilot Health — нажмите для диагностики": {
+    "en": "CandlePilot Health — click for diagnostics",
+    "de": "CandlePilot Health — für Diagnose klicken"
+  },
+  "GETTEX • официальный post-trade": {
+    "en": "GETTEX • official post-trade",
+    "de": "GETTEX • offizielle Nachhandelsdaten"
+  },
+  " • календарь сессий": {
+    "en": " • session calendar",
+    "de": " • Sitzungskalender"
+  },
+  " свечей • ": {
+    "en": " candles • ",
+    "de": " Kerzen • "
+  },
+  "\nЦена GETTEX недоступна": {
+    "en": "\nGETTEX price unavailable",
+    "de": "\nGETTEX-Kurs nicht verfügbar"
+  },
+  "\nДиагностический архив: разрывы отмечены; индикаторы и сигналы отключены.": {
+    "en": "\nDiagnostic archive: gaps marked; indicators and signals disabled.",
+    "de": "\nDiagnosearchiv: Lücken markiert; Indikatoren und Signale deaktiviert."
+  },
+  "\nОткр. ": {
+    "en": "\nOpen ",
+    "de": "\nEröffnung "
+  },
+  "  Макс. ": {
+    "en": "  High ",
+    "de": "  Hoch "
+  },
+  "  Мин. ": {
+    "en": "  Low ",
+    "de": "  Tief "
+  },
+  "  Закр. ": {
+    "en": "  Close ",
+    "de": "  Schluss "
+  },
+  "\nОбъём ": {
+    "en": "\nVolume ",
+    "de": "\nVolumen "
+  },
+  " • запросов ещё нет": {
+    "en": " • no requests yet",
+    "de": " • noch keine Anfragen"
+  },
+  "Тикер": {
+    "en": "Ticker",
+    "de": "Ticker"
+  },
+  "Средняя цена": {
+    "en": "Average price",
+    "de": "Durchschnittskurs"
+  },
+  "Цена истории": {
+    "en": "Historical price",
+    "de": "Historischer Kurs"
+  },
+  "Валюта цены": {
+    "en": "Price currency",
+    "de": "Kurswährung"
+  },
+  "Стоп": {
+    "en": "Stop",
+    "de": "Stopp"
+  },
+  "Цель": {
+    "en": "Target",
+    "de": "Ziel"
+  },
+  "Сигнал": {
+    "en": "Signal",
+    "de": "Signal"
+  },
+  "Время свечи": {
+    "en": "Candle time",
+    "de": "Kerzenzeit"
+  },
+  "Правка": {
+    "en": "Edit",
+    "de": "Bearbeiten"
+  },
+  "Справка": {
+    "en": "Help",
+    "de": "Hilfe"
+  },
+  "Добавление": {
+    "en": "Add",
+    "de": "Hinzufügen"
+  },
+  "Позиция / результат": {
+    "en": "Position / result",
+    "de": "Position / Ergebnis"
+  },
+  "Последняя доступная архивная свеча, не гарантия текущей цены": {
+    "en": "Latest available archived candle, not a guarantee of the current price",
+    "de": "Letzte verfügbare Archivkerze, keine Garantie für den aktuellen Kurs"
+  },
+  "Нет свечей выбранного источника": {
+    "en": "No candles from the selected source",
+    "de": "Keine Kerzen der ausgewählten Quelle"
+  },
+  "S/R: сплошные — ближайшие; пунктир — исторические": {
+    "en": "S/R: solid — nearest; dashed — historical",
+    "de": "S/R: durchgezogen — nächstgelegen; gestrichelt — historisch"
+  },
+  "Volume Profile\nоценка OHLCV": {
+    "en": "Volume Profile\nOHLCV estimate",
+    "de": "Volumenprofil\nOHLCV-Schätzung"
+  },
+  " (последняя архивная свеча)": {
+    "en": " (latest archived candle)",
+    "de": " (letzte Archivkerze)"
+  },
+  " • закрытых свечей ": {
+    "en": " • closed candles ",
+    "de": " • abgeschlossene Kerzen "
+  },
+  " участков; исключено ": {
+    "en": " segments; excluded ",
+    "de": " Abschnitte; ausgeschlossen "
+  },
+  " строк": {
+    "en": " rows",
+    "de": " Zeilen"
+  },
+  "Боллинджер верх": {
+    "en": "Upper Bollinger band",
+    "de": "Oberes Bollinger-Band"
+  },
+  "Боллинджер низ": {
+    "en": "Lower Bollinger band",
+    "de": "Unteres Bollinger-Band"
+  },
+  "Горизонталь": {
+    "en": "Horizontal",
+    "de": "Horizontal"
+  },
+  "Вертикаль": {
+    "en": "Vertical",
+    "de": "Vertikal"
+  },
+  "Трендовая линия": {
+    "en": "Trend line",
+    "de": "Trendlinie"
+  },
+  "Контрольная цель": {
+    "en": "Reference target",
+    "de": "Kontrollziel"
+  },
+  " • последний запрос ": {
+    "en": " • latest request ",
+    "de": " • letzte Anfrage "
+  },
+  "Время UTC": {
+    "en": "UTC time",
+    "de": "UTC-Zeit"
+  },
+  "Рекомендация": {
+    "en": "Recommendation",
+    "de": "Empfehlung"
+  },
+  "Изменение цены, %": {
+    "en": "Price change, %",
+    "de": "Kursänderung, %"
+  },
+  "Оценка": {
+    "en": "Assessment",
+    "de": "Bewertung"
+  },
+  "правильный": {
+    "ru": "правильный",
+    "de": "richtig",
+    "en": "correct"
+  },
+  "ложный": {
+    "ru": "ложный",
+    "de": "falsch",
+    "en": "false"
+  },
+  "запоздалый": {
+    "ru": "запоздалый",
+    "de": "verspätet",
+    "en": "late"
+  },
+  "ранний выход": {
+    "ru": "ранний выход",
+    "de": "früher Ausstieg",
+    "en": "early exit"
+  },
+  "плохой стоп": {
+    "ru": "плохой стоп",
+    "de": "ungeeigneter Stopp",
+    "en": "bad stop"
+  },
+  "пропущенная возможность": {
+    "ru": "пропущенная возможность",
+    "de": "verpasste Gelegenheit",
+    "en": "missed opportunity"
+  },
+  "не оценён": {
+    "ru": "не оценён",
+    "de": "nicht bewertet",
+    "en": "unassessed"
+  },
+  "Записанных рекомендаций пока нет.": {
+    "en": "No recommendations recorded yet.",
+    "de": "Noch keine Empfehlungen erfasst."
+  },
+  "Ожидание снимка": {
+    "en": "Waiting for snapshot",
+    "de": "Warten auf Snapshot"
+  },
+  "Информация о компании": {
+    "en": "Company information",
+    "de": "Unternehmensinformationen"
+  },
+  "Валюта позиции отличается; P/L не вычисляется": {
+    "en": "Position currency differs; P/L is not calculated",
+    "de": "Positionswährung weicht ab; P/L wird nicht berechnet"
+  },
+  "VWAP (с начала архива)": {
+    "en": "VWAP (from archive start)",
+    "de": "VWAP (ab Archivbeginn)"
+  },
+  "VWAP (сессия)": {
+    "en": "VWAP (session)",
+    "de": "VWAP (Sitzung)"
+  },
+  "EMA быстрая": {
+    "en": "Fast EMA",
+    "de": "Schnelle EMA"
+  },
+  "EMA медленная": {
+    "en": "Slow EMA",
+    "de": "Langsame EMA"
+  },
+  "Период SMA": {
+    "en": "SMA period",
+    "de": "SMA-Periode"
+  },
+  "Период RSI": {
+    "en": "RSI period",
+    "de": "RSI-Periode"
+  },
+  "Период ATR": {
+    "en": "ATR period",
+    "de": "ATR-Periode"
+  },
+  "Период Боллинджера": {
+    "en": "Bollinger period",
+    "de": "Bollinger-Periode"
+  },
+  "Отклонение Боллинджера": {
+    "en": "Bollinger deviation",
+    "de": "Bollinger-Abweichung"
+  },
+  "Период среднего объёма": {
+    "en": "Average volume period",
+    "de": "Periode des Durchschnittsvolumens"
+  },
+  "MACD быстрый": {
+    "en": "Fast MACD",
+    "de": "Schneller MACD"
+  },
+  "MACD медленный": {
+    "en": "Slow MACD",
+    "de": "Langsamer MACD"
+  },
+  "MACD сигнальный": {
+    "en": "MACD signal",
+    "de": "MACD-Signal"
+  },
+  "Рисование • ": {
+    "en": "Drawing tools • ",
+    "de": "Zeichenwerkzeuge • "
+  },
+  "Позиция и уровни • ": {
+    "en": "Position and levels • ",
+    "de": "Position und Kursniveaus • "
+  },
+  "ожидание": {
+    "ru": "ожидание",
+    "de": "ausstehend",
+    "en": "pending"
+  },
+  "рассчитано": {
+    "ru": "рассчитано",
+    "de": "berechnet",
+    "en": "calculated"
+  },
+  "настроен: ": {
+    "en": "configured: ",
+    "de": "konfiguriert: "
+  },
+  "Подключение к GitHub…": {
+    "en": "Connecting to GitHub…",
+    "de": "Verbindung zu GitHub wird hergestellt…"
+  },
+  "Загружено ": {
+    "en": "Downloaded ",
+    "de": "Heruntergeladen "
+  },
+  " из ": {
+    "en": " of ",
+    "de": " von "
+  },
+  " МБ (": {
+    "en": " MB (",
+    "de": " MB ("
+  },
+  "Добавить инструмент": {
+    "en": "Add instrument",
+    "de": "Instrument hinzufügen"
+  },
+  "Копия базы": {
+    "en": "Database copy",
+    "de": "Datenbankkopie"
+  },
+  "Выход": {
+    "en": "Exit",
+    "de": "Beenden"
+  },
+  "Удалить инструмент": {
+    "en": "Remove instrument",
+    "de": "Instrument entfernen"
+  },
+  "Журнал решений": {
+    "en": "Decision journal",
+    "de": "Entscheidungsjournal"
+  },
+  "Связь с ChatGPT / MCP": {
+    "en": "ChatGPT / MCP connection",
+    "de": "Verbindung mit ChatGPT / MCP"
+  },
+  "Диагностика": {
+    "en": "Diagnostics",
+    "de": "Diagnose"
+  },
+  " • Нет свечей выбранного источника": {
+    "en": " • No candles from the selected source",
+    "de": " • Keine Kerzen der ausgewählten Quelle"
+  },
+  "Архив загружается при запуске.": {
+    "en": "The archive loads on startup.",
+    "de": "Das Archiv wird beim Start geladen."
+  },
+  "Периоды: от 1 до 500": {
+    "en": "Periods: 1 to 500",
+    "de": "Perioden: 1 bis 500"
+  },
+  "MACD: быстрый период должен быть меньше медленного": {
+    "en": "MACD: the fast period must be shorter than the slow period",
+    "de": "MACD: Die schnelle Periode muss kürzer als die langsame sein"
+  },
+  "Обновление: ": {
+    "en": "Update: ",
+    "de": "Aktualisierung: "
+  },
+  "\nТекущая версия и данные сохранены. Можно повторить попытку.": {
+    "en": "\nThe current version and data are preserved. You can try again.",
+    "de": "\nDie aktuelle Version und die Daten bleiben erhalten. Sie können es erneut versuchen."
+  },
+  "Данные: ": {
+    "en": "Data: ",
+    "de": "Daten: "
+  },
+  "Запрошенный период покрыт не полностью. ": {
+    "en": "The requested period is not fully covered. ",
+    "de": "Der angeforderte Zeitraum ist nicht vollständig abgedeckt. "
+  },
+  " на графике.": {
+    "en": " on the chart.",
+    "de": " im Chart."
+  },
+  "Некорректное число": {
+    "en": "Invalid number",
+    "de": "Ungültige Zahl"
+  },
+  "нет цены": {
+    "ru": "нет цены",
+    "de": "kein Kurs",
+    "en": "no price"
+  },
+  "неизвестен": {
+    "ru": "неизвестен",
+    "de": "unbekannt",
+    "en": "unknown"
+  },
+  "нет оценок": {
+    "ru": "нет оценок",
+    "de": "keine Bewertungen",
+    "en": "no assessments"
+  },
+  "одну точку": {
+    "en": "one point",
+    "de": "einen Punkt"
+  },
+  "две точки": {
+    "en": "two points",
+    "de": "zwei Punkte"
+  },
+  "Укажите ": {
+    "en": "Specify ",
+    "de": "Angeben: "
+  },
+  "Нет сопоставимой истории": {
+    "en": "No comparable history",
+    "de": "Keine vergleichbare Historie"
+  },
+  "Обзор": {
+    "en": "Overview",
+    "de": "Übersicht"
+  },
+  "Фундаментал": {
+    "en": "Fundamentals",
+    "de": "Fundamentaldaten"
+  },
+  "Отчёты": {
+    "en": "Reports",
+    "de": "Berichte"
+  },
+  "Новости / события": {
+    "en": "News / events",
+    "de": "Nachrichten / Ereignisse"
+  },
+  "Техника": {
+    "en": "Technical analysis",
+    "de": "Technische Analyse"
+  },
+  "ИИ: локальная диагностика": {
+    "en": "AI: local diagnostics",
+    "de": "KI: lokale Diagnose"
+  },
+  "Сохранённые новости": {
+    "en": "Saved news",
+    "de": "Gespeicherte Nachrichten"
+  },
+  "Название": {
+    "en": "Name",
+    "de": "Name"
+  },
+  "Тикер / обозначение": {
+    "en": "Ticker / symbol",
+    "de": "Ticker / Symbol"
+  },
+  "Тикер истории": {
+    "en": "History ticker",
+    "de": "Historienticker"
+  },
+  "Тикер карточки": {
+    "en": "Company-card ticker",
+    "de": "Ticker der Unternehmenskarte"
+  },
+  "Поиск…": {
+    "en": "Searching…",
+    "de": "Suche…"
+  },
+  "Количество акций": {
+    "en": "Number of shares",
+    "de": "Anzahl der Aktien"
+  },
+  "Средняя цена покупки EUR": {
+    "en": "Average purchase price EUR",
+    "de": "Durchschnittlicher Kaufkurs EUR"
+  },
+  "Сохранённые данные": {
+    "ru": "Сохранённые данные",
+    "de": "Gespeicherte Daten",
+    "en": "Saved data"
+  },
+  "Не загружено": {
+    "ru": "Не загружено",
+    "de": "Nicht geladen",
+    "en": "Not loaded"
+  },
+  "Капитализация": {
+    "en": "Market capitalization",
+    "de": "Marktkapitalisierung"
+  },
+  "Выручка": {
+    "en": "Revenue",
+    "de": "Umsatz"
+  },
+  "Чистая прибыль": {
+    "en": "Net income",
+    "de": "Nettogewinn"
+  },
+  "Ожидаемый EPS": {
+    "en": "Forward EPS",
+    "de": "Erwartetes EPS"
+  },
+  "Маржа EBITDA": {
+    "en": "EBITDA margin",
+    "de": "EBITDA-Marge"
+  },
+  "Чистая маржа": {
+    "en": "Net margin",
+    "de": "Nettomarge"
+  },
+  "Валовая маржа": {
+    "en": "Gross margin",
+    "de": "Bruttomarge"
+  },
+  "Свободный денежный поток": {
+    "en": "Free cash flow",
+    "de": "Freier Cashflow"
+  },
+  "Долг": {
+    "en": "Debt",
+    "de": "Schulden"
+  },
+  "Денежные средства": {
+    "en": "Cash",
+    "de": "Liquide Mittel"
+  },
+  "Рост выручки": {
+    "en": "Revenue growth",
+    "de": "Umsatzwachstum"
+  },
+  "Рост прибыли": {
+    "en": "Earnings growth",
+    "de": "Gewinnwachstum"
+  },
+  "Дивидендная доходность": {
+    "en": "Dividend yield",
+    "de": "Dividendenrendite"
+  },
+  "Дата без дивиденда": {
+    "en": "Ex-dividend date",
+    "de": "Ex-Dividenden-Tag"
+  },
+  "Дата отчётности": {
+    "en": "Earnings date",
+    "de": "Berichtstermin"
+  },
+  "Минимум за 52 недели": {
+    "en": "52-week low",
+    "de": "52-Wochen-Tief"
+  },
+  "Максимум за 52 недели": {
+    "en": "52-week high",
+    "de": "52-Wochen-Hoch"
+  },
+  "Сектор": {
+    "en": "Sector",
+    "de": "Sektor"
+  },
+  "Отрасль": {
+    "en": "Industry",
+    "de": "Branche"
+  },
+  "Страна": {
+    "en": "Country",
+    "de": "Land"
+  },
+  "Валюта отчётности": {
+    "en": "Reporting currency",
+    "de": "Berichtswährung"
+  },
+  "Валюта котировки карточки": {
+    "en": "Company-card quote currency",
+    "de": "Kurswährung der Unternehmenskarte"
+  },
+  "Операционная выручка": {
+    "en": "Operating revenue",
+    "de": "Operativer Umsatz"
+  },
+  "Себестоимость": {
+    "en": "Cost of revenue",
+    "de": "Umsatzkosten"
+  },
+  "Валовая прибыль": {
+    "en": "Gross profit",
+    "de": "Bruttogewinn"
+  },
+  "Операционная прибыль": {
+    "en": "Operating income",
+    "de": "Betriebsergebnis"
+  },
+  "Чистая прибыль акционеров": {
+    "en": "Net income attributable to shareholders",
+    "de": "Den Aktionären zurechenbarer Nettogewinn"
+  },
+  "Базовый EPS": {
+    "en": "Basic EPS",
+    "de": "Unverwässertes EPS"
+  },
+  "Разводнённый EPS": {
+    "en": "Diluted EPS",
+    "de": "Verwässertes EPS"
+  },
+  "Нормализованная EBITDA": {
+    "en": "Normalized EBITDA",
+    "de": "Normalisiertes EBITDA"
+  },
+  "Налог на прибыль": {
+    "en": "Income tax",
+    "de": "Ertragsteuer"
+  },
+  "Прибыль до налогов": {
+    "en": "Pretax income",
+    "de": "Ergebnis vor Steuern"
+  },
+  "Процентные расходы": {
+    "en": "Interest expense",
+    "de": "Zinsaufwand"
+  },
+  "Дата выплаты дивиденда": {
+    "en": "Dividend payment date",
+    "de": "Dividendenzahlungstag"
+  },
+  "Прогноз EPS — верхняя граница": {
+    "en": "EPS estimate — high",
+    "de": "EPS-Prognose — Obergrenze"
+  },
+  "Прогноз EPS — нижняя граница": {
+    "en": "EPS estimate — low",
+    "de": "EPS-Prognose — Untergrenze"
+  },
+  "Средний прогноз EPS": {
+    "en": "Average EPS estimate",
+    "de": "Durchschnittliche EPS-Prognose"
+  },
+  "Прогноз выручки — верхняя граница": {
+    "en": "Revenue estimate — high",
+    "de": "Umsatzprognose — Obergrenze"
+  },
+  "Прогноз выручки — нижняя граница": {
+    "en": "Revenue estimate — low",
+    "de": "Umsatzprognose — Untergrenze"
+  },
+  "Средний прогноз выручки": {
+    "en": "Average revenue estimate",
+    "de": "Durchschnittliche Umsatzprognose"
+  },
+  "не указана источником": {
+    "en": "not specified by the source",
+    "de": "von der Quelle nicht angegeben"
+  },
+  "валюта отчётности неизвестна": {
+    "en": "reporting currency unknown",
+    "de": "Berichtswährung unbekannt"
+  },
+  "валюта котировки неизвестна": {
+    "en": "quote currency unknown",
+    "de": "Kurswährung unbekannt"
+  },
+  "некорректная дата источника": {
+    "en": "invalid source date",
+    "de": "ungültiges Quelldatum"
+  },
+  "Публикация без описания": {
+    "en": "Publication without description",
+    "de": "Veröffentlichung ohne Beschreibung"
+  },
+  "не определена": {
+    "en": "undefined",
+    "de": "nicht bestimmt"
+  },
+  "Открытые позиции": {
+    "en": "Open positions",
+    "de": "Offene Positionen"
+  },
+  "История BUY / SELL": {
+    "en": "BUY / SELL history",
+    "de": "BUY-/SELL-Verlauf"
+  },
+  "Демосчёт: ": {
+    "en": "Demo account: ",
+    "de": "Demokonto: "
+  },
+  "DATA BLOCKED / нет оценки": {
+    "en": "DATA BLOCKED / no valuation",
+    "de": "DATA BLOCKED / keine Bewertung"
+  },
+  "Загрузка демосчёта…": {
+    "en": "Loading demo account…",
+    "de": "Demokonto wird geladen…"
+  },
+  "Стоимость": {
+    "en": "Value",
+    "de": "Wert"
+  },
+  "Время оценки": {
+    "en": "Valuation time",
+    "de": "Bewertungszeitpunkt"
+  },
+  "Операция": {
+    "en": "Operation",
+    "de": "Vorgang"
+  },
+  "Комиссия": {
+    "en": "Fee",
+    "de": "Gebühr"
+  },
+  "Свеча": {
+    "en": "Candle",
+    "de": "Kerze"
+  },
+  "Демосчёт временно недоступен; данные не изменены.": {
+    "en": "Demo account temporarily unavailable; data unchanged.",
+    "de": "Demokonto vorübergehend nicht verfügbar; Daten unverändert."
+  },
+  "Сила подтверждений, не вероятность прибыли.": {
+    "en": "Strength of evidence, not probability of profit.",
+    "de": "Stärke der Bestätigung, keine Gewinnwahrscheinlichkeit."
+  },
+  "не проверено": {
+    "en": "not checked",
+    "de": "nicht geprüft"
+  },
+  "WAIT • нет результата": {
+    "en": "WAIT • no result",
+    "de": "WAIT • kein Ergebnis"
+  },
+  "Данные блокируют торговый сигнал.": {
+    "en": "Data blocks the trading signal.",
+    "de": "Die Daten blockieren das Handelssignal."
+  },
+  "За рост": {
+    "en": "Bullish evidence",
+    "de": "Für steigende Kurse"
+  },
+  "За снижение": {
+    "en": "Bearish evidence",
+    "de": "Für fallende Kurse"
+  },
+  "Блокировка": {
+    "en": "Block",
+    "de": "Sperre"
+  },
+  "Вход не подтверждён": {
+    "en": "Entry not confirmed",
+    "de": "Einstieg nicht bestätigt"
+  },
+  "Примечания": {
+    "en": "Notes",
+    "de": "Hinweise"
+  },
+  "Сила: ": {
+    "en": "Strength: ",
+    "de": "Stärke: "
+  },
+  "нет контекста": {
+    "en": "no context",
+    "de": "kein Kontext"
+  },
+  "Закрытая свеча: ": {
+    "en": "Closed candle: ",
+    "de": "Abgeschlossene Kerze: "
+  },
+  "не выбран": {
+    "en": "not selected",
+    "de": "nicht ausgewählt"
+  },
+  "Не сохранять": {
+    "en": "Do not save",
+    "de": "Nicht speichern"
+  },
+  "Загружено": {
+    "en": "Loaded",
+    "de": "Geladen"
+  },
+  "Часть источников недоступна": {
+    "en": "Some sources are unavailable",
+    "de": "Einige Quellen sind nicht verfügbar"
+  },
+  "Материалов нет": {
+    "en": "No articles",
+    "de": "Keine Artikel"
+  },
+  "Источники недоступны": {
+    "en": "Sources unavailable",
+    "de": "Quellen nicht verfügbar"
+  },
+  "Сохранённые данные — обновление не подтверждено": {
+    "en": "Saved data — refresh not confirmed",
+    "de": "Gespeicherte Daten — Aktualisierung nicht bestätigt"
+  },
+  "Ещё не загружено": {
+    "en": "Not loaded yet",
+    "de": "Noch nicht geladen"
+  },
+  "Ошибка загрузки": {
+    "en": "Loading error",
+    "de": "Ladefehler"
+  },
+  "отчётность": {
+    "en": "earnings",
+    "de": "Geschäftszahlen"
+  },
+  "прогноз": {
+    "en": "guidance",
+    "de": "Prognose"
+  },
+  "дивиденды": {
+    "en": "dividends",
+    "de": "Dividenden"
+  },
+  "сделка": {
+    "en": "deal",
+    "de": "Transaktion"
+  },
+  "руководство": {
+    "en": "management",
+    "de": "Unternehmensleitung"
+  },
+  "за последние 7 дней": {
+    "en": "within the last 7 days",
+    "de": "innerhalb der letzten 7 Tage"
+  },
+  "старше 7 дней": {
+    "en": "older than 7 days",
+    "de": "älter als 7 Tage"
+  },
+  "дата неизвестна": {
+    "en": "date unknown",
+    "de": "Datum unbekannt"
+  },
+  "дата в будущем — проверить источник": {
+    "en": "future date — check the source",
+    "de": "zukünftiges Datum — Quelle prüfen"
+  },
+  "Издатель указан источником": {
+    "en": "Publisher named by the source",
+    "de": "Herausgeber von der Quelle angegeben"
+  },
+  "Показан домен ссылки; первичный издатель может отличаться": {
+    "en": "Link domain shown; the original publisher may differ",
+    "de": "Link-Domain angezeigt; der ursprüngliche Herausgeber kann abweichen"
+  },
+  "Ссылка агрегатора ведёт к публикации": {
+    "en": "Aggregator link leads to the article",
+    "de": "Aggregator-Link führt zur Veröffentlichung"
+  },
+  "Ссылка на публикацию": {
+    "en": "Link to publication",
+    "de": "Link zur Veröffentlichung"
+  },
+  "\nИсточник содержит повреждённые символы": {
+    "en": "\nThe source contains corrupted characters",
+    "de": "\nDie Quelle enthält beschädigte Zeichen"
+  },
+  "В тексте упомянута компания; это не проверка биржевой записи.": {
+    "en": "The text mentions the company; this does not verify the exchange listing.",
+    "de": "Der Text erwähnt das Unternehmen; dies bestätigt nicht die Börsennotierung."
+  },
+  "Официальная лента компании": {
+    "en": "Official company feed",
+    "de": "Offizieller Unternehmensfeed"
+  },
+  "\n\nИсточники:\n": {
+    "en": "\n\nSources:\n",
+    "de": "\n\nQuellen:\n"
+  },
+  "Тексты приведены на языке оригинала.\nСобытия выделены по словам в заголовке; требуется проверка первоисточника.\n\n": {
+    "en": "Articles are shown in their original language.\nEvents are flagged by headline keywords; check the original source.\n\n",
+    "de": "Artikel werden in ihrer Originalsprache angezeigt.\nEreignisse werden anhand von Schlüsselwörtern in Überschriften markiert; Originalquelle prüfen.\n\n"
+  },
+  "Материалы отсутствуют. Это не означает отсутствия событий.": {
+    "en": "No articles available. This does not mean there are no events.",
+    "de": "Keine Artikel verfügbar. Dies bedeutet nicht, dass es keine Ereignisse gibt."
+  },
+  " • Получено: ": {
+    "en": " • Retrieved: ",
+    "de": " • Abgerufen: "
+  },
+  "Дата неизвестна": {
+    "en": "Date unknown",
+    "de": "Datum unbekannt"
+  },
+  "Краткое содержание не предоставлено источником": {
+    "en": "The source did not provide a summary",
+    "de": "Die Quelle hat keine Zusammenfassung bereitgestellt"
+  },
+  "Возможное событие по заголовку: ": {
+    "en": "Possible event based on headline: ",
+    "de": "Mögliches Ereignis laut Überschrift: "
+  },
+  "нет": {
+    "en": "no",
+    "de": "nein"
+  },
+  "Оригинал недоступен": {
+    "en": "Original unavailable",
+    "de": "Original nicht verfügbar"
+  },
+  "Ошибка: ": {
+    "en": "Error: ",
+    "de": "Fehler: "
+  },
+  "часовой пояс неизвестен": {
+    "en": "time zone unknown",
+    "de": "Zeitzone unbekannt"
+  },
+  "страна не указана": {
+    "ru": "страна не указана",
+    "de": "Land nicht angegeben",
+    "en": "country not specified"
+  },
+  "Описание эмитента пока не получено.": {
+    "ru": "Описание эмитента пока не получено.",
+    "de": "Noch keine Unternehmensbeschreibung verfügbar.",
+    "en": "Company description has not been retrieved yet."
+  },
+  "Ошибка карточки: ": {
+    "en": "Company-card error: ",
+    "de": "Fehler der Unternehmenskarte: "
+  },
+  "Новости ещё не получены.": {
+    "en": "News has not been received yet.",
+    "de": "Nachrichten wurden noch nicht empfangen."
+  },
+  "ИНДЕКС": {
+    "en": "INDEX",
+    "de": "INDEX"
+  },
+  "\nЕдиница: ": {
+    "en": "\nUnit: ",
+    "de": "\nEinheit: "
+  },
+  "; валюта источника: ": {
+    "en": "; source currency: ",
+    "de": "; Quellenwährung: "
+  },
+  "\nDQ ряда: ": {
+    "en": "\nSeries DQ: ",
+    "de": "\nDQ der Datenreihe: "
+  },
+  "\nАрхив: ": {
+    "en": "\nArchive: ",
+    "de": "\nArchiv: "
+  },
+  "\nИндекс используется как рыночный контекст. Торговый объём не применим.": {
+    "en": "\nThe index is used as market context. Trading volume does not apply.",
+    "de": "\nDer Index dient als Marktkontext. Handelsvolumen ist nicht anwendbar."
+  },
+  "Самостоятельный индекс": {
+    "en": "Standalone index",
+    "de": "Eigenständiger Index"
+  },
+  "Выберите benchmark": {
+    "en": "Select a benchmark",
+    "de": "Vergleichsindex auswählen"
+  },
+  "Ошибка подготовки графика: ": {
+    "en": "Chart preparation error: ",
+    "de": "Fehler bei der Chartvorbereitung: "
+  },
+  "Cboe — официальный VIX": {
+    "en": "Cboe — official VIX",
+    "de": "Cboe — offizieller VIX"
+  },
+  "Yahoo — прямой индекс": {
+    "en": "Yahoo — direct index",
+    "de": "Yahoo — direkter Index"
+  },
+  ": акция ": {
+    "en": ": stock ",
+    "de": ": Aktie "
+  },
+  "% / индекс ": {
+    "en": "% / index ",
+    "de": "% / Index "
+  },
+  " п.п. · ": {
+    "en": " pp · ",
+    "de": " Pp. · "
+  },
+  " п.п.": {
+    "en": " pp",
+    "de": " Pp."
+  },
+  "Расчёт недоступен: ": {
+    "en": "Calculation unavailable: ",
+    "de": "Berechnung nicht verfügbar: "
+  },
+  "Этот прямой источник подключён только для 1D / 1W / 1M; intraday не подменяется": {
+    "en": "This direct source supports only 1D / 1W / 1M; intraday is not substituted",
+    "de": "Diese direkte Quelle unterstützt nur 1D / 1W / 1M; Intraday-Daten werden nicht ersetzt"
+  },
+  "Загрузка: ": {
+    "en": "Loading: ",
+    "de": "Laden: "
+  },
+  "Индекс: объём не является торговым объёмом. ": {
+    "ru": "Индекс: объём не является торговым объёмом. ",
+    "de": "Index: Das Volumen ist kein Handelsvolumen. ",
+    "en": "Index: volume is not trading volume. "
+  },
+  "VIX — контекст волатильности.": {
+    "ru": "VIX — контекст волатильности.",
+    "de": "VIX zeigt den Volatilitätskontext.",
+    "en": "VIX provides volatility context."
+  },
+  "История 1D / 1W / 1M.": {
+    "ru": "История 1D / 1W / 1M.",
+    "de": "Historie 1D / 1W / 1M.",
+    "en": "History 1D / 1W / 1M."
+  },
+  "Показатели на акцию и количество акций имеют собственные единицы; пересчёта в EUR нет.": {
+    "en": "Per-share metrics and share counts have their own units; there is no EUR conversion.",
+    "de": "Kennzahlen je Aktie und Aktienanzahlen haben eigene Einheiten; keine Umrechnung in EUR."
+  },
+  "\nПубликации эмитента:": {
+    "en": "\nIssuer publications:",
+    "de": "\nVeröffentlichungen des Emittenten:"
+  },
+  "События не получены от источника.": {
+    "en": "No events received from the source.",
+    "de": "Keine Ereignisse von der Quelle empfangen."
+  },
+  "\nДаты и прогнозы поставщика могут измениться.": {
+    "en": "\nProvider dates and estimates may change.",
+    "de": "\nTermine und Prognosen des Anbieters können sich ändern."
+  },
+  "Квартальная отчётность. Валюта: ": {
+    "en": "Quarterly reports. Currency: ",
+    "de": "Quartalsberichte. Währung: "
+  },
+  "\nИсточник ещё не предоставил отчёты.": {
+    "en": "\nThe source has not provided reports yet.",
+    "de": "\nDie Quelle hat noch keine Berichte bereitgestellt."
+  },
+  "Список публикаций не получен.": {
+    "en": "Publication list not received.",
+    "de": "Veröffentlichungsliste nicht empfangen."
+  },
+  " (значение поставщика; единица не подтверждена)": {
+    "en": " (provider value; unit unconfirmed)",
+    "de": " (Anbieterwert; Einheit nicht bestätigt)"
+  },
+  "\nПериод: ": {
+    "en": "\nPeriod: ",
+    "de": "\nZeitraum: "
+  },
+  " • только виртуальные операции\nНачальный капитал: ": {
+    "en": " • virtual operations only\nInitial capital: ",
+    "de": " • nur virtuelle Vorgänge\nAnfangskapital: "
+  },
+  " EUR • Доходность: ": {
+    "en": " EUR • Return: ",
+    "de": " EUR • Rendite: "
+  },
+  "\nРеализованный P&L: ": {
+    "en": "\nRealized P&L: ",
+    "de": "\nRealisierter P&L: "
+  },
+  " • Нереализованный: ": {
+    "en": " • Unrealized: ",
+    "de": " • Unrealisiert: "
+  },
+  " • Комиссии: ": {
+    "en": " • Fees: ",
+    "de": " • Gebühren: "
+  },
+  "Trading Engine: актуальный фоновый результат недоступен. Торговый сигнал не подтверждён.": {
+    "en": "Trading Engine: a current background result is unavailable. The trading signal is not confirmed.",
+    "de": "Trading Engine: Ein aktuelles Hintergrundergebnis ist nicht verfügbar. Das Handelssignal ist nicht bestätigt."
+  },
+  ". Более старые дефекты сохранены в архиве вне этой области.": {
+    "en": ". Older defects remain in the archive outside this scope.",
+    "de": ". Ältere Fehler bleiben außerhalb dieses Bereichs im Archiv erhalten."
+  },
+  "Область анализа: последние 5 лет, с ": {
+    "en": "Analysis scope: last 5 years, from ",
+    "de": "Analysebereich: letzte 5 Jahre, ab "
+  },
+  ": в пределах пяти лет не подтверждён устойчивый прогрев индикаторов; более старые данные не использованы.": {
+    "en": ": stable indicator warm-up within five years is not confirmed; older data was not used.",
+    "de": ": Stabiler Indikatorvorlauf innerhalb von fünf Jahren ist nicht bestätigt; ältere Daten wurden nicht verwendet."
+  },
+  "Цена выше EMA10 и EMA30; тренд сохраняется.": {
+    "en": "Price is above EMA10 and EMA30; the trend persists.",
+    "de": "Der Kurs liegt über EMA10 und EMA30; der Trend hält an."
+  },
+  "Цена ниже EMA30; проверь выход из позиции.": {
+    "en": "Price is below EMA30; review exiting the position.",
+    "de": "Der Kurs liegt unter EMA30; Positionsausstieg prüfen."
+  },
+  "Цена достигла стоп-уровня; требуется срочная проверка.": {
+    "en": "Price reached the stop level; urgent review required.",
+    "de": "Der Kurs hat das Stoppniveau erreicht; dringende Prüfung erforderlich."
+  },
+  "Восходящий тренд и откат к EMA10; добавление только после проверки риска.": {
+    "en": "Uptrend and pullback to EMA10; add only after reviewing risk.",
+    "de": "Aufwärtstrend und Rücksetzer zur EMA10; Aufstockung nur nach Risikoprüfung."
+  },
+  "Условия для HOLD/SELL/ADD не подтверждены.": {
+    "en": "HOLD/SELL/ADD conditions are not confirmed.",
+    "de": "Bedingungen für HOLD/SELL/ADD sind nicht bestätigt."
+  },
+  "сделки для ISIN ": {
+    "en": "trades for ISIN ",
+    "de": "Transaktionen für ISIN "
+  },
+  " не найдены": {
+    "en": " not found",
+    "de": " nicht gefunden"
+  },
+  "Некорректные OHLCV значения.": {
+    "en": "Invalid OHLCV values.",
+    "de": "Ungültige OHLCV-Werte."
+  },
+  "Слишком мало корректных OHLCV строк.": {
+    "en": "Too few valid OHLCV rows.",
+    "de": "Zu wenige gültige OHLCV-Zeilen."
+  },
+  "Укажи 1H, 4H, 1D или 1W.": {
+    "en": "Specify 1H, 4H, 1D or 1W.",
+    "de": "1H, 4H, 1D oder 1W angeben."
+  },
+  "Stock Monitor уже запущен. Переключитесь на открытое окно программы.": {
+    "en": "Stock Monitor is already running. Switch to its open window.",
+    "de": "Stock Monitor läuft bereits. Wechseln Sie zum geöffneten Programmfenster."
+  },
+  "Ошибка запуска. Журнал: ": {
+    "en": "Startup error. Log: ",
+    "de": "Startfehler. Protokoll: "
+  },
+  "Модельный портфель: только рекомендации с явно заданным количеством.": {
+    "ru": "Модельный портфель: только рекомендации с явно заданным количеством.",
+    "de": "Modellportfolio: nur Empfehlungen mit ausdrücklich angegebener Stückzahl.",
+    "en": "Model portfolio: only recommendations with an explicitly specified quantity."
+  },
+  "Мост MCP запущен. В этом сеансе обращений ещё не было.": {
+    "en": "MCP Bridge is running. No requests in this session yet.",
+    "de": "MCP Bridge läuft. In dieser Sitzung gab es noch keine Anfragen."
+  },
+  "\n\nЛокальные проверки по правилам:\n": {
+    "en": "\n\nLocal rule-based checks:\n",
+    "de": "\n\nLokale regelbasierte Prüfungen:\n"
+  },
+  "Неизвестная тема": {
+    "en": "Unknown theme",
+    "de": "Unbekanntes Design"
+  },
+  "Рассчитанных модельных позиций пока нет.": {
+    "ru": "Рассчитанных модельных позиций пока нет.",
+    "de": "Noch keine berechneten Modellpositionen.",
+    "en": "No calculated model positions yet."
+  },
+  "НЕПОЛНЫЙ результат: есть отсутствующая история, ожидающие или отклонённые модельные операции.": {
+    "ru": "НЕПОЛНЫЙ результат: есть отсутствующая история, ожидающие или отклонённые модельные операции.",
+    "de": "UNVOLLSTÄNDIGES Ergebnis: Historie fehlt oder Modellvorgänge sind ausstehend bzw. abgelehnt.",
+    "en": "INCOMPLETE result: missing history, pending or rejected model operations."
+  },
+  "Связь через MCP подтверждена. Последнее обращение: ": {
+    "en": "MCP connection confirmed. Latest request: ",
+    "de": "MCP-Verbindung bestätigt. Letzte Anfrage: "
+  },
+  "не настроен; для общения через MCP ключ не нужен.": {
+    "en": "not configured; MCP communication does not require a key.",
+    "de": "nicht konfiguriert; für die Kommunikation über MCP ist kein Schlüssel erforderlich."
+  },
+  ": за день ": {
+    "en": ": today ",
+    "de": ": heute "
+  },
+  "; реализованный ": {
+    "en": "; realized ",
+    "de": "; realisiert "
+  },
+  "; открытые позиции ": {
+    "en": "; open positions ",
+    "de": "; offene Positionen "
+  },
+  "Неизвестный ISIN": {
+    "en": "Unknown ISIN",
+    "de": "Unbekannte ISIN"
+  },
+  "Неподдерживаемый интервал/период": {
+    "en": "Unsupported interval/period",
+    "de": "Nicht unterstütztes Intervall/Zeitraum"
+  },
+  "Некорректные уровни": {
+    "en": "Invalid levels",
+    "de": "Ungültige Kursniveaus"
+  },
+  " шт.\nPrice P/L: ": {
+    "en": " units\nPrice P/L: ",
+    "de": " Stück\nKurs-P/L: "
+  },
+  "\n\nСценарий при записи: ": {
+    "en": "\n\nScenario at recording: ",
+    "de": "\n\nSzenario bei Erfassung: "
+  },
+  " ч.; цель ": {
+    "en": " h; target ",
+    "de": " Std.; Ziel "
+  },
+  ", стоп/отмена ": {
+    "en": ", stop/invalidation ",
+    "de": ", Stopp/Ungültigkeit "
+  },
+  ".\nПроверка сценария: ": {
+    "en": ".\nScenario review: ",
+    "de": ".\nSzenarioprüfung: "
+  },
+  "\nУчитываются только полные наблюдаемые свечи; пропуски и порядок касаний внутри свечи не восстанавливаются.": {
+    "en": "\nOnly complete observed candles are considered; gaps and the order of intrabar touches are not reconstructed.",
+    "de": "\nNur vollständige beobachtete Kerzen werden berücksichtigt; Lücken und die Reihenfolge der Berührungen innerhalb einer Kerze werden nicht rekonstruiert."
+  },
+  "\nГоризонт: 24 часа, затем первое доступное закрытие.\nСвеча: ": {
+    "en": "\nHorizon: 24 hours, then the first available close.\nCandle: ",
+    "de": "\nHorizont: 24 Stunden, dann der erste verfügbare Schlusskurs.\nKerze: "
+  },
+  "\nЦена после: ": {
+    "en": "\nPrice afterwards: ",
+    "de": "\nKurs danach: "
+  },
+  "\nИзменение цены: ": {
+    "en": "\nPrice change: ",
+    "de": "\nKursänderung: "
+  },
+  "%\nДвижение в сторону сценария: ": {
+    "en": "%\nMove in the scenario direction: ",
+    "de": "%\nBewegung in Szenariorichtung: "
+  },
+  "%\nЭто сравнение цен, без исполнения сделки и комиссий. Оно не определяет автоматически качество рекомендации.": {
+    "en": "%\nThis compares prices without executing trades or including fees. It does not automatically assess recommendation quality.",
+    "de": "%\nDies ist ein Kursvergleich ohne Handelsausführung und Gebühren. Er bewertet nicht automatisch die Qualität der Empfehlung."
+  },
+  "\n\nПоследующее движение (пересчёт по архиву):\n": {
+    "en": "\n\nSubsequent movement (recalculated from archive):\n",
+    "de": "\n\nNachfolgende Bewegung (aus dem Archiv neu berechnet):\n"
+  },
+  "\n\nПоследний API-ответ (": {
+    "en": "\n\nLatest API response (",
+    "de": "\n\nLetzte API-Antwort ("
+  },
+  "\nОценки:\n": {
+    "en": "\nAssessments:\n",
+    "de": "\nBewertungen:\n"
+  },
+  "\nПрименить? Сохранение — кнопкой «Сохранить».": {
+    "en": "\nApply? Use Save to persist the changes.",
+    "de": "\nAnwenden? Änderungen mit Speichern sichern."
+  },
+  ". Скачать и установить?": {
+    "en": ". Download and install?",
+    "de": ". Herunterladen und installieren?"
+  },
+  " свечей": {
+    "en": " candles",
+    "de": " Kerzen"
+  },
+  " ошибок (подробности в диагностике)": {
+    "en": " errors (details in diagnostics)",
+    "de": " Fehler (Details in der Diagnose)"
+  },
+  "История proxy: ": {
+    "en": "Proxy history: ",
+    "de": "Proxy-Historie: "
+  },
+  "Доступна ": {
+    "en": "Available: ",
+    "de": "Verfügbar: "
+  },
+  "Недостаточно истории GETTEX: ": {
+    "en": "Insufficient GETTEX history: ",
+    "de": "Unzureichende GETTEX-Historie: "
+  },
+  "Не все файлы GETTEX загружены: ": {
+    "en": "Not all GETTEX files loaded: ",
+    "de": "Nicht alle GETTEX-Dateien geladen: "
+  },
+  "\n\nЦена относится к свече: ": {
+    "en": "\n\nPrice refers to candle: ",
+    "de": "\n\nKurs bezieht sich auf Kerze: "
+  },
+  "Модель пока не подключена. Локальные проверки работают без API.": {
+    "en": "No model connected yet. Local checks work without an API.",
+    "de": "Noch kein Modell verbunden. Lokale Prüfungen funktionieren ohne API."
+  },
+  "Полосы Боллинджера (20, 2)": {
+    "en": "Bollinger bands (20, 2)",
+    "de": "Bollinger-Bänder (20, 2)"
+  },
+  "Объектов: 0 • нажмите «Сохранить»": {
+    "en": "Objects: 0 • click Save",
+    "de": "Objekte: 0 • auf Speichern klicken"
+  },
+  "Последний сохранённый ответ • ": {
+    "en": "Last saved response • ",
+    "de": "Letzte gespeicherte Antwort • "
+  },
+  "\nСнимок данных: ": {
+    "en": "\nData snapshot: ",
+    "de": "\nDatensnapshot: "
+  },
+  "Сервис выбран. Нажмите «Запросить анализ» или включите автоматический запуск в настройках.": {
+    "en": "Service selected. Click Request analysis or enable automatic requests in Settings.",
+    "de": "Dienst ausgewählt. Klicken Sie auf Analyse anfordern oder aktivieren Sie automatische Anfragen in den Einstellungen."
+  },
+  "Режим: local / openai / compatible": {
+    "en": "Mode: local / openai / compatible",
+    "de": "Modus: local / openai / compatible"
+  },
+  "ID модели": {
+    "en": "Model ID",
+    "de": "Modell-ID"
+  },
+  "Адрес compatible API (полный путь /v1/chat/completions)": {
+    "en": "Compatible API address (full path /v1/chat/completions)",
+    "de": "Adresse der kompatiblen API (vollständiger Pfad /v1/chat/completions)"
+  },
+  "Интервал автоанализа, минут (минимум 5)": {
+    "en": "Automatic analysis interval, minutes (minimum 5)",
+    "de": "Intervall der automatischen Analyse in Minuten (mindestens 5)"
+  },
+  "Максимум запросов за сутки UTC": {
+    "en": "Maximum requests per UTC day",
+    "de": "Maximale Anfragen pro UTC-Tag"
+  },
+  "Запрашивать ИИ при запуске и изменении свечей (в пределах лимита)": {
+    "en": "Request AI on startup and candle changes (within the limit)",
+    "de": "KI beim Start und bei Kerzenänderungen anfragen (innerhalb des Limits)"
+  },
+  "Включать количество и цену покупки в отправляемые данные": {
+    "en": "Include quantity and purchase price in submitted data",
+    "de": "Anzahl und Kaufkurs in die gesendeten Daten aufnehmen"
+  },
+  "Открывать панель ИИ при запуске": {
+    "en": "Open AI panel on startup",
+    "de": "KI-Fenster beim Start öffnen"
+  },
+  "Identity LOADING: подтверждаю ISIN, symbol, venue и currency…": {
+    "en": "Identity LOADING: verifying ISIN, symbol, venue and currency…",
+    "de": "Identity LOADING: ISIN, Symbol, Handelsplatz und Währung werden geprüft…"
+  },
+  "Поддержка EUR (пусто = авто)": {
+    "en": "Support EUR (empty = automatic)",
+    "de": "Unterstützung EUR (leer = automatisch)"
+  },
+  "Сопротивление EUR (пусто = авто)": {
+    "en": "Resistance EUR (empty = automatic)",
+    "de": "Widerstand EUR (leer = automatisch)"
+  },
+  "Стоп EUR (пусто = сохранённый автостоп)": {
+    "en": "Stop EUR (empty = saved automatic stop)",
+    "de": "Stopp EUR (leer = gespeicherter automatischer Stopp)"
+  },
+  "EUR proxy тикер": {
+    "en": "EUR proxy ticker",
+    "de": "EUR-Proxy-Ticker"
+  },
+  "Тикер карточки Yahoo": {
+    "en": "Yahoo company-card ticker",
+    "de": "Yahoo-Ticker der Unternehmenskarte"
+  },
+  "\n\nИсточник: ": {
+    "en": "\n\nSource: ",
+    "de": "\n\nQuelle: "
+  },
+  "\nПолучено: ": {
+    "en": "\nRetrieved: ",
+    "de": "\nAbgerufen: "
+  },
+  "\nОшибки источника: ": {
+    "en": "\nSource errors: ",
+    "de": "\nQuellenfehler: "
+  },
+  "Объектов: ": {
+    "en": "Objects: ",
+    "de": "Objekte: "
+  },
+  "Горизонтальный": {
+    "en": "Horizontal",
+    "de": "Horizontal"
+  },
+  "Новости • ": {
+    "en": "News • ",
+    "de": "Nachrichten • "
+  },
+  "Свежие новости пока не получены.": {
+    "en": "Recent news not received yet.",
+    "de": "Aktuelle Nachrichten noch nicht empfangen."
+  },
+  "Identity CONFIRMED: ISIN / symbol / venue / currency. Можно добавить инструмент.": {
+    "en": "Identity CONFIRMED: ISIN / symbol / venue / currency. The instrument can be added.",
+    "de": "Identity CONFIRMED: ISIN / Symbol / Handelsplatz / Währung. Das Instrument kann hinzugefügt werden."
+  },
+  "Результатов: ": {
+    "en": "Results: ",
+    "de": "Ergebnisse: "
+  },
+  ". Выберите строку для подтверждения identity.": {
+    "en": ". Select a row to confirm identity.",
+    "de": ". Wählen Sie eine Zeile zur Identitätsbestätigung."
+  },
+  "Карточка • ": {
+    "en": "Company card • ",
+    "de": "Unternehmenskarte • "
+  },
+  " • свечей: ": {
+    "en": " • candles: ",
+    "de": " • Kerzen: "
+  },
+  ", закрытых: ": {
+    "en": ", closed: ",
+    "de": ", abgeschlossen: "
+  },
+  "\nПоследняя: ": {
+    "en": "\nLatest: ",
+    "de": "\nLetzte: "
+  },
+  "\nИсточник: ": {
+    "en": "\nSource: ",
+    "de": "\nQuelle: "
+  },
+  "\n\nЧто происходит сейчас\n": {
+    "en": "\n\nCurrent situation\n",
+    "de": "\n\nAktuelle Situation\n"
+  },
+  "\n\nТехнические уровни\nПоддержка: ": {
+    "en": "\n\nTechnical levels\nSupport: ",
+    "de": "\n\nTechnische Kursniveaus\nUnterstützung: "
+  },
+  "\nСопротивление: ": {
+    "en": "\nResistance: ",
+    "de": "\nWiderstand: "
+  },
+  "\nСтоп сценария: ": {
+    "en": "\nScenario stop: ",
+    "de": "\nSzenariostopp: "
+  },
+  "\n\nИндикаторы последней свечи (она может быть открыта)\nEMA10 ": {
+    "en": "\n\nLatest candle indicators (the candle may still be open)\nEMA10 ",
+    "de": "\n\nIndikatoren der letzten Kerze (sie kann noch offen sein)\nEMA10 "
+  },
+  " / средний 20 ": {
+    "en": " / average 20 ",
+    "de": " / Durchschnitt 20 "
+  },
+  "\nСценарий использует только закрытые свечи.": {
+    "en": "\nThe scenario uses only closed candles.",
+    "de": "\nDas Szenario verwendet nur abgeschlossene Kerzen."
+  },
+  "не рассчитан: нет позиции или разные валюты": {
+    "en": "not calculated: no position or different currencies",
+    "de": "nicht berechnet: keine Position oder unterschiedliche Währungen"
+  },
+  "не рассчитан": {
+    "en": "not calculated",
+    "de": "nicht berechnet"
+  },
+  "Нужен профиль с локальным защищённым файлом ключа": {
+    "en": "A profile with a locally protected key file is required",
+    "de": "Ein Profil mit einer lokal geschützten Schlüsseldatei ist erforderlich"
+  },
+  "Не найден официальный tunnel-client.exe": {
+    "en": "Official tunnel-client.exe not found",
+    "de": "Offizielle tunnel-client.exe nicht gefunden"
+  },
+  " • нажмите «Сохранить»": {
+    "en": " • click Save",
+    "de": " • auf Speichern klicken"
+  },
+  "Локальный мост работает. ": {
+    "en": "Local bridge is running. ",
+    "de": "Lokale Bridge läuft. "
+  },
+  "ЛОКАЛЬНАЯ ДИАГНОСТИКА (проверки по правилам)\n\n": {
+    "en": "LOCAL DIAGNOSTICS (rule-based checks)\n\n",
+    "de": "LOKALE DIAGNOSE (regelbasierte Prüfungen)\n\n"
+  },
+  "ИИ: ответ получен • ": {
+    "en": "AI: response received • ",
+    "de": "KI: Antwort empfangen • "
+  },
+  "ИИ: ": {
+    "en": "AI: ",
+    "de": "KI: "
+  },
+  "Identity BLOCKED: ISIN результата не совпадает с запросом": {
+    "en": "Identity BLOCKED: result ISIN does not match the query",
+    "de": "Identity BLOCKED: Ergebnis-ISIN stimmt nicht mit der Anfrage überein"
+  },
+  "Все файлы": {
+    "en": "All files",
+    "de": "Alle Dateien"
+  },
+  "Тикер сохранённой карточки отличается от выбранного. Обновите данные карточки.": {
+    "en": "The saved company-card ticker differs from the selected ticker. Refresh the card data.",
+    "de": "Der gespeicherte Kartenticker weicht vom ausgewählten Ticker ab. Aktualisieren Sie die Kartendaten."
+  },
+  "Количество: ": {
+    "en": "Quantity: ",
+    "de": "Anzahl: "
+  },
+  "\nСредняя цена: ": {
+    "en": "\nAverage price: ",
+    "de": "\nDurchschnittskurs: "
+  },
+  "\nЦена данных: ": {
+    "en": "\nData price: ",
+    "de": "\nDatenkurs: "
+  },
+  "\nРиск до стопа: ": {
+    "en": "\nRisk to stop: ",
+    "de": "\nRisiko bis zum Stopp: "
+  },
+  "\nКомиссии, налоги и проскальзывание не учтены.": {
+    "en": "\nFees, taxes and slippage are excluded.",
+    "de": "\nGebühren, Steuern und Slippage sind nicht berücksichtigt."
+  },
+  "\nP/L и риск: нет котировок для расчёта.": {
+    "en": "\nP/L and risk: no quotes for calculation.",
+    "de": "\nP/L und Risiko: keine Kurse zur Berechnung."
+  },
+  "Codex обращался к программе недавно.": {
+    "en": "Codex accessed the application recently.",
+    "de": "Codex hat kürzlich auf das Programm zugegriffen."
+  },
+  "Подключение Codex ещё не подтверждено.": {
+    "en": "Codex connection is not confirmed yet.",
+    "de": "Codex-Verbindung noch nicht bestätigt."
+  },
+  "Ожидание данных": {
+    "en": "Waiting for data",
+    "de": "Warten auf Daten"
+  },
+  "ИИ: сервис настроен": {
+    "en": "AI: service configured",
+    "de": "KI: Dienst konfiguriert"
+  },
+  "Identity BLOCKED: источник не подтвердил инструмент": {
+    "en": "Identity BLOCKED: source did not confirm the instrument",
+    "de": "Identity BLOCKED: Quelle hat das Instrument nicht bestätigt"
+  },
+  "Identity BLOCKED: Search недоступен: ": {
+    "en": "Identity BLOCKED: Search unavailable: ",
+    "de": "Identity BLOCKED: Suche nicht verfügbar: "
+  },
+  "Цена должна быть положительной, количество — неотрицательным.": {
+    "en": "Price must be positive and quantity nonnegative.",
+    "de": "Der Kurs muss positiv und die Anzahl darf nicht negativ sein."
+  },
+  "\n\nСобытия:\n": {
+    "en": "\n\nEvents:\n",
+    "de": "\n\nEreignisse:\n"
+  },
+  "\nСохранить эти уровни?": {
+    "en": "\nSave these levels?",
+    "de": "\nDiese Kursniveaus speichern?"
+  },
+  "Ошибка обработки: ": {
+    "en": "Processing error: ",
+    "de": "Verarbeitungsfehler: "
+  },
+  "официальная страница сейчас не содержит файлов post-trade (возможен выходной/истёкший архив)": {
+    "en": "The official page currently has no post-trade files (possibly a non-trading day or an expired archive)",
+    "de": "Die offizielle Seite enthält derzeit keine Nachhandelsdateien (möglicherweise handelsfreier Tag oder abgelaufenes Archiv)"
+  },
+  "GETTEX CSV найден, но не распознаны Trading date and time / Price": {
+    "en": "GETTEX CSV found, but Trading date and time / Price were not recognized",
+    "de": "GETTEX-CSV gefunden, aber Trading date and time / Price wurden nicht erkannt"
+  },
+  "GETTEX вернул сделки, но OHLCV построить не удалось": {
+    "en": "GETTEX returned trades, but OHLCV could not be built",
+    "de": "GETTEX hat Transaktionen geliefert, aber OHLCV konnte nicht erstellt werden"
+  },
+  "GETTEX без даты: необходим timestamp имени файла; текущая дата не подставляется.": {
+    "en": "GETTEX without a date: a filename timestamp is required; the current date is not substituted.",
+    "de": "GETTEX ohne Datum: Ein Zeitstempel im Dateinamen ist erforderlich; das aktuelle Datum wird nicht eingesetzt."
+  },
+  "Нужен столбец datetime/date/time/timestamp. В v0.5 время больше не выдумывается.": {
+    "en": "A datetime/date/time/timestamp column is required. Version 0.5 no longer invents timestamps.",
+    "de": "Eine Spalte datetime/date/time/timestamp ist erforderlich. Seit Version 0.5 werden keine Zeitstempel mehr erfunden."
+  },
+  " Dividends/Total Return рассчитаны отдельно по истории количества на ex-date; при неизвестной валюте, покрытии или FX результат отсутствует.": {
+    "en": " Dividends/Total Return are calculated separately using quantity history on the ex-date; no result is provided when currency, coverage or FX is unknown.",
+    "de": " Dividends/Total Return werden separat anhand der Stückzahlhistorie am Ex-Tag berechnet; bei unbekannter Währung, Abdeckung oder unbekanntem Wechselkurs gibt es kein Ergebnis."
+  },
+  "Price P/L по архиву без комиссий и сплит-корректировок; Dividends — модельные валовые выплаты, при подтверждённой валюте и покрытии. Источники и интервалы учитываются отдельно; стоп/цель не исполняются автоматически. Это не прибыль брокерского счёта.": {
+    "ru": "Price P/L по архиву без комиссий и сплит-корректировок; Dividends — модельные валовые выплаты, при подтверждённой валюте и покрытии. Источники и интервалы учитываются отдельно; стоп/цель не исполняются автоматически. Это не прибыль брокерского счёта.",
+    "de": "Kursgewinn/-verlust aus dem Archiv ohne Gebühren und Splitbereinigungen; Dividenden sind modellierte Bruttozahlungen bei bestätigter Währung und Datenabdeckung. Quellen und Intervalle werden getrennt behandelt; Stopps und Ziele werden nicht automatisch ausgeführt. Dies ist kein Gewinn eines Brokerkontos.",
+    "en": "Price P/L uses archived prices without fees or split adjustments; dividends are modeled gross payments with confirmed currency and coverage. Sources and intervals are handled separately; stops and targets are not executed automatically. This is not brokerage account profit."
+  },
+  "\n\nПродолжайте разговор в Codex: модель может читать состояние, источники и диагностику, обновлять данные, выбирать график и предлагать уровни с вашим подтверждением.\n\nДополнительный API-анализ: ": {
+    "en": "\n\nContinue the conversation in Codex: the model can read state, sources and diagnostics, refresh data, select a chart and propose levels subject to your confirmation.\n\nAdditional API analysis: ",
+    "de": "\n\nSetzen Sie das Gespräch in Codex fort: Das Modell kann Zustand, Quellen und Diagnosen lesen, Daten aktualisieren, einen Chart auswählen und Kursniveaus mit Ihrer Bestätigung vorschlagen.\n\nZusätzliche API-Analyse: "
+  },
+  "\nАргументы: пусто. Сохраните и перезапустите подключение.\n\nПосле подключения продолжайте общаться в своей задаче Codex. Доступны состояние программы, свечи с источниками, диагностика, обновление данных, выбор графика и предложение уровней. Уровни сохраняются после подтверждения в Stock Monitor.\n\nЭто подключение к работающей программе. Оно не переносит сюда личность или историю ChatGPT, не выполняет сделки и не устанавливает произвольный код. Для ChatGPT на другом устройстве требуется отдельно настроенный защищённый сервер; локальный мост туда автоматически не доступен.": {
+    "en": "\nArguments: empty. Save and restart the connection.\n\nAfter connecting, continue chatting in your Codex task. Available features include program state, candles with sources, diagnostics, data refresh, chart selection and proposed levels. Levels are saved after confirmation in Stock Monitor.\n\nThis connects to the running application. It does not transfer a ChatGPT identity or history here, execute trades or install arbitrary code. ChatGPT on another device requires a separately configured secure server; the local bridge is not automatically accessible there.",
+    "de": "\nArgumente: leer. Speichern und die Verbindung neu starten.\n\nNach dem Verbinden können Sie das Gespräch in Ihrer Codex-Aufgabe fortsetzen. Verfügbar sind Programmzustand, Kerzen mit Quellen, Diagnose, Datenaktualisierung, Chartauswahl und Vorschläge für Kursniveaus. Kursniveaus werden nach Bestätigung in Stock Monitor gespeichert.\n\nDies verbindet sich mit dem laufenden Programm. Eine ChatGPT-Identität oder ein Verlauf werden nicht hierher übertragen; es werden keine Transaktionen ausgeführt und kein beliebiger Code installiert. ChatGPT auf einem anderen Gerät benötigt einen separat eingerichteten sicheren Server; die lokale Bridge ist dort nicht automatisch erreichbar."
+  },
+  "\n\nВ Codex: Настройки → Серверы MCP → Добавить сервер → STDIO.\nИмя: stock-monitor\nКоманда: ": {
+    "en": "\n\nIn Codex: Settings → MCP servers → Add server → STDIO.\nName: stock-monitor\nCommand: ",
+    "de": "\n\nIn Codex: Einstellungen → MCP-Server → Server hinzufügen → STDIO.\nName: stock-monitor\nBefehl: "
+  },
+  "Официальный Scalable MCP: https://mcp.scalable.capital/mcp\nОфициальный CLI: https://github.com/ScalableCapital/scalable-cli\n\nДля чтения через CLI выберите его исполняемый файл в настройках подключения. Выполните вход самостоятельно в официальном сервисе. Документированные готовые CLI-сборки — macOS/Linux; Windows CLI здесь не прилагается.\n\nStock Monitor разрешает адаптеру только чтение обзора, позиций, возможностей и новостей.\n\n": {
+    "en": "Official Scalable MCP: https://mcp.scalable.capital/mcp\nOfficial CLI: https://github.com/ScalableCapital/scalable-cli\n\nFor CLI reading, select its executable in the connection settings. Sign in yourself through the official service. Documented prebuilt CLI binaries are for macOS/Linux; a Windows CLI is not included here.\n\nStock Monitor permits the adapter only to read overview, positions, capabilities and news.\n\n",
+    "de": "Offizieller Scalable MCP: https://mcp.scalable.capital/mcp\nOffizielle CLI: https://github.com/ScalableCapital/scalable-cli\n\nWählen Sie zum Lesen über die CLI deren ausführbare Datei in den Verbindungseinstellungen. Melden Sie sich selbst beim offiziellen Dienst an. Dokumentierte vorkompilierte CLI-Versionen sind für macOS/Linux; eine Windows-CLI ist hier nicht enthalten.\n\nStock Monitor erlaubt dem Adapter nur das Lesen von Übersicht, Positionen, Funktionen und Nachrichten.\n\n"
+  },
+  "Отчётность": {
+    "en": "Financial statements",
+    "de": "Finanzberichte"
+  },
+  "Отчётность: KPI и графики": {
+    "en": "Financial statements: KPIs and charts",
+    "de": "Finanzberichte: Kennzahlen und Diagramme"
+  },
+  "quarterly": {
+    "en": "Quarterly",
+    "de": "Quartalsweise",
+    "ru": "Квартальные"
+  },
+  "yearly": {
+    "en": "Annual",
+    "de": "Jährlich",
+    "ru": "Годовые"
+  },
+  "trailing": {
+    "en": "Trailing twelve months",
+    "de": "Letzte zwölf Monate",
+    "ru": "Последние 12 месяцев"
+  },
+  "valuation": {
+    "en": "Valuation and dividends",
+    "de": "Bewertung und Dividenden",
+    "ru": "Оценка и дивиденды"
+  },
+  "Операционный денежный поток": {
+    "en": "Operating cash flow",
+    "de": "Operativer Cashflow"
+  },
+  "Капитал акционеров": {
+    "en": "Stockholders equity",
+    "de": "Eigenkapital"
+  },
+  "Обыкновенные акции": {
+    "en": "Ordinary shares",
+    "de": "Stammaktien"
+  },
+  "Инвестиционный денежный поток": {
+    "en": "Investing cash flow",
+    "de": "Cashflow aus Investitionstätigkeit"
+  },
+  "Финансовый денежный поток": {
+    "en": "Financing cash flow",
+    "de": "Cashflow aus Finanzierungstätigkeit"
+  },
+  "Капитальные затраты": {
+    "en": "Capital expenditure",
+    "de": "Investitionsausgaben"
+  },
+  "Выплаченные дивиденды": {
+    "en": "Dividends paid",
+    "de": "Gezahlte Dividenden"
+  },
+  "Чистая рентабельность": {
+    "en": "Net margin",
+    "de": "Nettomarge"
+  },
+  "Операционная рентабельность": {
+    "en": "Operating margin",
+    "de": "Operative Marge"
+  },
+  "Показатель": {
+    "en": "Metric",
+    "de": "Kennzahl"
+  },
+  "Единица": {
+    "en": "Unit",
+    "de": "Einheit"
+  },
+  "Расчёт": {
+    "en": "Calculation",
+    "de": "Berechnung"
+  },
+  "Обновлено": {
+    "en": "Updated",
+    "de": "Aktualisiert"
+  },
+  "Нет данных": {
+    "en": "No data",
+    "de": "Keine Daten"
+  },
+  "Период не указан": {
+    "en": "Period not supplied",
+    "de": "Zeitraum nicht angegeben"
+  },
+  "Нет сопоставимых данных": {
+    "en": "No comparable data",
+    "de": "Keine vergleichbaren Daten"
+  },
+  "Календарь: даты поставщика могут быть предварительными": {
+    "en": "Calendar: provider dates may be provisional",
+    "de": "Kalender: Anbieterdaten können vorläufig sein"
+  },
+  "Выберите строку для источника и способа расчёта": {
+    "en": "Select a row for source and calculation",
+    "de": "Zeile für Quelle und Berechnung auswählen"
+  },
+  "Привязка по настроенному тикеру; ISIN независимо не подтверждён": {
+    "en": "Configured ticker; ISIN not independently verified",
+    "de": "Konfiguriertes Symbol; ISIN nicht unabhängig bestätigt"
+  },
+  "Тикер не указан": {
+    "en": "Ticker not configured",
+    "de": "Symbol nicht konfiguriert"
+  },
+  "Тикер изменён; откройте окно заново": {
+    "en": "Ticker changed; reopen this window",
+    "de": "Symbol geändert; Fenster erneut öffnen"
+  },
+  "Источник вернул другую компанию": {
+    "en": "Provider returned a different company",
+    "de": "Anbieter lieferte ein anderes Unternehmen"
+  },
+  "Источник недоступен; сохранённые значения оставлены": {
+    "en": "Provider unavailable; saved values retained",
+    "de": "Anbieter nicht verfügbar; gespeicherte Werte beibehalten"
+  },
+  "Ошибка загрузки; сохранённые данные оставлены": {
+    "en": "Load failed; saved data retained",
+    "de": "Laden fehlgeschlagen; gespeicherte Daten beibehalten"
+  },
+  "Обновить отчётность": {
+    "en": "Refresh financial statements",
+    "de": "Finanzberichte aktualisieren"
+  },
+  "P/E (TTM)": {
+    "en": "P/E (TTM)",
+    "de": "KGV (TTM)"
+  },
+  "P/E (прогноз)": {
+    "en": "Forward P/E",
+    "de": "Erwartetes KGV"
+  },
+  "P/S (TTM)": {
+    "en": "P/S (TTM)",
+    "de": "KUV (TTM)"
+  },
+  "P/B": {
+    "en": "P/B",
+    "de": "KBV"
+  },
+  "Дивиденд на акцию (12 месяцев)": {
+    "en": "Dividend per share (12 months)",
+    "de": "Dividende je Aktie (12 Monate)"
+  },
+  "Дивидендная доходность (12 месяцев)": {
+    "en": "Dividend yield (12 months)",
+    "de": "Dividendenrendite (12 Monate)"
+  },
+  "money": {
+    "en": "Reporting currency units",
+    "de": "Einheiten der Berichtswährung",
+    "ru": "Единицы валюты отчётности"
+  },
+  "per_share": {
+    "en": "Currency per share",
+    "de": "Währung je Aktie",
+    "ru": "Валюта на акцию"
+  },
+  "shares": {
+    "en": "Shares",
+    "de": "Aktien",
+    "ru": "Акции"
+  },
+  "ratio": {
+    "en": "Ratio shown as percent",
+    "de": "Verhältnis als Prozent",
+    "ru": "Доля в процентах"
+  },
+  "multiple": {
+    "en": "Multiple",
+    "de": "Multiplikator",
+    "ru": "Мультипликатор"
+  },
+  "CURRENT_CACHE": {
+    "en": "Current cache",
+    "de": "Aktueller Cache",
+    "ru": "Актуальный кеш"
+  },
+  "PARTIAL_RETAINED": {
+    "en": "Partial; previous datasets retained",
+    "de": "Teilweise; frühere Daten beibehalten",
+    "ru": "Частично; сохранены предыдущие данные"
+  },
+  "RETAINED_AFTER_REFRESH_FAILURE": {
+    "en": "Previous data; refresh failed",
+    "de": "Frühere Daten; Aktualisierung fehlgeschlagen",
+    "ru": "Предыдущие данные; обновить не удалось"
+  },
+  "FUTURE_TIMESTAMP": {
+    "en": "Future timestamp; check clock",
+    "de": "Zeitstempel in der Zukunft; Uhr prüfen",
+    "ru": "Дата в будущем; проверьте часы"
+  },
+  "CURRENCY_UNKNOWN": {
+    "en": "Reporting currency unknown",
+    "de": "Berichtswährung unbekannt",
+    "ru": "Валюта отчётности неизвестна"
+  },
+  "REVIEW_REQUIRED": {
+    "en": "Requires review",
+    "de": "Prüfung erforderlich",
+    "ru": "Требуется проверка"
+  },
+  "LEGACY_SAVED_QUARTERLY": {
+    "en": "Saved legacy quarterly data",
+    "de": "Gespeicherte frühere Quartalsdaten",
+    "ru": "Сохранённые квартальные данные"
+  },
+  "AVAILABLE": {
+    "en": "Available",
+    "de": "Verfügbar",
+    "ru": "Доступно"
+  },
+  "PARTIAL": {
+    "en": "Partial",
+    "de": "Teilweise",
+    "ru": "Частично"
+  },
+  "Дата отчёта": {
+    "en": "Earnings date",
+    "de": "Berichtstermin",
+    "ru": "Дата отчёта"
+  },
+  "Дата дивиденда": {
+    "en": "Dividend date",
+    "de": "Dividendentermin",
+    "ru": "Дата дивиденда"
+  },
+  "Экс-дивидендная дата": {
+    "en": "Ex-dividend date",
+    "de": "Ex-Dividenden-Tag",
+    "ru": "Экс-дивидендная дата"
+  },
+  "Данные поставщика": {
+    "en": "Provider reported",
+    "de": "Vom Anbieter gemeldet",
+    "ru": "Данные поставщика"
+  },
+  "Прибыль / выручка": {
+    "en": "Income / revenue",
+    "de": "Ergebnis / Umsatz",
+    "ru": "Прибыль / выручка"
+  },
+  "Маркер цены": {
+    "en": "Price marker",
+    "de": "Preismarkierung"
+  },
+  "Дата объекта": {
+    "en": "Object date",
+    "de": "Objektdatum"
+  },
+  "Новая дата начальной точки": {
+    "en": "New start date",
+    "de": "Neues Startdatum"
+  },
+  "Изменить дату": {
+    "en": "Change date",
+    "de": "Datum ändern"
+  },
+  "Разметка изменена. Нажмите «Сохранить».": {
+    "en": "Drawings changed. Click Save.",
+    "de": "Zeichnungen geändert. Bitte speichern."
+  },
+  "Нельзя переместить объект в эту точку": {
+    "en": "Cannot move object to this point",
+    "de": "Objekt kann nicht an diesen Punkt verschoben werden"
+  },
+  "Цена объекта": {
+    "en": "Object price",
+    "de": "Objektpreis"
+  },
+  "Новая цена начальной точки": {
+    "en": "New starting price",
+    "de": "Neuer Startpreis"
+  },
+  "{currency}: за день {daily}; Price P/L {pnl}; Dividends {dividends}; Total Return {total}; реализованный {realized}; открытые позиции {unrealized}.": {
+    "ru": "{currency}: за день {daily}; Price P/L {pnl}; Dividends {dividends}; Total Return {total}; реализованный {realized}; открытые позиции {unrealized}.",
+    "de": "{currency}: heute {daily}; Kursgewinn/-verlust {pnl}; Dividenden {dividends}; Gesamtertrag {total}; realisiert {realized}; offene Positionen {unrealized}.",
+    "en": "{currency}: today {daily}; price P/L {pnl}; dividends {dividends}; total return {total}; realized {realized}; open positions {unrealized}."
+  },
+  "Карточка • {name}": {
+    "ru": "Карточка • {name}",
+    "de": "Unternehmen • {name}",
+    "en": "Company • {name}"
+  },
+  "Proxy — автоматически · EUR": {
+    "ru": "Proxy — автоматически · EUR",
+    "de": "Proxy — automatisch · EUR",
+    "en": "Proxy — automatic · EUR"
+  },
+  "Значение": {
+    "ru": "Значение",
+    "de": "Wert",
+    "en": "Value"
+  },
+  "Статус": {
+    "ru": "Статус",
+    "de": "Status",
+    "en": "Status"
+  },
+  "Не удалось запустить обновление. Повторите позже.": {
+    "ru": "Не удалось запустить обновление. Повторите позже.",
+    "de": "Aktualisierung konnte nicht gestartet werden. Bitte später erneut versuchen.",
+    "en": "Could not start the refresh. Please try again later."
+  },
+  "\n\nИсточник: {source}\nПолучено: {at}\nОшибки источника: {errors}": {
+    "ru": "\n\nИсточник: {source}\nПолучено: {at}\nОшибки источника: {errors}",
+    "de": "\n\nQuelle: {source}\nAbgerufen: {at}\nQuellenfehler: {errors}",
+    "en": "\n\nSource: {source}\nRetrieved: {at}\nSource errors: {errors}"
+  },
+  "\n\nИсточник: {provider}\nПолучено: {at}\nОшибки источника: {errors}": {
+    "ru": "\n\nИсточник: {provider}\nПолучено: {at}\nОшибки источника: {errors}",
+    "de": "\n\nQuelle: {provider}\nAbgerufen: {at}\nQuellenfehler: {errors}",
+    "en": "\n\nSource: {provider}\nRetrieved: {at}\nSource errors: {errors}"
+  },
+  "Рисование • {name}": {
+    "ru": "Рисование • {name}",
+    "de": "Zeichnungen • {name}",
+    "en": "Drawing tools • {name}"
+  },
+  "Новости • {name}": {
+    "ru": "Новости • {name}",
+    "de": "Nachrichten • {name}",
+    "en": "News • {name}"
+  },
+  "Позиция и уровни • {name}": {
+    "ru": "Позиция и уровни • {name}",
+    "de": "Position und Kursniveaus • {name}",
+    "en": "Position and price levels • {name}"
+  },
+  "Доступна {version}. Скачать и установить?": {
+    "ru": "Доступна {version}. Скачать и установить?",
+    "de": "{version} ist verfügbar. Herunterladen und installieren?",
+    "en": "{version} is available. Download and install?"
+  },
+  "Загрузка: {name} · {timeframe}": {
+    "ru": "Загрузка: {name} · {timeframe}",
+    "de": "Laden: {name} · {timeframe}",
+    "en": "Loading: {name} · {timeframe}"
+  },
+  "Расчёт недоступен: {error}": {
+    "ru": "Расчёт недоступен: {error}",
+    "de": "Berechnung nicht verfügbar: {error}",
+    "en": "Calculation unavailable: {error}"
+  },
+  "Ошибка подготовки графика: {error}": {
+    "ru": "Ошибка подготовки графика: {error}",
+    "de": "Fehler bei der Diagrammvorbereitung: {error}",
+    "en": "Chart preparation error: {error}"
+  },
+  "RS 1D {state}: акция {stock:+.2f}% / индекс {benchmark:+.2f}% / Δ {difference:+.2f} п.п. · {first} → {last}": {
+    "en": "RS 1D {state}: stock {stock:+.2f}% / index {benchmark:+.2f}% / Δ {difference:+.2f} pp · {first} → {last}",
+    "de": "RS 1D {state}: Aktie {stock:+.2f}% / Index {benchmark:+.2f}% / Δ {difference:+.2f} Prozentpunkte · {first} → {last}"
+  },
+  " · {provider} {symbol} {venue} {currency} {timezone} · DQ {quality} · архив {archive}": {
+    "en": " · {provider} {symbol} {venue} {currency} {timezone} · DQ {quality} · archive {archive}",
+    "de": " · {provider} {symbol} {venue} {currency} {timezone} · DQ {quality} · Archiv {archive}"
+  },
+  "Качество данных: {state}": {
+    "en": "Data quality: {state}",
+    "de": "Datenqualität: {state}"
+  },
+  "Data Quality INVALID: не подтверждены source/listing/currency/timezone": {
+    "en": "Data Quality INVALID: source/listing/currency/timezone not confirmed",
+    "de": "Data Quality INVALID: Quelle/Notierung/Währung/Zeitzone nicht bestätigt"
+  },
+  "index points": {
+    "en": "index points",
+    "de": "Indexpunkte",
+    "ru": "пункты индекса"
+  },
+  "volatility points": {
+    "en": "volatility points",
+    "de": "Volatilitätspunkte",
+    "ru": "пункты волатильности"
+  },
+  "price": {
+    "en": "price return",
+    "de": "Kursrendite",
+    "ru": "ценовая доходность"
+  },
+  "performance (includes dividends)": {
+    "en": "total return (includes dividends)",
+    "de": "Gesamtrendite (einschließlich Dividenden)",
+    "ru": "полная доходность (включая дивиденды)"
+  },
+  "volatility": {
+    "en": "volatility",
+    "de": "Volatilität",
+    "ru": "волатильность"
+  },
+  "VIX is volatility context, not an equity performance benchmark": {
+    "en": "VIX is volatility context, not an equity performance benchmark",
+    "de": "VIX dient als Volatilitätskontext, nicht als Vergleichsindex für Aktienrenditen",
+    "ru": "VIX показывает контекст волатильности, а не сравнительную доходность акций"
+  },
+  "History unavailable": {
+    "en": "History unavailable",
+    "de": "Historie nicht verfügbar",
+    "ru": "История недоступна"
+  },
+  "Fewer than two comparable closed sessions": {
+    "en": "Fewer than two comparable closed sessions",
+    "de": "Weniger als zwei vergleichbare abgeschlossene Handelssitzungen",
+    "ru": "Меньше двух сопоставимых завершённых торговых сессий"
+  },
+  " · intraday SOURCE_UNAVAILABLE; direct daily only": {
+    "en": " · intraday SOURCE_UNAVAILABLE; direct daily only",
+    "de": " · intraday SOURCE_UNAVAILABLE; nur direkte Tagesdaten",
+    "ru": " · intraday SOURCE_UNAVAILABLE; доступны только прямые дневные данные"
+  },
+  "MACD выше signal, histogram усиливается": {
+    "en": "MACD is above signal; histogram is strengthening",
+    "de": "MACD liegt über der Signallinie; das Histogramm nimmt zu"
+  },
+  "MACD ниже signal, отрицательный histogram усиливается": {
+    "en": "MACD is below signal; negative histogram is strengthening",
+    "de": "MACD liegt unter der Signallinie; das negative Histogramm verstärkt sich"
+  },
+  "Импульс MACD ослабевает": {
+    "en": "MACD momentum is weakening",
+    "de": "Der MACD-Impuls lässt nach"
+  },
+  "Импульс MACD восстанавливается": {
+    "en": "MACD momentum is recovering",
+    "de": "Der MACD-Impuls erholt sich"
+  },
+  "RSI поддерживает положительный импульс": {
+    "en": "RSI supports positive momentum",
+    "de": "RSI bestätigt einen positiven Impuls"
+  },
+  "RSI ниже 45; перепроданность сама не подтверждает разворот": {
+    "en": "RSI is below 45; oversold conditions alone do not confirm a reversal",
+    "de": "RSI liegt unter 45; Überverkauftheit allein bestätigt keine Trendwende"
+  },
+  "RSI > 70: сильный импульс, сам по себе не SELL": {
+    "en": "RSI > 70: strong momentum; alone this is not SELL",
+    "de": "RSI > 70: starker Impuls; allein kein SELL"
+  },
+  "Слом поддержки / bearish retest на закрытии": {
+    "en": "Support break / bearish retest at the close",
+    "de": "Unterstützungsbruch / bärischer Retest zum Schlusskurs"
+  },
+  "Сопротивление ближе 0.5 ATR": {
+    "en": "Resistance is less than 0.5 ATR away",
+    "de": "Widerstand ist weniger als 0.5 ATR entfernt"
+  },
+  "Объём отсутствует или ненадёжен: не используется; BUY не подтверждён": {
+    "en": "Volume is missing or unreliable: excluded; BUY is not confirmed",
+    "de": "Volumen fehlt oder ist unzuverlässig: nicht verwendet; BUY nicht bestätigt"
+  },
+  "Benchmark недоступен/не проверен: исключён из оценки, без подмены": {
+    "en": "Benchmark unavailable/unverified: excluded from scoring, with no substitute",
+    "de": "Benchmark nicht verfügbar/nicht geprüft: ohne Ersatz aus der Bewertung ausgeschlossen"
+  },
+  "Timing TF сохраняет bearish структуру": {
+    "en": "Timing TF retains a bearish structure",
+    "de": "Timing-TF behält eine bärische Struktur bei"
+  },
+  "Средний и старший TF не согласованы bullish": {
+    "en": "Medium and higher TF are not aligned bullish",
+    "de": "Mittlerer und höherer TF sind nicht gemeinsam bullisch ausgerichtet"
+  },
+  "Нет подтверждённого breakout/retest/reclaim": {
+    "en": "No confirmed breakout/retest/reclaim",
+    "de": "Kein bestätigter breakout/retest/reclaim"
+  },
+  "Momentum входа не подтверждён": {
+    "en": "Entry momentum is not confirmed",
+    "de": "Einstiegsimpuls nicht bestätigt"
+  },
+  "Вход не подтверждён объёмом ≥ 1.2 × предыдущих 20 свечей": {
+    "en": "Entry is not confirmed by volume ≥ 1.2 × the previous 20 candles",
+    "de": "Einstieg nicht durch Volumen ≥ 1.2 × der vorherigen 20 Kerzen bestätigt"
+  },
+  "Цена дальше 3 ATR от EMA10": {
+    "en": "Price is more than 3 ATR from EMA10",
+    "de": "Kurs ist mehr als 3 ATR von EMA10 entfernt"
+  },
+  "До сопротивления меньше 1 ATR": {
+    "en": "Resistance is less than 1 ATR away",
+    "de": "Widerstand ist weniger als 1 ATR entfernt"
+  },
+  "Риск пропусков принят владельцем. CORE рассчитан по оставшимся реальным свечам; архив DQ не исправлен.": {
+    "en": "The owner accepted gap risk. CORE uses the remaining real candles; archive DQ has not been repaired.",
+    "de": "Der Eigentümer hat das Lückenrisiko akzeptiert. CORE nutzt die verbleibenden realen Kerzen; Archiv-DQ wurde nicht korrigiert."
+  },
+  "Нет проверенной истории": {
+    "en": "No verified history",
+    "de": "Keine geprüfte Historie"
+  },
+  "Нет достаточных направленных подтверждений": {
+    "en": "Insufficient directional evidence",
+    "de": "Nicht genügend richtungsbezogene Bestätigungen"
+  },
+  "{tf}: цена > EMA10 > EMA30, обе EMA растут": {
+    "en": "{tf}: price > EMA10 > EMA30; both EMAs are rising",
+    "de": "{tf}: Kurs > EMA10 > EMA30; beide EMAs steigen"
+  },
+  "{tf}: цена < EMA10 < EMA30, обе EMA снижаются": {
+    "en": "{tf}: price < EMA10 < EMA30; both EMAs are falling",
+    "de": "{tf}: Kurs < EMA10 < EMA30; beide EMAs fallen"
+  },
+  "Подтверждённая закрытием структура: {structure}": {
+    "en": "Structure confirmed at the close: {structure}",
+    "de": "Zum Schlusskurs bestätigte Struktur: {structure}"
+  },
+  "Относительный объём {volume} × предыдущих 20 свечей": {
+    "en": "Relative volume {volume} × the previous 20 candles",
+    "de": "Relatives Volumen {volume} × der vorherigen 20 Kerzen"
+  },
+  "{tf}: DATA BLOCKED / нет проверенного timing": {
+    "en": "{tf}: DATA BLOCKED / no verified timing",
+    "de": "{tf}: DATA BLOCKED / kein geprüftes Timing"
+  },
+  "\nРиск: {p0}. Исходный DQ сохранён; принятые пропуски допускаются в отдельный расчёт CORE.\nCP: {p1} · {p2}\nПовтор не раньше: {p3}\nПринятые пропуски разрешают расчёт по оставшимся реальным свечам. CORE сохраняет прогрев, identity и остальные проверки. Для ручной демооперации нужна свежая достоверная цена.\n\nТехнические подробности:\n": {
+    "en": "\nRisk: {p0}. Original DQ is preserved; accepted gaps are allowed in a separate CORE calculation.\nCP: {p1} · {p2}\nRetry no earlier than: {p3}\nAccepted gaps allow calculation on the remaining real candles. CORE retains warmup, identity and all other checks. A manual demo operation requires a fresh, valid price.\n\nTechnical details:\n",
+    "de": "\nRisiko: {p0}. Der ursprüngliche DQ bleibt erhalten; akzeptierte Lücken sind in einer separaten CORE-Berechnung zulässig.\nCP: {p1} · {p2}\nErneuter Versuch frühestens: {p3}\nAkzeptierte Lücken erlauben die Berechnung mit den verbleibenden realen Kerzen. CORE behält Aufwärmphase, Identität und alle weiteren Prüfungen bei. Eine manuelle Demoaktion erfordert einen aktuellen, gültigen Kurs.\n\nTechnische Details:\n"
+  },
+  "\nТорговля разрешается только действующим исполнительным контуром; эта панель не снимает ограничения.\n\nТехнические подробности:\n": {
+    "en": "\nTrading is permitted only by the active execution controls; this panel does not remove restrictions.\n\nTechnical details:\n",
+    "de": "\nHandel wird ausschließlich durch die aktiven Ausführungskontrollen freigegeben; dieses Fenster hebt keine Beschränkungen auf.\n\nTechnische Details:\n"
+  },
+  " / Анализ ": {
+    "en": " / Analysis ",
+    "de": " / Analyse "
+  },
+  " / Сигнал ": {
+    "en": " / Signal ",
+    "de": " / Signal "
+  },
+  " / Торговля ": {
+    "en": " / Trading ",
+    "de": " / Handel "
+  },
+  " · риск принят": {
+    "en": " · risk accepted",
+    "de": " · Risiko akzeptiert"
+  },
+  " Пропуски приняты владельцем: CORE по оставшимся реальным свечам; исходный DQ сохранён.": {
+    "en": " Gaps accepted by the owner: CORE uses remaining real candles; original DQ is preserved.",
+    "de": " Lücken vom Eigentümer akzeptiert: CORE verwendet verbleibende reale Kerzen; der ursprüngliche DQ bleibt erhalten."
+  },
+  ". Старые дефекты вне области; Max и архив сохранены.\n": {
+    "en": ". Older defects are outside the scope; Max and the archive are preserved.\n",
+    "de": ". Ältere Fehler liegen außerhalb des Bereichs; Max und das Archiv bleiben erhalten.\n"
+  },
+  "CORE: полный проверенный закрытый ряд. Исполнительный допуск проверяется отдельно.": {
+    "en": "CORE: complete verified closed-candle series. Execution permission is checked separately.",
+    "de": "CORE: vollständige geprüfte Reihe geschlossener Kerzen. Die Ausführungsfreigabe wird separat geprüft."
+  },
+  "CP: {p0} | Инструменты: {p1} | Архивные ряды: {p2} | DQ-ряды: {p3} | {p4}\nИзменено уникальных свечей (watcher): {p5} | Восстановлено с начала учёта: {p6} (исторически UNKNOWN) | NO_TRADES 5m-интервалов: {p7} (не квантовано: {p8})\nПоследнее успешное действие: {p9} | Чтение: {p10} с | Изменения: {p11}\nСохранённые DQ ≠ актуальный торговый допуск. Поиск фильтрует все сохранённые TF; отсутствующие отчёты не пересчитываются.": {
+    "en": "CP: {p0} | Instruments: {p1} | Archive series: {p2} | DQ series: {p3} | {p4}\nUnique candles changed (watcher): {p5} | Recovered since tracking began: {p6} (historical total UNKNOWN) | NO_TRADES 5m intervals: {p7} (unquantified: {p8})\nLast successful action: {p9} | Read: {p10} s | Changes: {p11}\nSaved DQ ≠ current trading permission. Search filters all saved TF; missing reports are not recalculated.",
+    "de": "CP: {p0} | Instrumente: {p1} | Archivreihen: {p2} | DQ-Reihen: {p3} | {p4}\nGeänderte einzelne Kerzen (Watcher): {p5} | Seit Beginn der Erfassung wiederhergestellt: {p6} (historische Gesamtzahl UNKNOWN) | NO_TRADES 5m-Intervalle: {p7} (nicht quantifiziert: {p8})\nLetzte erfolgreiche Aktion: {p9} | Lesen: {p10} s | Änderungen: {p11}\nGespeicherter DQ ≠ aktuelle Handelsfreigabe. Die Suche filtert alle gespeicherten TF; fehlende Berichte werden nicht neu berechnet."
+  },
+  "CandlePilot Health — центр управления": {
+    "en": "CandlePilot Health — control center",
+    "de": "CandlePilot Health — Steuerzentrale"
+  },
+  "ISIN / источник / площадка / TF:": {
+    "en": "ISIN / source / venue / TF:",
+    "de": "ISIN / Quelle / Handelsplatz / TF:"
+  },
+  "Smart Eligibility: проверено {p0}/{p1} акций; актуально {p2}. График: {p3}; анализ: {p4}; сигнал: {p5}; демоторговля: {p6}.\n": {
+    "en": "Smart Eligibility: assessed {p0}/{p1} stocks; current {p2}. Chart: {p3}; analysis: {p4}; signal: {p5}; demo trading: {p6}.\n",
+    "de": "Smart Eligibility: {p0}/{p1} Aktien geprüft; aktuell {p2}. Chart: {p3}; Analyse: {p4}; Signal: {p5}; Demohandel: {p6}.\n"
+  },
+  "{p0} · {p1}\n{p2}\n{p3}\nНастоящих свечей в контексте: {p4}\nПричины: ": {
+    "en": "{p0} · {p1}\n{p2}\n{p3}\nReal candles in context: {p4}\nReasons: ",
+    "de": "{p0} · {p1}\n{p2}\n{p3}\nReale Kerzen im Kontext: {p4}\nGründe: "
+  },
+  "{p0} · {p1}\nПроблем: {p2} (первые строки ниже; весь список доступен по страницам)\n{p3}\n\nИгнорировать эти исторические блокировки для ручных демоопераций? Свечи и исходный DQ не исправляются. Принятые пропуски разрешены в отдельном расчёте CORE по реальным свечам; повреждённые данные и недостаточный прогрев остаются блокирующими. Свежая валидная цена, EUR и защита от повторного исполнения обязательны. Новые проблемы требуют нового решения. Кнопка не создаёт сделку.": {
+    "en": "{p0} · {p1}\nProblems: {p2} (first rows below; full list available on pages)\n{p3}\n\nIgnore these historical blocks for manual demo operations? Candles and original DQ are not repaired. Accepted gaps are allowed in a separate CORE calculation using real candles; invalid data and insufficient warmup remain blocking. A fresh valid price, EUR and duplicate-execution protection are required. New problems require a new decision. This button does not create a trade.",
+    "de": "{p0} · {p1}\nProbleme: {p2} (erste Zeilen unten; vollständige Liste seitenweise verfügbar)\n{p3}\n\nDiese historischen Sperren für manuelle Demoaktionen ignorieren? Kerzen und ursprünglicher DQ werden nicht repariert. Akzeptierte Lücken sind in einer separaten CORE-Berechnung mit realen Kerzen zulässig; ungültige Daten und unzureichende Aufwärmphase bleiben sperrend. Ein aktueller gültiger Kurs, EUR und Schutz vor doppelter Ausführung sind erforderlich. Neue Probleme erfordern eine neue Entscheidung. Diese Schaltfläche erstellt keinen Trade."
+  },
+  "{p0} · {p1} · {p2}\nПериод: {p3} — {p4} ({p5})\nПричина: ": {
+    "en": "{p0} · {p1} · {p2}\nPeriod: {p3} — {p4} ({p5})\nReason: ",
+    "de": "{p0} · {p1} · {p2}\nZeitraum: {p3} — {p4} ({p5})\nGrund: "
+  },
+  "{p0}/{p1} · проблем {p2}; по 150 на странице": {
+    "en": "{p0}/{p1} · {p2} problems; 150 per page",
+    "de": "{p0}/{p1} · {p2} Probleme; 150 pro Seite"
+  },
+  "В истории, необходимой для проверки индикаторов: ": {
+    "en": "In the history required to validate indicators: ",
+    "de": "In der für die Indikatorprüfung erforderlichen Historie: "
+  },
+  "В пределах пяти лет не подтверждена устойчивость прогрева рекурсивных индикаторов": {
+    "en": "Stable warmup of recursive indicators has not been confirmed within five years",
+    "de": "Ein stabiler Vorlauf rekursiver Indikatoren wurde innerhalb von fünf Jahren nicht bestätigt"
+  },
+  "В расчётном окне: ": {
+    "en": "In the calculation window: ",
+    "de": "Im Berechnungsfenster: "
+  },
+  "График ": {
+    "en": "Chart ",
+    "de": "Chart "
+  },
+  "Допуск CP": {
+    "en": "CP eligibility",
+    "de": "CP-Freigabe"
+  },
+  "Заявка не отправлена": {
+    "en": "Request not submitted",
+    "de": "Anfrage nicht gesendet"
+  },
+  "Игнорировать: принять риск": {
+    "en": "Ignore: accept risk",
+    "de": "Ignorieren: Risiko akzeptieren"
+  },
+  "Изменились входные данные": {
+    "en": "Inputs have changed",
+    "de": "Eingabedaten haben sich geändert"
+  },
+  "Исправить проблему": {
+    "en": "Repair problem",
+    "de": "Problem beheben"
+  },
+  "Источник или листинг отличается от разрешённого": {
+    "en": "Source or listing differs from the permitted one",
+    "de": "Quelle oder Notierung weicht von der zugelassenen ab"
+  },
+  "Истёк срок проверки": {
+    "en": "Validation has expired",
+    "de": "Prüfung ist abgelaufen"
+  },
+  "Контрольная точка": {
+    "en": "Checkpoint",
+    "de": "Kontrollpunkt"
+  },
+  "Листинг не подтверждён для этого ISIN": {
+    "en": "Listing is not confirmed for this ISIN",
+    "de": "Notierung ist für diese ISIN nicht bestätigt"
+  },
+  "Не доказана полнота исходных свечей производного TF": {
+    "en": "Completeness of source candles for the derived TF is unproven",
+    "de": "Vollständigkeit der Ausgangskerzen für den abgeleiteten TF ist nicht nachgewiesen"
+  },
+  "Не доказано, что ошибка архива находится вне расчётных зависимостей": {
+    "en": "The archive error has not been proven to be outside calculation dependencies",
+    "de": "Es ist nicht nachgewiesen, dass der Archivfehler außerhalb der Berechnungsabhängigkeiten liegt"
+  },
+  "Не определено": {
+    "en": "Not determined",
+    "de": "Nicht bestimmt"
+  },
+  "Не подтверждён EUR-листинг: источник, площадка или валюта": {
+    "en": "EUR listing is unconfirmed: source, venue or currency",
+    "de": "EUR-Notierung nicht bestätigt: Quelle, Handelsplatz oder Währung"
+  },
+  "Недостаточный прогрев индикаторов либо повреждены OHLCV": {
+    "en": "Insufficient indicator warmup or invalid OHLCV",
+    "de": "Unzureichende Aufwärmphase der Indikatoren oder ungültige OHLCV"
+  },
+  "Неизвестно": {
+    "en": "Unknown",
+    "de": "Unbekannt"
+  },
+  "Нет пригодных свечей в расчётном контексте; причина исходного DQ сохранена, если известна": {
+    "en": "No usable candles in calculation context; original DQ reason retained when known",
+    "de": "Keine nutzbaren Kerzen im Berechnungskontext; ursprünglicher DQ-Grund bleibt erhalten, sofern bekannt"
+  },
+  "Обновить показатели": {
+    "en": "Refresh metrics",
+    "de": "Kennzahlen aktualisieren"
+  },
+  "Ограничение истории изменяет индикаторы или факты CORE": {
+    "en": "Limiting history changes indicators or CORE facts",
+    "de": "Die Begrenzung der Historie verändert Indikatoren oder CORE-Fakten"
+  },
+  "Ожидает очереди": {
+    "en": "Queued",
+    "de": "In Warteschlange"
+  },
+  "Отдельный CORE: до 200 закрытых свечей. Полный архивный расчёт не заменяется.": {
+    "en": "Separate CORE: up to 200 closed candles. Full archive calculation is not replaced.",
+    "de": "Separater CORE: bis zu 200 geschlossene Kerzen. Die Berechnung des vollständigen Archivs wird nicht ersetzt."
+  },
+  "Отозвать допуск": {
+    "en": "Revoke permission",
+    "de": "Freigabe widerrufen"
+  },
+  "Ошибка оценки": {
+    "en": "Assessment error",
+    "de": "Bewertungsfehler"
+  },
+  "Ошибка чтения: ": {
+    "en": "Read error: ",
+    "de": "Lesefehler: "
+  },
+  "Повторяющиеся либо неупорядоченные временные метки": {
+    "en": "Duplicate or unordered timestamps",
+    "de": "Doppelte oder unsortierte Zeitstempel"
+  },
+  "Принятие риска — только демосчёт": {
+    "en": "Accept risk — demo account only",
+    "de": "Risiko akzeptieren — nur Demokonto"
+  },
+  "Принять риски акции": {
+    "en": "Accept stock risks",
+    "de": "Risiken der Aktie akzeptieren"
+  },
+  "Проблемы акции:": {
+    "en": "Stock problems:",
+    "de": "Probleme der Aktie:"
+  },
+  "Проблемы свечей": {
+    "en": "Candle problems",
+    "de": "Kerzenprobleme"
+  },
+  "Проверка актуальна": {
+    "en": "Validation is current",
+    "de": "Prüfung ist aktuell"
+  },
+  "Страница →": {
+    "en": "Page →",
+    "de": "Seite →"
+  },
+  "Чтение сохранённой диагностики…": {
+    "en": "Reading saved diagnostics…",
+    "de": "Gespeicherte Diagnose wird gelesen…"
+  },
+  "да": {
+    "en": "yes",
+    "de": "ja"
+  },
+  "данные недоступны": {
+    "en": "data unavailable",
+    "de": "Daten nicht verfügbar"
+  },
+  "не принят": {
+    "en": "not accepted",
+    "de": "nicht akzeptiert"
+  },
+  "неподтверждённые интервалы": {
+    "en": "unconfirmed intervals",
+    "de": "unbestätigte Intervalle"
+  },
+  "неполные данные поставщика": {
+    "en": "incomplete provider data",
+    "de": "unvollständige Anbieterdaten"
+  },
+  "повреждённые данные": {
+    "en": "invalid data",
+    "de": "ungültige Daten"
+  },
+  "принят владельцем": {
+    "en": "accepted by owner",
+    "de": "vom Eigentümer akzeptiert"
+  },
+  "пропущенные свечи": {
+    "en": "missing candles",
+    "de": "fehlende Kerzen"
+  },
+  "устаревшие данные": {
+    "en": "stale data",
+    "de": "veraltete Daten"
+  },
+  "← Страница": {
+    "en": "← Page",
+    "de": "← Seite"
+  },
+  "В расчётном окне: неподтверждённые интервалы": {
+    "en": "In the calculation window: unconfirmed intervals",
+    "de": "Im Berechnungsfenster: unbestätigte Intervalle"
+  },
+  "В расчётном окне: пропущенные свечи": {
+    "en": "In the calculation window: missing candles",
+    "de": "Im Berechnungsfenster: fehlende Kerzen"
+  },
+  "В расчётном окне: устаревшие данные": {
+    "en": "In the calculation window: stale data",
+    "de": "Im Berechnungsfenster: veraltete Daten"
+  },
+  "В расчётном окне: повреждённые данные": {
+    "en": "In the calculation window: invalid data",
+    "de": "Im Berechnungsfenster: ungültige Daten"
+  },
+  "В расчётном окне: неполные данные поставщика": {
+    "en": "In the calculation window: incomplete provider data",
+    "de": "Im Berechnungsfenster: unvollständige Anbieterdaten"
+  },
+  "В расчётном окне: данные недоступны": {
+    "en": "In the calculation window: data unavailable",
+    "de": "Im Berechnungsfenster: Daten nicht verfügbar"
+  },
+  "В истории, необходимой для проверки индикаторов: неподтверждённые интервалы": {
+    "en": "In the history required to validate indicators: unconfirmed intervals",
+    "de": "In der für die Indikatorprüfung erforderlichen Historie: unbestätigte Intervalle"
+  },
+  "В истории, необходимой для проверки индикаторов: пропущенные свечи": {
+    "en": "In the history required to validate indicators: missing candles",
+    "de": "In der für die Indikatorprüfung erforderlichen Historie: fehlende Kerzen"
+  },
+  "В истории, необходимой для проверки индикаторов: устаревшие данные": {
+    "en": "In the history required to validate indicators: stale data",
+    "de": "In der für die Indikatorprüfung erforderlichen Historie: veraltete Daten"
+  },
+  "В истории, необходимой для проверки индикаторов: повреждённые данные": {
+    "en": "In the history required to validate indicators: invalid data",
+    "de": "In der für die Indikatorprüfung erforderlichen Historie: ungültige Daten"
+  },
+  "В истории, необходимой для проверки индикаторов: неполные данные поставщика": {
+    "en": "In the history required to validate indicators: incomplete provider data",
+    "de": "In der für die Indikatorprüfung erforderlichen Historie: unvollständige Anbieterdaten"
+  },
+  "В истории, необходимой для проверки индикаторов: данные недоступны": {
+    "en": "In the history required to validate indicators: data unavailable",
+    "de": "In der für die Indikatorprüfung erforderlichen Historie: Daten nicht verfügbar"
+  },
+  "Сохранение ключа поддерживается только через защиту Windows DPAPI.": {
+    "en": "Key storage requires Windows DPAPI protection.",
+    "de": "Die Schlüsselspeicherung erfordert den Schutz durch Windows DPAPI."
+  },
+  "Неизвестный сервис.": {
+    "en": "Unknown service.",
+    "de": "Unbekannter Dienst."
+  },
+  "Укажите ID модели вашего сервиса.": {
+    "en": "Enter your service model ID.",
+    "de": "Geben Sie die Modell-ID Ihres Dienstes ein."
+  },
+  "Укажите адрес API без пароля, query-параметров и фрагмента.": {
+    "en": "Enter an API address without a password, query parameters or fragment.",
+    "de": "Geben Sie eine API-Adresse ohne Passwort, Abfrageparameter oder Fragment ein."
+  },
+  "Для удалённого сервиса нужен HTTPS; HTTP разрешён только на этом компьютере.": {
+    "en": "Remote services require HTTPS; HTTP is allowed only on this computer.",
+    "de": "Entfernte Dienste erfordern HTTPS; HTTP ist nur auf diesem Computer zulässig."
+  },
+  "Выбран режим локальной диагностики; модель не подключена.": {
+    "en": "Local diagnostics selected; no model connected.",
+    "de": "Lokale Diagnose ausgewählt; kein Modell verbunden."
+  },
+  "Достигнут дневной лимит запросов ИИ (UTC).": {
+    "en": "Daily AI request limit reached (UTC).",
+    "de": "Tägliches Limit für KI-Anfragen erreicht (UTC)."
+  },
+  "Добавьте API-ключ OpenAI в настройках.": {
+    "en": "Add the OpenAI API key in settings.",
+    "de": "Fügen Sie den OpenAI-API-Schlüssel in den Einstellungen hinzu."
+  },
+  "Снимок слишком большой; сократите список акций.": {
+    "en": "The snapshot is too large; reduce the watchlist.",
+    "de": "Der Datenstand ist zu groß; verkleinern Sie die Beobachtungsliste."
+  },
+  "Сервис не вернул текстовый ответ.": {
+    "en": "The service returned no text response.",
+    "de": "Der Dienst hat keine Textantwort geliefert."
+  },
+  "[Неполный ответ сервиса]\n": {
+    "en": "[Incomplete service response]\n",
+    "de": "[Unvollständige Dienstantwort]\n"
+  },
+  "Нужно не менее 35 закрытых свечей для EMA30, RSI, MACD и ATR.": {
+    "en": "At least 35 closed candles are required for EMA30, RSI, MACD and ATR.",
+    "de": "Für EMA30, RSI, MACD und ATR sind mindestens 35 abgeschlossene Kerzen erforderlich."
+  },
+  "В истории есть некорректные OHLCV или даты: индикаторы и сигналы отключены до исправления источника.": {
+    "en": "History contains invalid OHLCV or dates: indicators and signals are disabled until the source is corrected.",
+    "de": "Die Historie enthält ungültige OHLCV oder Datumsangaben: Indikatoren und Signale sind bis zur Korrektur der Quelle deaktiviert."
+  },
+  "; сигналы отключены до проверки/восстановления.": {
+    "en": "; signals disabled pending verification/recovery.",
+    "de": "; Signale bis zur Prüfung/Wiederherstellung deaktiviert."
+  },
+  "Источник неизвестен или смешан: торговая аналитика отключена.": {
+    "en": "Unknown or mixed source: trading analysis is disabled.",
+    "de": "Unbekannte oder gemischte Quelle: Handelsanalyse deaktiviert."
+  },
+  "Локальная проверка завершена: явных проблем в доступном снимке не найдено.": {
+    "en": "Local checks completed: no obvious problems found in the available snapshot.",
+    "de": "Lokale Prüfung abgeschlossen: keine offensichtlichen Probleme im verfügbaren Datenstand gefunden."
+  },
+  "Качество данных: ": {
+    "en": "Data quality: ",
+    "de": "Datenqualität: "
+  },
+  "Пустая история, дубликаты или некорректный порядок timestamps": {
+    "en": "Empty history, duplicates or invalid timestamp order",
+    "de": "Leere Historie, Duplikate oder falsche Zeitstempelreihenfolge"
+  },
+  "положительный": {
+    "en": "positive",
+    "de": "positiv"
+  },
+  "Идентичность/TF не подтверждены или различаются": {
+    "en": "Identity/timeframe unconfirmed or inconsistent",
+    "de": "Identität/Zeitrahmen unbestätigt oder widersprüchlich"
+  },
+  "отрицательный": {
+    "en": "negative",
+    "de": "negativ"
+  },
+  "нулевой": {
+    "en": "zero",
+    "de": "null"
+  },
+  "; средний объём недоступен": {
+    "en": "; average volume unavailable",
+    "de": "; Durchschnittsvolumen nicht verfügbar"
+  },
+  "Несовпадение ожидаемой идентичности: ": {
+    "en": "Expected identity mismatch: ",
+    "de": "Abweichung von der erwarteten Identität: "
+  },
+  "Закрытая свеча ": {
+    "en": "Closed candle ",
+    "de": "Abgeschlossene Kerze "
+  },
+  "растущая": {
+    "en": "rising",
+    "de": "steigend"
+  },
+  "снижающаяся": {
+    "en": "falling",
+    "de": "fallend"
+  },
+  "без изменения": {
+    "en": "unchanged",
+    "de": "unverändert"
+  },
+  "Выберите установленный официальный исполняемый файл Scalable CLI.": {
+    "en": "Select the installed official Scalable CLI executable.",
+    "de": "Wählen Sie die installierte offizielle ausführbare Scalable-CLI-Datei."
+  },
+  "Разрешены только чтение обзора, позиций, возможностей и новостей.": {
+    "en": "Only overview, positions, capabilities and news may be read.",
+    "de": "Nur Übersicht, Positionen, Funktionen und Nachrichten dürfen gelesen werden."
+  },
+  "Scalable CLI: чтение не выполнено. Проверьте вход и доступ в официальном CLI.": {
+    "en": "Scalable CLI read failed. Check sign-in and access in the official CLI.",
+    "de": "Lesen über Scalable CLI fehlgeschlagen. Prüfen Sie Anmeldung und Zugriff in der offiziellen CLI."
+  },
+  "Некорректный ISIN": {
+    "en": "Invalid ISIN",
+    "de": "Ungültige ISIN"
+  },
+  "Область анализа: последние 5 лет": {
+    "en": "Analysis scope: last 5 years",
+    "de": "Analysezeitraum: letzte 5 Jahre"
+  },
+  "Нет подтверждённого BUY/SELL с пригодным benchmark": {
+    "en": "No confirmed BUY/SELL with a suitable benchmark",
+    "de": "Kein bestätigtes BUY/SELL mit geeignetem Benchmark"
+  },
+  "Нет пригодной истории либо нарушены временные метки": {
+    "en": "No usable history or invalid timestamps",
+    "de": "Keine geeignete Historie oder ungültige Zeitstempel"
+  },
+  "CORE: полный проверенный закрытый ряд. Только анализ; разрешения на сделку нет.": {
+    "en": "CORE: complete verified closed series. Analysis only; no trade permission.",
+    "de": "CORE: vollständige geprüfte abgeschlossene Reihe. Nur Analyse; keine Handelsfreigabe."
+  },
+  "MACD: периоды 1–500; быстрый период меньше медленного": {
+    "en": "MACD: periods 1–500; fast period must be shorter than slow period",
+    "de": "MACD: Perioden 1–500; schnelle Periode muss kürzer als langsame sein"
+  },
+  "Volume Profile: 2–100 уровней": {
+    "en": "Volume Profile: 2–100 levels",
+    "de": "Volume Profile: 2–100 Ebenen"
+  },
+  "Некорректные свечи для Volume Profile": {
+    "en": "Invalid candles for Volume Profile",
+    "de": "Ungültige Kerzen für Volume Profile"
+  },
+  "INVALID / PARTIAL — только отображение": {
+    "en": "INVALID / PARTIAL — display only",
+    "de": "INVALID / PARTIAL — nur Anzeige"
+  },
+  "Разрыв / исключённые данные": {
+    "en": "Gap / excluded data",
+    "de": "Lücke / ausgeschlossene Daten"
+  },
+  "Timezone не совпадает с площадкой": {
+    "en": "Timezone does not match the venue",
+    "de": "Zeitzone stimmt nicht mit dem Handelsplatz überein"
+  },
+  "Исторический календарь GETTEX вне 2026 ещё не подтверждён": {
+    "en": "Historical GETTEX calendar outside 2026 is not yet confirmed",
+    "de": "Historischer GETTEX-Kalender außerhalb von 2026 noch nicht bestätigt"
+  },
+  "Время проверки должно иметь timezone": {
+    "en": "Verification time must include a timezone",
+    "de": "Prüfzeit muss eine Zeitzone enthalten"
+  },
+  "Дубликаты timestamps": {
+    "en": "Duplicate timestamps",
+    "de": "Doppelte Zeitstempel"
+  },
+  "Неправильный порядок timestamps": {
+    "en": "Invalid timestamp order",
+    "de": "Falsche Zeitstempelreihenfolge"
+  },
+  "Нет проверенного календаря для площадки ": {
+    "en": "No verified calendar for venue ",
+    "de": "Kein geprüfter Kalender für Handelsplatz "
+  },
+  "Невозможные OHLC/цены/объёмы": {
+    "en": "Impossible OHLC/prices/volumes",
+    "de": "Unmögliche OHLC/Preise/Volumina"
+  },
+  "VOLUME_OUTLIER: требуется проверка источника": {
+    "en": "VOLUME_OUTLIER: source verification required",
+    "de": "VOLUME_OUTLIER: Quellenprüfung erforderlich"
+  },
+  "Свечи вне сессии/неправильное выравнивание": {
+    "en": "Candles outside session / incorrect alignment",
+    "de": "Kerzen außerhalb der Sitzung / falsche Ausrichtung"
+  },
+  "Не подтверждено ": {
+    "en": "Not confirmed: ",
+    "de": "Nicht bestätigt: "
+  },
+  "Изменилась идентичность: ": {
+    "en": "Identity changed: ",
+    "de": "Identität geändert: "
+  },
+  "Смешение рядов: ": {
+    "en": "Mixed series: ",
+    "de": "Gemischte Reihen: "
+  },
+  "timezone индекса": {
+    "en": "index timezone",
+    "de": "Zeitzone des Index"
+  },
+  "Календарь/timezone: ": {
+    "en": "Calendar/timezone: ",
+    "de": "Kalender/Zeitzone: "
+  },
+  "Источник не восстановил весь повреждённый участок": {
+    "en": "The source did not restore the entire damaged range",
+    "de": "Die Quelle hat den beschädigten Bereich nicht vollständig wiederhergestellt"
+  },
+  "Пропущенные свечи:": {
+    "en": "Missing candles:",
+    "de": "Fehlende Kerzen:"
+  },
+  "Источник не вернул пригодные закрытые свечи": {
+    "en": "The source returned no usable closed candles",
+    "de": "Die Quelle hat keine geeigneten abgeschlossenen Kerzen geliefert"
+  },
+  "; исключается из расчёта свечей": {
+    "en": "; excluded from candle calculations",
+    "de": "; von der Kerzenberechnung ausgeschlossen"
+  },
+  "Неполные агрегированные свечи: ": {
+    "en": "Incomplete aggregated candles: ",
+    "de": "Unvollständige aggregierte Kerzen: "
+  },
+  "Неподтверждённые пустые интервалы: ": {
+    "en": "Unconfirmed empty intervals: ",
+    "de": "Unbestätigte leere Intervalle: "
+  },
+  "Пропущенные свечи: ": {
+    "en": "Missing candles: ",
+    "de": "Fehlende Kerzen: "
+  },
+  "Неподтверждённые пустые интервалы:": {
+    "en": "Unconfirmed empty intervals:",
+    "de": "Unbestätigte leere Intervalle:"
+  },
+  "24 часа после записи; первое доступное закрытие": {
+    "en": "24 hours after recording; first available close",
+    "de": "24 Stunden nach Aufzeichnung; erster verfügbarer Schlusskurs"
+  },
+  "Среднее независимых сценариев, не накопленная доходность портфеля; комиссии и сделки отсутствуют.": {
+    "en": "Mean of independent scenarios, not cumulative portfolio return; no fees or trades.",
+    "de": "Mittelwert unabhängiger Szenarien, keine kumulierte Portfoliorendite; ohne Gebühren oder Geschäfte."
+  },
+  "При записи не были заданы цель, стоп и горизонт": {
+    "en": "Target, stop and horizon were not specified when recorded",
+    "de": "Ziel, Stop und Zeithorizont wurden bei der Aufzeichnung nicht angegeben"
+  },
+  "В наблюдаемых полных свечах цель и стоп не достигнуты": {
+    "en": "Neither target nor stop reached in observed complete candles",
+    "de": "In den beobachteten vollständigen Kerzen wurden weder Ziel noch Stop erreicht"
+  },
+  "Идентичность истории не совпадает или не была сохранена": {
+    "en": "History identity differs or was not saved",
+    "de": "Identität der Historie weicht ab oder wurde nicht gespeichert"
+  },
+  "Сравнение цен одного ряда; исходная цена могла быть архивной": {
+    "en": "Price comparison within one series; original price may have been historical",
+    "de": "Preisvergleich innerhalb einer Reihe; ursprünglicher Preis war möglicherweise historisch"
+  },
+  "Нет полных последующих свечей внутри горизонта": {
+    "en": "No complete subsequent candles within the horizon",
+    "de": "Keine vollständigen nachfolgenden Kerzen innerhalb des Zeithorizonts"
+  },
+  "Некорректный сценарий или OHLC-история": {
+    "en": "Invalid scenario or OHLC history",
+    "de": "Ungültiges Szenario oder ungültige OHLC-Historie"
+  },
+  "Ещё нет закрытой свечи после горизонта оценки": {
+    "en": "No closed candle after the evaluation horizon yet",
+    "de": "Noch keine abgeschlossene Kerze nach dem Bewertungshorizont"
+  },
+  "Недостаточные или некорректные время/цена/интервал": {
+    "en": "Insufficient or invalid time/price/interval",
+    "de": "Unzureichende oder ungültige Zeit/Preis/Intervall"
+  },
+  "Цель и стоп внутри одной свечи: порядок неизвестен": {
+    "en": "Target and stop within one candle: order unknown",
+    "de": "Ziel und Stop innerhalb einer Kerze: Reihenfolge unbekannt"
+  },
+  "Первое наблюдаемое касание в полных свечах — цель; пропуски и граничные свечи не оценены": {
+    "en": "First observed touch in complete candles: target; gaps and boundary candles not evaluated",
+    "de": "Erste beobachtete Berührung in vollständigen Kerzen: Ziel; Lücken und Randkerzen nicht bewertet"
+  },
+  "Первое наблюдаемое касание в полных свечах — стоп; пропуски и граничные свечи не оценены": {
+    "en": "First observed touch in complete candles: stop; gaps and boundary candles not evaluated",
+    "de": "Erste beobachtete Berührung in vollständigen Kerzen: Stop; Lücken und Randkerzen nicht bewertet"
+  },
+  "Некорректная выплата": {
+    "en": "Invalid payout",
+    "de": "Ungültige Ausschüttung"
+  },
+  "EUR listing discovery: cooldown источника": {
+    "en": "EUR listing discovery: source cooldown",
+    "de": "EUR-Notierungssuche: Wartezeit der Quelle"
+  },
+  "EUR listing discovery: локальный rate limit": {
+    "en": "EUR listing discovery: local rate limit",
+    "de": "EUR-Notierungssuche: lokales Anfragelimit"
+  },
+  "OpenFIGI: неверное число ответов": {
+    "en": "OpenFIGI: incorrect number of responses",
+    "de": "OpenFIGI: falsche Anzahl von Antworten"
+  },
+  "Не найден подтверждённый EUR-листинг с поддержанным календарём": {
+    "en": "No confirmed EUR listing with a supported calendar found",
+    "de": "Keine bestätigte EUR-Notierung mit unterstütztem Kalender gefunden"
+  },
+  "валюта выплаты не подтверждена": {
+    "en": "payout currency unconfirmed",
+    "de": "Ausschüttungswährung unbestätigt"
+  },
+  "В доступных файлах GETTEX нет сделок EUR для ": {
+    "en": "Available GETTEX files contain no EUR trades for ",
+    "de": "Verfügbare GETTEX-Dateien enthalten keine EUR-Geschäfte für "
+  },
+  "история проверяется": {
+    "en": "checking history",
+    "de": "Historie wird geprüft"
+  },
+  "Источник не вернул свечи": {
+    "en": "The source returned no candles",
+    "de": "Die Quelle hat keine Kerzen geliefert"
+  },
+  "Не подтверждены идентичность и timezone истории": {
+    "en": "History identity and timezone unconfirmed",
+    "de": "Identität und Zeitzone der Historie unbestätigt"
+  },
+  "Некорректные timestamps истории": {
+    "en": "Invalid history timestamps",
+    "de": "Ungültige Zeitstempel der Historie"
+  },
+  "Неполные OHLCV": {
+    "en": "Incomplete OHLCV",
+    "de": "Unvollständige OHLCV"
+  },
+  "Некорректные цены или объём": {
+    "en": "Invalid prices or volume",
+    "de": "Ungültige Preise oder ungültiges Volumen"
+  },
+  "Невозможные OHLC": {
+    "en": "Impossible OHLC",
+    "de": "Unmögliche OHLC"
+  },
+  "SOURCE_LIMITED • GETTEX: глубина архива ограничена; 20 лет не подтверждены": {
+    "en": "SOURCE_LIMITED • GETTEX: archive depth limited; 20 years not confirmed",
+    "de": "SOURCE_LIMITED • GETTEX: Archivtiefgang begrenzt; 20 Jahre nicht bestätigt"
+  },
+  "История источника не подтверждена": {
+    "en": "Source history unconfirmed",
+    "de": "Quellenhistorie unbestätigt"
+  },
+  "Изменились валюта/биржа/идентичность истории; автоматическое смешивание запрещено": {
+    "en": "History currency/venue/identity changed; automatic mixing forbidden",
+    "de": "Währung/Handelsplatz/Identität der Historie geändert; automatisches Mischen verboten"
+  },
+  "intraday проверяется": {
+    "en": "checking intraday",
+    "de": "Intraday wird geprüft"
+  },
+  "Intraday request end требует timezone": {
+    "en": "Intraday request end requires a timezone",
+    "de": "Ende der Intraday-Abfrage erfordert eine Zeitzone"
+  },
+  "Источник не указал валюту/биржу": {
+    "en": "The source did not specify currency/venue",
+    "de": "Die Quelle hat Währung/Handelsplatz nicht angegeben"
+  },
+  "Источник не подтвердил intraday timezone": {
+    "en": "The source did not confirm the intraday timezone",
+    "de": "Die Quelle hat die Intraday-Zeitzone nicht bestätigt"
+  },
+  "Нужен подтверждённый history_symbol для этого ISIN; автоматический выбор похожего листинга запрещён": {
+    "en": "Confirmed history_symbol required for this ISIN; automatic selection of a similar listing is forbidden",
+    "de": "Bestätigtes history_symbol für diese ISIN erforderlich; automatische Auswahl einer ähnlichen Notierung ist verboten"
+  },
+  "Нужен явно заданный history_symbol; автоматический выбор листинга запрещён": {
+    "en": "Explicit history_symbol required; automatic listing selection is forbidden",
+    "de": "Explizites history_symbol erforderlich; automatische Notierungsauswahl ist verboten"
+  },
+  "Источник не вернул историю ": {
+    "en": "The source returned no history for ",
+    "de": "Die Quelle hat keine Historie geliefert für "
+  },
+  "Дневная история неполна: ": {
+    "en": "Daily history is incomplete: ",
+    "de": "Tageshistorie ist unvollständig: "
+  },
+  "Intraday request start требует timezone": {
+    "en": "Intraday request start requires a timezone",
+    "de": "Beginn der Intraday-Abfrage erfordert eine Zeitzone"
+  },
+  "Источник вернул другой инструмент": {
+    "en": "The source returned a different instrument",
+    "de": "Die Quelle hat ein anderes Instrument geliefert"
+  },
+  "Изменилась идентичность истории: ": {
+    "en": "History identity changed: ",
+    "de": "Identität der Historie geändert: "
+  },
+  "INTRADAY: now без timezone": {
+    "en": "INTRADAY: now has no timezone",
+    "de": "INTRADAY: now enthält keine Zeitzone"
+  },
+  "INTRADAY: календарь/timezone площадки не подтверждены": {
+    "en": "INTRADAY: venue calendar/timezone unconfirmed",
+    "de": "INTRADAY: Kalender/Zeitzone des Handelsplatzes unbestätigt"
+  },
+  "INTRADAY: identity не подтверждена": {
+    "en": "INTRADAY: identity unconfirmed",
+    "de": "INTRADAY: Identität unbestätigt"
+  },
+  "INTRADAY request boundary без timezone": {
+    "en": "INTRADAY request boundary has no timezone",
+    "de": "INTRADAY-Abfragegrenze enthält keine Zeitzone"
+  },
+  "INTRADAY: смешение identity ": {
+    "en": "INTRADAY: mixed identity ",
+    "de": "INTRADAY: gemischte Identität "
+  },
+  "Неподтверждённое выравнивание source row: ": {
+    "en": "Unconfirmed source row alignment: ",
+    "de": "Unbestätigte Ausrichtung der Quellenzeile: "
+  },
+  "Акции": {
+    "en": "Stocks",
+    "de": "Aktien"
+  },
+  "Выбрать": {
+    "en": "Select",
+    "de": "Auswählen"
+  },
+  "Yahoo Finance (через yfinance), не GETTEX": {
+    "en": "Yahoo Finance (via yfinance), not GETTEX",
+    "de": "Yahoo Finance (über yfinance), nicht GETTEX"
+  },
+  "ISIN не подтверждён: нет однозначного точного совпадения symbol": {
+    "en": "ISIN unconfirmed: no unambiguous exact symbol match",
+    "de": "ISIN unbestätigt: keine eindeutige exakte Symbolübereinstimmung"
+  },
+  "Валюта proxy не совпадает с валютой инструмента; смешивание запрещено.": {
+    "en": "Proxy currency differs from instrument currency; mixing forbidden.",
+    "de": "Proxy-Währung weicht von der Instrumentenwährung ab; Mischen verboten."
+  },
+  "Нет symbol": {
+    "en": "No symbol",
+    "de": "Kein Symbol"
+  },
+  "Search вернул другой symbol": {
+    "en": "Search returned a different symbol",
+    "de": "Suche hat ein anderes Symbol geliefert"
+  },
+  "Неподдерживаемый тип инструмента": {
+    "en": "Unsupported instrument type",
+    "de": "Nicht unterstützter Instrumententyp"
+  },
+  "Источник не подтвердил listing": {
+    "en": "The source did not confirm the listing",
+    "de": "Die Quelle hat die Notierung nicht bestätigt"
+  },
+  "Источник вернул другой symbol/тип инструмента": {
+    "en": "The source returned a different symbol/instrument type",
+    "de": "Die Quelle hat ein anderes Symbol/einen anderen Instrumententyp geliefert"
+  },
+  "Venue не подтверждён или не совпадает с Search": {
+    "en": "Venue unconfirmed or inconsistent with Search",
+    "de": "Handelsplatz unbestätigt oder abweichend von der Suche"
+  },
+  "Currency не подтверждена": {
+    "en": "Currency unconfirmed",
+    "de": "Währung unbestätigt"
+  },
+  "Currency не совпадает с Search": {
+    "en": "Currency differs from Search",
+    "de": "Währung weicht von der Suche ab"
+  },
+  "Нет однозначного результата Search для symbol": {
+    "en": "No unambiguous Search result for symbol",
+    "de": "Kein eindeutiges Suchergebnis für das Symbol"
+  },
+  " — данные временно недоступны": {
+    "en": " — data temporarily unavailable",
+    "de": " — Daten vorübergehend nicht verfügbar"
+  },
+  "Некорректная модельная запись": {
+    "en": "Invalid model entry",
+    "de": "Ungültiger Modelleintrag"
+  },
+  "Нет сопоставимой полноценной истории для модельного учёта": {
+    "en": "No comparable complete history for model accounting",
+    "de": "Keine vergleichbare vollständige Historie für die Modellrechnung"
+  },
+  "Без заголовка": {
+    "en": "No headline",
+    "de": "Keine Überschrift"
+  },
+  "Время не указано": {
+    "en": "Time not specified",
+    "de": "Zeit nicht angegeben"
+  },
+  "Издатель не указан": {
+    "en": "Publisher not specified",
+    "de": "Herausgeber nicht angegeben"
+  },
+  "Тикер указан источником": {
+    "en": "Ticker supplied by source",
+    "de": "Ticker von der Quelle angegeben"
+  },
+  "Выдано источником по тикеру; связь с эмитентом не подтверждена": {
+    "en": "Returned by source for ticker; issuer relationship unconfirmed",
+    "de": "Von der Quelle für den Ticker geliefert; Emittentenbezug unbestätigt"
+  },
+  "INVALID / PARTIAL: диагностические участки; торговые сигналы заблокированы": {
+    "en": "INVALID / PARTIAL: diagnostic ranges; trading signals blocked",
+    "de": "INVALID / PARTIAL: Diagnosebereiche; Handelssignale gesperrt"
+  },
+  "Неподдерживаемая старая база: требуется импорт v0.10.": {
+    "en": "Unsupported old database: v0.10 import required.",
+    "de": "Nicht unterstützte alte Datenbank: Import aus v0.10 erforderlich."
+  },
+  "процент недоступен": {
+    "en": "percentage unavailable",
+    "de": "Prozentsatz nicht verfügbar"
+  },
+  "Benchmark РЅРµ РІС‹Р±СЂР°РЅ": {
+    "en": "No benchmark selected",
+    "de": "Kein Benchmark ausgewählt"
+  },
+  "Не указана идентичность ряда": {
+    "en": "Series identity not specified",
+    "de": "Identität der Reihe nicht angegeben"
+  },
+  "Выберите один ряд котировок": {
+    "en": "Select one price series",
+    "de": "Wählen Sie eine Kursreihe"
+  },
+  "Это не база Stock Monitor v0.10/v0.11.": {
+    "en": "This is not a Stock Monitor v0.10/v0.11 database.",
+    "de": "Dies ist keine Stock-Monitor-v0.10/v0.11-Datenbank."
+  },
+  "В базе есть некорректный инструмент.": {
+    "en": "The database contains an invalid instrument.",
+    "de": "Die Datenbank enthält ein ungültiges Instrument."
+  },
+  "Контрастная": {
+    "en": "High contrast",
+    "de": "Hoher Kontrast"
+  },
+  "Не подтверждён календарь/timezone площадки": {
+    "en": "Venue calendar/timezone unconfirmed",
+    "de": "Kalender/Zeitzone des Handelsplatzes unbestätigt"
+  },
+  "Календарь GETTEX вне2026 не подтверждён": {
+    "en": "GETTEX calendar outside 2026 unconfirmed",
+    "de": "GETTEX-Kalender außerhalb von 2026 unbestätigt"
+  },
+  " неполных начальных блоков": {
+    "en": " incomplete initial blocks",
+    "de": " unvollständige Anfangsblöcke"
+  },
+  "ARCHIVE_START_PARTIAL: исключено ": {
+    "en": "ARCHIVE_START_PARTIAL: excluded ",
+    "de": "ARCHIVE_START_PARTIAL: ausgeschlossen "
+  },
+  "Сила направленных подтверждений, не вероятность прибыли": {
+    "en": "Strength of directional evidence, not probability of profit",
+    "de": "Stärke der Richtungshinweise, keine Gewinnwahrscheinlichkeit"
+  },
+  "Укажите GitHub в виде владелец/репозиторий.": {
+    "en": "Enter GitHub as owner/repository.",
+    "de": "Geben Sie GitHub als Eigentümer/Repository an."
+  },
+  "Неподдерживаемый номер версии": {
+    "en": "Unsupported version number",
+    "de": "Nicht unterstützte Versionsnummer"
+  },
+  "В релизе не найден единственный установщик StockMonitor-версия-Setup.exe.": {
+    "en": "No unique StockMonitor-version-Setup.exe installer found in the release.",
+    "de": "Kein eindeutiger Installer StockMonitor-Version-Setup.exe im Release gefunden."
+  },
+  "Нет проверяемого SHA256 или адрес установщика не соответствует репозиторию.": {
+    "en": "No verifiable SHA256 or installer URL does not match the repository.",
+    "de": "Kein prüfbarer SHA256 oder Installer-URL stimmt nicht mit dem Repository überein."
+  },
+  "Недопустимый размер установщика": {
+    "en": "Invalid installer size",
+    "de": "Ungültige Installergröße"
+  },
+  "Проверка SHA256 установщика не пройдена": {
+    "en": "Installer SHA256 verification failed",
+    "de": "SHA256-Prüfung des Installers fehlgeschlagen"
+  },
+  "Размер загрузки превышает заявленный": {
+    "en": "Download exceeds declared size",
+    "de": "Download überschreitet die angegebene Größe"
+  },
+  "Windows не смог прочитать/защитить ключ для текущей учётной записи (код {p0}). Можно задать OPENAI_API_KEY в окружении.": {
+    "en": "Windows could not read/protect the key for the current account (code {p0}). You can set OPENAI_API_KEY in the environment.",
+    "de": "Windows konnte den Schlüssel für das aktuelle Konto nicht lesen/schützen (Code {p0}). OPENAI_API_KEY kann in der Umgebung gesetzt werden."
+  },
+  "Сервис ИИ вернул HTTP {p0}. Проверьте модель, ключ, доступ и лимиты сервиса.": {
+    "en": "AI service returned HTTP {p0}. Check the model, key, access and service limits.",
+    "de": "KI-Dienst meldet HTTP {p0}. Prüfen Sie Modell, Schlüssel, Zugriff und Dienstlimits."
+  },
+  "{p0}: свечи отсутствуют.": {
+    "en": "{p0}: no candles.",
+    "de": "{p0}: keine Kerzen."
+  },
+  "{p0}: последней свече {p1} мин. Возможны закрытый рынок или задержка источника.": {
+    "en": "{p0}: latest candle is {p1} min old. Market may be closed or source delayed.",
+    "de": "{p0}: letzte Kerze ist {p1} Min. alt. Markt möglicherweise geschlossen oder Quelle verzögert."
+  },
+  "{p0}: меньше 30 свечей; короткая история.": {
+    "en": "{p0}: fewer than 30 candles; short history.",
+    "de": "{p0}: weniger als 30 Kerzen; kurze Historie."
+  },
+  "{p0}: последняя свеча {p1}, это не чистый GETTEX.": {
+    "en": "{p0}: latest candle {p1}; not pure GETTEX.",
+    "de": "{p0}: letzte Kerze {p1}; nicht ausschließlich GETTEX."
+  },
+  "{p0}: достигнут сохранённый стоп.": {
+    "en": "{p0}: saved stop reached.",
+    "de": "{p0}: gespeicherter Stop erreicht."
+  },
+  ". RSI {p0}; импульс MACD ": {
+    "en": ". RSI {p0}; MACD momentum ",
+    "de": ". RSI {p0}; MACD-Momentum "
+  },
+  "; объём {p0} среднего за 20 свечей": {
+    "en": "; volume {p0} of the 20-candle average",
+    "de": "; Volumen {p0} des 20-Kerzen-Durchschnitts"
+  },
+  "; к предыдущему закрытию {p0}%": {
+    "en": "; versus previous close {p0}%",
+    "de": "; gegenüber vorherigem Schlusskurs {p0}%"
+  },
+  " • для текущих {p0} шт.: {p1} {p2} (не подтверждение выплаты)": {
+    "en": " • for current {p0} shares: {p1} {p2} (not payout confirmation)",
+    "de": " • für aktuell {p0} Stück: {p1} {p2} (keine Ausschüttungsbestätigung)"
+  },
+  "Последний сохранённый ответ • {p0} UTC • {p1} / {p2}\nСнимок данных: {p3}\n\n{p4}": {
+    "en": "Last saved response • {p0} UTC • {p1} / {p2}\nData snapshot: {p3}\n\n{p4}",
+    "de": "Letzte gespeicherte Antwort • {p0} UTC • {p1} / {p2}\nDatenstand: {p3}\n\n{p4}"
+  },
+  "Объектов: {p0}": {
+    "en": "Objects: {p0}",
+    "de": "Objekte: {p0}"
+  },
+  "Результатов: {p0}. Выберите строку для подтверждения identity.": {
+    "en": "Results: {p0}. Select a row to confirm identity.",
+    "de": "Ergebnisse: {p0}. Wählen Sie eine Zeile zur Identitätsprüfung."
+  },
+  "{p0} • свечей: {p1}, закрытых: {p2}\nПоследняя: {p3} • {p4}\nИсточник: {p5} / {p6} • {p7}\n\nЧто происходит сейчас\n{p8}\n{p9}\n\nТехнические уровни\nПоддержка: {p10}\nСопротивление: {p11}\nСтоп сценария: {p12}\n\nИндикаторы последней свечи (она может быть открыта)\nEMA10 {p13} • EMA30 {p14}\nRSI14 {p15} • ATR14 {p16}\nMACD {p17} / Signal {p18}\nОбъём {p19} / средний 20 {p20}\nСценарий использует только закрытые свечи.": {
+    "en": "{p0} • candles: {p1}, closed: {p2}\nLatest: {p3} • {p4}\nSource: {p5} / {p6} • {p7}\n\nCurrent state\n{p8}\n{p9}\n\nTechnical levels\nSupport: {p10}\nResistance: {p11}\nScenario stop: {p12}\n\nLatest candle indicators (candle may be open)\nEMA10 {p13} • EMA30 {p14}\nRSI14 {p15} • ATR14 {p16}\nMACD {p17} / Signal {p18}\nVolume {p19} / 20-bar mean {p20}\nThe scenario uses closed candles only.",
+    "de": "{p0} • Kerzen: {p1}, abgeschlossen: {p2}\nLetzte: {p3} • {p4}\nQuelle: {p5} / {p6} • {p7}\n\nAktueller Zustand\n{p8}\n{p9}\n\nTechnische Niveaus\nUnterstützung: {p10}\nWiderstand: {p11}\nSzenario-Stop: {p12}\n\nIndikatoren der letzten Kerze (möglicherweise offen)\nEMA10 {p13} • EMA30 {p14}\nRSI14 {p15} • ATR14 {p16}\nMACD {p17} / Signal {p18}\nVolumen {p19} / 20-Kerzen-Mittel {p20}\nDas Szenario verwendet nur abgeschlossene Kerzen."
+  },
+  "Объектов: {p0} • нажмите «Сохранить»": {
+    "en": "Objects: {p0} • click “Save”",
+    "de": "Objekte: {p0} • „Speichern“ anklicken"
+  },
+  " • 1D: {p0} свечей, {p1} — {p2}": {
+    "en": " • 1D: {p0} candles, {p1} — {p2}",
+    "de": " • 1D: {p0} Kerzen, {p1} — {p2}"
+  },
+  "Yahoo {p0}: доступен только текущий архив до {p1} дней": {
+    "en": "Yahoo {p0}: only the current archive up to {p1} days is available",
+    "de": "Yahoo {p0}: nur das aktuelle Archiv bis {p1} Tage ist verfügbar"
+  },
+  "{p0} {p1} | {p2} | {p3} свечей | {p4}": {
+    "en": "{p0} {p1} / {p2} / {p3} candles / {p4}",
+    "de": "{p0} {p1} / {p2} / {p3} Kerzen / {p4}"
+  },
+  "Относительный объём {p0} × предыдущих 20 свечей": {
+    "en": "Relative volume {p0} × previous 20 candles",
+    "de": "Relatives Volumen {p0} × vorherige 20 Kerzen"
+  },
+  "Отменить": {
+    "en": "Undo",
+    "de": "Rückgängig"
+  },
+  "Повторить": {
+    "en": "Redo",
+    "de": "Wiederholen"
+  },
+  "Connected": {
+    "ru": "Подключено",
+    "en": "Connected",
+    "de": "Verbunden"
+  },
+  "Disconnected": {
+    "ru": "Отключено",
+    "en": "Disconnected",
+    "de": "Getrennt"
+  },
+  "день": {
+    "de": "Tag",
+    "en": "Day"
+  },
+  "неделя": {
+    "de": "Woche",
+    "en": "Week"
+  }
+}

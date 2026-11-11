@@ -1,0 +1,5084 @@
+{
+  "generated_at": "2026-11-10T21:13:40.938986+00:00",
+  "inventory": [
+    {
+      "path": "stock_monitor/test_apple_analysis_timeframes.py",
+      "test_functions": 12,
+      "flags": [
+        "archive_reference",
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_apple_demo_seed.py",
+      "test_functions": 8,
+      "flags": [
+        "archive_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_apple_feature_reason.py",
+      "test_functions": 4,
+      "flags": [
+        "archive_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_apple_intraday_evidence.py",
+      "test_functions": 6,
+      "flags": [
+        "archive_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_apple_monthly_warmup.py",
+      "test_functions": 12,
+      "flags": [
+        "archive_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_chart_fast28.py",
+      "test_functions": 8,
+      "flags": [
+        "archive_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_cp_acquisition_order.py",
+      "test_functions": 7,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_cp_demo_priority.py",
+      "test_functions": 9,
+      "flags": [],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "stock_monitor/test_cp_focus_base.py",
+      "test_functions": 4,
+      "flags": [],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "stock_monitor/test_cp_fresh_completion.py",
+      "test_functions": 6,
+      "flags": [],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "stock_monitor/test_cp_fresh_fair_share.py",
+      "test_functions": 6,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "stock_monitor/test_cp_history_slot_release.py",
+      "test_functions": 4,
+      "flags": [],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "stock_monitor/test_cp_improve28.py",
+      "test_functions": 15,
+      "flags": [
+        "archive_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_cp_reserved_base.py",
+      "test_functions": 5,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "stock_monitor/test_cp_reviewed_ranges.py",
+      "test_functions": 7,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "stock_monitor/test_cp_trade_priority.py",
+      "test_functions": 13,
+      "flags": [],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "stock_monitor/test_demo_all_warmup.py",
+      "test_functions": 26,
+      "flags": [
+        "absolute_path",
+        "archive_reference",
+        "memory_sqlite"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_demo_dependency_pin.py",
+      "test_functions": 7,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_display_history_depth.py",
+      "test_functions": 22,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "stock_monitor/test_gettex_chart.py",
+      "test_functions": 14,
+      "flags": [
+        "archive_reference",
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_gettex_chart_daily.py",
+      "test_functions": 9,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_gettex_daily_2021.py",
+      "test_functions": 9,
+      "flags": [
+        "archive_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_gettex_minute.py",
+      "test_functions": 6,
+      "flags": [
+        "archive_reference",
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_gettex_only30.py",
+      "test_functions": 6,
+      "flags": [
+        "network_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_paper_valuation.py",
+      "test_functions": 11,
+      "flags": [
+        "archive_reference",
+        "memory_sqlite"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "stock_monitor/test_reviewed_entry_source.py",
+      "test_functions": 3,
+      "flags": [],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_admission_dependency_scope.py",
+      "test_functions": 9,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_admission_expiry.py",
+      "test_functions": 9,
+      "flags": [
+        "absolute_path",
+        "archive_reference",
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_analytical_read.py",
+      "test_functions": 8,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_analytics_retention.py",
+      "test_functions": 4,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_apple_policy_handoff.py",
+      "test_functions": 9,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_benchmarks.py",
+      "test_functions": 16,
+      "flags": [
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cached_quotes.py",
+      "test_functions": 7,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_candle_schedule.py",
+      "test_functions": 21,
+      "flags": [
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_candle_timing.py",
+      "test_functions": 7,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_candlepilot.py",
+      "test_functions": 15,
+      "flags": [
+        "network_reference",
+        "temporary_directory",
+        "gui_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_candlepilot_health.py",
+      "test_functions": 8,
+      "flags": [
+        "live_path_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_chart_p0.py",
+      "test_functions": 8,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_chart_switch_speed.py",
+      "test_functions": 13,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_chart_worker.py",
+      "test_functions": 5,
+      "flags": [
+        "temporary_directory",
+        "gui_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_closed_period_scope.py",
+      "test_functions": 8,
+      "flags": [
+        "absolute_path",
+        "archive_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_accepted_analysis.py",
+      "test_functions": 13,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_adaptive_recovery.py",
+      "test_functions": 23,
+      "flags": [
+        "network_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_archive_prefix02.py",
+      "test_functions": 9,
+      "flags": [
+        "archive_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_automatic_repair.py",
+      "test_functions": 15,
+      "flags": [
+        "archive_reference",
+        "network_reference",
+        "memory_sqlite"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_cp_autonomy.py",
+      "test_functions": 10,
+      "flags": [
+        "network_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_autonomy02.py",
+      "test_functions": 22,
+      "flags": [
+        "archive_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_controls.py",
+      "test_functions": 19,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_empty_context.py",
+      "test_functions": 5,
+      "flags": [
+        "archive_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_experience.py",
+      "test_functions": 14,
+      "flags": [
+        "network_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_failure_learning.py",
+      "test_functions": 9,
+      "flags": [
+        "network_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_fresh_daily_tail.py",
+      "test_functions": 7,
+      "flags": [
+        "archive_reference",
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_full_execution.py",
+      "test_functions": 12,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_gettex_universe.py",
+      "test_functions": 19,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_health_completion.py",
+      "test_functions": 5,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_cp_local_completion.py",
+      "test_functions": 14,
+      "flags": [
+        "network_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_nine_tf.py",
+      "test_functions": 23,
+      "flags": [
+        "archive_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_observation_content.py",
+      "test_functions": 6,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_observation_priority.py",
+      "test_functions": 9,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_planner_dispatch.py",
+      "test_functions": 5,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_reconciliation.py",
+      "test_functions": 23,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_recovery_preflight.py",
+      "test_functions": 6,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_recovery_route.py",
+      "test_functions": 2,
+      "flags": [
+        "archive_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_repair_fairness.py",
+      "test_functions": 8,
+      "flags": [
+        "network_reference",
+        "memory_sqlite"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_cp_review_stability.py",
+      "test_functions": 17,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_cp_reviewed_risk.py",
+      "test_functions": 22,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_source_acceptance.py",
+      "test_functions": 7,
+      "flags": [],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_cp_tv_batch.py",
+      "test_functions": 20,
+      "flags": [
+        "network_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_tv_receipts.py",
+      "test_functions": 5,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_cp_tv_risk.py",
+      "test_functions": 16,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_daily_live_slot.py",
+      "test_functions": 8,
+      "flags": [],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_daily_normalization.py",
+      "test_functions": 5,
+      "flags": [],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_data_quality.py",
+      "test_functions": 25,
+      "flags": [
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_demo_money_tolerance.py",
+      "test_functions": 8,
+      "flags": [
+        "archive_reference",
+        "memory_sqlite"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_eur_listings.py",
+      "test_functions": 15,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_evidence_batch_cost.py",
+      "test_functions": 11,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_exchange_interruption.py",
+      "test_functions": 15,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_extras016.py",
+      "test_functions": 11,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_feed_telemetry.py",
+      "test_functions": 5,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_frankfurt_cached.py",
+      "test_functions": 5,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_fresh_route_upgrade.py",
+      "test_functions": 4,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_gettex_cached_batch.py",
+      "test_functions": 12,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_gettex_daily_calendar02.py",
+      "test_functions": 4,
+      "flags": [
+        "archive_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_gettex_live_evidence.py",
+      "test_functions": 16,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_gettex_partial_evidence.py",
+      "test_functions": 12,
+      "flags": [
+        "network_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_gettex_primary29.py",
+      "test_functions": 8,
+      "flags": [
+        "archive_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_gettex_publication_recheck.py",
+      "test_functions": 22,
+      "flags": [
+        "network_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_health_readiness_meaning.py",
+      "test_functions": 5,
+      "flags": [
+        "absolute_path",
+        "archive_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_history_backfill.py",
+      "test_functions": 11,
+      "flags": [
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_history_depth.py",
+      "test_functions": 11,
+      "flags": [
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_identity_resolver.py",
+      "test_functions": 12,
+      "flags": [
+        "network_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_incoming_dq_reason.py",
+      "test_functions": 3,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_input_revisions.py",
+      "test_functions": 10,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_intraday_normalization.py",
+      "test_functions": 24,
+      "flags": [
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_legacy_frankfurt.py",
+      "test_functions": 3,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_live_candle.py",
+      "test_functions": 25,
+      "flags": [
+        "archive_reference",
+        "memory_sqlite"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_local_recovery_cooldown30.py",
+      "test_functions": 8,
+      "flags": [
+        "archive_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_mcp_diagnostics.py",
+      "test_functions": 5,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_mcp_instance.py",
+      "test_functions": 16,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_mcp_readback.py",
+      "test_functions": 4,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_native_reject_scope.py",
+      "test_functions": 9,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_numeric_metadata_cost.py",
+      "test_functions": 10,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_onvista_archive28.py",
+      "test_functions": 9,
+      "flags": [
+        "archive_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_onvista_binding28.py",
+      "test_functions": 7,
+      "flags": [
+        "archive_reference",
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_p1_closed_context.py",
+      "test_functions": 5,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_p1_closed_snapshot.py",
+      "test_functions": 13,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_p1_five_year_scope.py",
+      "test_functions": 6,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_p1_frankfurt_session.py",
+      "test_functions": 7,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_p1_parent_recovery.py",
+      "test_functions": 13,
+      "flags": [
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_p1_reference_binding.py",
+      "test_functions": 4,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_p1_systemic26.py",
+      "test_functions": 16,
+      "flags": [
+        "live_path_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_p1_watchlist_save.py",
+      "test_functions": 9,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_p2_restart_contract.py",
+      "test_functions": 5,
+      "flags": [
+        "subprocess",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_paper_hourly.py",
+      "test_functions": 19,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_paper_sizing.py",
+      "test_functions": 8,
+      "flags": [
+        "network_reference"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_paper_strategy_v2.py",
+      "test_functions": 26,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_paper_universe.py",
+      "test_functions": 12,
+      "flags": [
+        "archive_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_partial_accepted_bands.py",
+      "test_functions": 10,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_partial_accepted_indicators.py",
+      "test_functions": 4,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_partial_chart.py",
+      "test_functions": 9,
+      "flags": [
+        "indirect_private_fixture_via_partial_chart_REGISTRY"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "9 cases executed against existing read-only pinned archived fixtures; excluded from portable default runner (no source/database write)"
+    },
+    {
+      "path": "test_partial_display_levels.py",
+      "test_functions": 7,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_partial_independent_core.py",
+      "test_functions": 4,
+      "flags": [],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_partial_indicators.py",
+      "test_functions": 18,
+      "flags": [],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_partial_periods.py",
+      "test_functions": 5,
+      "flags": [
+        "archive_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_performance.py",
+      "test_functions": 7,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_performance_dispatcher.py",
+      "test_functions": 10,
+      "flags": [
+        "subprocess",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_performance_poll.py",
+      "test_functions": 3,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_performance_render.py",
+      "test_functions": 3,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_performance_scoped.py",
+      "test_functions": 8,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_performance_volume.py",
+      "test_functions": 2,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_prior_review_binding.py",
+      "test_functions": 11,
+      "flags": [
+        "absolute_path",
+        "archive_reference",
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_proxy_auto28.py",
+      "test_functions": 9,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_proxy_depth28.py",
+      "test_functions": 4,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_proxy_session28.py",
+      "test_functions": 12,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_rejected_history_retry.py",
+      "test_functions": 4,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_review_native_discrepancy.py",
+      "test_functions": 6,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_review_queue_rotation.py",
+      "test_functions": 4,
+      "flags": [
+        "memory_sqlite"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_review_recovery_route.py",
+      "test_functions": 9,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_revision_metadata.py",
+      "test_functions": 5,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_revision_watcher.py",
+      "test_functions": 13,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_risk_boundary30.py",
+      "test_functions": 6,
+      "flags": [
+        "archive_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_save_exit.py",
+      "test_functions": 10,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_seed_proof_status.py",
+      "test_functions": 5,
+      "flags": [
+        "absolute_path",
+        "archive_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_smart_code26.py",
+      "test_functions": 10,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_smart_eligibility.py",
+      "test_functions": 10,
+      "flags": [],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_smart_execution.py",
+      "test_functions": 16,
+      "flags": [
+        "archive_reference",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_smart_queue.py",
+      "test_functions": 9,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_smart_refresh_boundary.py",
+      "test_functions": 5,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_snapshot_error_stage.py",
+      "test_functions": 2,
+      "flags": [],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_snapshot_interleaved.py",
+      "test_functions": 6,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_source_gap.py",
+      "test_functions": 9,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_store_instance.py",
+      "test_functions": 0,
+      "flags": [
+        "subprocess",
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_store_stale_bridge.py",
+      "test_functions": 2,
+      "flags": [
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_timeframes.py",
+      "test_functions": 18,
+      "flags": [
+        "network_reference",
+        "temporary_directory"
+      ],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_trading_background.py",
+      "test_functions": 12,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_trading_engine.py",
+      "test_functions": 31,
+      "flags": [],
+      "status": "EXECUTED_OR_PARTIAL",
+      "reason": "See unique_cases for actual outcome"
+    },
+    {
+      "path": "test_trading_view.py",
+      "test_functions": 10,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_tunnel_freshness.py",
+      "test_functions": 4,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_tv_accepted_display.py",
+      "test_functions": 14,
+      "flags": [
+        "archive_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_ui016.py",
+      "test_functions": 0,
+      "flags": [
+        "gui_reference"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_ui_performance.py",
+      "test_functions": 9,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_ui_snapshot_cost.py",
+      "test_functions": 15,
+      "flags": [
+        "live_path_reference",
+        "temporary_directory",
+        "memory_sqlite"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_universal23.py",
+      "test_functions": 25,
+      "flags": [
+        "temporary_directory"
+      ],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_universal_history.py",
+      "test_functions": 10,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    },
+    {
+      "path": "test_watchlist_order.py",
+      "test_functions": 5,
+      "flags": [],
+      "status": "NOT RUN",
+      "reason": "Outside bounded publication regression; flags are static indicators, not proof of live I/O. Archive/GUI/integration scenarios require separate fixtures or environment."
+    }
+  ],
+  "inventory_summary": {
+    "files": 165,
+    "root_files": 139,
+    "source_subdirectory_files": 26,
+    "static_test_functions": 1662
+  },
+  "unique_counts": {
+    "PASS": 400,
+    "FAIL": 9,
+    "ERROR": 28,
+    "INTERRUPTED": 1
+  },
+  "unique_cases": [
+    {
+      "test": "test_candle_schedule.Schedule.test_aged_feed_jobs_200",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_aged_feed_jobs_53",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_benchmark_existing_cadence_preserved",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_daily_not_rechecked_every_fifteen_minutes",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_dst_spring_and_autumn",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_existing_proxy_sync_skips_unchanged_bases",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "EUR_HISTORY_IDENTITY_REQUIRED: stock history blocked before download"
+      ]
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_failed_closed_day_check_resumes",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_fresh_work_precedes_bounded_history_in_existing_feed",
+      "status": "FAIL",
+      "observations": [
+        "FAIL"
+      ],
+      "issues": [
+        "Lists differ: ['fresh_gettex', 'fresh_proxy', 'classify', 'history_files', 'history_audit'] != ['fresh_gettex', 'fresh_proxy', 'history_files', 'classify', 'history_audit']\n\nFirst differing element 2:\n'classify'\n'history_files'\n\n- ['fresh_gettex', 'fresh_proxy', 'classify', 'history_files', 'history_audit']\n?                                ------------\n\n+ ['fresh_gettex', 'fresh_proxy', 'history_files', 'classify', 'history_audit']\n?                                                  ++++++++++++\n"
+      ]
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_gettex_429_no_inner_retries",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_gettex_slice_and_delay",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_identical_closed_interval_suppressed_until_recheck",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_long_run_all_base_tf_and_history_turns",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_no_polling_active",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_partial_last_bar_and_before_publish",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_proxy_and_benchmark_share_429_gate",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "EUR_HISTORY_IDENTITY_REQUIRED: no confirmed stock listing before request"
+      ]
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_restart_suppression_and_failed_work_retry",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_retry_after_shared_all_tf",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_revision_change_is_valid_reason",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_us_early_close",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_weekend_and_holiday",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_candle_schedule.Schedule.test_xetra_not_gettex_evening",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_automatic_repair.AutomaticRepair.test_53_and_200_stocks_get_regular_repair_slots_without_owner_lane_flood",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_automatic_repair.AutomaticRepair.test_actual_5m_dependency_allowed_but_foreign_benchmark_not_planned",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_automatic_repair.AutomaticRepair.test_bounded_scan_rotates_more_than_four_terminal_ranges",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_automatic_repair.AutomaticRepair.test_completed_repair_requests_existing_analysis_without_manual_refresh",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_automatic_repair.AutomaticRepair.test_daily_subset_is_revalidated_and_changed_identity_or_resolved_range_skipped",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_automatic_repair.AutomaticRepair.test_fresh_route_neither_plans_nor_consumes_repairs",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_automatic_repair.AutomaticRepair.test_identity_window_and_optional_tfs_never_create_permissions",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_automatic_repair.AutomaticRepair.test_manual_request_priority_and_automatic_regular_turn_alternation",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_automatic_repair.AutomaticRepair.test_retry_after_blocks_network_without_consuming_attempt",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_automatic_repair.AutomaticRepair.test_revoked_source_policy_does_not_execute_saved_automatic_request",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_automatic_repair.AutomaticRepair.test_saved_blocked_dependency_enters_existing_queue_without_user_button",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_automatic_repair.AutomaticRepair.test_three_failed_attempts_then_wait_for_new_evidence_or_weekly_due",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_automatic_repair.AutomaticRepair.test_unchanged_terminal_restart_and_unrelated_tail_do_not_repeat",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_demo_priority.DemoPriority.test_53_200_load_two_demo_contexts_do_not_starve_history_or_others",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_demo_priority.DemoPriority.test_actual_unique_required_tfs_accepted_for_automatic_context_too",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_demo_priority.DemoPriority.test_bad_context_source_dependency_and_blocked_do_not_promote",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_demo_priority.DemoPriority.test_expiry_market_revision_requeues_without_extending_permission",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_demo_priority.DemoPriority.test_future_stock_enters_automatically_and_ready_stocks_rotate",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_demo_priority.DemoPriority.test_owner_revocation_or_identity_revision_removes_priority",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_demo_priority.DemoPriority.test_position_demo_chart_background_history_all_keep_slots",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_demo_priority.DemoPriority.test_reopened_rotation_keeps_next_background_slot",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_demo_priority.DemoPriority.test_wait_demo_precedes_different_open_chart_without_grant",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_focus_base.FocusBase.test_cooldown_preserves_alternative_minute_and_background_slot",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_focus_base.FocusBase.test_display_dependencies_follow_tf_without_optional_5m",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_focus_base.FocusBase.test_due_displayed_base_before_forming_minute_after_other_stock",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_focus_base.FocusBase.test_forming_minute_when_closed_base_not_due",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_fresh_completion.FreshCompletion.test_acquisition_exception_is_not_a_success",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_fresh_completion.FreshCompletion.test_continuous_53_and_200_stock_load_retains_history_and_background",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_fresh_completion.FreshCompletion.test_deferred_request_survives_reload_and_history_finishes_it",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_fresh_completion.FreshCompletion.test_failed_or_rate_limited_fresh_result_does_not_clear_diagnostics",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_fresh_completion.FreshCompletion.test_fresh_acquisition_never_enters_archive_or_full_assessment",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_fresh_completion.FreshCompletion.test_history_routes_still_process_review_and_requested_assessment",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_fresh_fair_share.FairLiveTurn.test_long_load_53_and_200_stocks_has_no_live_source_starvation",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_fresh_fair_share.FairLiveTurn.test_no_position_or_focus_still_services_all_stocks",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_fresh_fair_share.FairLiveTurn.test_position_focus_and_background_each_get_one_live_turn",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_fresh_fair_share.FairLiveTurn.test_rate_reservation_still_prevents_chart_request",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_fresh_fair_share.FairLiveTurn.test_rotation_reloaded_from_saved_state_keeps_background_slot",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_fresh_fair_share.FairLiveTurn.test_two_stocks_do_not_create_an_empty_background_slot",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_health_completion.Completion.test_all_tf_unknown_and_core_revision",
+      "status": "PASS",
+      "observations": [
+        "ERROR",
+        "PASS_AFTER_HARNESS_FIX"
+      ],
+      "issues": [],
+      "superseded_harness_error": "SQLite file: URI was not decoded by initial harness; corrected guard, same code, test passed"
+    },
+    {
+      "test": "test_cp_health_completion.Completion.test_failed_provider_not_recovered",
+      "status": "PASS",
+      "observations": [
+        "ERROR",
+        "PASS_AFTER_HARNESS_FIX"
+      ],
+      "issues": [],
+      "superseded_harness_error": "SQLite file: URI was not decoded by initial harness; corrected guard, same code, test passed"
+    },
+    {
+      "test": "test_cp_health_completion.Completion.test_invalid_and_rollback",
+      "status": "PASS",
+      "observations": [
+        "ERROR",
+        "PASS_AFTER_HARNESS_FIX"
+      ],
+      "issues": [],
+      "superseded_harness_error": "SQLite file: URI was not decoded by initial harness; corrected guard, same code, test passed"
+    },
+    {
+      "test": "test_cp_health_completion.Completion.test_no_count_for_tail_or_valid_change",
+      "status": "PASS",
+      "observations": [
+        "ERROR",
+        "PASS_AFTER_HARNESS_FIX"
+      ],
+      "issues": [],
+      "superseded_harness_error": "SQLite file: URI was not decoded by initial harness; corrected guard, same code, test passed"
+    },
+    {
+      "test": "test_cp_health_completion.Completion.test_real_recovery_once_and_reopen",
+      "status": "PASS",
+      "observations": [
+        "ERROR",
+        "PASS_AFTER_HARNESS_FIX"
+      ],
+      "issues": [],
+      "superseded_harness_error": "SQLite file: URI was not decoded by initial harness; corrected guard, same code, test passed"
+    },
+    {
+      "test": "test_cp_history_slot_release.HistorySlotRelease.test_already_released_work_does_not_rewrite_progress",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_history_slot_release.HistorySlotRelease.test_completed_nonfetch_history_routes_release_live_slot",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_history_slot_release.HistorySlotRelease.test_failed_work_does_not_claim_finished_history",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_history_slot_release.HistorySlotRelease.test_fresh_route_never_releases_history_requirement",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_repair_fairness.RepairFairness.test_legacy_attempt_time_survives_cooldown_only_visit",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_repair_fairness.RepairFairness.test_long_queue_rotates_actual_attempts_without_touching_waits_or_completed",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_repair_fairness.RepairFairness.test_mixed_legacy_and_new_receipts_keep_alternating_after_failed_attempts",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_repair_fairness.RepairFairness.test_persisted_priority_survives_reopen_including_interrupted_request",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_repair_fairness.RepairFairness.test_provider_wait_is_not_an_attempt_and_identity_change_still_rejected",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_repair_fairness.RepairFairness.test_real_order_repro_unattempted_range_precedes_repeated_empty_reply",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_repair_fairness.RepairFairness.test_retry_after_is_not_bypassed_and_read_does_not_change_queue",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_repair_fairness.RepairFairness.test_service_records_actual_attempt_and_preserves_unresolved_dq",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_reserved_base.ReservedBase.test_exact_reserved_base_despite_oldest_and_foreground_streak",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_reserved_base.ReservedBase.test_global_rate_reservation_still_prevents_request",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_reserved_base.ReservedBase.test_ordinary_history_turn_keeps_oldest_after_two_preferences",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_reserved_base.ReservedBase.test_reservation_no_longer_due_does_not_fetch_another_base",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_reserved_base.ReservedBase.test_reserved_base_cooldown_does_not_fall_back",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.NormalTurn.test_existing_legacy_grant_survives_migration_not_changed_market_data",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.NormalTurn.test_native_revision_during_calculation_cannot_publish_receipt",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.NormalTurn.test_normal_turn_migrates_and_readonly_health_reports_once",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.NormalTurn.test_owner_disabled_or_invalid_scope_cannot_be_admitted",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.ReviewStability.test_calendar_month_recheck_persists_without_grant_or_reference_extension",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.ReviewStability.test_calendar_month_uses_month_end_and_ui_keeps_unknown_explicit",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.ReviewStability.test_display_settings_do_not_invalidate_exact_market_review",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.ReviewStability.test_legacy_already_stale_review_is_not_revived",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.ReviewStability.test_legacy_retained_binding_requires_exact_pre_migration_inputs",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.ReviewStability.test_legacy_v3_migrates_only_when_exact_old_binding_is_proven",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.ReviewStability.test_matching_absence_is_diagnostic_not_ohlcv_or_no_trades",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.ReviewStability.test_native_changes_identity_and_evidence_still_invalidate",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.ReviewStability.test_open_and_multibar_ranges_do_not_become_single_closed_samples",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.ReviewStability.test_present_is_not_claimed_equal_and_changed_input_is_not_counted",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.ReviewStability.test_statistics_deduplicate_and_keep_isin_source_tf_separate",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.ReviewStability.test_tv_grant_binding_ignores_drawings_but_not_native_rows",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_review_stability.ReviewStability.test_v2_binding_migration_keeps_old_evidence_timestamp_guard",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_reviewed_ranges.ReviewedRanges.test_any_restored_bar_within_range_invalidates_scope",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_reviewed_ranges.ReviewedRanges.test_consecutive_missing_range_binds_without_writing_prices",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_reviewed_ranges.ReviewedRanges.test_following_session_neighbour_is_part_of_binding",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_reviewed_ranges.ReviewedRanges.test_identity_and_invalid_quality_remain_blocked",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_reviewed_ranges.ReviewedRanges.test_neighbour_revision_changes_binding_unrelated_tail_does_not",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_reviewed_ranges.ReviewedRanges.test_reversed_timezone_or_unaligned_scope_rejected",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_reviewed_ranges.ReviewedRanges.test_unconfirmed_listing_rejected",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_source_acceptance.SourceAcceptance.test_changed_policy_during_calculation_cannot_publish_acceptance",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_source_acceptance.SourceAcceptance.test_explicit_review_beyond_page_is_served_with_background_53_200",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_source_acceptance.SourceAcceptance.test_invalid_gap_incomplete_and_stale_observation_not_accepted",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_source_acceptance.SourceAcceptance.test_lseg_wrong_currency_venue_symbol_and_disabled_not_admitted",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_source_acceptance.SourceAcceptance.test_normal_turn_marks_valid_official_difference_weekly_without_grant",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_source_acceptance.SourceAcceptance.test_revocation_removes_advisory_acceptance",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_source_acceptance.SourceAcceptance.test_weekly_migration_persists_and_does_not_extend_observation",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_trade_priority.TradePriority.test_53_and_200_continuous_ready_load_does_not_starve_background",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_trade_priority.TradePriority.test_expiry_or_market_change_means_recheck_not_permission",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_trade_priority.TradePriority.test_no_priority_for_blocked_analysis_only_or_wrong_currency",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_trade_priority.TradePriority.test_no_ready_preserves_existing_three_live_slots",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_trade_priority.TradePriority.test_pending_archive_request_cannot_consume_fresh_price_turn",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_trade_priority.TradePriority.test_policy_or_identity_revision_revokes_priority",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_trade_priority.TradePriority.test_position_ready_focus_background_then_history",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_trade_priority.TradePriority.test_priority_metadata_survives_existing_worker_route",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_trade_priority.TradePriority.test_rate_limit_and_source_cooldown_not_bypassed",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_trade_priority.TradePriority.test_ready_stock_precedes_focus_without_open_position",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_trade_priority.TradePriority.test_required_daily_tail_and_exact_provider_before_optional_5m",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_trade_priority.TradePriority.test_restart_keeps_background_slot_and_read_only_evidence",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_cp_trade_priority.TradePriority.test_unknown_strategy_signal_or_other_provider_is_not_promoted",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_daily_live_slot.DailyLiveSlot.test_53_and_200_daily_tails_share_live_and_history_slots",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_daily_live_slot.DailyLiveSlot.test_already_present_closed_day_not_promoted_or_rewritten",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_daily_live_slot.DailyLiveSlot.test_closed_session_waits_for_publication_boundary",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_daily_live_slot.DailyLiveSlot.test_rate_reservation_source_and_unit_cooldowns_remain",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_daily_live_slot.DailyLiveSlot.test_real_missing_closed_daily_tail_is_selected",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_daily_live_slot.DailyLiveSlot.test_rotation_resumes_without_repeating_saved_day",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_daily_live_slot.DailyLiveSlot.test_unconfirmed_wrong_currency_or_venue_never_promoted",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_daily_live_slot.DailyLiveSlot.test_waiting_publication_budget_is_not_bypassed",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_daily_normalization.Tests.test_impossible_ohlc_is_not_repaired_by_normalization",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_daily_normalization.Tests.test_only_holiday_clones_excluded_and_diagnosed",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_daily_normalization.Tests.test_real_trade_or_different_quote_on_closed_day_still_invalid",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_daily_normalization.Tests.test_unknown_calendar_and_duplicates_remain_for_dq",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_daily_normalization.Tests.test_zero_volume_trading_day_is_preserved",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_atomic_bounded_recovery_preserves_healthy",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "[WinError 32] Процесс не может получить доступ к файлу, так как этот файл занят другим процессом: '<temporary-test-directory>\\\\stock_monitor.sqlite3'"
+      ],
+      "underlying_assertion": "Expected one recovery request; observed two. Windows cleanup error masked assertion."
+    },
+    {
+      "test": "test_data_quality.Tests.test_dst_nonexistent",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_dst_sessions",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_duplicates",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_empty",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_failed_new_source_blocks_healthy_cached_signals",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "[WinError 32] Процесс не может получить доступ к файлу, так как этот файл занят другим процессом: '<temporary-test-directory>\\\\stock_monitor.sqlite3'"
+      ],
+      "underlying_assertion": "Legacy Desktop014 stub missing drafts attribute. Windows cleanup error masked error."
+    },
+    {
+      "test": "test_data_quality.Tests.test_failed_recovery_preserves_cache",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_gaps_only_missing_ranges",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_gettex_published_calendar",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_gettex_recovery_download_filters_file_ranges",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_gettex_recovery_updates_only_official_table",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_holiday_short_session",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_identity_and_mixed_rows",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_impossible_ohlc",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_no_calendar_not_ready",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_off_session",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_order",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_prices_volume_nan",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_quality_blocks_signals",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_raw_duplicate_recovery_is_bounded",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_ready_weekend_no_false_stale",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_retry_cooldown",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_stale",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_timezone_listing_mismatch",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_data_quality.Tests.test_zero_and_outlier_are_visible",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_cache_53_and_200_jobs_bounded_with_actual_selected_frames",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'connect'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_chart_and_mcp_share_partial_projection_without_core_or_writes",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'connect'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_confirmed_gettex_wins_over_longer_separate_reserve",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'read_cache'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_incomplete_children_do_not_become_complete_aggregate",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'read_cache'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_long_partial_daily_wins_over_short_valid_without_clearing_invalid",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'read_cache'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_long_partial_render_keeps_all_breaks_with_bounded_artist_count",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_longest_requested_tf_can_come_from_five_minutes",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'read_cache'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_max_does_not_shorten_selected_archive",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'read_cache'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_max_preserves_older_verified_periods_over_denser_recent_archive",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'read_cache'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_mcp_partial_indicator_values_are_not_filled_across_holes",
+      "status": "FAIL",
+      "observations": [
+        "FAIL"
+      ],
+      "issues": [
+        "np.False_ is not true"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_no_unconfirmed_or_dollar_fallback_when_no_candidates",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_old_weeks_and_months_use_derived_provenance_and_exclude_bad_period",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'read_cache'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_persisted_global_invalid_is_not_hidden_by_localized_damage",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'read_cache'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_relevant_revision_invalidates_display_without_settings_or_writes",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'connect'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_revision_during_projection_rejected_by_existing_publication_guard",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'connect'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_source_outage_retains_verified_saved_rows_and_trade_block",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'read_cache'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_source_outage_without_damaged_rows_has_complete_display_metadata",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'read_cache'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_unlocalized_invalid_is_not_displayed_as_valid",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_unproven_historical_aggregate_still_rejected",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_unsaved_venue_lock_is_honored_by_chart_mcp_and_cache",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'NaTType' object has no attribute 'normalize'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_visible_gap_metadata_satisfies_existing_windows_binding",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Memory' object has no attribute 'read_cache'"
+      ]
+    },
+    {
+      "test": "test_display_history_depth.DisplayDepth.test_wrong_currency_or_isin_or_venue_never_wins",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_history_backfill.Tests.test_empty_incremental_is_not_identity_failure",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_history_backfill.Tests.test_full_then_incremental",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_history_backfill.Tests.test_hourly_maximum_is_separate_from_15m",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_history_backfill.Tests.test_identity_change_preserves_history",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_history_backfill.Tests.test_incomplete_not_ready",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_history_backfill.Tests.test_indicators_weekly_monthly_use_full_sqlite_history",
+      "status": "INTERRUPTED",
+      "observations": [
+        "INTERRUPTED"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_history_depth.DepthTests.test_daily_default_has_no_twenty_year_cutoff",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "EUR_HISTORY_IDENTITY_REQUIRED: no confirmed stock listing before request"
+      ]
+    },
+    {
+      "test": "test_history_depth.DepthTests.test_empty_initial_download_is_not_complete_and_cools_down",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_history_depth.DepthTests.test_explicit_repair_range_is_not_expanded",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "EUR_HISTORY_IDENTITY_REQUIRED: no confirmed stock listing before request"
+      ]
+    },
+    {
+      "test": "test_history_depth.DepthTests.test_gettex_display_never_borrows_proxy_complete_history",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_history_depth.DepthTests.test_hourly_aggregation_dst_early_close_and_ohlcv",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_history_depth.DepthTests.test_hourly_derivatives_use_deepest_compatible_base",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_history_depth.DepthTests.test_intraday_defaults_request_full_retention",
+      "status": "ERROR",
+      "observations": [
+        "ERROR",
+        "INTERRUPTED"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_history_depth.DepthTests.test_more_than_twenty_years_is_preserved",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_history_depth.DepthTests.test_proxy_display_preserves_its_own_daily_and_intraday_coverage",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_history_depth.DepthTests.test_rate_limit_has_no_busy_retry",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "EUR_HISTORY_IDENTITY_REQUIRED: no confirmed stock listing before request"
+      ]
+    },
+    {
+      "test": "test_history_depth.DepthTests.test_unknown_source_display_does_not_claim_proxy_coverage",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_input_revisions.InputRevisionTests.test_benchmark_and_settings_reads_are_dependencies",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_input_revisions.InputRevisionTests.test_cached_frame_replays_its_read_dependencies",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_input_revisions.InputRevisionTests.test_instrument_position_change_rejects",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_input_revisions.InputRevisionTests.test_journal_and_unrelated_settings_do_not_cancel_engine",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_input_revisions.InputRevisionTests.test_other_instrument_candles_and_unused_tf_do_not_cancel",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_input_revisions.InputRevisionTests.test_other_instrument_does_not_cancel_engine",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_input_revisions.InputRevisionTests.test_real_worker_publication_ignores_journal_but_checks_dependencies",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "AUDIT_FORBIDS_NON_TEMP_WRITE"
+      ],
+      "classification": "NOT RUN to completion: subprocess integration was intentionally blocked by harness (no child started). Not an application defect."
+    },
+    {
+      "test": "test_input_revisions.InputRevisionTests.test_same_value_and_rollback_do_not_invalidate",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_input_revisions.InputRevisionTests.test_used_identity_and_dq_change_rejects",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_input_revisions.InputRevisionTests.test_used_ohlcv_change_rejects",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.ChartGuards.test_53_200_updates_apply_only_current_request_and_reject_closed_window",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.ChartGuards.test_analysis_receives_closed_rows_only",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.ChartGuards.test_chart_marks_live_and_delayed_without_new_gap_band",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.ChartGuards.test_feed_refreshes_only_selected_chart_and_never_closing_window",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.ChartGuards.test_native_receipt_revision_invalidates_cached_live_view",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.ChartGuards.test_preliminary_indicators_move_without_changing_confirmed_decision",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.ChartGuards.test_provisional_receipt_does_not_invalidate_closed_core_but_quality_does",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.LiveTail.test_all_eleven_tf_from_actual_minute_children",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.LiveTail.test_completed_native_bar_wins_over_lower_tf_preview",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.LiveTail.test_delay_keeps_last_values_and_never_promotes_by_clock",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.LiveTail.test_first_parent_does_not_wait_for_closed_parent_history",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.LiveTail.test_interior_gap_remains_blocked_display_tail_only",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.LiveTail.test_live_update_keeps_same_slot_and_all_older_rows",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.LiveTail.test_no_provider_join_for_onvista_daily",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.LiveTail.test_no_real_data_no_invented_candle",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.LiveTail.test_week_and_month_preserve_previous_daily_volume",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.LiveTail.test_wrong_identity_or_invalid_ohlcv_is_rejected",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.MinuteScheduler.test_53_200_jobs_keep_minutes_positions_and_history_fair",
+      "status": "FAIL",
+      "observations": [
+        "FAIL"
+      ],
+      "issues": [
+        "'1m' not found in {'15m'}"
+      ]
+    },
+    {
+      "test": "test_live_candle.MinuteScheduler.test_minute_bootstrap_respects_retry_and_global_rate_reservation",
+      "status": "FAIL",
+      "observations": [
+        "FAIL"
+      ],
+      "issues": [
+        "'15m' != '1m'\n- 15m\n?  -\n+ 1m\n"
+      ]
+    },
+    {
+      "test": "test_live_candle.MinuteScheduler.test_restart_preserves_fairness_position",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.Receipts.test_bad_envelope_not_accepted_for_live",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.Receipts.test_first_forming_only_fetch_persists_evidence_not_ohlcv",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.Receipts.test_forming_kept_only_in_explicit_display_decode",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.Receipts.test_receipt_pinned_time_hash_and_no_sqlite_write",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_live_candle.Receipts.test_retained_forming_receipt_survives_later_response_without_tail",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_mcp_diagnostics.DiagnosticsTests.test_blocked_tf_links_evidence_not_invented_provider_failure",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_mcp_diagnostics.DiagnosticsTests.test_missing_engine_does_not_use_legacy_buy",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_mcp_diagnostics.DiagnosticsTests.test_no_new_signal_or_mutation",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_mcp_diagnostics.DiagnosticsTests.test_pipeline_available_without_full_snapshot",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_mcp_diagnostics.DiagnosticsTests.test_worker_exception_is_classified_without_secret_text",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "DiagnosticsTests.test_worker_exception_is_classified_without_secret_text.<locals>.<lambda>() got an unexpected keyword argument 'lane'"
+      ]
+    },
+    {
+      "test": "test_mcp_readback.ReadbackTests.test_new_accepted_analytics_replace_pending",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_mcp_readback.ReadbackTests.test_repeated_commands_keep_one_timer_and_one_busy_worker",
+      "status": "FAIL",
+      "observations": [
+        "FAIL"
+      ],
+      "issues": [
+        "Duplicate worker"
+      ]
+    },
+    {
+      "test": "test_mcp_readback.ReadbackTests.test_same_selection_does_not_destroy_completed_snapshot",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_mcp_readback.ReadbackTests.test_switch_removes_old_ready_analytics_immediately",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_p1_watchlist_save.WatchlistSave.test_actual_save_exit_path_keeps_unchanged_instrument_revisions",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_p1_watchlist_save.WatchlistSave.test_actual_save_exit_real_change_and_order_remain_atomic",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_p1_watchlist_save.WatchlistSave.test_duplicate_isin_rolls_back",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_p1_watchlist_save.WatchlistSave.test_invalid_payload_does_not_partially_save",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_p1_watchlist_save.WatchlistSave.test_order_change_is_preserved_without_false_revisions",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_p1_watchlist_save.WatchlistSave.test_real_identity_or_position_change_revokes_only_affected",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_p1_watchlist_save.WatchlistSave.test_remove_add_preserve_other_revisions",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_p1_watchlist_save.WatchlistSave.test_settings_write_failure_rolls_back_instruments_and_retains_drafts",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_p1_watchlist_save.WatchlistSave.test_unchanged_save_keeps_revisions_and_receipt_current",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_benchmark_and_quantity",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_disabled_authority",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_dq_blocked",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_expired_context",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_fresh_quote_does_not_replace_latest_invalid_or_stale",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_hourly_buy_sell_fees_spread_and_duplicate",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_hourly_maintenance_scope_and_pause_without_permission",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_legacy_execution_requires_new_epoch",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_missing_owner_risk_receipt_blocks_hourly_manual",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_no_wait_orders",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_position_and_one_bar_cap",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_reset_archives_receipt_and_never_replays",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_revision_changed",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_runtime_respects_cooldown_restart_and_close",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_seed_instability",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_stale_quote_and_zero_volume",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_unconfirmed_without_grant",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_warmup_not_proven",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_hourly.HourlyTests.test_wrong_source_currency_and_other_stock",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_sizing.SizingTests.test_allocation_commission_and_no_averaging",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_sizing.SizingTests.test_bad_volatility_and_unaffordable_quote",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_sizing.SizingTests.test_dynamic_buy_full_sell_and_roundtrip_costs",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_sizing.SizingTests.test_quantity_tampering_and_signal_guards",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_sizing.SizingTests.test_runtime_uses_variable_quantity_and_deduplicates",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_sizing.SizingTests.test_stale_invalid_identity_and_changed_revision_block",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_sizing.SizingTests.test_target_and_size_display_without_promise",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_sizing.SizingTests.test_unauthorized_sizing_policy_and_sell_without_holding",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.GuardTests.test_closed_dependency_revision_rejected",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.GuardTests.test_dq_identity_benchmark_warmup_and_expiry",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.GuardTests.test_open_bar_and_future_signal_blocked",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.GuardTests.test_quote_revision_rejected",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.GuardTests.test_stale_price_blocked",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.GuardTests.test_valid_wait_is_analyzable_without_forcing_buy",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_atomic_guard_failure_rolls_back_both",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_bad_or_future_execution_bar_rejected",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_breakeven_partial_and_trailing",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_early_positive_without_volume_120",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_entry_filters_and_reward_preserved",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_fill_rr_includes_costs",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_independent_books_same_cost_model_and_restart",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_metrics_profit_fees_drawdown",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_missing_execution_bar_is_not_silently_skipped",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_next_bar_only_and_no_duplicate",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_one_share_arms_trailing_without_inventing_fraction",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_proof_revision_revokes_even_if_terminal_facts_equal",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_revision_cancels_pending_fill",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_risk_half_cash_and_aggregate_caps",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_stop_first_and_gap_execution",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_unstable_seed_and_bad_core_blocked",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_v1_no_new_smart_stops",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_v1_signal_preserved_standard_and_sell",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_v1_sizing_parity_with_unchanged_implementation",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_paper_strategy_v2.V2Tests.test_variant_decisions_are_independent",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_chart.Tests.test_changed_archive_is_rejected_before_ui_publication",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_chart.Tests.test_confirmed_archive_load_has_no_store_writes",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_chart.Tests.test_existing_chart_worker_binds_preview_without_trading_analysis",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_chart.Tests.test_global_identity_error_not_convertible_to_preview",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_chart.Tests.test_identity_currency_hash_and_pinned_source_fail_closed",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_chart.Tests.test_line_breaks_and_candle_gap_bands_without_fake_rows",
+      "status": "FAIL",
+      "observations": [
+        "FAIL"
+      ],
+      "issues": [
+        "0 != 7"
+      ]
+    },
+    {
+      "test": "test_partial_chart.Tests.test_normal_history_and_other_tf_untouched",
+      "status": "FAIL",
+      "observations": [
+        "FAIL"
+      ],
+      "issues": [
+        "Expected 'setting' to not have been called. Called 1 times.\nCalls: [call('gettex_chart:US79466L3024:15m', {})]."
+      ]
+    },
+    {
+      "test": "test_partial_chart.Tests.test_preview_cannot_reuse_buy_or_enable_indicators",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_chart.Tests.test_real_two_archives_preserve_exact_rows_identity_and_invalid",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_independent_core.PartialIndependentCore.test_actual_core_block_and_fault_do_not_enable_display_archive",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_independent_core.PartialIndependentCore.test_approved_independent_core_does_not_clear_chart_dq",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_independent_core.PartialIndependentCore.test_no_policy_no_independent_evaluation",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_independent_core.PartialIndependentCore.test_revision_change_rejected_instead_of_published",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_accepted_absence_does_not_invent_or_split",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_all_eleven_timeframes_and_instruments_use_same_real_segments",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_bind_preserves_dq_wait_core_and_original_inputs",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_chart_worker_prepares_settings_without_core",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_custom_chart_periods_and_fixed_core_are_separate",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_does_not_use_interpolated_accepted_risk_price",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_duplicate_unsorted_timestamps_fail_closed",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_each_indicator_has_own_warmup",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_empty_short_and_all_invalid_are_safe",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_first_warmed_rsi_is_visible_as_point",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_identity_source_currency_fail_closed",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_invalid_ohlcv_resets_without_rewriting_it",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_live_updates_only_preview_not_closed_values",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_live_with_wrong_identity_and_interior_incomplete_excluded",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_native_listing_proof_carries_isin_without_top_level_alias",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_plot_break_keeps_first_real_value",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_provenance_and_rejected_rows_reset",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_partial_indicators.PartialIndicators.test_renderer_uses_worker_columns_and_breaks",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_rejected_history_retry.Tests.test_changed_significant_diagnosis_gets_short_retry",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_rejected_history_retry.Tests.test_other_timeframe_not_suppressed",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_rejected_history_retry.Tests.test_transient_outage_not_daily_blocked",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_rejected_history_retry.Tests.test_two_identical_rejections_then_no_download_after_restart",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_reviewed_entry_source.ReviewedEntrySource.test_reviewed_provider_is_expected_instead_of_proxy",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_reviewed_entry_source.ReviewedEntrySource.test_unapproved_or_revoked_pin_does_not_override_preference",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_reviewed_entry_source.ReviewedEntrySource.test_wrong_dependent_source_currency_or_venue_still_block",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_revision_watcher.Watcher.test_bad_ohlcv_and_dq_preserved",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_revision_watcher.Watcher.test_changed_only_row_and_journal_survives_restart",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_revision_watcher.Watcher.test_derived_and_indicator_cache_invalidated",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_revision_watcher.Watcher.test_forming_only_rows_not_requested",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_revision_watcher.Watcher.test_gettex_not_patched_over_old_trades",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_revision_watcher.Watcher.test_journal_failure_rolls_back_candle",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_revision_watcher.Watcher.test_missing_provider_does_not_change_dq",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_revision_watcher.Watcher.test_relevant_race_rejects_old_result",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_revision_watcher.Watcher.test_shifted_timestamp_no_deletion",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_revision_watcher.Watcher.test_source_cooldown_no_request",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_revision_watcher.Watcher.test_unchanged_no_write_or_revision",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_revision_watcher.Watcher.test_unconfirmed_listing_no_network",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_revision_watcher.Watcher.test_wrong_identity_currency_venue_source",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_save_exit.Tests.test_cancel",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_save_exit.Tests.test_clean_exit",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_save_exit.Tests.test_discard",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_save_exit.Tests.test_normalized_loading_is_clean",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_save_exit.Tests.test_save",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_save_exit.Tests.test_save_failure_keeps_drafts_and_db",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_save_exit.Tests.test_selection_without_data",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_save_exit.Tests.test_setting_revert_and_all_keys",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_save_exit.Tests.test_system_writes_still_persist",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_save_exit.Tests.test_watchlist_remove_detected_and_saved",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_smart_eligibility.BoundedEligibility.test_actual_invalid_ohlcv_stays_blocked",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_smart_eligibility.BoundedEligibility.test_all_eleven_no_automatic_trade",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_smart_eligibility.BoundedEligibility.test_bad_identity_and_currency",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_smart_eligibility.BoundedEligibility.test_derived_provenance_required",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_smart_eligibility.BoundedEligibility.test_exact_reference_and_archive_unchanged",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_smart_eligibility.BoundedEligibility.test_real_calendar_and_quality_path",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_smart_eligibility.BoundedEligibility.test_real_stale_reference_does_not_get_ready",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_smart_eligibility.BoundedEligibility.test_recursive_seed_difference_blocks",
+      "status": "FAIL",
+      "observations": [
+        "FAIL"
+      ],
+      "issues": [
+        "True is not false"
+      ]
+    },
+    {
+      "test": "test_smart_eligibility.BoundedEligibility.test_short_warmup_blocks",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_smart_eligibility.BoundedEligibility.test_unconfirmed_window_and_reference_block",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_snapshot_error_stage.ErrorStageTests.test_bounded_trace",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_snapshot_error_stage.ErrorStageTests.test_nested_guard_location_preserves_reason_without_locals",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_snapshot_interleaved.InterleavedTests.test_concurrent_record_read_retries_only_that_record",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_snapshot_interleaved.InterleavedTests.test_concurrent_record_read_retry_exhaustion_is_bounded",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_snapshot_interleaved.InterleavedTests.test_engine_failure_aborts_without_next_instrument",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_snapshot_interleaved.InterleavedTests.test_only_changed_instrument_repaired_and_parent_token_clean",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_snapshot_interleaved.InterleavedTests.test_real_snapshot_interleaves_and_keeps_order",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_snapshot_interleaved.InterleavedTests.test_shared_dependency_repair_is_bounded",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_store_stale_bridge.Tests.test_real_duplicate_still_stops_before_writes",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_store_stale_bridge.Tests.test_reused_destination_port_does_not_block_start",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_all_periods_preserved",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_early_close_and_holiday",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_europe_dst",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_explicit_identity_required",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_five_minute_watermark_survives_restart",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_forming_is_not_closed",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_gettex_0730_2300_all_intraday_counts_and_clipped_close",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_gettex_dst_weekends_and_holidays",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_indicators_recalculate",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_intraday_survives_daily_failure",
+      "status": "ERROR",
+      "observations": [
+        "ERROR"
+      ],
+      "issues": [
+        "'Store' object has no attribute 'connect'"
+      ]
+    },
+    {
+      "test": "test_timeframes.Tests.test_journal_resolves_new_periods",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_ohlcv",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_partial_closed_session_invalid",
+      "status": "FAIL",
+      "observations": [
+        "FAIL"
+      ],
+      "issues": [
+        "'GAP' != 'INVALID'\n- GAP\n+ INVALID\n"
+      ]
+    },
+    {
+      "test": "test_timeframes.Tests.test_selected_period_persists",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_session_break_is_not_crossed",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_sliced_endpoints",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_two_three_hour_sessions",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_timeframes.Tests.test_us_dst",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_bearish_sell_and_oversold_no_buy",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_benchmark_score_not_order",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_confirmed_entry_buy",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_deterministic_input_unchanged",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_duplicate_input_returns_structured_wait",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_extended_no_buy",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_features_bullish_bearish_range",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_forming_extreme_does_not_change_facts",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_full_ohlcv_pipeline_buy",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_full_pipeline_bad_quality_blocks",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_full_pipeline_breakout_needs_volume_and_closed_bar",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_full_pipeline_identity_blocks",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_higher_bearish_veto",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_internal_partial_excluded_before_indicators",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_invalid_benchmark_excluded",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_medium_bearish_veto",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_missing_tf_blocked",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_momentum_deterioration",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_overbought_trend_not_sell",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_oversold_recovery_requires_reclaim_and_mtf",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_position_changes_only_hold_wait",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_profile_has_three_distinct_tf",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_quality_gate_each_tf_and_state",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_range_position_layer",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_retest_entry",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_standalone_does_not_invent_other_timeframes",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_support_break_hold_to_sell",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_unconfirmed_volume_veto",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_unreliable_volume_explicit",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_volume_average_excludes_current",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    },
+    {
+      "test": "test_trading_engine.EngineTests.test_without_trigger_wait",
+      "status": "PASS",
+      "observations": [
+        "PASS"
+      ],
+      "issues": []
+    }
+  ],
+  "excluded": {
+    "test_cp_automatic_repair.AutomaticRepair.test_saved_real_gettex_missing_row_is_recovered_once_then_warmup_stays_blocked": "requires private archived real-candle fixture",
+    "test_cp_automatic_repair.AutomaticRepair.test_changed_inputs_during_real_recovery_prevent_ohlcv_write": "requires private archived real-candle fixture",
+    "test_history_backfill": "PARTIAL: helper stopped after scheduler long scenario completed, during weekly/monthly full-history test; not rerun during publication audit"
+  },
+  "findings": [
+    {
+      "area": "V1 / V2 / CORE guards",
+      "result": "V1 19 unique cases; dynamic sizing8 additional; V2 26; TradingEngine31 PASS. Independent shadow balances/logs, revision/source/freshness/risk guards tested in memory."
+    },
+    {
+      "area": "Current CandlePilot repair",
+      "result": "13 synthetic automatic-repair; 8 fairness; 17 review stability; 11 source-acceptance cases PASS. Two archived real-repair tests NOT RUN."
+    },
+    {
+      "area": "Scheduler",
+      "result": "Legacy long scenario completed154.610s:2047 suppressed repeated unit attempts,297 history turns; totalmodule18PASS,1FAIL,2ERROR. This is synthetic measured result, not production speed claim."
+    },
+    {
+      "area": "Legacy fixtures",
+      "result": "Missing Memory.connect/read_cache and Desktop014.drafts, obsolete EUR identity fixtures and job(lane=...) signature cause multiple errors; fix tests separately before asserting release regression PASS."
+    },
+    {
+      "area": "Unresolved assertion differences",
+      "result": "1m vs preferred15m source selection; GAP vs old INVALID label; one vs two recovery calls; classify/history_files order; recursive seed acceptance; gap-band/indicator semantics; one MCP busy-worker assertion. These are not all proven product defects."
+    },
+    {
+      "area": "Recursive seed",
+      "result": "bounded_features source still requires exact tail indicator/fact equality; legacy test changes the oldest row and expects rejection but returned READY. Needs bounded reproduction of fixture reference/rounding before classifying safety defect; no relaxation performed."
+    },
+    {
+      "area": "Publication scope",
+      "result": "No live DB, provider requests, production account operations, GUI or app restart. One subprocess integration blocked before child launch. Nine archived read-only partial-chart cases used local pinned fixtures and are not portable."
+    }
+  ],
+  "run_boundary": "22 original groups completed before helper stopped during history_backfill; remaining short groups resumed. No completed PASS test deliberately repeated. Duplicate imported testcase IDs in first phase counted once in unique totals.",
+  "reproducibility": "Current audit includes nine read-only private fixture cases and separately measured long scheduler test; portable default omits these. No live account/provider writes."
+}

@@ -1,0 +1,1055 @@
+{
+  "schema": 1,
+  "created_at": "2026-11-02T09:09:05.350015+00:00",
+  "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
+  "cases": [
+    {
+      "id": "real_children",
+      "title": "Восстановить родительскую свечу из реальных младших",
+      "sources": [],
+      "states": [
+        "GAP",
+        "SOURCE_GAP",
+        "UNCONFIRMED",
+        "INVALID",
+        "SOURCE_UNAVAILABLE"
+      ],
+      "status": "ПРОВЕРЕНО",
+      "steps": [
+        "В существующем recovery сначала проверить локальные совместимые children.",
+        "Сначала проверить наличие строк в точном диапазоне и identity индексированным SQLite-запросом; отсутствие локальных children не доказывает NO_TRADES. При наличии кандидата выполнить прежние полные проверки. Сам preflight не подтверждает качество; ограниченная память отрицательного поиска ниже обязана учитывать новые данные и доказательства.",
+        "При наличии сохранённых успешных попыток использовать их TF первыми; все текущие проверки выполняются заново.",
+        "Сохранить только полный подтверждённый диапазон и lineage в одной транзакции.",
+        "Отрицательный локальный поиск можно повторно использовать только5мин при неизменных данных точного диапазона,identity,evidence,lineage и коде валидатора. Положительный результат всегда проверяется заново.",
+        "Для выбора childTF учитывать измеренные свежие попытки только этой identity/ISIN/parentTF. Минимум3наблюдения,последние30дней;candidate без atomiccommit не успех. При нехватке измерений сохранять прежний порядок."
+      ],
+      "evidence": [
+        "test_p1_parent_recovery.py",
+        "history64-evidence/p1-systemic26/parent-real-saved-proof.json",
+        "test_cp_recovery_preflight.py",
+        "history64-evidence/cp-speed02/RESULT_RU.txt",
+        "test_cp_adaptive_recovery.py",
+        "history64-evidence/cp-adaptive02/RESULT_RU.txt"
+      ],
+      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
+    },
+    {
+      "id": "local_during_cooldown",
+      "title": "Локальные данные доступны даже при ожидании поставщика",
+      "sources": [
+        "gettex_chart",
+        "proxy"
+      ],
+      "states": [
+        "GAP",
+        "SOURCE_GAP",
+        "UNCONFIRMED",
+        "INVALID",
+        "SOURCE_UNAVAILABLE"
+      ],
+      "status": "ПРОВЕРЕНО",
+      "steps": [
+        "Проверить ещё не проверенные ревизии локальных children.",
+        "Не делать HTTP раньше Retry-After. Повтор неизменившихся входов ограничен существующим cooldown."
+      ],
+      "evidence": [
+        "test_local_recovery_cooldown30.py",
+        "history64-evidence/readiness30/RESULT_RU.txt"
+      ],
+      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
+    },
+    {
+      "id": "bounded_same_source",
+      "title": "Адресный запрос вместо повторной загрузки архива",
+      "sources": [],
+      "states": [
+        "GAP",
+        "SOURCE_GAP",
+        "UNCONFIRMED",
+        "INVALID",
+        "SOURCE_UNAVAILABLE"
+      ],
+      "status": "ПРОВЕРЕНО",
+      "steps": [
+        "Использовать существующий bounded recovery по одному торговому дню и сохранённому cursor.",
+        "Запросить только тот же подтверждённый источник/листинг/валюту.",
+        "Пустой или неполный ответ не становится READY.",
+        "При неудаче сохранять отдельную причину и факты ответа: пустой, неполный, повреждённый, identity/revision или HTTP. Ожидание лимита до запроса не является неудачной загрузкой. Не считать старые общие DQ_REJECTED доказательством конкретной причины.",
+        "После локальной ошибки данных продолжить независимые диапазоны в прежнем лимитеbatch. При429/HTTP/сменеidentity/revisions/conflict остановить пакет; не обходитьRetry-After черезauxiliary1m."
+      ],
+      "evidence": [
+        "stock_monitor/data_quality.py",
+        "history64-evidence/cp-autonomy02/RESULT_RU.txt",
+        "test_cp_failure_learning.py",
+        "history64-evidence/cp-help02/RESULT_RU.txt",
+        "test_cp_adaptive_recovery.py",
+        "history64-evidence/cp-adaptive02/RESULT_RU.txt"
+      ],
+      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
+    },
+    {
+      "id": "calendar",
+      "title": "Проверить календарь фактической площадки",
+      "sources": [],
+      "states": [
+        "GAP",
+        "SOURCE_GAP",
+        "UNCONFIRMED",
+        "INVALID",
+        "SOURCE_UNAVAILABLE"
+      ],
+      "status": "ПРОВЕРЕНО",
+      "steps": [
+        "Проверить verified calendar, Europe/Berlin, DST, праздники и границы сессии.",
+        "Не переносить расписание GETTEX на Frankfurt/Xetra.",
+        "MARKET_CLOSED не является пропуском; неизвестный календарь не угадывать.",
+        "GETTEX 1D: подтверждённые торговые дни с19.01.2015. Использовать именно GETTEX-исключения праздников, а не общий календарь Munich. Старые часы intraday из этого не следуют.",
+        "02Nov: официальный бюллетень GETTEX26Oct,p108 подтверждает остановку акций Baader07:30–09:55Berlin. CP сохраняет уведомление в существующем interval_evidence; строгие внутренние интервалы того же native gettex ряда — MARKET_CLOSED, не NO_TRADES. Пограничные публикации и gettex_chart требуют отдельного подтверждения времени. Положительные/нулевые противоречащие записи не списывать. Никаких синтетических свечей или торговых исключений."
+      ],
+      "evidence": [
+        "stock_monitor/timeframes.py",
+        "MCP_016_CHECKPOINT_RU.md",
+        "history64-evidence/all-history02/calendars/verified-facts.json",
+        "test_gettex_daily_calendar02.py",
+        "history64-evidence/cp-tv-others02/official-notice.json",
+        "history64-evidence/cp-tv-others02/real-check.json",
+        "test_exchange_interruption.py"
+      ],
+      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
+    },
+    {
+      "id": "no_trades",
+      "title": "Подтверждённое отсутствие торговли",
+      "sources": [
+        "gettex"
+      ],
+      "states": [
+        "GAP",
+        "SOURCE_GAP",
+        "UNCONFIRMED",
+        "INVALID",
+        "SOURCE_UNAVAILABLE"
+      ],
+      "status": "ПРОВЕРЕНО",
+      "steps": [
+        "Проверить полноту и пригодность официальных файлов для конкретного интервала.",
+        "Сохранить доказательства NO_TRADES с identity, датой и ссылками.",
+        "Не создавать OHLCV для полностью пустого интервала.",
+        "Заключительная сверка: после штатного bounded recovery CP сохраняет точное задание в cp_reconciliation; человек проверяет TradingView Desktop. Визуальное отсутствие само по себе не является доказательством NO_TRADES. Для 1D необходима полнота доказательства всей реальной сессии того же источника."
+      ],
+      "evidence": [
+        "history64-evidence/apple-recovery02/partial-real-result.json",
+        "stock_monitor/gettex_history.py"
+      ],
+      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
+    },
+    {
+      "id": "partial_evidence",
+      "title": "Использовать неповреждённые части доказательств",
+      "sources": [
+        "gettex"
+      ],
+      "states": [
+        "GAP",
+        "SOURCE_GAP",
+        "UNCONFIRMED",
+        "INVALID",
+        "SOURCE_UNAVAILABLE"
+      ],
+      "status": "ПРОВЕРЕНО",
+      "steps": [
+        "Один плохой MUNC/MUND файл не отменяет независимые полностью проверенные пары.",
+        "Непокрытые интервалы оставить UNCONFIRMED.",
+        "При изменении исходников отозвать только затронутые доказательства."
+      ],
+      "evidence": [
+        "history64-evidence/apple-recovery02/RESULT_RU.txt",
+        "test_gettex_partial_evidence.py"
+      ],
+      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
+    },
+    {
+      "id": "zero_quantity",
+      "title": "Нулевой объём не доказывает исполнение",
+      "sources": [
+        "gettex"
+      ],
+      "states": [
+        "GAP",
+        "SOURCE_GAP",
+        "UNCONFIRMED",
+        "INVALID",
+        "SOURCE_UNAVAILABLE"
+      ],
+      "status": "ПРОВЕРЕНО",
+      "steps": [
+        "Отдельно хранить zero_quantity_intervals.",
+        "Не считать их положительной сделкой и не объявлять NO_TRADES без доказательств.",
+        "Семантику поставщика уточнять; GETTEX запрос уже отправлен02Nov.",
+        "02Nov limited Desktop diagnosis: Apple28Oct13:30 TradingView flat310.85EUR volume0; own official file confirms zero quantity, not a positive-volume execution. No missing positive-volume candle found in the five examined intervals. Do not create READY from this observation."
+      ],
+      "evidence": [
+        "history64-evidence/apple-recovery02/zero-quantity-real.json",
+        "history64-evidence/apple-recovery02/gettex-request-sent.json",
+        "history64-evidence/tradingview02/RESULT_RU.txt"
+      ],
+      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
+    },
+    {
+      "id": "rejected_file",
+      "title": "Повторить загрузку отклонённого исходного файла",
+      "sources": [
+        "gettex"
+      ],
+      "states": [
+        "GAP",
+        "SOURCE_GAP",
+        "UNCONFIRMED",
+        "INVALID",
+        "SOURCE_UNAVAILABLE"
+      ],
+      "status": "ПРОВЕРЕНО",
+      "steps": [
+        "Существующий отклонённый файл допускается в bounded acquisition.",
+        "Проверить gzip/формат замены, сохранить оригинал, соблюдать CAS и cooldown.",
+        "404 старого файла — ограничение запроса, не доказательство отсутствия сделок."
+      ],
+      "evidence": [
+        "test_gettex_partial_evidence.py",
+        "history64-evidence/apple-recovery02/post-policy3-deployment.json"
+      ],
+      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
+    },
+    {
+      "id": "routing_not_identity",
+      "title": "Отличить служебный контекст очереди от identity",
+      "sources": [],
+      "states": [
+        "INVALID",
+        "SOURCE_UNAVAILABLE",
+        "UNCONFIRMED"
+      ],
+      "status": "ПРОВЕРЕНО",
+      "steps": [
+        "Не сравнивать известные _cp_focus/_cp_position и другие routing flags как пользовательскую identity.",
+        "Реальные поля инструмента и ревизии проверять строго.",
+        "Исправление уже в коде; повторное редактирование не требуется."
+      ],
+      "evidence": [
+        "stock_monitor/gettex_history.py",
+        "test_gettex_partial_evidence.py"
+      ],
+      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
+    },
+    {
+      "id": "partial_archive",
+      "title": "Сохранять пригодные участки INVALID-архива",
+      "sources": [],
+      "states": [
+        "INVALID"
+      ],
+      "status": "ПРОВЕРЕНО",
+      "steps": [
+        "Использовать существующее partial diagnostic display.",
+        "Оставить точные причины отклонения, разрывы и INVALID/PARTIAL.",
+        "Не допускать неподтверждённые неполные недельные/месячные агрегаты."
+      ],
+      "evidence": [
+        "history64-evidence/cp-improve28/RESULT_RU.txt",
+        "stock_monitor/test_cp_improve28.py"
+      ],
+      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
+    },
+    {
+      "id": "archive_limit",
+      "title": "Не запрашивать данные за пределами доступной истории",
+      "sources": [
+        "proxy"
+      ],
+      "states": [
+        "GAP",
+        "UNCONFIRMED",
+        "SOURCE_UNAVAILABLE",
+        "SOURCE_LIMITED"
+      ],
+      "status": "ПРОВЕРЕНО",
+      "steps": [
+        "Применить существующий retention/watermark.",
+        "Проверить сохранённые локальные данные до отказа.",
+        "Не переносить сегодняшние ограничения как доказательство повреждения старых свечей."
+      ],
+      "evidence": [
+        "stock_monitor/history_backfill.py",
+        "test_p1_parent_recovery.py"
+      ],
+      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
+    },
+    {
+      "id": "revision_conflict",
+      "title": "Не перезаписывать противоречивые действующие OHLCV",
+      "sources": [],
+      "states": [
+        "INVALID",
+        "GAP",
+        "SOURCE_GAP"
+      ],
+      "status": "ПРОВЕРЕНО",
+      "steps": [
+        "Сравнить исходник, реальный parent и child.",
+        "При расхождении сохранённого корректного parent использовать Revision Watcher, а не тихую замену.",
+        "Сохранить оригинал и происхождение; ревизионная гонка откатывает транзакцию."
+      ],
+      "evidence": [
+        "test_p1_parent_recovery.py",
+        "stock_monitor/revision_watcher.py"
+      ],
+      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
+    },
+    {
+      "id": "different_timestamp_basis",
+      "title": "Различить биржевое исполнение и native provider buckets",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "GAP",
+        "SOURCE_GAP",
+        "UNCONFIRMED",
+        "INVALID",
+        "SOURCE_UNAVAILABLE"
+      ],
+      "status": "ОГРАНИЧЕНИЕ / НУЖНЫ ДОКАЗАТЕЛЬСТВА",
+      "steps": [
+        "Сопоставить опубликованное время исполнения с временной семантикой провайдера.",
+        "Не считать единичный сдвиг доказанной timezone-ошибкой.",
+        "Не переносить NO_TRADES и свечи между providers без доказательства совместимости.",
+        "02Nov TradingView Desktop: targeted Apple28Oct13:30 observation differs from saved LSEG next bucket; official zero-quantity13:44:32.440233 vs LSEG13:47:57. Native time mismatch is not a proven Stock Monitor timezone defect. Do not shift timestamps or transfer absence proofs between providers."
+      ],
+      "evidence": [
+        "history64-evidence/apple-recovery02/bucket-comparison.json",
+        "history64-evidence/apple-recovery02/exchange-witness-check.json",
+        "history64-evidence/apple-resolution02/RESULT_RU.txt",
+        "history64-evidence/tradingview02/RESULT_RU.txt"
+      ],
+      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
+    },
+    {
+      "id": "scope_dependencies",
+      "title": "Отделить старый архив от фактических расчётных зависимостей",
+      "sources": [],
+      "states": [
+        "GAP",
+        "SOURCE_GAP",
+        "UNCONFIRMED",
+        "INVALID",
+        "SOURCE_UNAVAILABLE",
+        "STALE"
+      ],
+      "status": "ПРОВЕРЕНО",
+      "steps": [
+        "Использовать действующий analysis_scope и подтверждённый CORE context.",
+        "Независимый старый дефект вне окна не становится ошибкой окна.",
+        "Не уменьшать прогрев и не копировать разрешения между источниками.",
+        "После углубления daily архива сначала применять существующую область расчёта к выбору источника. Локальные старые повреждения вне фактических зависимостей сохранять в архивном DQ. Monthly warmup проверяет отдельные native месяцы и только непересекающийся фактически используемый daily суффикс; новые внутренние ошибки/identity/revisions блокируют расчёт."
+      ],
+      "evidence": [
+        "history64-evidence/continue30/RESULT_RU.txt",
+        "history64-evidence/cp-nine01/RESULT_RU.txt",
+        "test_admission_dependency_scope.py",
+        "history64-evidence/admission02/RESULT_RU.txt"
+      ],
+      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
+    },
+    {
+      "id": "recursive_warmup",
+      "title": "Проверить прогрев рекурсивных индикаторов",
+      "sources": [],
+      "states": [
+        "UNCONFIRMED",
+        "INVALID"
+      ],
+      "status": "ПРОВЕРЕНО",
+      "steps": [
+        "Использовать существующий benchmark полного и отдельного ограниченного контекстов.",
+        "Устойчивость индикаторов/сигнала должна быть доказана; недостаточная история остаётся BLOCKED.",
+        "Согласованную старую историю можно использовать как отдельную warmup dependency."
+      ],
+      "evidence": [
+        "history64-evidence/apple-periods30/RESULT_RU.txt",
+        "history64-evidence/cp-autonomy02/RESULT_RU.txt"
+      ],
+      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
+    },
+    {
+      "id": "freshness",
+      "title": "Не заменять актуальную цену исторической",
+      "sources": [],
+      "states": [
+        "STALE",
+        "SOURCE_UNAVAILABLE"
+      ],
+      "status": "ПРОВЕРЕНО",
+      "steps": [
+        "Дождаться закрытия интервала и допустимого времени публикации.",
+        "Проверить естественный GETTEX feed и фактическое время приёма/публикации аналитики.",
+        "Запретить исполнение при старой или недостоверной цене независимо от исторических исключений."
+      ],
+      "evidence": [
+        "stock_monitor/candle_schedule.py",
+        "history64-evidence/apple-recovery02/natural-cycle.jsonl"
+      ],
+      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
+    },
+    {
+      "id": "onvista_export",
+      "title": "Получить штатный полный экспорт Onvista",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "GAP",
+        "SOURCE_GAP",
+        "UNCONFIRMED",
+        "INVALID",
+        "SOURCE_UNAVAILABLE"
+      ],
+      "status": "НЕ РЕШЕНО: CSV НЕ ПОЛУЧЕН",
+      "steps": [
+        "Подтвердить GETTEX/EUR/ISIN и нужный день.",
+        "Обычный авторизованный CSV; видимые10строк не доказывают полноту.",
+        "Если download не появился — зафиксировать сбой, не выдавать импорт за выполненный.",
+        "По проверке02Nov исторический CSV доступен бесплатному аккаунту. Plus/Pro не заявляют расширение GETTEX-архива; оплата не считается исправлением сбоя CSV."
+      ],
+      "evidence": [
+        "history64-evidence/onvista-timesales30/RESULT_RU.txt",
+        "history64-evidence/apple-recovery02/web-sources.json",
+        "history64-evidence/onvista-paid02/RESULT_RU.txt",
+        "history64-evidence/apple-resolution02/RESULT_RU.txt"
+      ],
+      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю. Для автоматического получения Onvista требуется отдельное письменное согласие поставщика по AGB§3.3; подписка сама по себе его не подтверждает."
+    },
+    {
+      "id": "external_archive",
+      "title": "Эскалация поставщику при нехватке доказательств",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "GAP",
+        "SOURCE_GAP",
+        "UNCONFIRMED",
+        "INVALID",
+        "SOURCE_UNAVAILABLE"
+      ],
+      "status": "ОЖИДАЕТ ОТВЕТА GETTEX",
+      "steps": [
+        "Сначала использовать сохранённые источники и результаты предыдущих запросов.",
+        "Подготовить точный ISIN/venue/EUR/даты/вопрос о времени и полноте.",
+        "Письмо/учётная запись/оплата только с соответствующим разрешением; не дублировать ожидающий запрос.",
+        "02Nov по разрешению владельца отправлены запросы образца dxFeed и технической проверки Onvista. Сначала проверить сохранённые threads/receipt, не дублировать письма и не покупать доступ без подтверждённого покрытия.",
+        "TradingView Desktop authenticated GETTEX chart and native CSV dialog verified02Nov. Terms3 restrict non-display algorithmic/risk/trading use; download capability is not permission for CP ingestion. Use for bounded visual diagnosis; no automated ingestion or purchase. See source note and evidence."
+      ],
+      "evidence": [
+        "history64-evidence/apple-recovery02/GETTEX_ARCHIVE_REQUEST_DE.txt",
+        "history64-evidence/apple-recovery02/gettex-request-sent.json",
+        "history64-evidence/apple-resolution02/RESULT_RU.txt",
+        "history64-evidence/tradingview02/RESULT_RU.txt"
+      ],
+      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
+    },
+    {
+      "id": "max_available_depth",
+      "title": "Накопление максимальной доступной истории",
+      "sources": [],
+      "states": [
+        "GAP",
+        "INVALID",
+        "UNCONFIRMED",
+        "SOURCE_LIMITED",
+        "STALE"
+      ],
+      "status": "ДЕЙСТВУЮЩИЙ ПРОВЕРЕННЫЙ МЕХАНИЗМ",
+      "steps": [
+        "Использовать existing backfill/inception/watermark; не заменять более глубокий архив коротким.",
+        "SOURCE_LIMITED не означает INVALID. Не выполнять полную повторную загрузку неизменного архива.",
+        "GETTEX daily: брать начальную границу из того же подтверждённого календаря, что использует DQ; не оставлять отдельный устаревший год в загрузчике.",
+        "После расширения календаря дозагружать только префикс до первой сохранённой свечи. Не уменьшать last-watermark; пустой ответ — UNCONFIRMED с bounded retry, не NO_TRADES."
+      ],
+      "evidence": [
+        "MCP_016_CHECKPOINT_RU.md",
+        "history64-evidence/TASK_6_4_CHECKPOINT_RU.md",
+        "test_cp_archive_prefix02.py",
+        "history64-evidence/all-history02/RESULT_RU.txt"
+      ],
+      "limits": "Не переписывать работающий механизм. Все текущие DQ/identity/revisions/CORE проверки сохраняются."
+    },
+    {
+      "id": "cache_normalization",
+      "title": "Нормализация старого кэша при чтении",
+      "sources": [],
+      "states": [
+        "GAP",
+        "INVALID",
+        "UNCONFIRMED",
+        "SOURCE_LIMITED",
+        "STALE"
+      ],
+      "status": "ДЕЙСТВУЮЩИЙ ПРОВЕРЕННЫЙ МЕХАНИЗМ",
+      "steps": [
+        "Применять существующий нормализатор к копии данных в памяти.",
+        "Служебная запись исключается только по подтверждённым правилам; исходная SQLite сохраняется."
+      ],
+      "evidence": [
+        "MCP_016_CHECKPOINT_RU.md",
+        "history64-evidence/TASK_6_4_CHECKPOINT_RU.md"
+      ],
+      "limits": "Не переписывать работающий механизм. Все текущие DQ/identity/revisions/CORE проверки сохраняются."
+    },
+    {
+      "id": "incremental_dependencies",
+      "title": "Пересчёт изменённых дней и зависимостей",
+      "sources": [],
+      "states": [
+        "GAP",
+        "INVALID",
+        "UNCONFIRMED",
+        "SOURCE_LIMITED",
+        "STALE"
+      ],
+      "status": "ДЕЙСТВУЮЩИЙ ПРОВЕРЕННЫЙ МЕХАНИЗМ",
+      "steps": [
+        "Использовать input_revisions, существующий дневной cache и актуальную provenance.",
+        "Не пересчитывать весь архив и не принимать старый результат при изменении значимых входов."
+      ],
+      "evidence": [
+        "MCP_016_CHECKPOINT_RU.md",
+        "history64-evidence/TASK_6_4_CHECKPOINT_RU.md"
+      ],
+      "limits": "Не переписывать работающий механизм. Все текущие DQ/identity/revisions/CORE проверки сохраняются."
+    },
+    {
+      "id": "gap_aggregation",
+      "title": "GAP младших рядов не является повреждением OHLCV",
+      "sources": [],
+      "states": [
+        "GAP",
+        "INVALID",
+        "UNCONFIRMED",
+        "SOURCE_LIMITED",
+        "STALE"
+      ],
+      "status": "ДЕЙСТВУЮЩИЙ ПРОВЕРЕННЫЙ МЕХАНИЗМ",
+      "steps": [
+        "Строить старшие TF существующей сессионной агрегацией.",
+        "Подтверждённый NO_TRADES учитывается отдельно; непроверенный разрыв не становится COMPLETE.",
+        "Не подменять численную проверку 886производных рядов повторным полным аудитом."
+      ],
+      "evidence": [
+        "MCP_016_CHECKPOINT_RU.md",
+        "history64-evidence/TASK_6_4_CHECKPOINT_RU.md"
+      ],
+      "limits": "Не переписывать работающий механизм. Все текущие DQ/identity/revisions/CORE проверки сохраняются."
+    },
+    {
+      "id": "tv_accepted_absence_aggregation",
+      "title": "Принятое совпадающее отсутствие в TV: агрегация и график",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "GAP",
+        "UNCONFIRMED",
+        "SOURCE_GAP"
+      ],
+      "status": "ПРОВЕРЕНО: 14 адресных тестов; Windows/MCP 03.11.2026",
+      "steps": [
+        "Использовать уже сохранённую точную сверку ABSENT и действующую политику владельца для того же ISIN, TF, источника, GETTEX/EUR и ревизий. PRESENT и ZERO_VOLUME не являются ABSENT.",
+        "Не выполнять повторную визуальную проверку неизменившегося доказательства. Передавать действующее разрешение в существующую агрегацию и разметку графика.",
+        "Считать покрытие принятым по TV отдельно от доказанного биржей NO_TRADES. Строить OHLCV только из реальных младших свечей; целиком пустой период не заполнять.",
+        "Не рисовать полосу ошибки для принятого интервала. Непринятый соседний пропуск, INVALID и изменившаяся ревизия сохраняют блокировку и предупреждение.",
+        "Анализ и демоторговля требуют отдельного полного действующего разрешения расчётных зависимостей, прогрева, CORE и свежей цены. Принятие отсутствия не является восстановленной свечой."
+      ],
+      "evidence": [
+        "test_tv_accepted_display.py",
+        "СМ-Архив/TV принятые интервалы результат.json"
+      ]
+    },
+    {
+      "id": "owner_reviewed_time_distribution",
+      "title": "Принятое владельцем расхождение распределения сделок по времени",
+      "sources": [
+        "gettex_chart"
+      ],
+      "states": [
+        "GAP",
+        "UNCONFIRMED",
+        "SOURCE_GAP"
+      ],
+      "status": "ПРОВЕРЕНО АДРЕСНЫМИ ТЕСТАМИ",
+      "steps": [
+        "Сначала использовать сохранённое сравнение точных ISIN, GETTEX/EUR, TF и интервалов. PRESENT или ZERO_VOLUME в TV не объявлять NO_TRADES.",
+        "При отдельном согласии владельца authorize_reviewed_gaps сохраняет точные интервалы и отпечаток проверенных соседних OHLCV. Рассчитывать только настоящие закрытые свечи; не заполнять пропуски и не смешивать поставщиков.",
+        "Штатный feed вызывает reviewed_risk_turn: новые хвостовые свечи требуют повторной проверки и обновления ревизий. Изменение проверенного участка отзывает разрешение; восстановленный интервал больше не нуждается в исключении.",
+        "Учитывать только фактические зависимости CORE, включая прогрев. Проверять устойчивость результата и свежесть цены. Похожий новый интервал требует собственного доказательства и разрешения."
+      ],
+      "evidence": [
+        "test_cp_reviewed_risk.py",
+        "local-private-evidence/Apple влияние пяти интервалов.json"
+      ],
+      "limits": "Только явно принятый исторический риск демосчёта. Это не исправление OHLCV, не фактический DQ READY, не торговый сигнал и не обход исполнительных проверок."
+    }
+  ],
+  "sources": [
+    {
+      "source": "GETTEX official post-trade",
+      "url": "https://www.gettex.de/handel/delayed-data/posttrade-data/",
+      "result": "Existing provider. Published execution files, UTC; site promises >=24h retention, not multi-week archive. Current source already acquired by CP. Three cached 26Oct MUNC slices empty; bounded retry fixed.",
+      "coverage": "confirmed GETTEX EUR, execution time"
+    },
+    {
+      "source": "Onvista",
+      "url": "https://hilfe.onvista.de/de/wie-lade-ich-die-csv-datei-zu-historischen-kursen-herunter",
+      "result": "Existing evidence onvista-timesales30 retained: authenticated full-day CSV command produced no browser download; visible recent 10 trades do not prove whole historical interval. No duplicate downloads.",
+      "coverage": "notation 120581417 GETTEX/EUR",
+      "new_attempt": "02Nov07:03UTC: fresh IAB tab retained access; GETTEX/EUR and26Oct selected. Based on newly observed mouse-click issue tried one keyboard Enter export, no download event after15sec; no CSV. No renewed login or bypass.",
+      "paid_review": {
+        "checked_at": "2026-11-02T09:38:43.364148+00:00",
+        "historical_csv": "free my-onvista account according to official help",
+        "paid_gettex_archive_extension": "NOT_DOCUMENTED",
+        "cp_automated_access": "separate written provider consent required by paid AGB3.3",
+        "no_paid_purchase": true,
+        "evidence": "history64-evidence/onvista-paid02/RESULT_RU.txt",
+        "official_urls": [
+          "https://www.onvista.de/info/premium/plus",
+          "https://hilfe.onvista.de/de/musterdepot-csv-download",
+          "https://www.onvista.de/agb"
+        ]
+      },
+      "owner_authorized_inquiry": {
+        "state": "SENT",
+        "thread": "1a19ba5b702b906b",
+        "evidence": "history64-evidence/apple-resolution02/sent-receipts.json",
+        "automatic_resend": false,
+        "paid_order": false
+      }
+    },
+    {
+      "source": "ARIVA",
+      "url": "https://www.ariva.de/aktien/apple-inc-aktie/kurse/historische-kurse?boerse_id=207",
+      "result": "Browser confirmed selected Gettex; daily historical OHLCV available. Public Times & Sales inspected only current day. Did not obtain historical intraday CSV; daily data does not repair 15m gaps.",
+      "coverage": "confirmed GETTEX/EUR daily"
+    },
+    {
+      "source": "TradingView",
+      "url": "https://www.tradingview.com/chart/?symbol=GETTEX%3AAPC",
+      "result": "Browser confirmed GETTEX:APC / Apple / US0378331005 / EUR. Selected 15m; native Download chart data dialog confirmed GETTEX:APC,15, UNIX UTC. Download attempted once 06:58UTC: no download event after20sec; page export error Value is null. No CSV obtained; no bars imported. Not evidence that archive does not exist.",
+      "coverage": "GETTEX:APC / ISIN US0378331005 / EUR confirmed in Desktop; five historical15m intervals visually checked; no usable licensed automated archive acquired",
+      "desktop_review": {
+        "checked_at": "2026-11-02T13:40:41.983106+00:00",
+        "evidence": "history64-evidence/tradingview02/RESULT_RU.txt",
+        "intervals_checked": 5,
+        "missing_on_both": 4,
+        "zero_volume_only": 1,
+        "native_export_dialog": "CONFIRMED; actual CSV download NOT RUN",
+        "non_display_import": "BLOCKED: separate rights not confirmed",
+        "imported_candles": 0,
+        "permanent_workflow": "cp_reconciliation: persisted assisted review on existing feed lane; no Desktop controller or OHLCV ingestion; existing five observations reused; current native proof and exact identity required",
+        "policy_url": "https://www.tradingview.com/policies/",
+        "autonomy_review_2026_11_02": {
+          "mode": "ASSISTED_ONLY: native queue prepares bounded packets, accepts atomic revision-bound observations and invokes existing eligibility; no TV price ingestion or grants",
+          "official_mcp": "https://www.tradingview.com/mcp/docs",
+          "access": "Official unauthenticated initialize returned HTTP401 OAuth required. Desktop login is not CP authorization; Essential+ entitlement and applicable non-display rights unconfirmed. Do not claim no official API exists.",
+          "navigation": "User-initiated public chart URL opened a new installed Desktop tab in this Windows setup; interval/TF/timezone and visual result still require a person.",
+          "additional_visual_check": "14Oct2026 13:45 Berlin 15m: Desktop GETTEX:APC jumps13:30 to14:00; both neighbouring OHLCV match saved native rows. Visual absence alone remains UNCONFIRMED; no new NO_TRADES or candle.",
+          "native_defect_fixed": "Mixed intervals: final-stage DQ now attaches existing same-source authoritative absence evidence and subtracts only covered_empty intervals. INVALID, partial evidence and wrong identity remain blocking.",
+          "evidence": "history64-evidence/cp-tv-autonomy02"
+        }
+      }
+    },
+    {
+      "source": "TradingView CSV documentation",
+      "url": "https://www.tradingview.com/support/solutions/43000537255-how-to-export-chart-data/",
+      "result": "Official export is chart-loaded CSV via toolbar. No hidden API, authentication bypass or subscription purchase attempted."
+    },
+    {
+      "source": "FactSet Tick History model",
+      "url": "https://assets.ctfassets.net/lmz2w5z92b9u/2yNjkkO0Q1ZMsBpGQ6KfHn/2a27e724f6160a67900a959be3d08d0a/FactSet_Tick_History_Data_Model_1.0G.pdf",
+      "result": "Primary provider model lists Munich Gettex MUNC. Actual Apple dates/entitlement not verified; subscribed access unavailable, not an acquired archive."
+    },
+    {
+      "source": "LSEG Tick History",
+      "url": "https://community.developers.lseg.com/discussion/86712/how-to-filter-by-market-identifier-code-in-the-tick-history",
+      "result": "Primary forum does not establish retrievable GETTEX/MUNC/MUND coverage; cannot claim it fills gaps."
+    },
+    {
+      "source": "comdirect / finanzen.net",
+      "result": "Confirmed market-selection/current quotation candidates; no usable full historical GETTEX intraday export obtained. Default Tradegate/Frankfurt not used."
+    },
+    {
+      "source": "Marktumsaetze.de",
+      "url": "https://marktumsaetze.de/aktie/apple-inc-US0378331005",
+      "methodology": "https://marktumsaetze.de/methodik",
+      "result": "Public UI confirms Apple ISIN/EUR and GETTEX executions. 26Oct shows 6704 trades across ALL venues, 50/page, 135 pages; not 6704 GETTEX trades. About90days tick retention; no venue filter/export found. Methodology does not certify complete exchange tape. No data imported and no absence certified."
+    },
+    {
+      "source": "dxFeed",
+      "url": "https://dxfeed.com/de/marktdaten/aktien-und-etfs/gettex-market-data/",
+      "documentation": "https://kb.dxfeed.com/en/data-model/reference-data/ipf-webservice/how-to-request-ipf.html",
+      "result": "Provider explicitly offers GETTEX historical/TimeAndSale/candles. Authorized public demo/demo IPF query ISIN US0378331005,CURRENCY EUR returned HTTP200 and ##COMPLETE with zero instruments. Demo entitlement does not confirm GETTEX Apple. No OHLCV queried, no subscription or account created; USD examples not downloaded. Commercial coverage of exact dates not yet confirmed.",
+      "evidence": "dxfeed-ipf-apple-eur.txt",
+      "owner_authorized_inquiry": {
+        "state": "SENT",
+        "thread": "1a19ba5996ad6d68",
+        "evidence": "history64-evidence/apple-resolution02/sent-receipts.json",
+        "automatic_resend": false,
+        "paid_order": false
+      }
+    },
+    {
+      "source": "Bavest",
+      "url": "https://docs.bavest.co/reference/timeseriescandles",
+      "result": "Official REST document lists D/W/M only; exchange can pin MUN, currency parameter converts FX and is not proof of native EUR. Realtime GETTEX documented for enterprise subscriptions. No authorized key used; not a verified solution for old intraday holes."
+    },
+    {
+      "source": "lemon.markets",
+      "url": "https://developer.lemon.markets/reference/get_prices-1",
+      "result": "Current documented instrument-price endpoint returns nav/quote and requires authorized business API. Old third-party 2021 OHLC examples not accepted as current working source."
+    },
+    {
+      "source": "GETTEX technical escalation",
+      "url": "https://www.gettex.de/handel/delayed-data/",
+      "contact": "marketdata@gettex.de",
+      "state": "WAITING_EXTERNAL_REPLY",
+      "sent": "2026-11-02",
+      "request_reference": "history64-evidence/apple-recovery02/gettex-request-sent.json",
+      "automatic_send": false
+    }
+  ],
+  "evidence_index": [
+    {
+      "path": "history64-evidence/all-stocks30/RESULT_RU.txt",
+      "sha256_at_import": "0018b165cbe9c881947bce3e9c74e90f29116bf66925dc46713addc103a09d67",
+      "summary": "30.10.2026 — загрузка всех акций, PARTIAL (торговая готовность не подтверждена).",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "history64-evidence/alternate30/RESULT_RU.txt",
+      "sha256_at_import": "8156961ed687be84a6f62d88eadadd01315580551738ef044b8de5b5d6cb5f38",
+      "summary": "30.10.2026 — alternate30. Исправление границы принятого риска внедрено; общий торговый приоритет PARTIAL.",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "history64-evidence/apple-admission30/RESULT_RU.txt",
+      "sha256_at_import": "5ef402bf46e3572d92044cdca55f32b8a8e29211c5e37c92f7fe66502e39c47d",
+      "summary": "APPLE GETTEX/EUR — 30.10.2026, отдельный разрешённый владельцем демо-контекст",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "history64-evidence/apple-intraday30/RESULT_RU.txt",
+      "sha256_at_import": "b2d1108802f0ef46b3b3a0d4d779c0dcde84e39a62905c9b8dd607d84895bfd5",
+      "summary": "Apple GETTEX/EUR — 10m, 30m, 1H, 2H, 3H. 30.10.2026",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "history64-evidence/apple-minute30/RESULT_RU.txt",
+      "sha256_at_import": "d1a1028fecf0dcc3e40c43caeb1bc8170640b7eb95b832fb7ffac651b1000e95",
+      "summary": "Apple GETTEX/EUR — минутный архив, 30.10.2026. PARTIAL / DATA BLOCKED.",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "history64-evidence/apple-periods30/RESULT_RU.txt",
+      "sha256_at_import": "ee8ec09956e435aa49980b175a06558e329ca3810c90c8bdb10858e7d781d302",
+      "summary": "30.10.2026 — Apple GETTEX/EUR, 1W / 1M",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "history64-evidence/apple-ready29/RESULT_RU.txt",
+      "sha256_at_import": "a5e2f58ed85b29bdbc15ef4249c3ffa8e22bc70f62ccc01fb72b493f4f955221",
+      "summary": "29.10.2026, 23:23 Berlin — Apple / общая свежесть CandlePilot",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "history64-evidence/apple-ready30/RESULT_RU.txt",
+      "sha256_at_import": "1a073fe1baf60ddf6f0c49dc59e7a6281315432e8e0c792218bbebe8a5738eea",
+      "summary": "30.10.2026 apple-ready30 — PARTIAL / DATA BLOCKED.",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "history64-evidence/apple-recovery02/RESULT_RU.txt",
+      "sha256_at_import": "14f055363ccacecd519e370f21bbd0efeeffd70ec5de2f8d0b2ae3d47735d889",
+      "summary": "02.11.2026 — Apple GETTEX/EUR recovery02: PARTIAL.",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "history64-evidence/apple-truth30/RESULT_RU.txt",
+      "sha256_at_import": "8fa70c135f551b29aea529c3614c24c047af32cf5495e31c0db9ba0973e26b58",
+      "summary": "30.10.2026 — Apple GETTEX: PARTIAL / внешний архив не восполнен.",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "history64-evidence/apple-valuation30/RESULT_RU.txt",
+      "sha256_at_import": "df0ef4afad1e88bc3492b53cc4cc143e4065fb03e7adc24f4d049025348d8340",
+      "summary": "APPLE — текущая стоимость и P&L, 30.10.2026: DONE / проверено",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "history64-evidence/auto-risk29/RESULT_RU.txt",
+      "sha256_at_import": "8fa7558679971b69bbce84e8c6808ef2b66e6945ecc8ba5e0d2fb9d9fe02a29f",
+      "summary": "29.10.2026 — CP: автоматический риск и GETTEX recovery",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "history64-evidence/chart-fast28/RESULT_RU.txt",
+      "sha256_at_import": "aa566c1f7286f9e13bf8520776c44a60cd357940d1acde56f88afd4f0c309f70",
+      "summary": "Stock Monitor 0.16 TEST — продолжение CP, 28.10.2026",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "history64-evidence/continue30/RESULT_RU.txt",
+      "sha256_at_import": "a06cea25ba713e0d493a5c9f4443efa4f26058db7a7f7998259ecd19f9b9be4b",
+      "summary": "30.10.2026 continue30 — резервный Apple: свежая изолированная проверка; рабочее включение не выполнено.",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "history64-evidence/cp-accepted-analysis27/RESULT_RU.md",
+      "sha256_at_import": "62e701193f5db598cf205d8028cf9b3c94e5adbb50fb755893c00ae457178e1b",
+      "summary": "# Принятые пропуски → реальный CORE, 27.10.2026",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "history64-evidence/cp-autonomy02/RESULT_RU.txt",
+      "sha256_at_import": "8d973971e796cc10610eda2a34f93ec68e5c3835fd389304d0b1fa6cb95e8955",
+      "summary": "Stock Monitor 0.16 TEST — cp-autonomy02, 02.11.2026",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "history64-evidence/cp-autonomy27/RESULT_RU.md",
+      "sha256_at_import": "4afdf618a943531aeb6ff4be544637a24fdc6592ba022e5e02137d14c8609516",
+      "summary": "# CandlePilot — завершение недостающей автоматики, 27.10.2026",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "history64-evidence/cp-controls27/RESULT_RU.md",
+      "sha256_at_import": "419bdc085d24a0da28af8a5176a606555b20a7909b02daa628a5048dab2721ef",
+      "summary": "# 27.10.2026 — управление проблемами CandlePilot",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "history64-evidence/cp-improve28/RESULT_RU.txt",
+      "sha256_at_import": "5e539aeaee125030fa78ee8b4801e57298d3327642dad625a7c5e3ef36c9f6c4",
+      "summary": "CandlePilot — три улучшения Work №1, 28.10.2026",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "history64-evidence/cp-nine01/RESULT_RU.txt",
+      "sha256_at_import": "435a02716fa8e707ba5ad1dd0a1c7ac3232a57ecc3fe253995b005bf0e62d104",
+      "summary": "02.11.2026 — Work №1, CandlePilot 15m–1M. Статус PARTIAL.",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "history64-evidence/eur-only29/RESULT_RU.txt",
+      "sha256_at_import": "ea3b7460567053f930ef0e1a9c1fe5b76eb15e6d2e90d7bb30adcce296c32144",
+      "summary": "29.10.2026 — EUR-only stock history: внедрено, адресные проверки PASS.",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "history64-evidence/gettex-only30/RESULT_RU.txt",
+      "sha256_at_import": "1b016b4244547e3d1fdc9cfa0f99e77e6ab4ba1f8335fd39636f009d85d90298",
+      "summary": "30.10.2026 gettex-only30 — owner instruction «все только GETTEX, одна биржа» applied to current Apple scope. Code/test stage DONE; WORKING ACTIVATION PARTIAL / WAITING FOR SAFE CLOSE. Four production files changed: eur_listings.py (optional history_venue_lock and confirmed/stored",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "history64-evidence/gettex-primary29/RESULT_RU.txt",
+      "sha256_at_import": "40e54a84496f1aff41a680d6bb3f71201d82b6941c36c244522df8e21bc1a740",
+      "summary": "29.10.2026 — GETTEX основной: внедрено в Windows TEST",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "history64-evidence/mean-core29/RESULT_RU.txt",
+      "sha256_at_import": "40883db8768769141ffa27178326b717cf092d2fc43c6bec49bd33212d98c811",
+      "summary": "29.10.2026 — принятая средняя Close в анализе / CORE",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "history64-evidence/onvista-timesales30/RESULT_RU.txt",
+      "sha256_at_import": "61a9084966d41c19745bca7fbf7bd01aea529bf88f489609c83ea5285aab6f7e",
+      "summary": "30.10.2026 — Apple / Onvista GETTEX Times & Sales 26Oct: PARTIAL, import BLOCKED.",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "history64-evidence/onvista28/RESULT_RU.txt",
+      "sha256_at_import": "9e99ab002fa57c0b107785bc3ca5c7dce153b1da7a282b8a52610711b64d31de",
+      "summary": "28.10.2026 — Onvista: загрузка и подключение к 0.16 TEST",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "history64-evidence/owner-risk30/RESULT_RU.txt",
+      "sha256_at_import": "6402cfc713986ee6d488ba274ba5ea20aecc0e70d61535f2235adc7e87754186",
+      "summary": "30.10.2026, 07:13 Berlin — продолжение Apple / CandlePilot",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "history64-evidence/p1-systemic26/RESULT_RU.md",
+      "sha256_at_import": "6c0bc759f5a73498506533760d589a0b223c7a07ea80f1ad32a44865c96912d6",
+      "summary": "# P1 — системные блокировки аналитики, 26.10.2026",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "history64-evidence/proxy-auto28/RESULT_RU.md",
+      "sha256_at_import": "c1b7ac359734000488a25a4a70b0f32bfc6b84892eab9c227da1d7666831734a",
+      "summary": "# 28.10.2026 — единый Proxy и поиск глубокого EUR-архива",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "history64-evidence/readiness30/RESULT_RU.txt",
+      "sha256_at_import": "18695c79fd748e7aa47531564ab72bb7cf05cff4f849818ce32888397384e652",
+      "summary": "30.10.2026 — Readiness, первая адресная программная правка внедрена. Общий торговый допуск PARTIAL / DATA BLOCKED.",
+      "kind": "historical report; original status retained, not a new PASS"
+    },
+    {
+      "path": "MCP_016_CHECKPOINT_RU.md",
+      "kind": "full historical checkpoint; indexed reference, not re-audited"
+    },
+    {
+      "path": "history64-evidence/TASK_6_4_CHECKPOINT_RU.md",
+      "kind": "full historical checkpoint; indexed reference, not re-audited"
+    },
+    {
+      "path": "history64-evidence/CHART_P0_RESULT_RU.md",
+      "summary": "# P0 — восстановление графиков 0.16 TEST, 26.10.2026",
+      "sha256_at_import": "7f6c358696fbb6e10e691dc20068cdf0ee3d6f9e08d54ae83601b1e16f4723fe",
+      "kind": "retained report; not re-audited"
+    },
+    {
+      "path": "history64-evidence/COVERAGE_11TF_19OCT_RU.md",
+      "summary": "# Покрытие 11 TF — метаданные 19.10.2026",
+      "sha256_at_import": "ef458698f8ba6791bfda1b23aad1572746408ca4e95cde847afaa8b422464769",
+      "kind": "retained report; not re-audited"
+    },
+    {
+      "path": "history64-evidence/COVERAGE_6_4_FINAL_19OCT_RU.md",
+      "summary": "# Universal Candle History 6.4 — фактическое покрытие, 19.10.2026",
+      "sha256_at_import": "ebbfd07cffea4714628c5a28edc23e2b1b0720e2c7eab0281c77f0ef13b62ef6",
+      "kind": "retained report; not re-audited"
+    },
+    {
+      "path": "history64-evidence/estimate29/README_RU.txt",
+      "summary": "29.10.2026 — оценка исторического пропуска по соседним Close.",
+      "sha256_at_import": "43eb7e4ec8254f2ea84e04a44ead660927721004563ef47e75aa77ff810e11fa",
+      "kind": "retained report; not re-audited"
+    },
+    {
+      "path": "history64-evidence/EUR_WINDOW_CONTRACT_21OCT_RU.md",
+      "summary": "# Контракт расчётного окна EUR — проект допуска, 21.10.2026",
+      "sha256_at_import": "b86ed2365e55eae90d980c110e3f59ff9f985e9fbe4b2a2f5d09d6b3b50b05f2",
+      "kind": "retained report; not re-audited"
+    },
+    {
+      "path": "history64-evidence/p1-systemic26/final_report_section.txt",
+      "summary": "## Завершение проверки P1, 26.10.2026",
+      "sha256_at_import": "1286102c7bdc5e4c6bc444cd7794ea6817f4b99173b1d433c2c24de3aed18235",
+      "kind": "retained report; not re-audited"
+    },
+    {
+      "path": "history64-evidence/p1-systemic26/ROLLBACK_RU.md",
+      "summary": "# Точечный откат P1, 26.10.2026",
+      "sha256_at_import": "835cea5392e4328f6ca7c5d81e4e8c9a6b56de5315c6ea17a085aaa9885c97c1",
+      "kind": "retained report; not re-audited"
+    },
+    {
+      "path": "history64-evidence/P1_RESULT_26_RU.md",
+      "summary": "# P1 — 26.10.2026: PARTIAL, торговая готовность BLOCKED",
+      "sha256_at_import": "65c59d1c6c316bc915c0d7362efd046df6986a4405eb509aebe1772c4ee76dc6",
+      "kind": "retained report; not re-audited"
+    },
+    {
+      "path": "history64-evidence/P2_RESULT_26_RU.md",
+      "summary": "# P2 — 26.10.2026: изолированный маршрут PASS, рабочий кандидат BLOCKED",
+      "sha256_at_import": "5a26cab9ee896975850befae18e45b6993136a8404027d909aad16d12ec85fb2",
+      "kind": "retained report; not re-audited"
+    },
+    {
+      "path": "history64-evidence/proxy-session27/RESULT28_RU.md",
+      "summary": "# Proxy: автоматический EUR-ряд 07:30–23:00 — 28.10.2026",
+      "sha256_at_import": "698620875f38fb447c8be20ae96d60490994ba4ca46b79ee6c5e3e911483a094",
+      "kind": "retained report; not re-audited"
+    },
+    {
+      "path": "history64-evidence/tesla-21oct/CHECKPOINT_RU.md",
+      "summary": "## 21.10.2026 — Tesla evening 5m/15m (owner priority replaces five-stock work)",
+      "sha256_at_import": "9248d156f29385ac959f4c9f14facfd925fe8c78337646af4f3694dc6750f106",
+      "kind": "retained report; not re-audited"
+    },
+    {
+      "path": "local-private-evidence/Отчёты 03.10.2026/HISTORY20_016_VERIFIED_RU.md",
+      "kind": "04–07Oct original verified report; not rerun",
+      "sha256_at_import": "48d67d9dd0d6c3919b7215769470ee48aeb31a1feaff60d6af484523d9954a93"
+    },
+    {
+      "path": "local-private-evidence/Отчёты 03.10.2026/HISTORY2_FINAL_PASS_RU.md",
+      "kind": "04–07Oct original verified report; not rerun",
+      "sha256_at_import": "b0cafb58ec55279a59fbfb6a1fe251fd89dc2f39f1fc9b5bf41aac4290920ccd"
+    },
+    {
+      "path": "local-private-evidence/Отчёты 03.10.2026/DATA_QUALITY_016_VERIFIED_RU.md",
+      "kind": "04–07Oct original verified report; not rerun",
+      "sha256_at_import": "8c458c104acbebbe38aacbbf35fe0d653a059c0e8bfcc23d4a22088647f2f10d"
+    },
+    {
+      "path": "local-private-evidence/Отчёты 03.10.2026/TIMEFRAMES4_016_VERIFIED_RU.md",
+      "kind": "04–07Oct original verified report; not rerun",
+      "sha256_at_import": "9c3677fec31d5cfa505625faf5227825c99799956e06d32ee68dbc710726df6a"
+    },
+    {
+      "path": "local-private-evidence/Отчёты 03.10.2026/MARKET_BENCHMARKS_016_FINAL_PASS_RU.md",
+      "kind": "04–07Oct original verified report; not rerun",
+      "sha256_at_import": "4f42108a0288b1c8db438cb2c107629a6232c5237aa3cb5d4414b96e3e68d0f6"
+    },
+    {
+      "path": "history64-evidence/onvista-paid02/RESULT_RU.txt",
+      "kind": "Official paid-access research; no market revalidation",
+      "sha256_at_import": "65185ce5fe15350bf1a528f08dd5ac9f1de706c4f668e68bf25be6e82232774b"
+    },
+    {
+      "path": "history64-evidence/apple-resolution02/RESULT_RU.txt",
+      "kind": "Targeted read-only dependencies and authorized provider sample requests",
+      "sha256_at_import": "87a83aeda99886a8e59baa02e2bb99965188fa349595fdfcfc836ee16c7001ad"
+    },
+    {
+      "path": "history64-evidence/all-history02/RESULT_RU.txt",
+      "sha256_at_import": "d9417291fee8b64dd3305ba351356e4a30eb3cde23f286efba9c3db6d300fff8",
+      "summary": "GETTEX daily prefix: устаревшая граница2024 устранена; подтверждённый календарь2015–2020 добавлен. Только недостающий prefix, сохранение watermark/identity/CAS; источник может вернуть неполный или повреждённый архив.",
+      "kind": "current implementation evidence; no global completeness claim"
+    },
+    {
+      "path": "history64-evidence/cp-help02/RESULT_RU.txt",
+      "sha256_at_import": "d1606ce0b18696808cb70ea2af2e9c6d55ca8d9c487e39af9b645e41d1061ec0",
+      "summary": "Точные причины recovery:9новых+2затронутыхPASS; естественный WindowsCP и remote MCP подтверждены.",
+      "kind": "bounded structured evidence; no market readiness inference"
+    },
+    {
+      "path": "history64-evidence/cp-speed02/RESULT_RU.txt",
+      "kind": "6 new + 4 affected PASS; Windows natural recovery and remote MCP verified; not overall CP speed",
+      "sha256_at_import": "9cb68add382e79c3e65292ceec2a8eb24543e2a89b0b727c23d3915514eafbfb"
+    },
+    {
+      "path": "history64-evidence/cp-adaptive02/RESULT_RU.txt",
+      "kind": "23new+6affectedPASS; Windows pending",
+      "sha256_at_import": "51e56e24827d2747c9fd6cd326baa287366681c8fc2a79d010a3fff1a48de271"
+    },
+    {
+      "path": "history64-evidence/admission02/RESULT_RU.txt",
+      "kind": "9new+5affectedPASS; isolatedrealApple1W/1MREADY; Windows pending at import",
+      "sha256_at_import": "67709b48a2b06aa1c0e8be1acd1bb85a6dd10b6ce935aed9e7e19f9302a3be2f"
+    },
+    {
+      "path": "history64-evidence/tradingview02/RESULT_RU.txt",
+      "kind": "5 target visual diagnosis and saved-source comparison; no import; no trading PASS",
+      "sha256_at_import": "1cdb3ec4c375da282bcdcc62de0eeba30ea30f1c7d1bd76bcd03f37d62c8da57"
+    }
+  ]
+}
