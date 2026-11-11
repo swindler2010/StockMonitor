@@ -24720,3 +24720,56 @@ Windows штатно перезапущен11:59:50CET, MCP нового экз�
 
 
 **Сопутствующие документы, audit и manifest** полностью сохранены в разделе X; PR #18 issue-комментарий сохранён в разделе XI. Приоритет требований: новые решения владельца и текущие секции I–IX, затем архивные PR-описания; фактический статус по live-коду/тестам, не по старым словам PASS.
+
+
+## XV. GitHub Timeline: перекрёстные ссылки и события (кроме уже архивированных комментариев)
+
+GitHub timeline содержит повторные события комментариев, уже полностью сохранённых в разделах V/XI. Ниже сохранены **только дополнительные события** с указанием связанных Issue/PR; сохранённые события не образуют вторых задач. Частичный экспорт #1–#8.
+
+### XV.1. Дополнительные события Issues #1–#8
+
+| Issue | Вид | Дата UTC | Автор | Связанный объект | Идентификатор / ссылка |
+|---:|---|---|---|---|---|
+| 1 | cross-referenced | 2026-10-15T07:14:18Z | swindler2010 | [7](https://github.com/swindler2010/StockMonitor/issues/7) v0.16: safe MCP UI controls, state confirmation and cloud connection | — |
+| 1 | cross-referenced | 2026-10-15T07:14:40Z | swindler2010 | [13](https://github.com/swindler2010/StockMonitor/issues/13) MASTER REGISTRY: 62 legacy tasks, D01–D14, N01–N23 and v0.16→0.17 status | — |
+| 1 | cross-referenced | 2026-10-15T07:55:42Z | swindler2010 | [14](https://github.com/swindler2010/StockMonitor/issues/14) GLOBAL DEVELOPER RULE — applies to EVERY task: documentation, backups, safe cleanup | — |
+| 1 | cross-referenced | 2026-10-22T17:30:43Z | swindler2010 | [5](https://github.com/swindler2010/StockMonitor/issues/5) v0.16: complete universal EUR OHLCV history and Data Quality E2E | — |
+| 2 | cross-referenced | 2026-10-15T07:14:12Z | swindler2010 | [4](https://github.com/swindler2010/StockMonitor/issues/4) v0.16 blocker: fix UI hangs, source switching and watchlist add verification | — |
+| 2 | cross-referenced | 2026-10-15T07:14:16Z | swindler2010 | [6](https://github.com/swindler2010/StockMonitor/issues/6) v0.16: finish MCP read access to charts, indicators, quotes, news and portfolio | — |
+| 2 | cross-referenced | 2026-10-15T07:14:40Z | swindler2010 | [13](https://github.com/swindler2010/StockMonitor/issues/13) MASTER REGISTRY: 62 legacy tasks, D01–D14, N01–N23 and v0.16→0.17 status | — |
+| 2 | cross-referenced | 2026-10-15T07:53:52Z | swindler2010 | [11](https://github.com/swindler2010/StockMonitor/issues/11) v0.16: paper trading after stable EUR candles; v0.17: advanced trading roadmap | — |
+| 2 | cross-referenced | 2026-10-26T18:31:51Z | swindler2010 | [14](https://github.com/swindler2010/StockMonitor/issues/14) GLOBAL DEVELOPER RULE — applies to EVERY task: documentation, backups, safe cleanup | — |
+| 2 | cross-referenced | 2026-10-26T18:32:18Z | swindler2010 | [7](https://github.com/swindler2010/StockMonitor/issues/7) v0.16: safe MCP UI controls, state confirmation and cloud connection | — |
+| 2 | renamed | 2026-10-28T16:11:35Z | swindler2010 | v0.17: Expose complete instrument watchlist via MCP Bridge → v0.16 TEST: complete instrument watchlist via MCP Bridge — PARTIAL verification | 34494960043 |
+| 2 | mentioned | 2026-10-28T16:27:30Z | catalog | — | 34496468515 |
+| 2 | mentioned | 2026-10-28T16:27:30Z | persisted | — | 34496469182 |
+| 2 | subscribed | 2026-10-28T16:27:31Z | persisted | — | 34496469886 |
+| 2 | cross-referenced | 2026-11-02T13:55:58Z | swindler2010 | [5](https://github.com/swindler2010/StockMonitor/issues/5) v0.16: complete universal EUR OHLCV history and Data Quality E2E | — |
+| 3 | cross-referenced | 2026-10-15T07:14:40Z | swindler2010 | [13](https://github.com/swindler2010/StockMonitor/issues/13) MASTER REGISTRY: 62 legacy tasks, D01–D14, N01–N23 and v0.16→0.17 status | — |
+| 3 | cross-referenced | 2026-10-15T07:53:52Z | swindler2010 | [11](https://github.com/swindler2010/StockMonitor/issues/11) v0.16: paper trading after stable EUR candles; v0.17: advanced trading roadmap | — |
+| 4 | cross-referenced | 2026-10-15T07:14:40Z | swindler2010 | [13](https://github.com/swindler2010/StockMonitor/issues/13) MASTER REGISTRY: 62 legacy tasks, D01–D14, N01–N23 and v0.16→0.17 status | — |
+| 4 | cross-referenced | 2026-10-15T07:53:52Z | swindler2010 | [11](https://github.com/swindler2010/StockMonitor/issues/11) v0.16: paper trading after stable EUR candles; v0.17: advanced trading roadmap | — |
+| 5 | cross-referenced | 2026-10-15T07:14:23Z | swindler2010 | [10](https://github.com/swindler2010/StockMonitor/issues/10) v0.17 backlog: single-instance windows and chart drawing UX | — |
+| 5 | cross-referenced | 2026-10-15T07:14:40Z | swindler2010 | [13](https://github.com/swindler2010/StockMonitor/issues/13) MASTER REGISTRY: 62 legacy tasks, D01–D14, N01–N23 and v0.16→0.17 status | — |
+| 5 | cross-referenced | 2026-10-15T07:53:52Z | swindler2010 | [11](https://github.com/swindler2010/StockMonitor/issues/11) v0.16: paper trading after stable EUR candles; v0.17: advanced trading roadmap | — |
+| 5 | cross-referenced | 2026-10-26T13:51:18Z | swindler2010 | [14](https://github.com/swindler2010/StockMonitor/issues/14) GLOBAL DEVELOPER RULE — applies to EVERY task: documentation, backups, safe cleanup | — |
+| 5 | cross-referenced | 2026-10-26T19:47:24Z | swindler2010 | [4](https://github.com/swindler2010/StockMonitor/issues/4) v0.16 blocker: fix UI hangs, source switching and watchlist add verification | — |
+| 6 | cross-referenced | 2026-10-15T07:14:18Z | swindler2010 | [7](https://github.com/swindler2010/StockMonitor/issues/7) v0.16: safe MCP UI controls, state confirmation and cloud connection | — |
+| 6 | cross-referenced | 2026-10-15T07:14:40Z | swindler2010 | [13](https://github.com/swindler2010/StockMonitor/issues/13) MASTER REGISTRY: 62 legacy tasks, D01–D14, N01–N23 and v0.16→0.17 status | — |
+| 6 | cross-referenced | 2026-10-15T07:53:52Z | swindler2010 | [11](https://github.com/swindler2010/StockMonitor/issues/11) v0.16: paper trading after stable EUR candles; v0.17: advanced trading roadmap | — |
+| 6 | cross-referenced | 2026-10-26T18:31:51Z | swindler2010 | [14](https://github.com/swindler2010/StockMonitor/issues/14) GLOBAL DEVELOPER RULE — applies to EVERY task: documentation, backups, safe cleanup | — |
+| 6 | cross-referenced | 2026-10-28T13:06:26Z | swindler2010 | [2](https://github.com/swindler2010/StockMonitor/issues/2) v0.16 TEST: complete instrument watchlist via MCP Bridge — PARTIAL verification | — |
+| 6 | mentioned | 2026-10-28T16:27:31Z | catalog | — | 34496471399 |
+| 6 | mentioned | 2026-10-28T16:27:32Z | persisted | — | 34496472156 |
+| 6 | subscribed | 2026-10-28T16:27:32Z | persisted | — | 34496472818 |
+| 7 | cross-referenced | 2026-10-15T07:14:40Z | swindler2010 | [13](https://github.com/swindler2010/StockMonitor/issues/13) MASTER REGISTRY: 62 legacy tasks, D01–D14, N01–N23 and v0.16→0.17 status | — |
+| 7 | cross-referenced | 2026-10-15T07:53:52Z | swindler2010 | [11](https://github.com/swindler2010/StockMonitor/issues/11) v0.16: paper trading after stable EUR candles; v0.17: advanced trading roadmap | — |
+| 7 | cross-referenced | 2026-10-26T17:51:06Z | swindler2010 | [6](https://github.com/swindler2010/StockMonitor/issues/6) v0.16: finish MCP read access to charts, indicators, quotes, news and portfolio | — |
+| 7 | cross-referenced | 2026-10-26T18:31:51Z | swindler2010 | [14](https://github.com/swindler2010/StockMonitor/issues/14) GLOBAL DEVELOPER RULE — applies to EVERY task: documentation, backups, safe cleanup | — |
+| 8 | cross-referenced | 2026-10-15T07:14:40Z | swindler2010 | [13](https://github.com/swindler2010/StockMonitor/issues/13) MASTER REGISTRY: 62 legacy tasks, D01–D14, N01–N23 and v0.16→0.17 status | — |
+| 5 | mentioned | 2026-10-28T09:03:45Z | Tinyfish | — | 34456070668 |
+| 5 | subscribed | 2026-10-28T09:03:45Z | Tinyfish | — | 34456071362 |
+| 5 | cross-referenced | 2026-11-10T21:24:07Z | swindler2010 | [17](https://github.com/swindler2010/StockMonitor/pull/17) Синхронизация актуальной Stock Monitor 0.16 TEST: CandlePilot, Bridge/MCP и V2 | — |
+| 5 | cross-referenced | 2026-11-10T22:06:42Z | swindler2010 | [18](https://github.com/swindler2010/StockMonitor/pull/18) Work1: изолировать оперативную торговлю от восстановления истории | — |
+
+Объём прочитанного timeline (включая уже перенесённые comment events): #1=8, #2=18, #3=6, #4=6, #5=334, #6=24, #7=9, #8=6. Некомментарных событий: 41.
