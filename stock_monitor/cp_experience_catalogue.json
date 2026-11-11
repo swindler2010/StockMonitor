@@ -4,10 +4,40 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "unavailable_file_head_starvation",
+      "title": "Отсутствующий официальный файл не задерживает остальные срезы",
+      "sources": [
+        "gettex official posttrade"
+      ],
+      "states": [
+        "UNCONFIRMED",
+        "SOURCE_GAP"
+      ],
+      "status": "ПРОВЕРЕНО ИЗОЛИРОВАННО; RUNTIME ОЖИДАЕТ",
+      "steps": [
+        "Только HTTP404 отдельного файла допускает переход к следующему независимому файлу внутри прежнего бюджета до8.",
+        "Сохранять file_cursor в стабильном порядке файлов сессии и в RUNNING lease до запроса; после restart и cooldown продолжать обход.",
+        "HTTP429 немедленно останавливает пачку, общий cooldown и Retry-After сохраняются. Повреждённые gzip и другие ошибки не обходить.",
+        "Сохранённые реальные файлы обрабатывает прежний валидатор. Отсутствующий файл не создаёт ни свечу, ни NO_TRADES, ни торговой допуск."
+      ],
+      "evidence": [
+        "test_cp_missing_file_rotation:6 new PASS; first404 before two available neighbours, bounded cursor restart/cooldown,429RetryAfter,wrap,corruptgzip,interruptedlease",
+        "57 related test executions PASS;4 unrelated baseline failures reproduced against original function and documented separately"
+      ],
+      "limits": "Не обещает доступность отсутствующих архивов. Недоступные файлы остаются в квитанции unavailable_files. Не увеличивает общий бюджет и не запускает повторную массовую загрузку."
+    },
+    {
       "id": "preserve_analysis_after_failed_assessment",
       "title": "Ошибка повторной оценки не стирает проверенные независимые результаты",
-      "sources": ["saved assessment queue"],
-      "states": ["ERROR", "STALE", "EXPIRED", "INPUT_CHANGED"],
+      "sources": [
+        "saved assessment queue"
+      ],
+      "states": [
+        "ERROR",
+        "STALE",
+        "EXPIRED",
+        "INPUT_CHANGED"
+      ],
       "status": "ПРОВЕРЕНО ИЗОЛИРОВАННО; RUNTIME ОЖИДАЕТ",
       "steps": [
         "При ошибке повторной оценки сохранить прежнюю успешную квитанцию с неизменными закрытыми входами, сроками, identity и разрешениями; записать последнюю ошибку отдельно.",
@@ -24,9 +54,15 @@
     {
       "id": "assessment_retry_waiting_age",
       "title": "Повторная оценка не вытесняется новыми успешными заявками",
-      "sources": ["saved assessment queue"],
-      "states": ["ERROR", "STALE", "INPUT_CHANGED"],
-      "status": "ПРОВЕРЕНО ИЗОЛИРОВАННО; RUNTIME ОЖИДАЕТ",
+      "sources": [
+        "saved assessment queue"
+      ],
+      "states": [
+        "ERROR",
+        "STALE",
+        "INPUT_CHANGED"
+      ],
+      "status": "ПРОВЕРЕНО WINDOWS/MCP",
       "steps": [
         "В существующей последовательной очереди сравнивать последнее фактическое ожидание: last_attempt_at либо requested_at для ещё не выполненной заявки.",
         "Не считать отсутствующую попытку временем ноль: иначе новые заявки постоянно вытесняют старые ошибки.",
@@ -34,7 +70,8 @@
       ],
       "evidence": [
         "test_cp_assessment_retry_fairness:3 new PASS; reproduced starvation FAIL before fix; recurring53/200requests",
-        "test_cp_assessment_worker:3 affected PASS; priority fairness, persisted retry and revision-change rejection"
+        "test_cp_assessment_worker:3 affected PASS; priority fairness, persisted retry and revision-change rejection",
+        "11Nov11:24CET normal restart; natural Newmont retry11:32:12 replaced prior-evening error;9preservation checks true11:33"
       ],
       "limits": "Повторная попытка не гарантирует READY. Реальное изменение входных данных и недостаток доказательств продолжают блокировать публикацию; TTL и торговые разрешения не меняются."
     },
@@ -835,7 +872,7 @@
         "INVALID",
         "UNCONFIRMED"
       ],
-      "status": "ПРОВЕРЕНО ИЗОЛИРОВАННО; RUNTIME ОЖИДАЕТ",
+      "status": "ПРОВЕРЕНО WINDOWS/MCP",
       "steps": [
         "Разделять текущую область политики, архив других площадок, удалённые инструменты и неопределённую identity; не выдавать архивные ошибки за текущий торговый допуск.",
         "В существующем serial history turn перепроверять один изменённый зарегистрированный GETTEX/EUR ряд, включая gettex_chart.",
@@ -864,7 +901,7 @@
         "UNCONFIRMED",
         "READY"
       ],
-      "status": "ПРОВЕРЕНО ИЗОЛИРОВАННО; RUNTIME ОЖИДАЕТ",
+      "status": "ПРОВЕРЕНО WINDOWS/MCP",
       "steps": [
         "В существующем history writer после NO_MATCH нормализации проверить ограниченные кандидаты data_quality, не более одного переноса за turn.",
         "BEGIN IMMEDIATE, повторная проверка отсутствия ISIN в instruments, content-addressed receipt с точным before_raw; CAS удаляет только прежний диагностический ключ.",
