@@ -383,9 +383,68 @@ def _calculate(store,values,last_client):
     return state
 
 
+def _invalidated_stock(stock,reason):
+    result={k:stock[k] for k in ('isin','name','timeframe','source_mode') if k in stock}
+    result.update(candles=[],count=0,input_state='INVALIDATED',
+        data_quality={'state':'STALE','issues':['Closed calculation inputs changed; re-evaluation required'],
+                      'basis':'calculation validity; saved archive DQ not modified'},
+        trading_engine={'status':'DATA BLOCKED','signal':'WAIT','confidence':0,'score':0,
+                        'blockers':['CLOSED_INPUT_CHANGED'],'input_change':str(reason)})
+    return result
+
+
+def _merge_snapshot_proofs(guards):
+    from performance_cache import _digest
+    merged=dict(version=1,revisions={},strict={},settings={},settings_start={},series=[]);series={}
+    for guard in guards:
+        for field in ('revisions','strict','settings','settings_start'):merged[field].update(guard.get(field,{}))
+        for item in guard['series']:series[_digest(item['spec'])]=item
+    merged['series']=list(series.values())
+    return merged
+
+
+def retain_current_publication(state,current):
+    """Bounded metadata filter at the final UI boundary; never reads candles.
+
+    A late raw revision revokes every dependent stock. No token is rebased
+    over that change, and missing/global unowned proofs still reject all.
+    Exact validation remains on the worker; this is deliberately stricter.
+    """
+    token=state.get('_input_revisions')
+    if not isinstance(state.get('analysis_snapshot'),dict) or not isinstance(token,dict) or set(token)!=set(current):return False
+    changed={k for k,v in token.items() if current[k]!=v}
+    records=[];owned=set()
+    for stock in state.get('stocks',[]):
+        if stock.get('input_state')=='INVALIDATED':continue
+        guard=stock.get('_closed_inputs')
+        if (not isinstance(guard,dict) or guard.get('version')!=1 or not isinstance(guard.get('series'),list)
+            or not all(isinstance(guard.get(k),dict) for k in ('revisions','strict','settings','settings_start'))):return False
+        scopes=set(guard['revisions'])
+        if not scopes.issubset(token):return False
+        if ('instrument:'+stock['isin'] not in scopes and
+            (stock.get('candles') or stock.get('trading_engine',{}).get('status')=='READY')):return False
+        records.append((stock,guard,scopes));owned.update(scopes)
+    if set(token)!=owned:return False
+    invalidated={s['isin']:'Late publication revision changed: '+', '.join(sorted(scopes & changed)[:12])
+                 for s,_,scopes in records if scopes & changed}
+    guards=[g for s,g,_ in records if s['isin'] not in invalidated]
+    retained={k:token[k] for g in guards for k in g['revisions']}
+    state['stocks']=[_invalidated_stock(s,invalidated[s['isin']]) if s['isin'] in invalidated else s for s in state['stocks']]
+    state['_input_revisions']=retained;state['_closed_inputs']=_merge_snapshot_proofs(guards)
+    snapshot=state['analysis_snapshot'];snapshot.setdefault('invalidated_inputs',{}).update(invalidated)
+    snapshot['validated_instruments']=len(guards)
+    state.setdefault('_calculation_timing',{}).update(publication_invalidated_instruments=len(invalidated),
+        invalidated_instruments=len(snapshot['invalidated_inputs']))
+    state['_revision_trace']={k:v for k,v in state.get('_revision_trace',{}).items()
+        if len(v.get('scope','').split(':'))>=2 and v['scope'].split(':')[1] not in invalidated}
+    if state.get('selected',{}).get('isin') in invalidated:
+        state['market_context']={'state':'UNAVAILABLE','reason':'Selected closed inputs changed before publication'}
+    return True
+
+
 def validate_snapshot(store,state):
     """Retain valid instruments; a changed instrument cannot keep old signals."""
-    from performance_cache import validate_closed_inputs,InputRevisionChanged,_digest
+    from performance_cache import validate_closed_inputs,InputRevisionChanged
     union={};guards=[];invalidated={};memo={}
     with store.connect() as db:
         db.execute('BEGIN')
@@ -396,18 +455,8 @@ def validate_snapshot(store,state):
                 union.update(current);guards.append(guard)
             except InputRevisionChanged as error:
                 invalidated[stock['isin']]=str(error)
-                state['stocks'][index]={k:stock[k] for k in ('isin','name','timeframe','source_mode') if k in stock}
-                state['stocks'][index].update(candles=[],count=0,input_state='INVALIDATED',
-                    data_quality={'state':'STALE','issues':['Closed calculation inputs changed; re-evaluation required'],
-                                  'basis':'calculation validity; saved archive DQ not modified'},
-                    trading_engine={'status':'DATA BLOCKED','signal':'WAIT','confidence':0,'score':0,
-                                    'blockers':['CLOSED_INPUT_CHANGED'],'input_change':str(error)})
-    merged=dict(version=1,revisions={},strict={},settings={},settings_start={},series=[]);series={}
-    for guard in guards:
-        for field in ('revisions','strict','settings','settings_start'):merged[field].update(guard.get(field,{}))
-        for item in guard['series']:series[_digest(item['spec'])]=item
-    merged['series']=list(series.values())
-    state['_closed_inputs']=merged;state['_input_revisions']=union
+                state['stocks'][index]=_invalidated_stock(stock,error)
+    state['_closed_inputs']=_merge_snapshot_proofs(guards);state['_input_revisions']=union
     state['analysis_snapshot'].update(invalidated_inputs=invalidated,validated_instruments=len(guards))
     state['_calculation_timing']['invalidated_instruments']=len(invalidated)
     if state.get('selected',{}).get('isin') in invalidated:

@@ -4,6 +4,31 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "late_snapshot_publication_independence",
+      "title": "Изменение одной акции перед публикацией не отменяет независимые результаты",
+      "sources": [
+        "existing snapshot worker",
+        "final Windows publication guard"
+      ],
+      "states": [
+        "INPUT_CHANGED",
+        "STALE"
+      ],
+      "status": "8 NEW PASS; WINDOWS APPLY PENDING",
+      "steps": [
+        "Перед публикацией один раз прочитать текущие raw revision scopes. При изменении пометить все зависимые акции INVALIDATED/DATA BLOCKED, убрав свечи/сигнал из этого отчёта.",
+        "Сохранить только прежние proofs и revision tokens незатронутых акций. Общий benchmark отзывает все зависимые расчёты; неоднозначные/global/unbound dependencies сохраняют полный отказ.",
+        "Повторить строгую проверку сохранённого token непосредственно перед публикацией. Не переносить старую ревизию на новую и не выдавать trading permission.",
+        "В главном потоке только ограниченная обработка готовых metadata; OHLCV, DQ и индикаторы не пересчитывать. Тот же общий формат INVALIDATED и merger proofs применяется worker и публикацией."
+      ],
+      "evidence": [
+        "Natural13:35CET snapshot rejected485.875s after start, changed_inputs=[]; final raw revision guard discarded all stocks after worker had separately invalidated22.",
+        "Positive final-publication test FAIL on759debc, PASS after;8newtests including53/200,sharedbenchmark,allblocked,legacy/globalunknown,settings/identity/secondrace and actual in-memory SQLite OHLCV correction between worker and UI.",
+        "53/200 metadata-only test0.0019/0.0050s; not a Windows measurement or claim of faster total computation."
+      ],
+      "limits": "Не ослабляет исполнение, не меняет DQ/историю/разрешения. Не ускоряет сам полный snapshot. Неизменённые результаты могут остаться WAIT; настоящий новый вход требуется для изменившейся акции."
+    },
+    {
       "id": "reconciliation_v4_bookkeeping_closed_proof",
       "title": "Повторная сверка неизменного интервала без ложного отзыва анализа",
       "sources": [
@@ -14,7 +39,7 @@
         "STALE",
         "INPUT_CHANGED"
       ],
-      "status": "8 NEW +2 AFFECTED PASS; WINDOWS APPLY PENDING",
+      "status": "ПРОВЕРЕНО WINDOWS/MCP И ЕСТЕСТВЕННЫМ ОБНОВЛЕНИЕМ КВИТАНЦИЙ",
       "steps": [
         "Только при v4 current identity-confirmed observation и точном совпадении input_fingerprint сравнивать решение без служебных checked_at/next_check/checks/native_retry/history.",
         "В finding заменить повторный timestamp-sensitive evidence_digest существующим полным v4 input_fingerprint; сохранить все фактические поля, scoped authoritative proof, observation, native rows/neighbours и неизвестные поля.",
@@ -24,7 +49,8 @@
       "evidence": [
         "Before13:18:41/after13:20:40 CET:7 real Apple15m records changed only bookkeeping and checked_at-sensitive proof digest; exact v4 inputs and decisions identical.",
         "Positive unit reproduced ERROR on804ef813, then PASS.8unique new tests include53/200independence,changedOHLCV/evidence/identity,oldproof,expiry,strictexecution and malformedrecords.2directlyaffected receipt-policy guards PASS.",
-        "Same7saved real pairs:raw unequal7/7,canonical equal7/7; readonly/in-memory comparison only, no live edits."
+        "Same7saved real pairs:raw unequal7/7,canonical equal7/7; readonly/in-memory comparison only, no live edits.",
+        "11Nov13:27:32 CET normal restart;9preservationchecks PASS. At13:37:22 two NVIDIA15m jobs25Sep22:15/27Oct22:45 advanced58→59; new13:27:41proof retained matching scoped inputs. Real source changes and expiry still revoke1H. Seven authoritative digests reconstructed exactly by replacing only checked_at."
       ],
       "limits": "Не новый NO_TRADES, не принятие неизвестного риска, не исправление рыночной свечи. Текущая авторитетная evidence остаётся отдельной строгой зависимостью. Ни одна сделка не создана."
     },
@@ -155,7 +181,7 @@
       "states": [
         "BLOCKED"
       ],
-      "status": "6 NEW TESTS PASS; WINDOWS APPLIED; NATURAL REVIEW PENDING 12:49 CET",
+      "status": "ПРОВЕРЕНО WINDOWS И ЕСТЕСТВЕННОЙ ДНЕВНОЙ СВЕРКОЙ",
       "steps": [
         "Передавать timeframe задания в существующий timeframes.schedule; чистая identity его не содержит.",
         "Сохранить прежние границы подтверждённых календарей: старый intraday и дневные периоды до подтверждённой истории отклоняются.",
@@ -165,7 +191,8 @@
         "test_cp_daily_review_calendar:6 PASS; two exact historical daily failures reproduced before fix",
         "Existing test_cp_reconciliation:20 PASS,3 failures reproduced against HEAD _classify; not full suite PASS",
         "Two saved daily review inputs reclassified read-only with current binding; natural runtime awaits existing next_check",
-        "Windows normal restart11Nov11:59:50CET; MCP and9preservation checks confirmed;31saved daily jobs readonly UNCONFIRMED,0can_affect_dq,not31resolved"
+        "Windows normal restart11Nov11:59:50CET; MCP and9preservation checks confirmed;31saved daily jobs readonly UNCONFIRMED,0can_affect_dq,not31resolved",
+        "11Nov13:25:26–13:28:58 CP naturally classified8newApple1D observations with no calendar exception. UNCONFIRMED preserved; no OHLCV import. Original10–11May2018 jobs still await ordinary rotation, not silently marked repaired."
       ],
       "limits": "Не расширяет календарь и не подтверждает native 1W/1M provenance. Не обеспечивает TV export/import. Старые BLOCKED задания сохраняют next_check; не ускорять ради отчёта."
     },

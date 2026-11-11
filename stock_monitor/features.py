@@ -253,17 +253,25 @@ class Features:
         # Feed error text is presentation telemetry, not a CORE/DQ input.
         # Refresh both views from the same current copy, without recalculation.
         for stock in state.get('stocks',[]):stock['error']=current['feed_errors'].get(stock['isin'])
-        state['diagnostics']=diagnostics(state)
-        state['diagnostic_detail']=[diagnostic_detail(stock) for stock in state.get('stocks',[])]
         timing=state.setdefault('_calculation_timing',{})
         now=time.time()
         if timing.get('finished_at') is not None:timing['publication_wait_seconds']=round(max(0,now-timing['finished_at']),3)
         if state.get('at'):timing['snapshot_age_at_publication_seconds']=round(max(0,now-datetime.fromisoformat(state['at']).timestamp()),3)
         timing['instrument_count']=len(state.get('stocks',[]))
         token=state.get('_input_revisions')
-        if token is None or not self.store.read_cache.current(token):
+        if token is None:
             self.bridge.revision_rejected(state,'INPUT_REVISION_CHANGED')
             return False
+        current_token=self.store.read_cache.token_for(token)
+        if current_token!=token:
+            self.bridge.revision_rejected(state,'INPUT_REVISION_CHANGED')
+            from snapshot_worker import retain_current_publication
+            filter_started=time.monotonic()
+            if not retain_current_publication(state,current_token):return False
+            timing['publication_invalidation_seconds']=round(time.monotonic()-filter_started,6)
+            if not self.store.read_cache.current(state['_input_revisions']):return False
+        state['diagnostics']=diagnostics(state)
+        state['diagnostic_detail']=[diagnostic_detail(stock) for stock in state.get('stocks',[])]
         if state.get('analysis_snapshot'):
             state['analysis_selection']=dict(state.get('selected',{}))
             selected=next((i for i in current['watchlist'] if i['name']==current['symbol']),None)
