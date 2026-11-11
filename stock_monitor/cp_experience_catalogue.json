@@ -766,6 +766,27 @@
         "test_partial_display_levels.py"
       ],
       "limits": "3 новых и 2 непосредственно затронутых теста PASS; отсутствие строк не доказывает NO_TRADES. Все 11 TF проверены в пустом сценарии."
+    },
+    {
+      "id": "legacy_diagnostic_identity",
+      "title": "Убрать дублирование старого INVALID без подмены качества",
+      "sources": [
+        "local diagnostics"
+      ],
+      "states": [
+        "INVALID"
+      ],
+      "status": "ПРОВЕРЕНО ИЗОЛИРОВАННО; RUNTIME ОЖИДАЕТ",
+      "steps": [
+        "В обычном history turn существующего serial writer проверить максимум 8 старых отчётов без identity, исправить максимум один.",
+        "Требовать единственную сохранённую series identity и совпадающий архивный INVALID с теми же ошибками. Добавить только identity/base_tf; исходные state/issues/checked_at сохранить.",
+        "Сохранить исходный отчёт в ограниченном receipt той же транзакции. Повреждённые metadata дают UNKNOWN/skip, не останавливая feed."
+      ],
+      "evidence": [
+        "test_cp_diagnostic_cleanup.py: 7 PASS",
+        "СМ-Архив/CP устаревшие дубликаты проверка.json: 3 реальные записи в изолированной памяти"
+      ],
+      "limits": "Убирается только дублирование диагностики. Архив не считается новой проверкой DQ. OHLCV, время ошибки, допуски и fresh-price slots не меняются. Не удалять актуальные ошибки."
     }
   ],
   "sources": [

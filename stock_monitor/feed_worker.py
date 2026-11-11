@@ -26,6 +26,8 @@ class FeedContext(StockMonitor):
                     local['cached_history']=accumulate_cached_batch(self.store,self._parse_gettex_csv,max_pairs=2,max_seconds=1)
                 from history_service import inspect_changed_official_archive
                 local['archive_quality']=inspect_changed_official_archive(self.store)
+                from cp_diagnostic_cleanup import turn as normalize_diagnostics
+                local['diagnostic_cleanup']=normalize_diagnostics(self.store,info)
             except Exception as error:
                 local['error']=str(error)
         planned=None
