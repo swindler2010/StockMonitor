@@ -7,6 +7,39 @@ contracts only until separately tested and explicitly authorized for execution.
 import copy
 
 
+def closed_parent_input(frame, base, target, now):
+    """Only children of closed parents belong to this closed CORE context.
+
+    Validate the complete child window up to the required parent's close; the TF
+    is still audited at real now, and execution has its own current quote.
+    An unfinished newer parent cannot revoke an older accepted dependency.
+    """
+    import pandas as pd
+    from candle_schedule import boundary
+    from timeframes import MINUTES,endpoints
+    if frame.empty or target not in (*MINUTES,'1D'):return frame,now
+    due=boundary(frame.attrs,target,now,delay_seconds=0)
+    if not due.get('close_at'):return frame,now
+    cutoff=pd.Timestamp(due['close_at'])
+    raw=frame.copy();raw.attrs['timeframe']=base
+    ends=endpoints(raw)
+    # Keep malformed timestamps visible to DQ; never erase bad rows in order
+    # to turn a source into READY. Only known unclosed children are omitted.
+    out=raw.loc[ends.isna() | (ends<=cutoff)].copy()
+    # Include the whole required child window, including an absent final
+    # child. It is an ordinary classified gap, not freshness of a newer parent.
+    # Evidence uses REAL now, so a review obtained after the parent closed is
+    # usable. No rows are generated and the resulting target keeps real-time DQ.
+    if base in MINUTES and not out.empty:
+        span=out.attrs.get('intraday_span')
+        first=min(pd.Timestamp(span[0]),out.index.min()) if span else out.index.min()
+        last=cutoff.tz_convert(raw.attrs['timezone']).tz_localize(None)-pd.Timedelta(nanoseconds=1)
+        out.attrs['intraday_span']=[str(first),str(last)]
+    out.attrs['closed_parent_input']=dict(target=target,input_base=base,through=cutoff.isoformat(),
+        evaluated_at=pd.Timestamp(now).isoformat(),excluded_forming_children=len(raw)-len(out))
+    return out,now
+
+
 def plan(signal_tf, trend_tf=None, execution_tf=('5m','15m')):
     from timeframes import LABELS
     from trading_engine import profile
@@ -49,6 +82,7 @@ def calculate(store,values,identity,contract,position,now):
                 self.pinned_frame(instrument,tf,identity),tf)
 
     context=ClosedContext();context.store=store
+    context.closed_parent_inputs=True
     for key,value in values.items():
         setattr(context,key,Value(value) if key in ('symbol','timeframe','period') else value)
     # Selection is owned by this request, never the currently displayed chart.

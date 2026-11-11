@@ -379,8 +379,13 @@ class Desktop014:
                 raw.attrs.update(required_identity,timeframe=tf,data_quality=report)
             return raw
         from data_quality import audit as audit_quality
+        input_clock=clock
+        if scoped and getattr(self,'closed_parent_inputs',False):
+            from trading_context import closed_parent_input
+            raw,input_clock=closed_parent_input(raw,base,tf,clock)
         derived_quality=raw.attrs.get('data_quality') if raw.attrs.get('daily_origin') or raw.attrs.get('archive_invalid') else None
-        raw.attrs['data_quality']=audit_quality(raw,base,now=clock)
+        raw.attrs['data_quality']=audit_quality(raw,base,now=input_clock,
+            check_stale=not bool(raw.attrs.get('closed_parent_input') and base in MINUTES))
         if derived_quality and derived_quality.get('state') in ('INVALID','SOURCE_GAP','UNCONFIRMED','GAP','RECOVERING','SOURCE_UNAVAILABLE'):
             # A valid-looking daily OHLC must not erase a blocked child archive.
             raw.attrs['data_quality']=derived_quality
@@ -399,7 +404,7 @@ class Desktop014:
         if markers:raw=raw.loc[~raw.index.isin(pd.to_datetime(markers))]
         if scoped:
             from cp_controls import accepted_gap_input
-            raw=accepted_gap_input(self.store,info,raw,base,clock)
+            raw=accepted_gap_input(self.store,info,raw,base,input_clock)
         meta=raw.attrs.copy();out=resample(raw,base,tf,now=clock)
         if scoped:
             from cp_controls import accepted_gap_output

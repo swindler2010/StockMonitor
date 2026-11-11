@@ -921,7 +921,9 @@ def accepted_gap_input(store,info,frame,base,now):
     if identity.get('currency')!='EUR' or not confirmed_listing(info,meta):return out
     inherited=meta.get('data_quality',{})
     if inherited.get('state') not in ('READY','GAP','UNCONFIRMED','SOURCE_GAP','STALE'):return out
-    report=dq.audit(frame,base,expected=identity,now=now)
+    from timeframes import MINUTES
+    report=dq.audit(frame,base,expected=identity,now=now,
+        check_stale=not bool(meta.get('closed_parent_input') and base in MINUTES))
     if report['state'] not in ('READY','GAP','UNCONFIRMED') or report.get('stale_count'):return out
     policy=initialization_policy_for(store,info,identity)
     # A verified clean daily archive has no gap grant to carry this policy.

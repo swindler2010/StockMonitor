@@ -55,6 +55,7 @@ class SnapshotContext:
         state=json.dumps(self.user_state(info),sort_keys=True,default=str)
         key=('pinned_frame_v1',info['isin'],tf,tuple(sorted(identity.items())),state,
             str(getattr(self,'analysis_at','')),bool(getattr(self,'five_year_scope',False)),
+            bool(getattr(self,'closed_parent_inputs',False)),
             int(time.time()//60) if not hasattr(self,'analysis_at') else None)
         return self.store.read_cache.get(key,
             lambda:Desktop014._frame_uncached(self,info,tf,required_identity=identity),

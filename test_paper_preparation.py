@@ -159,5 +159,41 @@ class PreparationTests(unittest.TestCase):
             self.assertEqual(turn.call_count,1)
         self.assertEqual(calls,[dict(lane='trading',key='paper_preparation')])
 
+    def test_failed_turn_keeps_exact_core_reason_and_retry_without_authority(self):
+        f=self.f;f.now+=301;f.db.commit()
+        @contextmanager
+        def connect():
+            with f.db:yield f.db
+        def calculate(*args):
+            r=self.refresh()
+            r['execution_context']['trading_engine'].update(status='DATA BLOCKED',reason='1H: missing confirmed 15m interval')
+            return r
+        app=SimpleNamespace(closing=False,user_dirty=False,ai_config={},
+            store=SimpleNamespace(connect=connect,read_cache=SimpleNamespace(token_for=lambda _:{})),
+            compute_trading=SimpleNamespace(calculate=calculate))
+        with patch.object(prep.time,'time',return_value=f.now):report=prep.turn(app)
+        self.assertEqual(report['analysis_reason'],'1H: missing confirmed 15m interval')
+        self.assertEqual(report['next_check'],f.now+300)
+        self.assertNotIn(f.isin,fixture.hourly.read(f.db,fixture.hourly.CONFIG)['identities'])
+        self.assertEqual(fixture.paper.ledger(f.db)['fills'],[])
+
+    def test_preparation_never_displaces_due_active_quote(self):
+        import candle_schedule as schedule
+        f=self.f;infos=[f.info,dict(isin=self.anchor,kind='stock',name='NVIDIA')]
+        meta=f.cfg['identities'][self.anchor]
+        f.write('gettex_chart:'+self.anchor+':15m',dict(identity=meta,received_at='2026-11-04T09:30Z'))
+        @contextmanager
+        def connect():yield f.db
+        store=SimpleNamespace(connect=connect,setting=lambda k,d=None:fixture.hourly.read(f.db,k,d))
+        proofs={i:[dict(identity=m,required_tf=['15m','1H','4H','1D'],execution_tf=['5m','15m'],strategy='CORE:1',proof_state=s)]
+            for i,m,s in ((f.isin,f.identity,'SEQUENTIAL_PREPARATION'),(self.anchor,meta,'OWNER_HOURLY_MAINTENANCE'))}
+        def due(store,isin,meta,base,now):return dict(due=meta['source']=='gettex_chart' and base=='15m',session_open=True)
+        with patch.object(schedule,'trade_maintenance',return_value=proofs),patch('gettex_chart.confirmed_state',side_effect=lambda i,v:bool(v.get('identity'))),patch.object(schedule,'decision',side_effect=due):
+            got=schedule.fresh_candidate(store,infos,fixture.pd.Timestamp(f.now,unit='s',tz='UTC'))[0]
+            self.assertEqual(got['isin'],self.anchor)
+        with patch.object(schedule,'trade_maintenance',return_value=proofs),patch('gettex_chart.confirmed_state',side_effect=lambda i,v:bool(v.get('identity'))),patch.object(schedule,'decision',side_effect=lambda s,i,m,b,n:dict(due=i==f.isin and m['source']=='gettex_chart' and b=='15m',session_open=True)):
+            got=schedule.fresh_candidate(store,infos,fixture.pd.Timestamp(f.now,unit='s',tz='UTC'))[0]
+            self.assertEqual(got['isin'],f.isin)
+
 
 if __name__=='__main__':unittest.main()

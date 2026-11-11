@@ -157,6 +157,7 @@ def turn(app):
             db.execute('BEGIN IMMEDIATE');old=read(db,STATE,{})
             if old.get('isin')!=info['isin'] or old.get('state')=='ADMITTED':return
             old.update(compact(result) if result else {})
+            if result:old['analysis_reason']=result.get('execution_context',{}).get('trading_engine',{}).get('reason')
             old.update(state='WAITING',at=time.time(),next_check=time.time()+300,
                 execution_permission=False,reason=str(error),
                 message='Допуск пока закрыт; CandlePilot продолжает штатное восстановление данных')

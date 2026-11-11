@@ -403,7 +403,10 @@ def fresh_candidate(store,infos,now,focus=None):
  slot=rotation.get('consecutive',0)
  position=oldest(x for x in candidates if x[6])
  foreground=oldest(x for x in candidates if x[5])
- trading=oldest(x for x in candidates if x[7])
+ # A newly prepared archive must not displace an already enabled stock's
+ # fresh quote just because its last historical receipt is much older.
+ trading=(oldest(x for x in candidates if x[7] and x[7].get('proof_state')!='SEQUENTIAL_PREPARATION')
+          or oldest(x for x in candidates if x[7]))
  if slot==0:chosen=position or trading or foreground or chosen
  elif trades and slot==1:chosen=trading or foreground or position or chosen
  elif slot==(2 if trades else 1):chosen=foreground or trading or position or chosen

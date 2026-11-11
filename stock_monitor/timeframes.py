@@ -144,7 +144,8 @@ def accepted_display_slots(meta,missing,target,now):
 def aggregate(frame,base,target,now=None):
     now=pd.Timestamp(now or pd.Timestamp.now(tz='UTC'))
     meta=frame.attrs.copy();zone=meta.get('timezone')
-    raw_report=quality.audit(frame,base,now=now)
+    raw_report=quality.audit(frame,base,now=now,
+        check_stale=not bool(meta.get('closed_parent_input') and base in MINUTES))
     inherited=meta.get('data_quality',{})
     if quality.absence_report_resolved(inherited,frame,base,now):inherited={}
     # Availability/recovery is a separate gate, not a replacement for candle validation.
@@ -234,7 +235,8 @@ def daily_provenance(daily, out, target, now=None, base='1D'):
     meta=daily.attrs.copy()
     inherited=meta.get('data_quality',{})
     try:
-        raw=quality.audit(daily,base,expected={k:meta.get(k) for k in quality.IDENTITY},now=now)
+        raw=quality.audit(daily,base,expected={k:meta.get(k) for k in quality.IDENTITY},now=now,
+            check_stale=not bool(meta.get('closed_parent_input') and base in MINUTES))
         first=out.index[0]-pd.Timedelta(days=6) if target=='1W' else out.index[0]
         last=out.index[-1] if target in ('1D','1W') else out.index[-1]+pd.offsets.MonthBegin(1)-pd.Timedelta(days=1)
         if meta.get('venue')=='GETTEX' and base=='1D' and int(quality.GETTEX_DAILY_START[:4])<=daily.index.min().year<=daily.index.max().year<=2026:
