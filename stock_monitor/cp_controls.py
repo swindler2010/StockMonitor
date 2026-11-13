@@ -388,8 +388,50 @@ def _revisions(db,scopes):
     return {s:(db.execute('SELECT revision FROM input_revisions WHERE scope=?',(s,)).fetchone() or [0])[0] for s in scopes}
 
 
+def _reviewed_market_tail_current(db,isin,entry,token,current):
+    """Revalidate an issued exact gap receipt after ONLY its market clock moved.
+
+    New bars outside the reviewed neighbourhood are not a changed permission.
+    Every policy, DQ, listing, observation and unknown scope remains strict.
+    This read does not renew tokens, extend deadlines or create a grant.
+    """
+    try:
+        p=entry['problem'];e=entry['evidence'];meta=p['identity']
+        market='market:'+isin+':'+p['tf']
+        required={'instrument:'+isin,market,'setting:'+p['report_key'],
+                  'setting:gettex_chart:'+isin+':'+p['tf']}
+        if (p['isin']!=isin or p['kind']!='archive' or p['tf']!='15m'
+                or meta.get('source')!='gettex_chart' or meta.get('venue')!='GETTEX'
+                or meta.get('currency')!='EUR' or not required<=set(token)
+                or {k for k in token if token[k]!=current[k]}!={market}
+                or not isinstance(token[market],int) or current[market]<=token[market]):return False
+        if entry['actor']==REVIEWED_ACTOR:
+            if 'setting:'+REVIEWED_PREFIX+isin not in token:return False
+            return _reviewed_binding(db,read_instrument(db,isin),p)==e['native_binding']
+        if entry['actor']!=TV_ACTOR or e.get('native_binding_version')!=2:return False
+        import cp_reconciliation as rv
+        import pandas as pd
+        jobs=e.get('job_ids',[])
+        if len(jobs)!=1:return False
+        job_key=rv.PREFIX+isin+':'+jobs[0]
+        if not {'setting:'+TV_POLICY,'setting:'+job_key,'setting:interval_evidence:'+isin,
+                'setting:history_identity:'+isin}<=set(token):return False
+        job=read(db,job_key,{})
+        obs=job.get('observation',{})
+        if (job.get('isin')!=isin or job.get('identity')!=meta or job.get('tf')!=p['tf']
+                or obs.get('result')!='ABSENT' or obs.get('identity_confirmed') is not True
+                or not obs.get('tv_symbol','').startswith('GETTEX:')
+                or not _covered([p['range']],[[job['first'],job['last']]])):return False
+        inputs=rv._input(db,job)
+        if inputs['rows'] or _tv_native_binding(job,inputs)!=e['native_binding']:return False
+        finding=rv._classify(job,inputs,pd.Timestamp.now(tz='UTC'))
+        return (finding.get('state') in ('GAP','UNCONFIRMED','SOURCE_TIMEBASE_UNCONFIRMED')
+                and not finding.get('reason','').startswith('EXCHANGE_NOTICE_CONFLICT'))
+    except (ValueError,KeyError,TypeError):return False
+
+
 def effective_accepted(db,isin,grant):
-    """Auto receipts expire on any consulted input change, even before CP runs."""
+    """Recheck issued receipts; material/unknown changes block before CP runs."""
     policy=read(db,AUTO_POLICY,{})
     enabled=(policy.get('enabled') is True and policy.get('version')==AUTO_VERSION and
              isin not in policy.get('excluded_isins',[]))
@@ -398,8 +440,10 @@ def effective_accepted(db,isin,grant):
         if entry.get('actor')==REVIEWED_ACTOR:
             policy=read(db,REVIEWED_PREFIX+isin,{})
             token=entry.get('input_revisions',{})
+            current=_revisions(db,token)
             if (policy.get('version')==REVIEWED_VERSION and policy.get('approved') is True
-                    and pid in policy.get('entries',{}) and token and _revisions(db,token)==token
+                    and pid in policy.get('entries',{}) and token
+                    and (current==token or _reviewed_market_tail_current(db,isin,entry,token,current))
                     and all(entry.get('problem',{}).get(k)==policy['entries'][pid]['problem'].get(k)
                             for k in ('id','isin','kind','identity','tf','range','report_key','state'))
                     and entry.get('evidence',{}).get('policy_digest')==digest(policy)):
@@ -407,7 +451,9 @@ def effective_accepted(db,isin,grant):
             continue
         if entry.get('actor')==TV_ACTOR:
             token=entry.get('input_revisions',{})
-            if not _tv_enabled(db,isin) or not token or _revisions(db,token)!=token:continue
+            if not _tv_enabled(db,isin) or not token:continue
+            current=_revisions(db,token)
+            if current!=token and not _reviewed_market_tail_current(db,isin,entry,token,current):continue
             result[pid]=entry
             continue # New explicit policy; never revive old historical grants.
         review=grant.get('historical_review',{})
