@@ -427,12 +427,22 @@ def run_turn(app, info, values, cfg):
             if ready and (report['signal'] in ('BUY','SELL') or cfg.get('protection')):
                 if app.closing or app.user_dirty:
                     raise ValueError('PAPER_APP_NOT_READY')
-                with sqlite3.connect(app.store.path,timeout=.2) as db:
-                    db.execute('BEGIN IMMEDIATE')
-                    args=order_command(db,info,result,time.time())
-                    if args and filled and args['side']=='BUY':
-                        raise ValueError('PAPER_AUTO_FILL_ALREADY_IN_TURN')
-                    answer=execute(db,info,result,args) if args else None
+                actionable=report['signal'] in ('BUY','SELL')
+                if not actionable:
+                    # WAIT/HOLD must not contend with a CP writer merely because
+                    # brackets are enabled. Read the existing protective trigger;
+                    # a real exit is re-evaluated under the original write lock.
+                    from paper_protection import decision
+                    with app.store.connect() as db:
+                        actionable=bool(decision(db,info,result,time.time()))
+                answer=None
+                if actionable:
+                    with sqlite3.connect(app.store.path,timeout=.2) as db:
+                        db.execute('BEGIN IMMEDIATE')
+                        args=order_command(db,info,result,time.time())
+                        if args and filled and args['side']=='BUY':
+                            raise ValueError('PAPER_AUTO_FILL_ALREADY_IN_TURN')
+                        answer=execute(db,info,result,args) if args else None
                 if answer:
                     filled=filled or not answer.get('idempotent',False)
                     report.update(state='COMPLETED',request_id=args['request_id'],quantity=args['quantity'],

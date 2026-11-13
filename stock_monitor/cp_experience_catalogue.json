@@ -4,6 +4,23 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "paper_wait_during_cp_writer",
+      "title": "WAIT без заявки не должен конкурировать с записью CandlePilot",
+      "sources": ["paper_hourly.run_turn", "existing paper_protection.decision"],
+      "states": ["OperationalError: database is locked"],
+      "status": "1 targeted scenario PASS; Windows deployment pending",
+      "steps": [
+        "Для WAIT/HOLD сначала читать действующее условие защитного выхода без блокировки записи. При отсутствии заявки сохранить обычный WAIT.",
+        "Если защитный выход действительно нужен, заново вычислить его внутри прежней BEGIN IMMEDIATE и выполнить все исходные проверки исполнения. BUY/SELL продолжают прежний транзакционный путь.",
+        "Не прерывать writer CP, не менять тайм-аут, ревизии, данные или разрешения ради снятия конкуренции. Настоящая недоступность записи при заявке остаётся блокирующей до следующего штатного хода."
+      ],
+      "evidence": [
+        "13Nov10:35:06 и10:36:06CET NVIDIA1H: CORE READY/WAIT, позиции нет, но включённый bracket безусловно открывал write transaction и получал database is locked;4H следующий ход оставался WAIT.",
+        "test_paper_wait_contention: настоящий WAL writer, WAIT без заявки; существующий защитный выход при занятой записи; устаревшая котировка; исчезнувший trigger между чтением и транзакцией; подтверждённый stop через существующий executor. Только изолированная SQLite."
+      ],
+      "limits": "Не подтверждает свечи, не создаёт BUY и не заменяет DQ/CORE/freshness. Не обещает исполнение при недоступной базе; реальная заявка всегда проверяется транзакционно."
+    },
+    {
       "id": "expired_assessment_durable_retry",
       "title": "Оценка истекла во время расчёта: повтор без ожидания нового события загрузчика",
       "sources": [
