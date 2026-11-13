@@ -942,7 +942,8 @@
       ],
       "evidence": [
         "test_tv_accepted_display.py",
-        "СМ-Архив/TV принятые интервалы результат.json"
+        "СМ-Архив/TV принятые интервалы результат.json",
+        "13Nov2026 AD: Apple GETTEX/EUR15m12Nov22:45 и13Nov09:45 отсутствуют в Desktop TV; соседние OHLCV совпали с native gettex_chart. Существующий CP обработал точные наблюдения11:14:48/11:30:42CET и применил действующую owner TV policy.0 новых OHLCV; SOURCE_TIMEBASE_UNCONFIRMED остаётся отдельным ограничением, не NO_TRADES. PAPER1H/4H READY/WAIT после штатной переоценки; visual TV выполнен Work. docs/TRADING_ENGINE_PROGRESS_RU.md, раздел AD."
       ]
     },
     {
