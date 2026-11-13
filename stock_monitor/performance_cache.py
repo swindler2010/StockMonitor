@@ -3,6 +3,14 @@ import copy,sqlite3,threading
 from collections import OrderedDict
 from contextlib import contextmanager
 
+# Repair scheduling/progress is persisted for CP, but is not candle quality.
+# Keep state, identity, ranges, stale facts, provider quality/errors and every
+# unknown field strict. The writer/reader must use the same small allowlist.
+DQ_PROGRESS_FIELDS = ('checked_at', 'raw_retry_after', 'parent_child_revisions',
+    'next_retry', 'recovery_cursor', 'recovery_ranges', 'recovery_completed_ranges',
+    'recovery_failed_ranges', 'local_recovery_reused', 'recovery_provider_attempted',
+    'recovery_wait')
+
 def install_input_revisions(db):
     """Transactional dependency revisions; no journal or global setting clock."""
     db.execute('CREATE TABLE IF NOT EXISTS input_revisions(scope TEXT PRIMARY KEY, revision INTEGER NOT NULL)')
@@ -18,8 +26,9 @@ def install_input_revisions(db):
             # Keep every other field, including state, ranges, session and source.
             def meaningful(prefix):
                 key=prefix+'key';value=prefix+'value'
+                dq_paths=','.join("'$."+field+"'" for field in DQ_PROGRESS_FIELDS)
                 return (f"CASE WHEN json_valid({value}) THEN CASE "
-                    f"WHEN {key} LIKE 'data_quality:%' THEN json_remove({value},'$.checked_at','$.raw_retry_after','$.parent_child_revisions') "
+                    f"WHEN {key} LIKE 'data_quality:%' THEN json_remove({value},{dq_paths}) "
                     f"WHEN {key} LIKE 'history_identity:%' OR {key} LIKE 'history_coverage:%' THEN json_remove({value},'$.fetched_at') "
                     f"ELSE {value} END ELSE {value} END")
             same='NEW.key IS key AND '+meaningful('NEW.')+' IS '+meaningful('')
@@ -71,7 +80,7 @@ def _setting_value(db, key, start=None):
     value=json.loads(row[0])
     if isinstance(value,dict):
         if key.startswith('data_quality:'):
-            value={k:v for k,v in value.items() if k not in ('checked_at','raw_retry_after','parent_child_revisions')}
+            value={k:v for k,v in value.items() if k not in DQ_PROGRESS_FIELDS}
             if start:
                 from calculation_window import scope_report
                 value=scope_report(value,start)

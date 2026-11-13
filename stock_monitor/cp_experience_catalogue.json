@@ -4,6 +4,30 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "dq_recovery_progress_is_not_analytical_input",
+      "title": "Служебный прогресс восстановления не отзывает неизменную оценку",
+      "sources": [
+        "data_quality.repair",
+        "performance_cache.install_input_revisions",
+        "performance_cache._setting_value"
+      ],
+      "states": [
+        "CURRENT",
+        "STALE"
+      ],
+      "status": "1 адресный сценарий PASS; рабочая приёмка ожидается",
+      "steps": [
+        "Сопоставить ревизии и точный diff отчёта DQ. Не считать next_retry, recovery_cursor и перечни выполненных попыток изменением рыночных фактов.",
+        "Одинаковый ограниченный список служебных полей исключён из сравнения ревизий DQ и хеша закрытых входов. Сами поля сохраняются; очередь читает действующий cooldown.",
+        "State, identity, ranges, stale_count, ошибки/качество источника и неизвестные поля остаются строгими. Изменения свечей и разрешений сохраняют отдельные ревизии. Срок оценки не продлевается."
+      ],
+      "evidence": [
+        "test_cp_recovery_metadata.py",
+        "13Nov2026 Apple: ordinary CURRENT observed12:51:16CET; STALE12:51:37 only DQ15m2313→2314, nine changed progress/check fields; no changed OHLCV/policy inputs. Ordinary queue request12:51:43, subsequent material market inputs preserved."
+      ],
+      "limits": "Не восстанавливает свечи и не даёт READY неподтверждённым данным. Не меняет расписание, TTL, торговую стратегию или ручные разрешения."
+    },
+    {
       "id": "paper_wait_during_cp_writer",
       "title": "WAIT без заявки не должен конкурировать с записью CandlePilot",
       "sources": [
