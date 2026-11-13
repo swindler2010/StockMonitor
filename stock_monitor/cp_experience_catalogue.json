@@ -788,11 +788,15 @@
       "steps": [
         "Дождаться закрытия интервала и допустимого времени публикации.",
         "Проверить естественный GETTEX feed и фактическое время приёма/публикации аналитики.",
-        "Запретить исполнение при старой или недостоверной цене независимо от исторических исключений."
+        "Запретить исполнение при старой или недостоверной цене независимо от исторических исключений.",
+        "PAPER: последняя подтверждённая закрытая 5m/15m-свеча пригодна по свежести до 900 секунд включительно ПОСЛЕ закрытия. Отсутствие более новой 5m-свечи само по себе не блокирует пригодную 15m. Использовать прежний fresh_quote и финальный paper_account.quote, не прибавлять новый льготный срок при повторном чтении или задержке поставщика.",
+        "Свежесть цены отделять от сигнала и полного допуска. WAIT не становится BUY; пригодная цена не отменяет UNCONFIRMED/INVALID расчётных зависимостей, identity, ревизии, риск или закрытие сессии. Проверенный предел 900 секунд уже действовал; исторический DQ и торговые флаги этим правилом не переписывать."
       ],
       "evidence": [
         "stock_monitor/candle_schedule.py",
-        "history64-evidence/apple-recovery02/natural-cycle.jsonl"
+        "history64-evidence/apple-recovery02/natural-cycle.jsonl",
+        "test_paper_quote_delay.py: AH 13Nov2026 PASS; RAM fresh_quote with only 15m at ages 0/899/900s, rejection at900.001s; shared V1 executor BUY at900s rolled back in isolated account, stale/DQ/identity/WAIT refusals preserved. Production logic unchanged.",
+        "13Nov2026 MCP generated14:34:29CET: Apple quoteclose14:20 passed price guard, while CORE was blocked by separate UNCONFIRMED; NVIDIA quoteclose14:30 CORE READY/WAIT. This is a timed observation, not permanent readiness."
       ],
       "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
     },
