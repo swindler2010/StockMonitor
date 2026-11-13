@@ -34,10 +34,10 @@ def read(db, key, default=None):
     return json.loads(row[0]) if row else default
 
 
-def authority(db, isin, identity=None):
+def authority(db, isin, identity=None, *, allow_paused=False):
     from paper_account import ACCOUNT
     cfg = read(db, CONFIG, {})
-    if (cfg.get('version') != VERSION or cfg.get('enabled') is not True
+    if (cfg.get('version') != VERSION or (cfg.get('enabled') is not True and not allow_paused)
             or cfg.get('approved') is not True or cfg.get('account') != ACCOUNT
             or cfg.get('timeframe') != '1H'
             or not (variable_size(cfg) or ('sizing' not in cfg and cfg.get('quantity') == 1 and cfg.get('max_position') == 1))
@@ -55,7 +55,7 @@ def authority(db, isin, identity=None):
 def authorize_hourly(db, isin, identity):
     # Historical-risk analysis may examine the one owner-approved preparation
     # candidate. Execution still requires authority(), which excludes it.
-    try:authority(db, isin, identity)
+    try:authority(db, isin, identity, allow_paused=True)
     except ValueError:
         from paper_preparation import candidate_authority
         candidate_authority(db, isin, identity)
@@ -65,7 +65,7 @@ def ledger_token(db):
     return digest(db.execute('SELECT id,digest FROM paper_fills ORDER BY rowid').fetchall())
 
 
-def order_size(db, info, result, side, now):
+def order_size(db, info, result, side, now, *, allow_paused=False):
     """Integer entry size from free cash and existing CORE volatility/structure.
 
     This is a sizing estimate, not a stop order or a guaranteed loss ceiling.
@@ -74,7 +74,7 @@ def order_size(db, info, result, side, now):
     """
     from paper_account import ledger, quote, POLICY, money
     from eur_listings import stored_identity
-    cfg = authority(db, info['isin'], result.get('identity'))
+    cfg = authority(db, info['isin'], result.get('identity'), allow_paused=allow_paused)
     state = ledger(db)
     held = [p for p in state['positions'] if p['isin'] == info['isin'] and Decimal(p['quantity'])]
     if side == 'SELL':
@@ -122,7 +122,7 @@ def order_size(db, info, result, side, now):
         risk_is_estimate=True, target_equity=cfg['target_equity'])
 
 
-def fresh_quote(store, info, identity, now):
+def fresh_quote(store, info, identity, now, timeframes=('15m', '5m')):
     """Current real 15m/5m quote, independent of the hourly signal's price."""
     import pandas as pd
     import data_quality as dq
@@ -131,7 +131,7 @@ def fresh_quote(store, info, identity, now):
     from paper_account import quote, POLICY
     candidates = []
     with store.connect() as db:
-        for tf in ('15m', '5m'):
+        for tf in timeframes:
             store.read_cache.depend('market:' + info['isin'] + ':' + tf)
             store.read_cache.depend('setting:gettex_chart:' + info['isin'] + ':' + tf)
             rows = db.execute('SELECT ts,open,high,low,close,volume FROM series WHERE '
@@ -175,7 +175,7 @@ def calculate(store, values):
             store.read_cache.depend('setting:'+STATE)
             cfg, identity = candidate_authority(db, info['isin'])
         else:
-            cfg = authority(db, info['isin'])
+            cfg = authority(db, info['isin'], allow_paused=bool(values.get('_paper_order')))
             identity = cfg['identities'][info['isin']]
         position = next((p for p in ledger(db)['positions'] if p['isin'] == info['isin'] and Decimal(p['quantity'])), {})
         position_token = ledger_token(db)
@@ -198,7 +198,13 @@ def calculate(store, values):
     if preparing:result['hourly']['preparation_only']=True
     # Analysis is useful even while prices are stale. Its status cannot place a fill.
     try:
-        result['execution_quote'] = fresh_quote(store, info, identity, now)
+        order = values.get('_paper_order')
+        if order:
+            from paper_orders import check_intent
+            check_intent(order, info['isin'])
+            result['discretionary'] = copy.deepcopy(order)
+        result['execution_quote'] = fresh_quote(store, info, identity, now,
+            (order['quote_tf'],) if order else ('15m', '5m'))
     except ValueError as error:
         result['quote_blocker'] = str(error)
     return result

@@ -289,6 +289,9 @@ class Features:
 
     def bridge_dispatch(self,action,args):
         if action=='paper_trade':
+            from paper_orders import PAIR, submit
+            if args.get('isin') in PAIR:
+                return submit(self,args,'CHATGPT')
             from analytical_read import capture
             from paper_account import execute, instrument_allowed
             from concurrent.futures import Future

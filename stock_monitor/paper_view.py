@@ -4,6 +4,9 @@ from decimal import Decimal
 import tkinter as tk
 from tkinter import ttk
 
+def price_text(value):
+    return '—' if value is None else f'{Decimal(str(value)):.4f}'
+
 def _auto_refresh(parent,app,refresh,interval_ms=5000):
     """Schedule existing read jobs only; stop with the tab or application."""
     timer=None
@@ -63,6 +66,40 @@ def summary(state):
     return (f"{state['account']}{tr(' • только виртуальные операции\nНачальный капитал: ')}{start}{tr(' EUR • Доходность: ')}{change}\nCash: {value('cash')} • Equity: {value('equity')}{tr('\nРеализованный P&L: ')}{value('realized')}{tr(' • Нереализованный: ')}{value('unrealized')}{tr(' • Комиссии: ')}{value('fees')}"+universe+automation_summary(state))
 
 def attach(app, parent):
+    from paper_orders import PAIR, submit
+    from uuid import uuid4
+    order_box=ttk.LabelFrame(parent,text='Поручение владельца • только PAPER');order_box.pack(fill='x',padx=10,pady=4)
+    row=ttk.Frame(order_box);row.pack(fill='x')
+    selected=tk.StringVar(value='Apple');quantity=tk.StringVar(value='1')
+    ttk.Combobox(row,textvariable=selected,values=list(PAIR.values()),state='readonly',width=12).pack(side='left',padx=4)
+    ttk.Label(row,text='Количество:').pack(side='left')
+    ttk.Entry(row,textvariable=quantity,width=10).pack(side='left',padx=4)
+    message=tk.StringVar(value='WAIT V1 не запрещает ваше поручение. Качество, свежесть цены и риск обязательны.')
+    ttk.Label(order_box,textvariable=message,wraplength=1000,justify='left').pack(anchor='w',padx=4,pady=4)
+    order_buttons=[]
+    def place(side,preview=False):
+        try:qty=float(quantity.get().replace(',','.'))
+        except ValueError:message.set('Укажите положительное количество акций.');return
+        args=dict(isin=next(k for k,v in PAIR.items() if v==selected.get()),side=side,quantity=qty,
+            timeframe='15m',request_id='manual-'+str(uuid4()))
+        for button in order_buttons:button.configure(state='disabled')
+        message.set('Проверяю данные, цену и риск…')
+        future=submit(app,args,'MANUAL',preview)
+        def poll():
+            if not parent.winfo_exists() or app.closing:return
+            if not future.done():parent.after(100,poll);return
+            for button in order_buttons:button.configure(state='normal')
+            answer=future.result()
+            if answer.get('status') in ('PREVIEW','COMPLETED'):
+                f=answer['fill'];plan=f.get('smart_eligibility',{}).get('protection') or {}
+                message.set(('Оценка' if preview else 'Исполнено')+f": {f['side']} {f['quantity']} по {price_text(f['price'])} EUR • "
+                    f"комиссия {f['fee']} EUR • стоп {price_text(plan.get('stop'))} • цель {price_text(plan.get('target'))}"+
+                    (' • при исполнении цена проверяется заново' if preview else ''))
+                refresh()
+            else:message.set('Отказ: '+str(answer.get('code'))+' • '+str(answer.get('detail','')))
+        poll()
+    for label,side,preview in [('Цена BUY','BUY',True),('Цена SELL','SELL',True),('BUY','BUY',False),('SELL','SELL',False)]:
+        b=ttk.Button(row,text=label,command=lambda s=side,p=preview:place(s,p));b.pack(side='left',padx=3);order_buttons.append(b)
     head=tk.StringVar(value=tr('Загрузка демосчёта…'))
     ttk.Label(parent,textvariable=head,justify='left',wraplength=1000).pack(anchor='w',padx=10,pady=8)
     controls=ttk.Frame(parent);controls.pack(side='bottom',fill='x',padx=10,pady=4)
@@ -75,8 +112,8 @@ def attach(app, parent):
         y=ttk.Scrollbar(body,orient='vertical',command=tree.yview);y.pack(side='right',fill='y')
         tree.configure(xscrollcommand=x.set,yscrollcommand=y.set);tree.pack(fill='both',expand=True)
         return tree
-    positions=table(tr('Открытые позиции'),('ISIN',tr('Количество'),tr('Затраты'),tr('Цена'),tr('Текущая стоимость'),'P&L',tr('Площадка'),tr('Валюта'),tr('Время оценки'),'DQ'))
-    fills=table(tr('История BUY / SELL'),(tr('Время'),'ISIN',tr('Операция'),tr('Количество'),tr('Цена'),tr('Комиссия'),tr('Площадка'),tr('Валюта'),tr('Свеча')))
+    positions=table(tr('Открытые позиции'),('ISIN',tr('Количество'),tr('Затраты'),tr('Цена'),'Стоп','Цель',tr('Текущая стоимость'),'P&L',tr('Площадка'),tr('Валюта'),tr('Время оценки'),'DQ'))
+    fills=table(tr('История BUY / SELL'),(tr('Время'),'ISIN',tr('Операция'),tr('Количество'),tr('Цена'),'Инициатор','Стоп','Цель',tr('Комиссия'),tr('Площадка'),tr('Валюта'),tr('Свеча')))
     shadow=ttk.Frame(notebook);notebook.add(shadow,text=tr('V1 / V2 — теневые портфели'))
     from paper_strategy_shadow import attach as attach_shadow
     attach_shadow(app,shadow)
@@ -96,9 +133,11 @@ def attach(app, parent):
             detail=(tr('Цена проверена')+' '+p.get('mark_timeframe','')) if p.get('mark_context')=='CURRENT_CLOSED_BAR' else p['mark_status']
             if p.get('archive_quality') not in (None,'READY'):detail+=tr(' • архив: ')+p['archive_quality']
             if p.get('mark_reason'):detail+=': '+p['mark_reason']
-            positions.insert('','end',values=(p['isin'],p['quantity'],p['cost'],p.get('mark','—'),p.get('market_value','—'),p.get('unrealized','—'),ident['venue'],ident['currency'],p.get('mark_at','—'),detail))
+            plan=p.get('protection') or {}
+            positions.insert('','end',values=(p['isin'],p['quantity'],p['cost'],p.get('mark','—'),price_text(plan.get('stop')),price_text(plan.get('target')),p.get('market_value','—'),p.get('unrealized','—'),ident['venue'],ident['currency'],p.get('mark_at','—'),detail))
         for f in state.get('fills',[]):
-            fills.insert('','end',values=(f['at'],f['isin'],f['side'],f['quantity'],f['price'],f['fee'],f['identity']['venue'],f['identity']['currency'],f['bar_close_at']))
+            plan=f.get('smart_eligibility',{}).get('protection') or {}
+            fills.insert('','end',values=(f['at'],f['isin'],f['side'],f['quantity'],price_text(f['price']),f.get('initiator','Ранее'),price_text(plan.get('stop')),price_text(plan.get('target')),f['fee'],f['identity']['venue'],f['identity']['currency'],f['bar_close_at']))
     def failed(message):
         nonlocal busy
         busy=False
