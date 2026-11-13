@@ -157,7 +157,7 @@ def draw_partial(app, full, visible, s, muted, blue):
     # the entire provenance archive for every panel/column/segment.
     visible=pd.DataFrame(visible,copy=False)
     def line(ax,column,**kwargs):
-        x,y=segmented_line(visible,visible[column]);artist,=ax.plot(x,y,**kwargs)
+        x,y=segmented_line(visible,visible[column]);kwargs.setdefault('lw',1.6);artist,=ax.plot(x,y,**kwargs)
         # The first warmed-up value (often today's RSI) is a single point.
         # A line alone hides it; mark isolated values without joining gaps.
         finite=np.isfinite(y)
@@ -167,7 +167,7 @@ def draw_partial(app, full, visible, s, muted, blue):
         ('EMA','ema_fast','EMA '+str(s['ema_fast'])),('EMA','ema_slow','EMA '+str(s['ema_slow'])),
         ('SMA','sma','SMA '+str(s['sma'])),('Bollinger','bb_high','Боллинджер верх'),
         ('Bollinger','bb_low','Боллинджер низ'),('VWAP','vwap','VWAP (по участкам)')):
-        if s[enabled]:line(app.ax_price,'chart_'+column,label=label,lw=1)
+        if s[enabled]:line(app.ax_price,'chart_'+column,label=label,lw=1.8)
     x=np.arange(len(visible));valid=visible.chart_segment.to_numpy()>0
     def bars(ax,values,alpha=1):
         values=np.asarray(values,dtype=float);ok=valid&np.isfinite(values)
@@ -176,7 +176,8 @@ def draw_partial(app, full, visible, s, muted, blue):
     for name,ax in app.panels:
         ax.set_ylabel(name,color=muted,fontsize=8)
         if name=='Объём':
-            bars(ax,visible.volume)
+            from chart_modes import draw_volume
+            draw_volume(ax,visible,valid)
             if s['Средний объём']:line(ax,'chart_volume_mean',color='#f59e0b')
         elif name=='Относительный объём':line(ax,'chart_relative_volume',color=blue)
         elif name=='RSI':

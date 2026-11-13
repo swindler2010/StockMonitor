@@ -55,6 +55,8 @@ class Desktop014:
             style.map(name,fieldbackground=[('readonly',palette['panel'])],foreground=[('readonly',TEXT)],background=[('selected',BLUE)])
         for name in ('Muted.TLabel','PanelMuted.TLabel'):style.configure(name,foreground=MUTED)
         for name in ('Title.TLabel','Price.TLabel','Decision.TLabel'):style.configure(name,foreground=TEXT,font=('Segoe UI',16,'bold'))
+        from compact_theme import install
+        install(self.root,palette)
         self.root.option_add('*TCombobox*Listbox.background',palette['panel']);self.root.option_add('*TCombobox*Listbox.foreground',TEXT)
         self.root.option_add('*Text.background',BG);self.root.option_add('*Text.foreground',TEXT)
         def recolor(widget):
@@ -121,7 +123,8 @@ class Desktop014:
         signature=self.current_quality_signature()
         if signature!=self.quality_signature:
             self.quality_signature=signature
-            self.render_key=None;self.refresh_chart()
+            # New data/quality is not a new user selection. Preserve zoom/pan.
+            self.refresh_chart()
         self.root.after(1000,self.quality_tick)
 
     def _load_cached(self):
@@ -133,7 +136,7 @@ class Desktop014:
     def build_ui(self):
         from text_menu import install_text_menus
         install_text_menus(self.root)
-        self._styles();style=ttk.Style();style.configure('TButton',padding=(5,3));style.configure('Title.TLabel',font=('Segoe UI',16,'bold'))
+        self._styles();style=ttk.Style();style.configure('Title.TLabel',font=('Segoe UI',16,'bold'))
         from freshness_panel import show as show_freshness, label as freshness_label
         menu=tk.Menu(self.root)
         for title,entries in [
@@ -141,7 +144,7 @@ class Desktop014:
             ('Правка',[('Позиция и уровни',self.position_dialog),('Удалить инструмент',self.remove_instrument),('Сохранить',self.save_user_changes)]),
             ('Вид',[('Портфель',self.show_portfolio),('Журнал решений',self.show_decision_journal),('Карточка',self.show_card),('Новости',self.show_news),('Индикаторы',self.show_indicators),('Рисование',self.show_drawing)]),
             ('Настройки',[('Параметры',self.show_settings),('Оформление',self.show_theme)]),
-            ('Справка',[(freshness_label('title'),lambda:show_freshness(self)),('Связь с ChatGPT / MCP',self.show_connection),('Диагностика',self.show_ai),('Обновить программу',lambda:self.check_updates(False))])]:
+            ('Справка',[(freshness_label('title'),lambda:show_freshness(self)),('Связь с ChatGPT / MCP',self.show_connection),('Диагностика',self.show_ai),('Логотипы: Elbstream',lambda:__import__('webbrowser').open('https://elbstream.com')),('Обновить программу',lambda:self.check_updates(False))])]:
             sub=tk.Menu(menu,tearoff=False)
             for label,command in entries:sub.add_command(label=tr(label),command=command)
             menu.add_cascade(label=tr(title),menu=sub)
@@ -724,6 +727,8 @@ class Desktop014:
         self.source_choice.set(tr('Proxy — автоматически · EUR'))
         key=(info['isin'],self.timeframe.get(),self.period.get(),mode)
         if key!=self.render_key:self.user_view=None
+        prior_index=self.current_df.index if self.user_view and self.current_df is not None else None
+        prior_identity=getattr(self,'_viewport_identity',None)
         self.render_key=key;self.cursor=[];self.drag=None;self.drawing_start=None
         if getattr(self,'hover_overlay',None):self.hover_overlay.close();self.hover_overlay=None
         render_timing.mark('state_sqlite')
@@ -731,7 +736,7 @@ class Desktop014:
         render_timing.mark('clear_figure')
         settings={**DEFAULT_IND,**self.store.setting('global_indicators',{})}
         panel_names=[k for k in ('Объём','RSI','MACD','ATR','Относительный объём') if settings.get(k)]
-        heights=[4]+[1]*len(panel_names);grid=self.fig.add_gridspec(len(heights),1,height_ratios=heights,left=.085,right=.81 if settings['Volume Profile'] else .97,top=.93,bottom=.12,hspace=.10)
+        heights=[4]+[1.4 if name=='Объём' else 1 for name in panel_names];grid=self.fig.add_gridspec(len(heights),1,height_ratios=heights,left=.085,right=.80 if settings['Volume Profile'] else .97,top=.93,bottom=.12,hspace=.10)
         self.ax_price=self.fig.add_subplot(grid[0]);self.ax_vol=self.ax_price
         for index,name in enumerate(panel_names,1):
             ax=self.fig.add_subplot(grid[index],sharex=self.ax_price);self.panels.append((name,ax));self.ax_vol=ax
@@ -742,6 +747,12 @@ class Desktop014:
         for ax in axes[:-1]:ax.tick_params(labelbottom=False)
         render_timing.mark('create_axes')
         frame=self.frame_for(info,self.timeframe.get());self.current_df=None
+        identity=tuple(frame.attrs.get(k) for k in ('source','venue','currency','symbol'))
+        if prior_identity is not None and identity!=prior_identity:self.user_view=None
+        elif self.user_view:
+            from chart_viewport import rebase
+            self.user_view=rebase(self.user_view,prior_index,frame.index)
+        self._viewport_identity=identity
         self.instrument.set(info['name'])
         from trading_view import bind_engine
         bind_engine(self,(getattr(self,'_prepared_chart',None) or {}).get('trading_engine'))
@@ -771,11 +782,11 @@ class Desktop014:
             for zone in self.level_zones(info,frame):
                 color='#22c55e' if zone['side']=='support' else '#ef4444'
                 self.ax_price.axhspan(zone['low'],zone['high'],color=color,alpha=.09 if zone['historical'] else .16)
-                self.ax_price.axhline((zone['low']+zone['high'])/2,color=color,lw=1,ls='--' if zone['historical'] else '-',alpha=.5)
+                self.ax_price.axhline((zone['low']+zone['high'])/2,color=color,lw=1.5,ls='--' if zone['historical'] else '-',alpha=.8)
             self.ax_price.text(.01,.98,tr('S/R: сплошные — ближайшие; пунктир — исторические'),transform=self.ax_price.transAxes,va='top',fontsize=7,color=MUTED)
             if result.get('display_levels_available'):
                 for field,color,label in (('support','#22c55e','Поддержка'),('resistance','#ef4444','Сопротивление')):
-                    self.ax_price.axhline(result[field],color=color,lw=1,ls='--',label=label+' · закрытые свечи')
+                    self.ax_price.axhline(result[field],color=color,lw=1.5,ls='--',label=label+' · закрытые свечи')
         render_timing.mark('zones')
         partial=frame.attrs.get('partial_chart')
         if not partial:
@@ -799,12 +810,18 @@ class Desktop014:
             low=float(requested.low.min());high=float(requested.high.max());padding=max((high-low)*.06,abs(high)*.001)
             self.ax_price.set_ylim(low-padding,high+padding)
         if self.user_view:self.ax_price.set_xlim(self.user_view[0]);self.ax_price.set_ylim(self.user_view[1])
+        from chart_modes import fit_volume, compact_number
+        for name,axis in self.panels:
+            if name=='Объём':
+                def update_volume(price,volume_axis=axis):fit_volume(volume_axis,visible,price.get_xlim())
+                update_volume(self.ax_price)
+                self.ax_price.callbacks.connect('xlim_changed',update_volume)
         render_timing.mark('labels_limits')
         from chart_indicators import volume_profile_rows
         profile_rows=volume_profile_rows(visible,result.get('ohlcv_valid',False)) if settings['Volume Profile'] else None
         if profile_rows is not None and not profile_rows.empty:
             profile_title='Volume Profile\nоценка OHLCV'+('\nчастичная история' if frame.attrs.get('partial_chart') else '')
-            self.profile_axis=self.ax_price.inset_axes([1.03,0,.16,1],sharey=self.ax_price)
+            self.profile_axis=self.ax_price.inset_axes([1.025,0,.20,1],sharey=self.ax_price)
             self.profile_axis.set_facecolor(BG)
             self.profile_axis.tick_params(colors=MUTED,labelsize=6,labelleft=False)
             self.profile_axis.set_title(profile_title,color=TEXT,fontsize=7)
@@ -814,9 +831,12 @@ class Desktop014:
                 portion=volume_profile_rows(portion,result.get('ohlcv_valid',False))
                 prices,volumes,widths=volume_profile(portion)
                 self.profile_axis.clear();self.profile_axis.set_facecolor(BG)
-                self.profile_axis.barh(prices,volumes,height=widths*.9,color=BLUE,alpha=.6)
+                self.profile_axis.barh(prices,volumes,height=widths*.92,color=BLUE,alpha=.92)
                 self.profile_axis.set_title(profile_title,color=TEXT,fontsize=7)
-                self.profile_axis.tick_params(colors=MUTED,labelsize=6,labelleft=False)
+                self.profile_axis.tick_params(colors=MUTED,labelsize=8,labelleft=False)
+                from matplotlib.ticker import MaxNLocator
+                self.profile_axis.xaxis.set_major_locator(MaxNLocator(3))
+                self.profile_axis.xaxis.set_major_formatter(FuncFormatter(compact_number))
                 self.profile_axis.set_ylim(axis.get_ylim())
             update_profile(self.ax_price)
             self.ax_price.callbacks.connect('xlim_changed',update_profile)
@@ -884,13 +904,13 @@ class Desktop014:
                 series['VWAP (с начала архива)']=((full.high+full.low+close)/3*full.volume).cumsum()/full.volume.cumsum().replace(0,np.nan)
             else:
                 group=full.index.normalize();series['VWAP (сессия)']=(((full.high+full.low+close)/3*full.volume).groupby(group).cumsum()/full.volume.groupby(group).cumsum().replace(0,np.nan))
-        for name,values in series.items():self.ax_price.plot(np.arange(len(visible)),values.reindex(visible.index),label=name,lw=1)
+        for name,values in series.items():self.ax_price.plot(np.arange(len(visible)),values.reindex(visible.index),label=name,lw=1.8)
         x=np.arange(len(visible));volume_mean=full.volume.rolling(s['volume']).mean()
         for name,ax in self.panels:
             ax.set_ylabel(name,color=MUTED,fontsize=8)
             if name=='Объём':
-                from chart_modes import draw_segments
-                draw_segments(ax,np.stack((np.column_stack((x,np.zeros(len(x)))),np.column_stack((x,visible.volume.to_numpy()))),axis=1),color=BLUE,lw=1);ax.autoscale_view()
+                from chart_modes import draw_volume
+                draw_volume(ax,visible)
                 if s['Средний объём']:ax.plot(x,volume_mean.reindex(visible.index),color='#f59e0b')
             elif name=='Относительный объём':ax.plot(x,(full.volume/volume_mean.replace(0,np.nan)).reindex(visible.index),color=BLUE)
             elif name=='RSI':
