@@ -74,6 +74,10 @@ class Dispatcher:
         priority=0 if lane=='chart' else .5 if lane=='trading' else 1 if lane=='read' else 2 if isin and isin==self.visible else 3 if isin in self.positions else 4 if lane=='misc' else 5 if lane=='snapshot' else 6
         if lane=='feed_update' and task.get('owner_priority'):priority=float(task['owner_priority'])
         if lane in ('snapshot','eligibility'):priority=5  # FIFO between long readonly jobs.
+        # Fresh feeds can keep the only background slot occupied under load.
+        # Let an overdue assessment take the next slot while keeping chart,
+        # trading and explicit reads ahead and never preempting a writer.
+        if lane=='eligibility' and time.monotonic()-task['queued']>=60:priority=1.05
         # CP session polling must not starve older feed/history turns behind
         # an always-changing visible instrument. Preserve chart/read priority.
         if lane=='feed_update' and time.monotonic()-task['queued']>=300:priority=min(priority,2)

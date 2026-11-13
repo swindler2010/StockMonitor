@@ -38,6 +38,25 @@ class DispatcherTests(unittest.TestCase):
         d.submit(interactive.set,lambda _:None,lambda _:None,lane='chart')
         wait(interactive.is_set);self.assertFalse(other.is_set());self.assertEqual(d.snapshot()['capacity'],2)
         gate.set();wait(other.is_set)
+    def test_waiting_assessment_runs_before_feed_backlog_under_pressure(self):
+        d=self.make(pressure={'cpu':99,'ram':20})
+        gate=threading.Event();started=threading.Event();order=[]
+        self.addCleanup(gate.set)
+        d.submit(lambda:(started.set(),gate.wait(3)),lambda _:None,lambda _:None,lane='feed_update')
+        wait(started.is_set)
+        d.focus('visible')
+        for n in range(53):
+            d.submit(lambda:order.append('feed'),lambda _:None,lambda _:None,
+                     key=str(n),lane='feed_update',isin='visible')
+        d.submit(lambda:order.append('assessment'),lambda _:None,lambda _:None,
+                 key='assessment',lane='eligibility')
+        with d.cv:
+            d.pending['assessment']['queued']-=61
+        self.assertFalse(order)
+        gate.set()
+        wait(lambda:len(order)==54)
+        self.assertEqual(order[0],'assessment')
+
     def test_sqlite_pressure_and_single_writer(self):
         d=self.make();d.sqlite_busy();self.assertTrue(d.snapshot()['sqlite_busy']);self.assertEqual(d.snapshot()['capacity'],2)
         active=[];maximum=[];lock=threading.Lock();done=[]
