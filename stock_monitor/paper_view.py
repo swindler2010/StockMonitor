@@ -66,12 +66,13 @@ def summary(state):
     return (f"{state['account']}{tr(' • только виртуальные операции\nНачальный капитал: ')}{start}{tr(' EUR • Доходность: ')}{change}\nCash: {value('cash')} • Equity: {value('equity')}{tr('\nРеализованный P&L: ')}{value('realized')}{tr(' • Нереализованный: ')}{value('unrealized')}{tr(' • Комиссии: ')}{value('fees')}"+universe+automation_summary(state))
 
 def attach(app, parent):
-    from paper_orders import PAIR, submit
+    from paper_orders import order_choices, submit
     from uuid import uuid4
     order_box=ttk.LabelFrame(parent,text='Поручение владельца • только PAPER');order_box.pack(fill='x',padx=10,pady=4)
     row=ttk.Frame(order_box);row.pack(fill='x')
-    selected=tk.StringVar(value='Apple');quantity=tk.StringVar(value='1')
-    instrument_box=ttk.Combobox(row,textvariable=selected,values=list(PAIR.values()),state='readonly',width=12)
+    choices={}
+    selected=tk.StringVar(value='');quantity=tk.StringVar(value='1')
+    instrument_box=ttk.Combobox(row,textvariable=selected,values=[],state='readonly',width=24)
     instrument_box.pack(side='left',padx=4)
     ttk.Label(row,text='Количество:').pack(side='left')
     quantity_box=ttk.Entry(row,textvariable=quantity,width=10);quantity_box.pack(side='left',padx=4)
@@ -81,9 +82,11 @@ def attach(app, parent):
     selected.trace_add('write',changed);quantity.trace_add('write',changed)
     order_buttons=[]
     def place(side,preview=False):
+        isin=next((k for k,v in choices.items() if v==selected.get()),None)
+        if isin is None:message.set('Нет выбранной акции с действующим подключением к PAPER.');return
         try:qty=float(quantity.get().replace(',','.'))
         except ValueError:message.set('Укажите положительное количество акций.');return
-        args=dict(isin=next(k for k,v in PAIR.items() if v==selected.get()),side=side,quantity=qty,
+        args=dict(isin=isin,side=side,quantity=qty,
             timeframe='AUTO',request_id='manual-'+str(uuid4()))
         instrument_box.configure(state='disabled');quantity_box.configure(state='disabled')
         for button in order_buttons:button.configure(state='disabled')
@@ -97,7 +100,7 @@ def attach(app, parent):
             answer=future.result()
             if answer.get('status') in ('PREVIEW','COMPLETED'):
                 f=answer['fill'];plan=f.get('smart_eligibility',{}).get('protection') or {}
-                message.set(('Оценка' if preview else 'Исполнено')+f": {PAIR.get(f['isin'],f['isin'])} {f['side']} {f['quantity']} по {price_text(f['price'])} EUR • "
+                message.set(('Оценка' if preview else 'Исполнено')+f": {choices.get(f['isin'],f['isin'])} {f['side']} {f['quantity']} по {price_text(f['price'])} EUR • "
                     f"комиссия {f['fee']} EUR • стоп {price_text(plan.get('stop'))} • цель {price_text(plan.get('target'))}"+
                     (' • при исполнении цена проверяется заново' if preview else ''))
                 refresh()
@@ -135,9 +138,14 @@ def attach(app, parent):
     busy=False
     def alive(): return bool(parent.winfo_exists()) and not app.closing
     def done(state):
-        nonlocal busy
+        nonlocal busy,choices
         busy=False
         if not alive(): return
+        current=next((k for k,v in choices.items() if v==selected.get()),None)
+        choices=order_choices(state)
+        instrument_box.configure(values=list(choices.values()))
+        label=choices.get(current,next(iter(choices.values()),''))
+        if selected.get()!=label:selected.set(label)
         set_summary(summary(state))
         for tree in (positions,fills):
             tree.delete(*tree.get_children())

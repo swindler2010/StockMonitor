@@ -5,6 +5,7 @@ only the decision to BUY/SELL and quantity come from the user's instruction.
 """
 import copy
 import math
+import re
 import sqlite3
 import time
 from concurrent.futures import Future
@@ -14,9 +15,37 @@ PAIR = {'US0378331005': 'Apple', 'US67066G1040': 'NVIDIA'}
 VERSION = 'owner_paper_order_v1'
 
 
+def owner_route(config, isin):
+    """Keep legacy routes; admitted instruments use the same owner executor.
+
+    This is dispatch only. authority() rechecks the current permission in the
+    calculation and again in the final execution transaction.
+    """
+    return isin in PAIR or isin in config.get('identities', {})
+
+
+def order_choices(state):
+    """Project the existing admitted universe, never grant trading authority."""
+    from paper_hourly import VERSION as AUTO_VERSION
+    from paper_account import ACCOUNT
+    config=state.get('automation', {})
+    if (state.get('status')!='ACTIVE' or config.get('approved') is not True
+            or config.get('version')!=AUTO_VERSION or config.get('account')!=ACCOUNT):return {}
+    allowed=set(state.get('allowed_isins', []));choices={}
+    for isin,meta in config.get('identities', {}).items():
+        if (isin not in allowed or meta.get('source')!='gettex_chart'
+                or meta.get('venue')!='GETTEX' or meta.get('currency')!='EUR'
+                or meta.get('timezone')!='Europe/Berlin'):continue
+        name=PAIR.get(isin) or config.get('names', {}).get(isin) or isin
+        # Labels remain unambiguous even when two registered stocks share a name.
+        choices[isin]=name if name not in choices.values() else f'{name} ({isin})'
+    return choices
+
+
 def check_intent(intent, isin):
     qty = intent.get('quantity')
-    if (intent.get('version') != VERSION or isin not in PAIR
+    if (intent.get('version') != VERSION or not isinstance(isin,str)
+            or re.fullmatch(r'[A-Z]{2}[A-Z0-9]{9}[0-9]',isin) is None
             or intent.get('isin') != isin or intent.get('initiator') not in ('MANUAL', 'CHATGPT')
             or intent.get('side') not in ('BUY', 'SELL') or intent.get('quote_tf') not in ('5m', '15m', 'AUTO')
             or not isinstance(intent.get('request_id'), str) or not 8 <= len(intent['request_id']) <= 160):
