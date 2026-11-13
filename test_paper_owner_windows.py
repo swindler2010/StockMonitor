@@ -79,7 +79,7 @@ def serve():
                 return r
             finally:f.db.close()
 
-    root=tk.Tk();root.title('Stock Monitor AD — ИЗОЛИРОВАННЫЙ PAPER / WAIT fixture');root.geometry('1180x820')
+    root=tk.Tk();root.title('Stock Monitor AD — ИЗОЛИРОВАННЫЙ PAPER / WAIT fixture');root.geometry('1120x450')
     events=queue.Queue()
     store=SimpleNamespace(path=DB,directory=Directory(),read_cache=ReadCache(DB),
         connect=lambda:sqlite3.connect(DB),setting=lambda k,d=None:h.read(sqlite3.connect(DB),k,d))

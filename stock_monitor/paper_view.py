@@ -100,8 +100,17 @@ def attach(app, parent):
         poll()
     for label,side,preview in [('Цена BUY','BUY',True),('Цена SELL','SELL',True),('BUY','BUY',False),('SELL','SELL',False)]:
         b=ttk.Button(row,text=label,command=lambda s=side,p=preview:place(s,p));b.pack(side='left',padx=3);order_buttons.append(b)
-    head=tk.StringVar(value=tr('Загрузка демосчёта…'))
-    ttk.Label(parent,textvariable=head,justify='left',wraplength=1000).pack(anchor='w',padx=10,pady=8)
+    # Keep order controls and the ledger visible in the existing small window.
+    summary_box=ttk.Frame(parent);summary_box.pack(fill='x',padx=10,pady=4)
+    head=tk.Text(summary_box,height=8,wrap='word',font='TkDefaultFont')
+    summary_scroll=ttk.Scrollbar(summary_box,orient='vertical',command=head.yview)
+    summary_scroll.pack(side='right',fill='y');head.configure(yscrollcommand=summary_scroll.set)
+    head.pack(side='left',fill='x',expand=True)
+    def set_summary(text):
+        offset=head.yview()[0]
+        head.configure(state='normal');head.delete('1.0','end');head.insert('1.0',text);head.configure(state='disabled')
+        head.yview_moveto(offset)
+    set_summary(tr('Загрузка демосчёта…'))
     controls=ttk.Frame(parent);controls.pack(side='bottom',fill='x',padx=10,pady=4)
     notebook=ttk.Notebook(parent);notebook.pack(fill='both',expand=True,padx=10)
     def table(title,columns):
@@ -124,7 +133,7 @@ def attach(app, parent):
         nonlocal busy
         busy=False
         if not alive(): return
-        head.set(summary(state))
+        set_summary(summary(state))
         for tree in (positions,fills):
             tree.delete(*tree.get_children())
         for p in state.get('positions',[]):
@@ -141,7 +150,7 @@ def attach(app, parent):
     def failed(message):
         nonlocal busy
         busy=False
-        if alive(): head.set(tr('Демосчёт временно недоступен; данные не изменены.'))
+        if alive(): set_summary(tr('Демосчёт временно недоступен; данные не изменены.'))
     def refresh():
         nonlocal busy
         if busy or not alive(): return
