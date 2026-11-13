@@ -15,7 +15,7 @@
         "CURRENT",
         "STALE"
       ],
-      "status": "1 адресный сценарий PASS; рабочая приёмка ожидается",
+      "status": "1 адресный сценарий PASS; штатный restart13Nov12:58:43CET; обычная очередь Apple13:07:18→CURRENT13:08:30CET, deadline13:15 сохранён",
       "steps": [
         "Сопоставить ревизии и точный diff отчёта DQ. Не считать next_retry, recovery_cursor и перечни выполненных попыток изменением рыночных фактов.",
         "Одинаковый ограниченный список служебных полей исключён из сравнения ревизий DQ и хеша закрытых входов. Сами поля сохраняются; очередь читает действующий cooldown.",
@@ -23,7 +23,8 @@
       ],
       "evidence": [
         "test_cp_recovery_metadata.py",
-        "13Nov2026 Apple: ordinary CURRENT observed12:51:16CET; STALE12:51:37 only DQ15m2313→2314, nine changed progress/check fields; no changed OHLCV/policy inputs. Ordinary queue request12:51:43, subsequent material market inputs preserved."
+        "13Nov2026 Apple: ordinary CURRENT observed12:51:16CET; STALE12:51:37 only DQ15m2313→2314, nine changed progress/check fields; no changed OHLCV/policy inputs. Ordinary queue request12:51:43, subsequent material market inputs preserved.",
+        "После правки запрос обслужен13:07:18, публикацияCURRENT13:08:30,72.157s. Девять аналитических кандидатов пригодны только в прежнем owner PAPER-контексте,1H/4H WAIT. Позднейший общий STALE по grant/DQ/reconciliation revisions не скрыт;1Hclosed proof13:09 остаётсяUNCHANGED, новый запрос13:08:43. Исправление не обещает постоянныйCURRENT или автоматический торговый допуск."
       ],
       "limits": "Не восстанавливает свечи и не даёт READY неподтверждённым данным. Не меняет расписание, TTL, торговую стратегию или ручные разрешения."
     },
