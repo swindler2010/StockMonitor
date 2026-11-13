@@ -138,13 +138,14 @@ class Desktop014:
         install_text_menus(self.root)
         self._styles();style=ttk.Style();style.configure('Title.TLabel',font=('Segoe UI',16,'bold'))
         from freshness_panel import show as show_freshness, label as freshness_label
+        from development_advisor_view import show as show_development_advisor
         menu=tk.Menu(self.root)
         for title,entries in [
             ('Файл',[('Добавить инструмент',self.add_stock_dialog),('Копия базы',self.backup_data),('Импорт базы',self.import_legacy_data),('Выход',self.close)]),
             ('Правка',[('Позиция и уровни',self.position_dialog),('Удалить инструмент',self.remove_instrument),('Сохранить',self.save_user_changes)]),
             ('Вид',[('Портфель',self.show_portfolio),('Журнал решений',self.show_decision_journal),('Карточка',self.show_card),('Новости',self.show_news),('Индикаторы',self.show_indicators),('Рисование',self.show_drawing)]),
             ('Настройки',[('Параметры',self.show_settings),('Оформление',self.show_theme)]),
-            ('Справка',[(freshness_label('title'),lambda:show_freshness(self)),('Связь с ChatGPT / MCP',self.show_connection),('Диагностика',self.show_ai),('Логотипы: Elbstream',lambda:__import__('webbrowser').open('https://elbstream.com')),('Обновить программу',lambda:self.check_updates(False))])]:
+            ('Справка',[(freshness_label('title'),lambda:show_freshness(self)),('Советы по развитию',lambda:show_development_advisor(self)),('Связь с ChatGPT / MCP',self.show_connection),('Диагностика',self.show_ai),('Логотипы: Elbstream',lambda:__import__('webbrowser').open('https://elbstream.com')),('Обновить программу',lambda:self.check_updates(False))])]:
             sub=tk.Menu(menu,tearoff=False)
             for label,command in entries:sub.add_command(label=tr(label),command=command)
             menu.add_cascade(label=tr(title),menu=sub)
