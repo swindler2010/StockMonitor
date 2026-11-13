@@ -103,7 +103,7 @@ class Bridge:
                         from mcp_server import validate_arguments
                         validate_arguments(action,args)
                         result=receipt(bridge.command_status(args),{k:args[k] for k in ('path','offset','limit','expected_revision') if k in args})
-                    elif action in ('refresh','select','set_levels','add_instrument','remove_instrument','update_position','record_decision','review_decision','read_analytics','paper_trade'):
+                    elif action in ('refresh','select','set_levels','add_instrument','remove_instrument','update_position','record_decision','review_decision','read_analytics','paper_trade','get_indicators','set_indicators'):
                         from mcp_server import validate_arguments
                         validate_arguments(action,args)
                         result=bridge.commands.submit(action,args,obj.get('command',{}))

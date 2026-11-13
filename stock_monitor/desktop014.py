@@ -28,10 +28,8 @@ BG='#0b1220';TEXT='#e5e7eb';MUTED='#94a3b8';BLUE='#60a5fa'
 PERIODS={'день':None,'неделя':None,'месяц':1,'6 месяцев':6,'год':12,'2 года':24,'5 лет':60,'Max':None}
 ALIASES={'Последние':'неделя','1 месяц':'месяц','1 год':'год'}
 from timeframes import LABELS as TF, base_for
-DEFAULT_IND={'EMA':True,'SMA':False,'Bollinger':False,'VWAP':False,'RSI':False,'MACD':False,'ATR':False,'Объём':True,'Средний объём':False,'Относительный объём':False,'ema_fast':10,'ema_slow':30,'sma':20,'rsi':14,'atr':14,'bb':20,'bb_dev':2,'volume':20}
-DEFAULT_IND.update(macd_fast=12,macd_slow=26,macd_signal=9)
-DEFAULT_IND['Volume Profile']=False
-DEFAULT_IND['Уровни анализа']=True
+from indicator_controls import DEFAULT_IND
+
 
 def number(value):
     try:return f'{float(value):.2f}' if math.isfinite(float(value)) else 'недостаточно истории'
@@ -1049,8 +1047,10 @@ class Desktop014:
         def apply():
             try:
                 selected={k:v.get() if isinstance(s[k],bool) else (float(v.get()) if k=='bb_dev' else int(v.get())) for k,v in values.items()}
-                if any(not 1<=v<=500 for k,v in selected.items() if not isinstance(v,bool)):raise ValueError('Периоды: от 1 до 500')
-                if selected['macd_fast']>=selected['macd_slow']:raise ValueError('MACD: быстрый период должен быть меньше медленного')
+                if getattr(self,'_indicator_write_busy',False):raise ValueError('Настройки сохраняются из чата. Повторите после завершения.')
+                if s!={**DEFAULT_IND,**self.store.setting('global_indicators',{})}:raise ValueError('Настройки изменились. Откройте окно индикаторов заново.')
+                from indicator_controls import validate
+                selected=validate(selected,s)
                 self.store.set_setting('global_indicators',selected);win.destroy();self.refresh_chart()
             except ValueError as e:messagebox.showerror(tr('Параметры'),tr(str(e)),parent=win)
         ttk.Button(actions,text=tr('Применить'),command=apply).pack(side='right')
@@ -1350,6 +1350,12 @@ class Desktop014:
             tf=args.get('timeframe',self.timeframe.get());period=ALIASES.get(args.get('period'),args.get('period',self.period.get()))
             if tf not in TF or period not in PERIODS:raise ValueError('Неподдерживаемый интервал/период')
             self.symbol.set(info['name']);self.timeframe.set(tf);self.period.set(period);self.refresh_chart();self.publish_bridge();return {'selected':info['isin'],'source_mode':self.source_mode(info)}
+        if action=='get_indicators':
+            from indicator_controls import snapshot
+            return snapshot(self)
+        if action=='set_indicators':
+            from indicator_controls import dispatch
+            return dispatch(self,args)
         if action=='set_levels':
             info=next((i for i in self.watchlist if i['isin']==args.get('isin')),None)
             if info is None:raise ValueError('Неизвестный ISIN')
