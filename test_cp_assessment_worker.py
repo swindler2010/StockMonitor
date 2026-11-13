@@ -70,5 +70,40 @@ class AssessmentWorker(unittest.TestCase):
   with patch.object(windows,'eligibility_state',return_value='CURRENT'):
    worker.finish(self.s,item,{'isin':'A','checked_at':'now'})
   self.assertEqual(self.s.setting('cp_reconciliation_progress:A')['analysis_requested_at'],'new')
+ def test_expired_publication_retains_request_and_review_until_current_retry(self):
+  self.s.set_setting('cp_reconciliation_progress:A',{'analysis_requested_at':'review'})
+  item=worker.request(self.s,'A');item['analysis_requested_at']='review'
+  result=dict(isin='A',checked_at='2026-11-13T07:54:55.699158Z',expires_at='2026-11-13T07:55:00Z',
+   _input_revisions={'instrument:A':3},candidates=[dict(timeframe='1H',expires_at='2026-11-13T08:30:00Z',
+    execution_revisions={'market:A:15m':7},execution_expires_at='2026-11-13T08:00:00Z',trade_ready=False)])
+  with patch.object(windows,'eligibility_state',return_value='EXPIRED'),patch.object(worker.time,'time',return_value=1000):
+   worker.finish(self.s,item,result)
+  pending=self.s.setting(worker.PREFIX+'A');self.assertIsNotNone(pending)
+  self.assertEqual(pending['requested_at'],item['requested_at'])
+  self.assertEqual(pending['retry_at'],1060);self.assertEqual(pending['retry_reason'],'EXPIRED_AT_PUBLICATION')
+  self.assertEqual(self.s.setting('cp_reconciliation_progress:A')['analysis_requested_at'],'review')
+  saved=self.s.setting('cp_eligibility:A')
+  self.assertEqual(saved,{**result,'publication_state':'EXPIRED'})
+  other=fixture.Memory();self.addCleanup(other.db.close);self.s.db.backup(other.db)
+  self.assertIsNone(worker.choose(other.db,1059));due=worker.choose(other.db,1060)
+  self.assertEqual(due['isin'],'A');due['analysis_requested_at']='review'
+  with patch.object(windows,'eligibility_state',return_value='CURRENT'):
+   worker.finish(other,due,result)
+  self.assertIsNone(other.setting(worker.PREFIX+'A'))
+  self.assertNotIn('analysis_requested_at',other.setting('cp_reconciliation_progress:A'))
+ def test_expired_retry_does_not_starve_53_200_ordinary_requests(self):
+  for count in (53,200):
+   s=fixture.Memory();self.addCleanup(s.db.close)
+   s.set_setting(CONFIG,dict(enabled=True,approved=True,identities={'A':{}}))
+   item=worker.request(s,'A')
+   for n in range(count):worker.request(s,'B'+str(n))
+   with patch.object(windows,'eligibility_state',return_value='EXPIRED'),patch.object(worker.time,'time',return_value=1000):
+    worker.finish(s,item,dict(isin='A',expires_at='old'))
+   pending=s.setting(worker.PREFIX+'A');self.assertIsNotNone(pending)
+   seen=[]
+   for n in range(count):
+    job=worker.choose(s.db,1059);seen.append(job['isin']);worker.finish(s,job)
+   self.assertEqual(len(set(seen)),count);self.assertNotIn('A',seen)
+   self.assertEqual(worker.choose(s.db,1060)['isin'],'A')
 
 if __name__=='__main__':unittest.main()

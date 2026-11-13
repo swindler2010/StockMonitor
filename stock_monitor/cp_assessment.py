@@ -39,12 +39,14 @@ def finish(store,item,result=None,error=None):
     from calculation_window import publish_eligibility
     from cp_reconciliation import complete_analysis_request
     from paper_hourly import CONFIG,read
-    isin=item['isin'];now=time.time()
+    isin=item['isin'];expired=False
     if error is None:
         result=publish_eligibility(store,{'isin':isin},result)
         if result and not result.get('error'):
-            complete_analysis_request(store,isin,item.get('analysis_requested_at'),result)
+            expired=result.get('publication_state')=='EXPIRED'
+            if not expired:complete_analysis_request(store,isin,item.get('analysis_requested_at'),result)
         elif result:error=result.get('error')
+    now=time.time()
     with store.connect() as db:
         db.execute('BEGIN IMMEDIATE')
         key=PREFIX+isin;old=read(db,key,{})
@@ -54,6 +56,13 @@ def finish(store,item,result=None,error=None):
         db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',(CURSOR,json.dumps(streak)))
         if error:
             old.update(last_attempt_at=now,retry_at=now+60,error=str(error))
+            db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',(key,json.dumps(old)))
+        elif expired:
+            # Keep independent closed proofs for diagnostics, but do not
+            # acknowledge a fresh assessment or rely on another feed event.
+            # The existing retry delay and rotation prevent a hot retry loop.
+            old.pop('error',None)
+            old.update(last_attempt_at=now,retry_at=now+60,retry_reason='EXPIRED_AT_PUBLICATION')
             db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',(key,json.dumps(old)))
         else:db.execute('DELETE FROM settings WHERE key=?',(key,))
 

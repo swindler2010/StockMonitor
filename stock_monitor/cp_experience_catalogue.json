@@ -4,6 +4,28 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "expired_assessment_durable_retry",
+      "title": "Оценка истекла во время расчёта: повтор без ожидания нового события загрузчика",
+      "sources": [
+        "cp_assessment.finish",
+        "existing eligibility publication"
+      ],
+      "states": [
+        "EXPIRED"
+      ],
+      "status": "2 new + 2 affected scenarios PASS; Windows application pending",
+      "steps": [
+        "Сохранять EXPIRED как диагностический результат с исходными сроками и независимыми закрытыми доказательствами.",
+        "Не закрывать analysis_requested_at и не удалять запрос; сохранить retry_reason EXPIRED_AT_PUBLICATION, last_attempt_at и retry_at через60секунд.",
+        "Повторить через существующую очередь и прежнюю ротацию; при CURRENT завершить запрос. Не создавать отдельную очередь, не продлевать TTL и не считать EXPIRED торговым разрешением."
+      ],
+      "evidence": [
+        "Apple13Nov08:54:55.699CET→expiry08:55:00;compute65.000сек,finished08:56:00.672,receipt08:56:00.872. Новый запрос появился08:56:55.032 только благодаря отдельному событию feed.",
+        "Positive failure before fix: expired publication deleted its request. New tests cover durable retry, review acknowledgement, restart/current successor and53/200ordinary requests; related deadline/revision guards remain."
+      ],
+      "limits": "Не ускоряет сам расчёт и не гарантирует слот ровно через60секунд. Недостоверные данные, устаревшая цена и изменения допуска остаются блокирующими."
+    },
+    {
       "id": "coherent_eligibility_receipt_publication",
       "title": "Публикация оценки при служебном переподтверждении допуска",
       "sources": [
