@@ -13,7 +13,7 @@
       "states": [
         "EXPIRED"
       ],
-      "status": "2 new + 2 affected scenarios PASS; Windows application pending",
+      "status": "2 new + 2 affected PASS; Windows normal restart applied 13Nov09:10CET",
       "steps": [
         "Сохранять EXPIRED как диагностический результат с исходными сроками и независимыми закрытыми доказательствами.",
         "Не закрывать analysis_requested_at и не удалять запрос; сохранить retry_reason EXPIRED_AT_PUBLICATION, last_attempt_at и retry_at через60секунд.",
@@ -21,7 +21,8 @@
       ],
       "evidence": [
         "Apple13Nov08:54:55.699CET→expiry08:55:00;compute65.000сек,finished08:56:00.672,receipt08:56:00.872. Новый запрос появился08:56:55.032 только благодаря отдельному событию feed.",
-        "Positive failure before fix: expired publication deleted its request. New tests cover durable retry, review acknowledgement, restart/current successor and53/200ordinary requests; related deadline/revision guards remain."
+        "Positive failure before fix: expired publication deleted its request. New tests cover durable retry, review acknowledgement, restart/current successor and53/200ordinary requests; related deadline/revision guards remain.",
+        "Windows Save/Close/writer exit/restart and local Bridge confirmed;9preservation comparisons matched. New natural EXPIRED not observed at verification, the retry transition was verified in isolated SQLite."
       ],
       "limits": "Не ускоряет сам расчёт и не гарантирует слот ровно через60секунд. Недостоверные данные, устаревшая цена и изменения допуска остаются блокирующими."
     },
