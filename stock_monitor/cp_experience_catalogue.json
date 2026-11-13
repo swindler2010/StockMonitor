@@ -19,12 +19,15 @@
       "steps": [
         "Сопоставить ревизии и точный diff отчёта DQ. Не считать next_retry, recovery_cursor и перечни выполненных попыток изменением рыночных фактов.",
         "Одинаковый ограниченный список служебных полей исключён из сравнения ревизий DQ и хеша закрытых входов. Сами поля сохраняются; очередь читает действующий cooldown.",
-        "State, identity, ranges, stale_count, ошибки/качество источника и неизвестные поля остаются строгими. Изменения свечей и разрешений сохраняют отдельные ревизии. Срок оценки не продлевается."
+        "State, identity, ranges, stale_count, ошибки/качество источника и неизвестные поля остаются строгими. Изменения свечей и разрешений сохраняют отдельные ревизии. Срок оценки не продлевается.",
+        "Для closed-input proof отдельно отличать прирост expected_open_intervals/with_candles всего архива от изменения фактов внутри использованного окна. Убирать только эти два согласованных счётчика из семантического хеша; реальные OHLCV отдельно сверять по точному диапазону, остальные факты DQ сохранять строгими. Raw revisions и срок исполнения не перепривязывать."
       ],
       "evidence": [
         "test_cp_recovery_metadata.py",
         "13Nov2026 Apple: ordinary CURRENT observed12:51:16CET; STALE12:51:37 only DQ15m2313→2314, nine changed progress/check fields; no changed OHLCV/policy inputs. Ordinary queue request12:51:43, subsequent material market inputs preserved.",
-        "После правки запрос обслужен13:07:18, публикацияCURRENT13:08:30,72.157s. Девять аналитических кандидатов пригодны только в прежнем owner PAPER-контексте,1H/4H WAIT. Позднейший общий STALE по grant/DQ/reconciliation revisions не скрыт;1Hclosed proof13:09 остаётсяUNCHANGED, новый запрос13:08:43. Исправление не обещает постоянныйCURRENT или автоматический торговый допуск."
+        "После правки запрос обслужен13:07:18, публикацияCURRENT13:08:30,72.157s. Девять аналитических кандидатов пригодны только в прежнем owner PAPER-контексте,1H/4H WAIT. Позднейший общий STALE по grant/DQ/reconciliation revisions не скрыт;1Hclosed proof13:09 остаётсяUNCHANGED, новый запрос13:08:43. Исправление не обещает постоянныйCURRENT или автоматический торговый допуск.",
+        "AG,13Nov: Apple13:53 calculation; at14:01 seven candidates lost validity only because archive census4736/4598→4737/4599; all used closed rows and138 UNCONFIRMED unchanged. test_cp_archive_tail_counts.py: reproducedFAIL before; PASS after, including material OHLCV/DQ/identity/unknown facts/inconsistent census rejection and unchanged execution deadline/revisions. Ordinary Windows cycles Apple checked14:05:33 and14:15:00CET both publishedCURRENT; nine analytical candidates current on observation14:06:48 and14:16:11. Real expired15m/30m at14:15 kept EXPIRED until second cycle; owner grants still temporarily revoke during recheck.",
+        "test_cp_archive_tail_counts.py"
       ],
       "limits": "Не восстанавливает свечи и не даёт READY неподтверждённым данным. Не меняет расписание, TTL, торговую стратегию или ручные разрешения."
     },
