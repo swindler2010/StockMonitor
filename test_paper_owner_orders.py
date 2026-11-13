@@ -91,4 +91,35 @@ class OwnerOrders(unittest.TestCase):
         self.assertEqual(r['execution_context']['trading_engine']['signal'],'WAIT')
 
 
+    def test_manual_auto_quote_uses_fresh_5m_without_weakening_checks(self):
+        from types import SimpleNamespace
+        from contextlib import nullcontext
+        from unittest.mock import patch
+        import pandas as pd
+        f=self.f
+        f.write('gettex_chart:'+f.isin+':5m',dict(state='SAVED',identity=f.identity,
+            listing_proof=dict(f.identity,status='CONFIRMED',isin=f.isin)))
+        for tf,stamp in [('15m','2026-11-04 10:00:00'),('5m','2026-11-04 10:30:00')]:
+            f.db.execute('INSERT INTO series VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+                (f.isin,'gettex_chart','GETTEX','EUR','AAPL.GTX',tf,stamp,100,102,99,100,20))
+        store=SimpleNamespace(connect=lambda:nullcontext(f.db),read_cache=SimpleNamespace(depend=lambda _:None))
+        self.prepare();f.result['discretionary']['quote_tf']='AUTO';f.args['_quote_tf']='AUTO'
+        now=pd.Timestamp(f.now,unit='s',tz='UTC')
+        import data_quality
+        audit=data_quality.audit
+        def at_clock(*args,**kwargs):
+            report=audit(*args,**kwargs);report['checked_at']=now.isoformat();return report
+        with patch('paper_hourly.time.time',return_value=f.now), patch('data_quality.audit',side_effect=at_clock):
+            with self.assertRaisesRegex(ValueError,'STALE_QUOTE'):
+                hourly.fresh_quote(store,f.info,f.identity,now,('15m',))
+            q=hourly.fresh_quote(store,f.info,f.identity,now,orders.quote_timeframes(f.result['discretionary']))
+            self.assertEqual(q['timeframe'],'5m');f.result['execution_quote']=q
+            fill=f.trade()['fill'];self.assertEqual(fill['execution_quote_timeframe'],'5m')
+            f.db.execute("UPDATE series SET volume=0 WHERE base_tf='5m'")
+            with self.assertRaisesRegex(ValueError,'BAD_OHLCV'):
+                hourly.fresh_quote(store,f.info,f.identity,now)
+        self.assertEqual(orders.quote_timeframes(dict(quote_tf='15m')),('15m',))
+        self.assertEqual(orders.quote_timeframes(None),('15m','5m'))
+
+
 if __name__=='__main__':unittest.main()

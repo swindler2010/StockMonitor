@@ -198,13 +198,13 @@ def calculate(store, values):
     if preparing:result['hourly']['preparation_only']=True
     # Analysis is useful even while prices are stale. Its status cannot place a fill.
     try:
+        from paper_orders import check_intent, quote_timeframes
         order = values.get('_paper_order')
         if order:
-            from paper_orders import check_intent
             check_intent(order, info['isin'])
             result['discretionary'] = copy.deepcopy(order)
         result['execution_quote'] = fresh_quote(store, info, identity, now,
-            (order['quote_tf'],) if order else ('15m', '5m'))
+            quote_timeframes(order))
     except ValueError as error:
         result['quote_blocker'] = str(error)
     return result

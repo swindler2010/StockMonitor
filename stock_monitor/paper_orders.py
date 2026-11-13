@@ -18,12 +18,16 @@ def check_intent(intent, isin):
     qty = intent.get('quantity')
     if (intent.get('version') != VERSION or isin not in PAIR
             or intent.get('isin') != isin or intent.get('initiator') not in ('MANUAL', 'CHATGPT')
-            or intent.get('side') not in ('BUY', 'SELL') or intent.get('quote_tf') not in ('5m', '15m')
+            or intent.get('side') not in ('BUY', 'SELL') or intent.get('quote_tf') not in ('5m', '15m', 'AUTO')
             or not isinstance(intent.get('request_id'), str) or not 8 <= len(intent['request_id']) <= 160):
         raise ValueError('PAPER_ORDER_INTENT_INVALID')
     if (isinstance(qty, bool) or not isinstance(qty, (int, float)) or not math.isfinite(qty)
             or qty <= 0 or Decimal(str(qty)).as_tuple().exponent < -6):
         raise ValueError('PAPER_BAD_QUANTITY')
+
+
+def quote_timeframes(intent):
+    return ('15m', '5m') if not intent or intent['quote_tf']=='AUTO' else (intent['quote_tf'],)
 
 
 def check_binding(result, args):
@@ -48,7 +52,7 @@ def validate(db, info, result, args, now):
         raise ValueError(result['quote_blocker'])
     q = result.get('execution_quote', {})
     if (q.get('identity') != result['identity'] or q.get('isin') != info['isin']
-            or q.get('timeframe') != result['discretionary']['quote_tf']):
+            or q.get('timeframe') not in quote_timeframes(result['discretionary'])):
         raise ValueError('PAPER_AUTO_QUOTE_IDENTITY_BLOCKED')
     size = order_size(db, info, result, args['side'], now, allow_paused=True)
     quantity = Decimal(str(args['quantity']))

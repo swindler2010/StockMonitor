@@ -84,7 +84,7 @@ def attach(app, parent):
         try:qty=float(quantity.get().replace(',','.'))
         except ValueError:message.set('Укажите положительное количество акций.');return
         args=dict(isin=next(k for k,v in PAIR.items() if v==selected.get()),side=side,quantity=qty,
-            timeframe='15m',request_id='manual-'+str(uuid4()))
+            timeframe='AUTO',request_id='manual-'+str(uuid4()))
         instrument_box.configure(state='disabled');quantity_box.configure(state='disabled')
         for button in order_buttons:button.configure(state='disabled')
         message.set('Проверяю данные, цену и риск…')
