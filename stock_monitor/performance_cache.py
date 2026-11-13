@@ -197,9 +197,16 @@ def validate_closed_inputs(db, guard, memo=None):
     token=guard['revisions'];current={k:(db.execute('SELECT revision FROM input_revisions WHERE scope=?',(k,)).fetchone() or [0])[0] for k in token}
     changed={k for k,v in token.items() if current[k]!=v}
     for k in changed & guard['strict'].keys():raise InputRevisionChanged('Closed input changed: '+k)
-    for k in changed & guard['settings'].keys():
+    settings_changed=changed & guard['settings'].keys()
+    if changed:
+        # A receipt can lose effective acceptance when its referenced data
+        # changes, even BEFORE the CP writer renews the receipt itself.
+        settings_changed |= {k for k in guard['settings'] if k.startswith('setting:cp_manual_risk:')}
+    for k in settings_changed:
         start=guard.get('settings_start',{}).get(k)
         cache=('setting',k,current[k],start)
+        if k.startswith('setting:cp_manual_risk:'):
+            cache += (tuple(sorted(current.items())),)
         if cache not in memo:memo[cache]=_digest(_setting_value(db,k[len('setting:'):],start))
         if memo[cache]!=guard['settings'][k]:raise InputRevisionChanged('Closed input changed: '+k)
     for item in guard['series']:

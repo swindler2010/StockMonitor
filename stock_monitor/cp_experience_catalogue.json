@@ -4,6 +4,29 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "coherent_eligibility_receipt_publication",
+      "title": "Публикация оценки при служебном переподтверждении допуска",
+      "sources": [
+        "SQLite WAL read transaction",
+        "existing exact closed-input proof"
+      ],
+      "states": [
+        "INPUT_CHANGED"
+      ],
+      "status": "12 targeted scenarios; runtime verification pending",
+      "steps": [
+        "Рассчитать все TF на одном read-only состоянии Store/ReadCache; не останавливать загрузчик и не копировать базу.",
+        "Собрать точные закрытые диапазоны обычного и owner-контекстов, проверить существующим validate_closed_inputs. Не покрытые доказательством зависимости проверять строго по ревизии.",
+        "При изменении зависимостей повторно проверять effective acceptance разрешения, даже если сама квитанция ещё не обновлена. Настоящее изменение данных/допуска отклонять с прежним retry очереди.",
+        "Обновлять только общий publication token; сохранить исходные closed proofs, execution_revisions и expires_at. Финальная проверка публикации остаётся обязательной."
+      ],
+      "evidence": [
+        "NVIDIA: штатная очередь 13Nov08:34:52 отклонена при cp_manual_risk 1835→1837 до сравнения содержимого.",
+        "Адресные сценарии: append вне окна, коррекция внутри, identity/unknown scopes, read-only/WAL release, исходные execution tokens/deadlines, переподтверждение/изменение/отзыв разрешения, retry и 53/200 зависимостей."
+      ],
+      "limits": "Не выдаёт новый допуск, не игнорирует INVALID/UNCONFIRMED и не продлевает срок. Нет автоматического изменения OHLCV или ручного восстановления инструмента."
+    },
+    {
       "id": "closed_gettex_tail_progress",
       "title": "Новые свечи источника не отменяют неизменный закрытый расчёт",
       "sources": [

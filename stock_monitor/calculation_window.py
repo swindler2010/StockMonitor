@@ -591,7 +591,20 @@ def calculate_eligibility(store, info):
         if prior and prior.get('paper_universe_version')==UNIVERSE_VERSION and prior.get('input_binding_version')==2 and prior.get('closed_input_semantics')==2 and _owner_initialization_current(prior) and eligibility_state(db,prior,pd.Timestamp.now(tz='UTC'))=='CURRENT': reused=prior
     if reused is not None:return reused
     now=pd.Timestamp.now(tz='UTC')
+    # The same WAL read view must serve both Store and dependency tracking.
+    # Otherwise a verified receipt renewal can abort _record midway through
+    # the calculation, before the existing exact-input comparison is reached.
+    import copy
+    from contextlib import contextmanager
+    from performance_cache import ReadCache,capture_closed_inputs,validate_closed_inputs,InputRevisionChanged
+    live_store=store
+    store=copy.copy(live_store);store.read_cache=ReadCache(live_store.path)
+    @contextmanager
+    def connect():yield store.read_cache.db
+    store.connect=connect
     try:
+        captured_db=store.read_cache.db
+        captured_db.execute('PRAGMA query_only=ON');captured_db.execute('BEGIN')
         with store.read_cache.track_inputs(isolated=True) as token:
             store.read_cache.depend('instrument:'+isin)
             with store.connect() as db:
@@ -607,10 +620,33 @@ def calculate_eligibility(store, info):
             result['paper_universe_version']=UNIVERSE_VERSION
             result['_input_revisions']=dict(token)
             store.read_cache.assert_current(token)
+            # Owner contexts use clones with their own closed_specs. Include
+            # those exact ranges as well as the ordinary context/benchmark.
+            specs=list(ctx.closed_specs.values())
+            for candidate in result.get('candidates',[]):
+                specs.extend(item['spec'] for item in (candidate.get('closed_inputs') or {}).get('series',[]))
+            proof=capture_closed_inputs(captured_db,specs,token)
+        # Release the reader before validation; no database backup or writer
+        # lock during analysis. Uncovered inputs stay strictly revision-bound.
+        store.read_cache.close();store=None
+        with live_store.connect() as db:
+            db.execute('BEGIN')
+            current=validate_closed_inputs(db,proof)
+            for scope,revision in token.items():
+                if scope in current:continue
+                actual=(db.execute('SELECT revision FROM input_revisions WHERE scope=?',(scope,)).fetchone() or [0])[0]
+                if actual!=revision:raise InputRevisionChanged('Uncovered eligibility input changed: '+scope)
+                current[scope]=actual
+        # Rebind only the publication token. Candidate closed proofs, executor
+        # revisions and all deadlines remain exactly as calculated originally.
+        result['_input_revisions']=current
+        live_store.read_cache.assert_current(current)
         return result
     except Exception as error:
         return dict(isin=isin,error=type(error).__name__+": "+str(error),checked_at=now.isoformat(),
                     expires_at=(now+pd.Timedelta(minutes=5)).isoformat())
+    finally:
+        if store is not None:store.read_cache.close()
 
 
 def publish_eligibility(store,info,result):
