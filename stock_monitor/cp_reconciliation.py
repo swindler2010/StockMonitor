@@ -252,7 +252,13 @@ def _classify(job, inputs, now):
                      min(b,r.close.tz_convert(meta['timezone']).tz_localize(None)))
                     for _,r in sessions.iterrows() if r.open<hi and r.close>lo]
             if any(dq.known_trade(authority,x,y,now) for x,y in active):market='GAP'
-            elif proof.get('zero_quantity_intervals'):market='ZERO_QUANTITY_UNCONFIRMED'
+            # A zero-quantity publication elsewhere in the archive is not
+            # evidence about this interval. Keep half-open session boundaries;
+            # overlapping unresolved records still forbid NO_TRADES.
+            elif any(pd.Timestamp(x)<right and pd.Timestamp(y)>left
+                     for left,right in active
+                     for x,y in proof.get('zero_quantity_intervals',[])):
+                market='ZERO_QUANTITY_UNCONFIRMED'
             elif active and all(dq.no_trades_proof(authority,x,y,now) for x,y in active):market='NO_TRADES'
         closure=dq.market_closed_proof({**meta,'absence_evidence':proof},a,b,now)
         if closure and not dq.closure_conflict({**meta,'absence_evidence':proof},a,b,now):

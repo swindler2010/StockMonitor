@@ -666,11 +666,13 @@
       "steps": [
         "Сопоставить опубликованное время исполнения с временной семантикой провайдера.",
         "Не считать единичный сдвиг доказанной timezone-ошибкой.",
+        "Нулевая запись ограничивает только пересекающийся полуоткрытый интервал, а не весь архив. Проверить полное NO_TRADES для нужного участка, сохраняя source/timebase guard.",
         "Не переносить NO_TRADES и свечи между providers без доказательства совместимости.",
         "02Nov TradingView Desktop: targeted Apple28Oct13:30 observation differs from saved LSEG next bucket; official zero-quantity13:44:32.440233 vs LSEG13:47:57. Native time mismatch is not a proven Stock Monitor timezone defect. Do not shift timestamps or transfer absence proofs between providers."
       ],
       "evidence": [
         "history64-evidence/apple-recovery02/bucket-comparison.json",
+        "test_reconciliation_interval_scope.py",
         "history64-evidence/apple-recovery02/exchange-witness-check.json",
         "history64-evidence/apple-resolution02/RESULT_RU.txt",
         "history64-evidence/tradingview02/RESULT_RU.txt"
