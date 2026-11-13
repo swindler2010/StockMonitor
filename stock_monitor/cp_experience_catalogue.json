@@ -6,9 +6,14 @@
     {
       "id": "paper_wait_during_cp_writer",
       "title": "WAIT без заявки не должен конкурировать с записью CandlePilot",
-      "sources": ["paper_hourly.run_turn", "existing paper_protection.decision"],
-      "states": ["OperationalError: database is locked"],
-      "status": "1 targeted scenario PASS; Windows deployment pending",
+      "sources": [
+        "paper_hourly.run_turn",
+        "existing paper_protection.decision"
+      ],
+      "states": [
+        "OperationalError: database is locked"
+      ],
+      "status": "1 targeted scenario PASS; normal Windows restart13Nov10:42:40CET; fresh1H/4H WAIT confirmed10:43 and10:44",
       "steps": [
         "Для WAIT/HOLD сначала читать действующее условие защитного выхода без блокировки записи. При отсутствии заявки сохранить обычный WAIT.",
         "Если защитный выход действительно нужен, заново вычислить его внутри прежней BEGIN IMMEDIATE и выполнить все исходные проверки исполнения. BUY/SELL продолжают прежний транзакционный путь.",
