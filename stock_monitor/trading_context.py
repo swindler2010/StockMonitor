@@ -1,8 +1,8 @@
 """Independent closed-data context using the existing CORE/history/cache.
 
 No downloads, UI state changes, write permissions or strategy substitution.
-The hourly executor pins its original profile; other profiles are calculation
-contracts only until separately tested and explicitly authorized for execution.
+The PAPER executor pins the CORE profile; other profiles are calculation
+contracts unless explicitly authorized for execution.
 """
 import copy
 

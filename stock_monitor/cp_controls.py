@@ -542,7 +542,7 @@ def manual_gate(db,isin,identity,entry_tf=None,dependency_proof=None):
     if dependency_proof is not None:
         from trading_engine import profile
         from performance_cache import validate_closed_inputs,InputRevisionChanged
-        if entry_tf=='1H':
+        if entry_tf in ('1H','4H'):
             from paper_hourly import authorize_hourly
             authorize_hourly(db,isin,identity)
         elif entry_tf not in ('5m','15m'):raise ValueError('PAPER_MANUAL_DEPENDENCY_SCOPE')

@@ -71,7 +71,10 @@ def quote(info,result,now,accepted_historical_risk=False,stored_listing=None):
     if identity.get('source')=='gettex_chart' and not stored_listing:confirmed=False
     if not confirmed or identity.get('venue') not in ('GER','FRA','GETTEX'):raise ValueError('PAPER_IDENTITY_BLOCKED')
     quality=result.get('data_quality',{})
-    if quality.get('state')!='READY' and not accepted_historical_risk:raise ValueError('PAPER_DATA_BLOCKED')
+    if quality.get('state')!='READY' and not accepted_historical_risk:
+        detail='; '.join(str(issue) for issue in quality.get('issues', []))
+        state=quality.get('state') or 'UNKNOWN'
+        raise ValueError(f"PAPER_DATA_BLOCKED ({result['timeframe']}, {state})" + (f": {detail}" if detail else ""))
     if any(quality.get('identity',{}).get(k)!=identity.get(k) for k in ('source','symbol','venue','currency','timezone')):raise ValueError('PAPER_DQ_IDENTITY_BLOCKED')
     checked=datetime.fromisoformat(quality.get('checked_at',''))
     if checked.tzinfo is None or not 0<=now-checked.timestamp()<=900:raise ValueError('PAPER_STALE_DQ')
@@ -126,7 +129,7 @@ def execute(db,info,result,args,now=None):
         if (row[0] if row else 0)!=rev:raise ValueError('PAPER_STALE_INPUTS')
     persisted=registered_instrument(db,info['isin'])
     contract=result.get('execution_context') or {}
-    hourly=result.get('timeframe')=='1H'
+    hourly=result.get('timeframe') in ('1H','4H')
     hourly_receipt=None
     if hourly:
         from paper_hourly import validate

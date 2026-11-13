@@ -125,7 +125,7 @@ class ProtectionTests(unittest.TestCase):
         f=self.f;self.buy();self.advance(100);f.db.commit();writes={}
         def save(k,v):
             self.assertFalse(f.db.in_transaction);writes[k]=v
-        store=SimpleNamespace(path='unused',setting=lambda k,d=None:f.cfg if k==fixture.hourly.CONFIG else d,
+        store=SimpleNamespace(path='unused',connect=lambda: f.db,setting=lambda k,d=None:f.cfg if k==fixture.hourly.CONFIG else d,
             set_setting=save,read_cache=SimpleNamespace(token_for=lambda _:{}))
         app=SimpleNamespace(store=store,watchlist=[f.info],closing=False,user_dirty=False,ai_config={},
             root=SimpleNamespace(after=lambda *a:None),compute_trading=SimpleNamespace(calculate=lambda *a:f.result),
@@ -136,7 +136,7 @@ class ProtectionTests(unittest.TestCase):
 
     def test_runtime_stop_works_on_wait_but_never_buys_for_test(self):
         f=self.f;self.buy();self.advance(94);f.db.commit();writes={}
-        store=SimpleNamespace(path='unused',setting=lambda k,d=None:f.cfg if k==fixture.hourly.CONFIG else d,
+        store=SimpleNamespace(path='unused',connect=lambda: f.db,setting=lambda k,d=None:f.cfg if k==fixture.hourly.CONFIG else d,
             set_setting=lambda k,v:writes.update({k:v}),read_cache=SimpleNamespace(token_for=lambda _:{}))
         app=SimpleNamespace(store=store,watchlist=[f.info],closing=False,user_dirty=False,ai_config={},
             root=SimpleNamespace(after=lambda *a:None),compute_trading=SimpleNamespace(calculate=lambda *a:f.result),

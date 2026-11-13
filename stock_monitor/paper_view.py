@@ -27,7 +27,7 @@ def automation_summary(state):
     size=('количество автоматически • до 45% свободных денег на вход • расчётный риск 1%'
         if variable_size(auto) else 'максимум по 1 акции')
     lines=['\nАвтоторговля демо: '+('ВКЛЮЧЕНА' if auto.get('enabled') else 'ПАУЗА')+
-        ' • сигнал 1H, подтверждение 4H/1D • только GETTEX/EUR\n'+size]
+        ' • входы 1H и 4H, подтверждение 1H/4H/1D • только GETTEX/EUR\n'+size]
     from paper_protection import enabled
     try:protection=enabled(auto)
     except ValueError:protection=False
@@ -40,12 +40,15 @@ def automation_summary(state):
         lines.append('Цель: '+str(target)+' EUR • '+progress+' • достижение и предел убытка не гарантируются.')
     for isin,row in auto.get('instruments',{}).items():
         name=auto.get('names',{}).get(isin,isin)
-        code=row.get('execution_blocker') or row.get('quote_blocker')
-        text={'PAPER_STALE_QUOTE':'Цена исполнения устарела — ожидаем свежую свечу.',
-              'PAPER_DATA_BLOCKED':'Качество текущей цены не подтверждено.'}.get(code,code or row.get('reason') or 'Ожидается первая проверка')
-        if len(text)>180:text=text[:177]+'…'
-        lines.append(name+': '+row.get('state','ОЖИДАНИЕ')+' • CORE '+row.get('core','UNKNOWN')+
-            ' • '+row.get('signal','WAIT')+'\n'+text)
+        for tf, outcome in row.get('timeframes', {'1H': row}).items():
+            code=outcome.get('execution_blocker') or outcome.get('quote_blocker')
+            detail={'PAPER_STALE_QUOTE':'Цена исполнения устарела — ожидаем свежую свечу.',
+                    'PAPER_DATA_BLOCKED':'Качество текущей цены не подтверждено.'}
+            reason=detail.get(code,code or outcome.get('reason') or 'Ожидается первая проверка')
+            if outcome.get('state')=='COMPLETED':
+                reason='Виртуальная сделка • количество '+str(outcome.get('quantity'))
+            lines.append(f"{name} {tf}: {outcome.get('state','ОЖИДАНИЕ')} • CORE "
+                f"{outcome.get('core','UNKNOWN')} • {outcome.get('signal','WAIT')}\n"+reason)
     if state.get('archived_fills'):lines.append('Предыдущий прогон сохранён в архиве: '+str(state['archived_fills'])+' операций.')
     return '\n'.join(lines)
 

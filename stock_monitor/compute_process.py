@@ -113,7 +113,9 @@ def serve():
                 result=validate_snapshot(store,result)
             elif kind=='paper_hourly':
                 from paper_hourly import calculate_snapshot
-                result=calculate_snapshot(store,values)
+                from performance_cache import InputRevisionChanged
+                try:result=calculate_snapshot(store,values)
+                except InputRevisionChanged:result=calculate_snapshot(store,values)
             else:
                 with store.read_cache.track_inputs() as dependencies:
                     captured=values.get('instrument_revisions',{})

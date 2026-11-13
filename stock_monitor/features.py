@@ -312,7 +312,10 @@ class Features:
                     future.set_result(answer)
                 except Exception as error:
                     code=str(error)
-                    future.set_result({'status':'BLOCKED','code':code if code.startswith('PAPER_') else 'PAPER_EXECUTION_UNAVAILABLE'})
+                    if code.startswith('PAPER_DATA_BLOCKED ('):
+                        future.set_result({'status':'BLOCKED','code':'PAPER_DATA_BLOCKED','detail':code})
+                    else:
+                        future.set_result({'status':'BLOCKED','code':code if code.startswith('PAPER_') else 'PAPER_EXECUTION_UNAVAILABLE'})
             def failed(message):
                 self._paper_busy=False;future.set_result({'status':'BLOCKED','code':'PAPER_DATA_UNAVAILABLE'})
             self.job(lambda:self.compute_chart.calculate('read_analytics',values),done,failed,lane='chart',key='paper_quote')

@@ -72,6 +72,24 @@ class ConsistentReadTests(unittest.TestCase):
             (f.isin,'gettex_chart','GETTEX','EUR','AAPL.GTX','15m','2026-11-04 10:15:00',100,102,99,100,0))
         with self.assertRaisesRegex(InputRevisionChanged,'quote changed'):self.run_read(insert)
 
+    def test_quote_only_listing_transport_receipt_is_rebased_but_identity_is_not(self):
+        f=self.f
+        key='gettex_chart:'+f.isin+':5m'
+        with closing(sqlite3.connect(self.path)) as writer:
+            writer.execute('INSERT INTO settings VALUES (?,?)',(key,'{"received_at":"old"}'))
+            writer.commit()
+        self.original['_input_revisions']['setting:'+key]=0
+        def receipt(db):
+            db.execute("UPDATE settings SET value=json_set(value,'$.received_at','new') WHERE key=?",(key,))
+        result=self.run_read(receipt)
+        with self.store.connect() as db:
+            revision=db.execute('SELECT revision FROM input_revisions WHERE scope=?',('setting:'+key,)).fetchone()[0]
+        self.assertEqual(result['_input_revisions']['setting:'+key],revision)
+        def identity(db):
+            db.execute("UPDATE settings SET value=json_set(value,'$.identity.venue','FRA') WHERE key=?",(key,))
+        with self.assertRaisesRegex(InputRevisionChanged,'PAPER input changed'):
+            self.run_read(identity)
+
     def test_owner_config_and_permission_changes_remain_blocking(self):
         with self.assertRaises(InputRevisionChanged):
             self.run_read(lambda db:db.execute("UPDATE settings SET value=json_set(value,'$.enabled',0) WHERE key=?",(fixture.hourly.CONFIG,)))

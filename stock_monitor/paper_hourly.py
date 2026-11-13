@@ -1,7 +1,7 @@
 """Owner-enabled hourly demo runner. Reuses CORE, Dispatcher and paper executor.
 
 No feed, broker, alternative indicators, inferred gap permission or market orders.
-One position per authorized instrument; one deterministic operation per 1H bar.
+One position per authorized instrument; deterministic operations per signal bar.
 """
 import copy
 import hashlib
@@ -9,13 +9,13 @@ import json
 import sqlite3
 import time
 from decimal import Decimal
-from pathlib import Path
 
 CONFIG = 'paper_auto_1h'
 EPOCH = 'paper_epoch'
 STATUS = 'paper_auto_status:'
 VERSION = 'core_hourly_demo_v1'
 SIZING = 'cash_volatility_v1'
+SIGNAL_TIMEFRAMES = ('1H', '4H')
 
 
 def variable_size(cfg):
@@ -95,7 +95,7 @@ def order_size(db, info, result, side, now):
         raise ValueError('PAPER_AUTO_QUOTE_IDENTITY_BLOCKED')
     _, bar = quote(info, q, now,
         stored_listing=stored_identity(db, info, result['identity'], q.get('timeframe')))
-    facts = result.get('execution_context', {}).get('trading_engine', {}).get('timeframe_context', {}).get('1H', {}).get('facts', {})
+    facts = result.get('execution_context', {}).get('trading_engine', {}).get('timeframe_context', {}).get(result['timeframe'], {}).get('facts', {})
     try:
         atr, support = (Decimal(str(facts[k])) for k in ('atr', 'support'))
         if not all(v.is_finite() and v > 0 for v in (atr, support)):
@@ -181,16 +181,19 @@ def calculate(store, values):
         position_token = ledger_token(db)
     now = pd.Timestamp.now(tz='UTC')
 
-    contract=plan('1H')
+    signal_tf = values.get('timeframe', '1H')
+    if signal_tf not in SIGNAL_TIMEFRAMES or (preparing and signal_tf != '1H'):
+        raise ValueError('PAPER_AUTO_TIMEFRAME_BLOCKED')
+    contract=plan(signal_tf)
     calculated=calculate_context(store,values,identity,contract,position,now)
     engine,proof,manual=(calculated[k] for k in ('engine','proof','manual'))
-    result = dict(isin=info['isin'], timeframe='1H', identity=identity,
+    result = dict(isin=info['isin'], timeframe=signal_tf, identity=identity,
         execution_context=dict(status='MANUAL_RISK_ACCEPTED' if manual else 'HOURLY_DEMO_READY',
             isin=info['isin'], checked_at=now.isoformat(), analysis_ready=engine.get('status') == 'READY',
             trading_engine=engine, manual_risk=manual, manual_inputs=proof),
         hourly=dict(version=VERSION, config_digest=digest(cfg), ledger_token=position_token,
             epoch=cfg['epoch'], checked_at=now.isoformat(),
-            expires_at=min(now+pd.Timedelta(seconds=60), context_deadline(identity, '1H', now)).isoformat(),
+            expires_at=min(now+pd.Timedelta(seconds=60), context_deadline(identity, signal_tf, now)).isoformat(),
             proof=proof, required_tf=contract['required_tf'],timeframe_contract=contract))
     if preparing:result['hourly']['preparation_only']=True
     # Analysis is useful even while prices are stale. Its status cannot place a fill.
@@ -209,7 +212,7 @@ def calculate_snapshot(store, values):
     or unidentified archive problem is checked again by the manual gate.
     """
     from contextlib import contextmanager
-    from performance_cache import ReadCache,validate_closed_inputs,InputRevisionChanged
+    from performance_cache import ReadCache,validate_closed_inputs,InputRevisionChanged,_setting_value
     from cp_controls import manual_gate
     def quote_tail(db, result):
         meta=result['identity'];rows=[]
@@ -230,6 +233,9 @@ def calculate_snapshot(store, values):
             captured.read_cache.assert_current(expected);captured.read_cache._record(expected)
             result=calculate(captured,values)
             quote_rows=quote_tail(db,result)
+            listing_prefix='setting:gettex_chart:'+result['isin']+':'
+            quote_listings={scope:_setting_value(db,scope[len('setting:'):]) for scope in token
+                if scope in (listing_prefix+'5m',listing_prefix+'15m')}
         token=dict(token)
     finally:captured.read_cache.close()
     proof=result['hourly']['proof']
@@ -247,11 +253,13 @@ def calculate_snapshot(store, values):
             if scope in current:continue
             if scope.startswith('setting:data_quality:'):continue
             row=db.execute('SELECT revision FROM input_revisions WHERE scope=?',(scope,)).fetchone()
-            if (row[0] if row else 0)!=revision:
-                raise InputRevisionChanged('Hourly input changed: '+scope)
-            current[scope]=revision
+            revision_now=row[0] if row else 0
+            if revision_now!=revision and (scope not in quote_listings
+                    or quote_listings[scope]!=_setting_value(db,scope[len('setting:'):])):
+                raise InputRevisionChanged('PAPER input changed: '+scope)
+            current[scope]=revision_now
         manual=result['execution_context'].get('manual_risk')
-        if manual is not None and manual_gate(db,result['isin'],result['identity'],'1H',proof)!=manual:
+        if manual is not None and manual_gate(db,result['isin'],result['identity'],result['timeframe'],proof)!=manual:
             raise InputRevisionChanged('Hourly historical-risk permission changed')
     result['_input_revisions']=current
     return result
@@ -279,7 +287,14 @@ def validate_analysis(db, info, result, now, cfg):
         raise ValueError('PAPER_AUTO_RULES_CHANGED')
     if engine.get('demo_initialization') and not engine['demo_initialization'].get('consistent'):
         raise ValueError('PAPER_AUTO_SEED_BLOCKED')
-    required = set(profile('1H'))
+    signal_tf = result.get('timeframe')
+    if signal_tf not in SIGNAL_TIMEFRAMES:
+        raise ValueError('PAPER_AUTO_TIMEFRAME_BLOCKED')
+    if signal_tf == '4H':
+        from trading_context import plan
+        if h.get('timeframe_contract') != plan(signal_tf):
+            raise ValueError('PAPER_AUTO_DEPENDENCY_BLOCKED')
+    required = set(profile(signal_tf))
     own = [s for s in h.get('proof', {}).get('series', []) if s['spec'].get('isin') == info['isin']]
     if (set(h.get('required_tf', [])) != required
             or not required <= {s['spec'].get('timeframe') for s in own if s.get('count', 0) >= 35}
@@ -288,7 +303,7 @@ def validate_analysis(db, info, result, now, cfg):
     validate_closed_inputs(db, h['proof'])
     manual = None
     if contract.get('status') == 'MANUAL_RISK_ACCEPTED':
-        manual = manual_gate(db, info['isin'], result['identity'], '1H', h['proof'])
+        manual = manual_gate(db, info['isin'], result['identity'], signal_tf, h['proof'])
         if manual != contract.get('manual_risk'):
             raise ValueError('PAPER_MANUAL_CONTEXT_CHANGED')
     elif contract.get('status') != 'HOURLY_DEMO_READY' or any(
@@ -316,19 +331,21 @@ def validate(db, info, result, args, now):
             raise ValueError('PAPER_PROTECTION_TRIGGER_CHANGED')
     if not protective and (engine.get('signal') not in ('BUY','SELL') or engine['signal'] != args.get('side')):
         raise ValueError('PAPER_AUTO_SIGNAL_MISMATCH')
+    if not protective and result['timeframe']=='4H' and args['side']!='BUY':
+        raise ValueError('PAPER_4H_ENTRY_ONLY')
+    if result.get('quote_blocker'):
+        raise ValueError(result['quote_blocker'])
     size = order_size(db, info, result, args['side'], now)
     if Decimal(str(args.get('quantity'))) != Decimal(str(size['quantity'])):
         raise ValueError('PAPER_AUTO_SIZE_BLOCKED')
     signal_at = engine.get('timestamp')
-    command = protective['request_id'] if protective else request_id(cfg, info['isin'], signal_at)
+    command = protective['request_id'] if protective else request_id(cfg, info['isin'], signal_at, result['timeframe'])
     if not signal_at or args.get('request_id') != command:
         raise ValueError('PAPER_AUTO_REQUEST_MISMATCH')
-    if result.get('quote_blocker'):
-        raise ValueError(result['quote_blocker'])
     q = result.get('execution_quote', {})
     if q.get('identity') != result['identity'] or q.get('isin') != info['isin']:
         raise ValueError('PAPER_AUTO_QUOTE_IDENTITY_BLOCKED')
-    receipt = dict(context=VERSION, strategy='CORE:'+CORE_VERSION, timeframe='1H', signal=engine['signal'],
+    receipt = dict(context=VERSION, strategy='CORE:'+CORE_VERSION, timeframe=result['timeframe'], signal=engine['signal'],
         signal_at=signal_at, quote_timeframe=q['timeframe'], manual_risk=manual, epoch=cfg['epoch'], sizing=size)
     if protective:receipt['protective_exit']=protective
     elif args['side']=='BUY':
@@ -338,9 +355,9 @@ def validate(db, info, result, args, now):
     return receipt
 
 
-def request_id(cfg, isin, signal_at):
+def request_id(cfg, isin, signal_at, timeframe='1H'):
     # Side/revision deliberately excluded: no second opposite trade on the same bar.
-    return 'auto1h-' + digest([cfg['epoch'], isin, signal_at])
+    return 'auto'+timeframe.lower()+'-' + digest([cfg['epoch'], isin, signal_at])
 
 
 def order_command(db, info, result, now):
@@ -350,15 +367,17 @@ def order_command(db, info, result, now):
     engine=result['execution_context']['trading_engine']
     protective=decision(db,info,result,now)
     side=protective['side'] if protective else engine.get('signal')
-    if side not in ('BUY','SELL'):return None
-    command=protective['request_id'] if protective else request_id(cfg,isin,engine['timestamp'])
+    signal_tf=result['timeframe']
+    if side not in ('BUY','SELL') or (signal_tf=='4H' and side=='SELL' and not protective):return None
+    if result.get('quote_blocker'):raise ValueError(result['quote_blocker'])
+    command=protective['request_id'] if protective else request_id(cfg,isin,engine['timestamp'],signal_tf)
     prior=db.execute('SELECT payload FROM paper_fills WHERE id=?',(command,)).fetchone()
     if prior:
         receipt=json.loads(prior[0])
         if receipt['side']!=side:raise ValueError('PAPER_REQUEST_REUSED')
         qty=float(receipt['quantity']);qty=int(qty) if qty.is_integer() else qty
     else:qty=order_size(db,info,result,side,now)['quantity']
-    args=dict(isin=isin,timeframe='1H',side=side,quantity=qty,request_id=command,_deadline=now+30)
+    args=dict(isin=isin,timeframe=signal_tf,side=side,quantity=qty,request_id=command,_deadline=now+30)
     if protective:args['_protection']=protective
     return args
 
@@ -389,6 +408,50 @@ def compact(result):
         quote_at=(result.get('execution_quote', {}).get('bars') or [{}])[-1].get('close_at'))
 
 
+def run_turn(app, info, values, cfg):
+    """Evaluate both signals in sequence and persist each admission outcome."""
+    from paper_account import execute
+    from paper_preparation import retry_inputs
+    isin=info['isin']
+    with app.store.connect() as db:
+        wake=retry_inputs(db,isin,cfg['identities'][isin])
+    reports={}
+    filled=False
+    for signal_tf in SIGNAL_TIMEFRAMES:
+        report=dict(timeframe=signal_tf,at=time.time())
+        try:
+            result=app.compute_trading.calculate('paper_hourly',dict(values,timeframe=signal_tf))
+            report.update(compact(result))
+            ready=report['core']=='READY'
+            report['state']='WAIT' if ready else 'BLOCKED'
+            if ready and (report['signal'] in ('BUY','SELL') or cfg.get('protection')):
+                if app.closing or app.user_dirty:
+                    raise ValueError('PAPER_APP_NOT_READY')
+                with sqlite3.connect(app.store.path,timeout=.2) as db:
+                    db.execute('BEGIN IMMEDIATE')
+                    args=order_command(db,info,result,time.time())
+                    if args and filled and args['side']=='BUY':
+                        raise ValueError('PAPER_AUTO_FILL_ALREADY_IN_TURN')
+                    answer=execute(db,info,result,args) if args else None
+                if answer:
+                    filled=filled or not answer.get('idempotent',False)
+                    report.update(state='COMPLETED',request_id=args['request_id'],quantity=args['quantity'],
+                        idempotent=answer.get('idempotent',False),
+                        sizing=answer['fill'].get('smart_eligibility',{}).get('sizing'),
+                        protective_exit=answer['fill'].get('smart_eligibility',{}).get('protective_exit'))
+        except Exception as error:
+            message=str(error)
+            if not message.startswith('InputRevisionChanged:'):
+                message=type(error).__name__+': '+message
+            report.update(state='BLOCKED',execution_blocker=message)
+        reports[signal_tf]=report
+    retry=any(row.get('execution_blocker','').startswith(('InputRevisionChanged:','ValueError: PAPER_STALE_INPUTS'))
+        for row in reports.values())
+    status=dict(reports['1H'],timeframes=reports,retry_inputs=wake,next_check=time.time()+(15 if retry else 60))
+    app.store.set_setting(STATUS+isin,status)
+    return status
+
+
 class Runtime:
     """One bounded trading job; owned read client, existing Dispatcher and ledger."""
     def __init__(self, app):
@@ -408,7 +471,9 @@ class Runtime:
             isin = ids[self.cursor % len(ids)];self.cursor += 1
             info = next((i for i in app.watchlist if i['isin'] == isin), None)
             previous = app.store.setting(STATUS+isin, {})
-            if info and time.time() >= previous.get('next_check', 0):
+            wake=previous.get('retry_inputs',{})
+            inputs_changed=bool(wake) and app.store.read_cache.token_for(wake)!=wake
+            if info and (inputs_changed or time.time() >= previous.get('next_check', 0)):
                 values = dict(watchlist=[copy.deepcopy(info)], drafts={}, feed_errors={}, symbol=info['name'],
                     timeframe='1H', period='Max', ai_config=copy.deepcopy(app.ai_config),
                     instrument_revisions=app.store.read_cache.token_for(['instrument:'+isin]))
@@ -416,32 +481,7 @@ class Runtime:
                 submitted = True
 
                 def work():
-                    # All computation, proof verification and the write transaction stay off Tk.
-                    result = app.compute_trading.calculate('paper_hourly', values)
-                    report = compact(result)
-                    engine = result['execution_context']['trading_engine']
-                    report['state'] = 'WAIT' if engine.get('status') == 'READY' else 'BLOCKED'
-                    # Protection shares the exact CORE/quote/transaction guards;
-                    # WAIT alone neither causes a fill nor disables a valid stop.
-                    if engine.get('status') == 'READY' and (engine.get('signal') in ('BUY','SELL') or cfg.get('protection')):
-                        from paper_account import execute
-                        try:
-                            if app.closing or app.user_dirty:
-                                raise ValueError('PAPER_APP_NOT_READY')
-                            with sqlite3.connect(app.store.path, timeout=.2) as db:
-                                db.execute('BEGIN IMMEDIATE')
-                                args = order_command(db,info,result,time.time())
-                                answer = execute(db, info, result, args) if args else None
-                            if answer:
-                                report.update(state='COMPLETED', request_id=args['request_id'], quantity=args['quantity'],
-                                    idempotent=answer.get('idempotent', False),
-                                    sizing=answer.get('fill', {}).get('smart_eligibility', {}).get('sizing'),
-                                    protective_exit=answer.get('fill', {}).get('smart_eligibility', {}).get('protective_exit'))
-                        except Exception as error:
-                            report.update(state='BLOCKED', execution_blocker=type(error).__name__+': '+str(error))
-                    report['next_check'] = time.time()+60
-                    app.store.set_setting(STATUS+isin, report)
-                    return report
+                    return run_turn(app,info,values,cfg)
 
                 def done(_):
                     self.busy = False

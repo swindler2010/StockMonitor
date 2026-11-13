@@ -64,8 +64,9 @@ def decision(db,info,result,now):
     entry=max(entries,key=lambda f:f['at']);plan=entry.get('smart_eligibility',{}).get('protection')
     if not plan:return None  # Existing unarmed V1 holding keeps its original exits.
     if (plan.get('version')!=VERSION or plan.get('identity')!=result['identity']
-        or plan.get('signal_tf')!=result['timeframe'] or plan.get('trigger')!=POLICY['trigger']
+        or plan.get('signal_tf')!=entry.get('timeframe') or plan.get('trigger')!=POLICY['trigger']
         or plan.get('fill')!=POLICY['fill']):raise ValueError('PAPER_PROTECTION_BINDING_CHANGED')
+    if plan['signal_tf']!=result['timeframe']:return None
     if result.get('quote_blocker'):raise ValueError(result['quote_blocker'])
     q=result.get('execution_quote',{})
     if q.get('identity')!=result['identity']:raise ValueError('PAPER_PROTECTION_QUOTE_IDENTITY')

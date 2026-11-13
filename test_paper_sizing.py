@@ -83,7 +83,7 @@ class SizingTests(unittest.TestCase):
     def test_runtime_uses_variable_quantity_and_deduplicates(self):
         f=self.f;writes={}
         f.db.commit()  # Runtime opens its own write transaction, as in the application.
-        store=SimpleNamespace(path='unused',setting=lambda k,d=None:f.cfg if k==hourly.CONFIG else writes.get(k,d),
+        store=SimpleNamespace(path='unused',connect=lambda: f.db,setting=lambda k,d=None:f.cfg if k==hourly.CONFIG else writes.get(k,d),
             set_setting=lambda k,v:writes.update({k:v}),read_cache=SimpleNamespace(token_for=lambda _:{}))
         app=SimpleNamespace(store=store,watchlist=[f.info],closing=False,user_dirty=False,ai_config={},
             root=SimpleNamespace(after=lambda *args:None),compute_trading=SimpleNamespace(calculate=lambda *args:copy.deepcopy(f.result)))

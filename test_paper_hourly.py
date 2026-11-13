@@ -134,8 +134,8 @@ class HourlyTests(unittest.TestCase):
         from unittest.mock import patch
         calls=[];writes={}
         self.result['execution_context']['trading_engine']['signal']='WAIT'
-        store=SimpleNamespace(path='unused',setting=lambda k,d=None: self.cfg if k==hourly.CONFIG else writes.get(k,d),
-            set_setting=lambda k,v:writes.update({k:v}),read_cache=SimpleNamespace(token_for=lambda _:{}))
+        store=SimpleNamespace(path='unused',connect=lambda: self.db,setting=lambda k,d=None: self.cfg if k==hourly.CONFIG else writes.get(k,d),
+            set_setting=lambda k,v:writes.update({k:v}),read_cache=SimpleNamespace(token_for=lambda scopes: {k: dict(self.db.execute('SELECT scope,revision FROM input_revisions')).get(k,0) for k in scopes}))
         root=SimpleNamespace(after=lambda ms,fn:calls.append(('timer',ms)))
         def job(work,done,failed=None,**kwargs):
             self.assertEqual(kwargs['lane'],'trading');calls.append(('job',kwargs['key']));done(work());return True
@@ -147,7 +147,52 @@ class HourlyTests(unittest.TestCase):
             hourly.Runtime(app).tick()
         self.assertEqual(sum(x[0]=='job' for x in calls),1)
         self.assertEqual(writes[hourly.STATUS+self.isin]['state'],'WAIT')
+        self.write('data_quality:'+self.isin+':AAPL.GTX:15m',{'state':'READY'})
+        with patch.object(hourly.time,'time',return_value=self.now+15):
+            runtime.tick()
+        self.assertEqual(sum(x[0]=='job' for x in calls),2)
         app.closing=True;count=len(calls);runtime.tick();self.assertEqual(len(calls),count)
+
+    def test_runtime_enters_on_4h_and_records_both_outcomes(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        from trading_context import plan
+        for hourly_signal in ('WAIT', 'BUY'):
+            with self.subTest(hourly_signal=hourly_signal):
+                self.db.execute('DELETE FROM paper_fills')
+                self.db.commit()
+                reports={}
+                def calculate(kind, values):
+                    tf=values['timeframe']
+                    result=self.result_for(hourly_signal if tf=='1H' else 'BUY')
+                    result['timeframe']=tf
+                    result['hourly']['timeframe_contract']=plan(tf)
+                    return result
+                store=SimpleNamespace(path='unused',connect=lambda:self.db,
+                    set_setting=lambda key,value:reports.update({key:value}))
+                app=SimpleNamespace(store=store,compute_trading=SimpleNamespace(calculate=calculate),
+                    closing=False,user_dirty=False)
+                with patch.object(hourly.sqlite3,'connect',return_value=self.db),patch.object(hourly.time,'time',return_value=self.now):
+                    first=hourly.run_turn(app,self.info,{},self.cfg)
+                    repeated=hourly.run_turn(app,self.info,{},self.cfg)
+                fills=paper.ledger(self.db)['fills']
+                self.assertEqual(len(fills),1)
+                chosen='4H' if hourly_signal=='WAIT' else '1H'
+                self.assertEqual(fills[0]['timeframe'],chosen)
+                self.assertEqual(first['timeframes'][chosen]['state'],'COMPLETED')
+                self.assertTrue(repeated['timeframes'][chosen]['idempotent'])
+                if chosen=='1H':
+                    self.assertIn('POSITION_LIMIT', first['timeframes']['4H']['execution_blocker'])
+
+    def test_4h_rejects_missing_contract_and_changed_closed_input(self):
+        from trading_context import plan
+        self.result['timeframe']='4H'
+        self.args.update(timeframe='4H',request_id=hourly.request_id(self.cfg,self.isin,
+            self.result['execution_context']['trading_engine']['timestamp'],'4H'))
+        self.blocked('DEPENDENCY_BLOCKED')
+        self.result['hourly']['timeframe_contract']=plan('4H')
+        self.db.execute("UPDATE series SET close=100 WHERE base_tf='4H'")
+        self.blocked('STALE_INPUTS')
 
     def test_missing_owner_risk_receipt_blocks_hourly_manual(self):
         from cp_controls import manual_gate
