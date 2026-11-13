@@ -84,6 +84,19 @@ def _setting_value(db, key, start=None):
             if start:
                 from calculation_window import scope_report
                 value=scope_report(value,start)
+            classification=value.get('interval_classification')
+            # These two totals cover the entire growing archive, not the
+            # frozen range. Exact used OHLCV are independently hashed below.
+            # Normalize only a consistent census; all gap/absence/delay facts,
+            # evidence, unknown fields and malformed counters remain strict.
+            # Do not change stored DQ or its raw revision/execution binding.
+            counts=('with_candles','NO_TRADES','UNCONFIRMED','GAP','market_closed_intervals')
+            if (isinstance(classification,dict)
+                and all(type(classification.get(k)) is int and classification[k]>=0
+                        for k in ('expected_open_intervals',*counts))
+                and classification['expected_open_intervals']==sum(classification[k] for k in counts)):
+                value={**value,'interval_classification':{k:v for k,v in classification.items()
+                    if k not in ('expected_open_intervals','with_candles')}}
         elif key.startswith(('history_identity:','history_coverage:')):
             value={k:v for k,v in value.items() if k!='fetched_at'}
         elif key.startswith('gettex_chart:'):
