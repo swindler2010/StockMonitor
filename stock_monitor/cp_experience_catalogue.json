@@ -391,11 +391,13 @@
       "status": "ПРОВЕРЕНО",
       "steps": [
         "Проверить ещё не проверенные ревизии локальных children.",
-        "Не делать HTTP раньше Retry-After. Повтор неизменившихся входов ограничен существующим cooldown."
+        "Не делать HTTP раньше Retry-After. Повтор неизменившихся входов ограничен существующим cooldown.",
+        "Короткое ожидание источника сохраняет точный max(next_retry, network_not_before); отсутствие младших свечей не превращает его в 15 минут. Ограничение числа попыток и повторная проверка лимита перед HTTP сохраняются."
       ],
       "evidence": [
         "test_local_recovery_cooldown30.py",
-        "history64-evidence/readiness30/RESULT_RU.txt"
+        "history64-evidence/readiness30/RESULT_RU.txt",
+        "test_cp_automatic_repair.py::AutomaticRepair.test_short_provider_wait_keeps_deadline_then_records_unconfirmed_retry"
       ],
       "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
     },

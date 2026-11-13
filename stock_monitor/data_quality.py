@@ -686,12 +686,15 @@ def repair(info,store,symbol,base,meta,download,now=None,max_ranges=8,target_ran
                 lambda:recover_from_children(info,store,meta,base,first,last,clock,observations=observations))
             local_skips+=int(local_reused)
             if replacement is None:
+                waits=[pd.Timestamp(x) for x in (previous.get('next_retry'),network_not_before) if x and clock<pd.Timestamp(x)]
                 if local_only:
-                    waiting=(clock+pd.Timedelta(minutes=15)).isoformat()
+                    # A short shared-provider reservation is not a failed
+                    # recovery attempt. Keep its actual deadline; use the
+                    # bounded local-only delay only when none was supplied.
+                    waiting=max(waits).isoformat() if waits else (clock+pd.Timedelta(minutes=15)).isoformat()
                     break
                 # Local recovery does not consume a provider request. Preserve
                 # Retry-After/rate reservations at the actual network boundary.
-                waits=[pd.Timestamp(x) for x in (previous.get('next_retry'),network_not_before) if x and clock<pd.Timestamp(x)]
                 if waits:
                     waiting=max(waits).isoformat()
                     break

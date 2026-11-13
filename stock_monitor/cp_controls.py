@@ -1288,6 +1288,8 @@ def service_request(info,store,recover_gettex,now=None):
             elif report.get('next_retry') or future:
                 retries=[pd.Timestamp(t) for t in [report.get('next_retry'),*future] if t]
                 out=dict(state='WAITING',next_retry=max(retries).isoformat(),reason=report.get('recovery_error') or report.get('state'))
+                if report.get('recovery_wait')=='PROVIDER' and not report.get('recovery_error'):
+                    out['reason']='WAITING_PROVIDER: проверка источника не ранее '+out['next_retry']+'; DQ '+str(report.get('state'))
             else:out=dict(state='BLOCKED',reason=report.get('recovery_constraints',{}).get('status') or report.get('state','UNCONFIRMED'))
             out['quality']=report.get('state')
         item.update(out,finished_at=stamp())

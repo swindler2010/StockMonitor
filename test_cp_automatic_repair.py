@@ -207,4 +207,37 @@ class AutomaticRepair(unittest.TestCase):
   if self.s.db.execute("SELECT 1 FROM sqlite_master WHERE name='candle_recoveries'").fetchone():
    self.assertEqual(self.s.db.execute('SELECT count(*) FROM candle_recoveries').fetchone()[0],0)
 
+ def test_short_provider_wait_keeps_deadline_then_records_unconfirmed_retry(self):
+  import data_quality as dq
+  rows,reply=self.real_fixture();self.plan()
+  wait=self.now+pd.Timedelta(seconds=30)
+  self.s.set_setting('cp_source_retry:gettex',wait.isoformat())
+  fetch=Mock(return_value=reply.iloc[:0].copy())
+  with patch('requests.get',side_effect=AssertionError('No external HTTP in replay')):
+   first=cp.service_request(self.info,self.s,fetch,self.now)
+   fetch.assert_not_called()
+   self.assertEqual(first['state'],'WAITING');self.assertEqual(first['attempts'],0)
+   self.assertEqual(pd.Timestamp(first['next_retry']),wait)
+   self.assertIn('WAITING_PROVIDER',first['reason'])
+   self.assertEqual(self.s.setting(self.qkey)['recovery_wait'],'PROVIDER')
+   self.assertIsNone(cp.due_request(self.s.db,self.isin,wait-pd.Timedelta(seconds=1)))
+   self.assertIsNotNone(cp.due_request(self.s.db,self.isin,wait))
+   # Keep the existing regular-feed turn between automatic recovery visits.
+   self.assertIsNone(cp.service_request(self.info,self.s,fetch,wait))
+   # A later authoritative provider wait must still be respected.
+   later=wait+pd.Timedelta(seconds=30)
+   self.s.set_setting('cp_source_retry:gettex',later.isoformat())
+   delayed=cp.service_request(self.info,self.s,fetch,wait)
+   self.assertEqual(pd.Timestamp(delayed['next_retry']),later)
+   self.assertEqual(delayed['attempts'],0);fetch.assert_not_called()
+   self.assertIsNone(cp.service_request(self.info,self.s,fetch,later))
+   result=cp.service_request(self.info,self.s,fetch,later)
+  fetch.assert_called_once()
+  self.assertEqual(result['attempts'],1);self.assertEqual(result['state'],'WAITING')
+  self.assertGreater(pd.Timestamp(result['next_retry']),later)
+  self.assertTrue(result['reason']);self.assertNotEqual(result['quality'],'READY')
+  self.assertEqual(self.jobs()[cp.repair_id(result['problem'])],result)
+  self.assertEqual(self.s.db.execute('SELECT count(*) FROM candles').fetchone()[0],2)
+  self.assertIsNone(self.s.setting('cp_manual_risk:'+self.isin))
+
 if __name__=='__main__':unittest.main()
