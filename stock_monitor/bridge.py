@@ -84,8 +84,7 @@ class Bridge:
                             observations=dict(bridge.revision_observations);rejections=list(bridge.revision_rejections);pipeline=dict(bridge.diagnostic_pipeline)
                         result=read(bridge.directory/'stock_monitor.sqlite3',args,observations,rejections,pipeline,bridge.instance_id)
                     elif action=='health':
-                        from mcp_projection import compact_identity
-                        result=compact_identity(bridge.identity())
+                        result=bridge.identity(include_diagnostics=False)
                         from mcp_routes import routes
                         result['read_routes']=routes()
                     elif action=='list_instruments':
@@ -197,9 +196,26 @@ class Bridge:
                         'analytics_status':'PENDING','reason':'Background analytics for this selection are not published yet'}
             self.published_at=time.time()
 
-    def identity(self):
+    def identity(self,include_diagnostics=True):
         from mcp_server import TOOLS
         path=str((self.directory/'stock_monitor.sqlite3').resolve())
+        if not include_diagnostics:
+            # Liveness must not wait for archive/account reads. A responding
+            # bridge is not evidence of current analytics or trading admission.
+            with self.lock:
+                published=self.published_at
+                pipeline={k:self.diagnostic_pipeline.get(k) for k in
+                          ('status','attempts','accepted','rejected','failed','updated_at')}
+            return {'version':'0.16-dev','mcp_api_revision':2,'scope':'test',
+                    'instance_id':self.instance_id,'environment_id':hashlib.sha256(path.encode()).hexdigest()[:16],
+                    'database_path':path,'endpoint':f'http://127.0.0.1:{self.server.server_port}/bridge',
+                    'bridge':'running','snapshot_published_at':published,
+                    'snapshot_age_seconds':None if published is None else max(0,time.time()-published),
+                    'diagnostic_pipeline':pipeline,'capabilities':[t['name'] for t in TOOLS],
+                    'readiness':'NOT_EVALUATED_BY_HEALTH',
+                    'candlepilot_health':{'status':'NOT_READ','tool':'stock_monitor_snapshot','section':'candlepilot_health'},
+                    'paper_account':{'status':'NOT_READ','tool':'stock_monitor_snapshot','section':'runtime','path':'/paper_account'},
+                    'detail_delivery':{'status':'EXPLICIT_READ_REQUIRED','reason':'Health checks connection only; no archive/account query or readiness grant.'}}
         from paper_account import status
         try:paper=status(path)
         except Exception:paper={'status':'UNAVAILABLE','virtual':True}

@@ -5,6 +5,8 @@ from pathlib import Path
 import sys
 import copy
 import math
+import hashlib
+import time
 from urllib.request import Request, urlopen, ProxyHandler, build_opener
 from urllib.parse import urlparse
 from urllib.error import HTTPError,URLError
@@ -40,7 +42,7 @@ for _name,(_description,_props,_required) in _definitions.items():
     TOOLS.append({'name':'stock_monitor_'+_name,'description':_description,'inputSchema':{'type':'object','properties':_props,'required':_required,'additionalProperties':False},'annotations':{'readOnlyHint':_read,'destructiveHint':_name=='remove_instrument','idempotentHint':True,'openWorldHint':False}})
 
 TOOLS.extend([
-    {'name':'stock_monitor_health','description':'Read authenticated 0.16 TEST instance identity, freshness and capabilities. Never includes tokens.','inputSchema':{'type':'object','properties':{},'additionalProperties':False},'annotations':{'readOnlyHint':True}},
+    {'name':'stock_monitor_health','description':'Read bounded authenticated 0.16 TEST connection identity, snapshot age and capabilities without database/archive/account queries. Does not assess analytical or trading readiness. Read detailed diagnostics explicitly through snapshot. Never includes tokens.','inputSchema':{'type':'object','properties':{},'additionalProperties':False},'annotations':{'readOnlyHint':True}},
     {'name':'stock_monitor_command_status','description':'Read the receipt of a command from the same instance; use after an indeterminate result.','inputSchema':{'type':'object','properties':{'instance_id':_string,'command_id':_string},'required':['instance_id','command_id'],'additionalProperties':False},'annotations':{'readOnlyHint':True}}
 ])
 TOOLS.append({'name':'stock_monitor_read_analytics','description':'Read existing OHLCV, fixed-core indicator series, chart settings and drawings without switching UI or fetching data. Asynchronous: poll command_status. DQ is not bypassed. Chart-configurable indicator values not yet exported are explicitly unavailable.',
@@ -76,6 +78,9 @@ for tool in TOOLS:
     schema['properties'].update(instance_id={'type':'string','minLength':1,'maxLength':128},request_id={'type':'string','minLength':1,'maxLength':128},deadline={'type':'number'})
     schema['required']=list(dict.fromkeys([*schema.get('required',[]),'instance_id','request_id','deadline']))
     tool['description']+=' Requires instance_id from health and an absolute Unix deadline at most 120 seconds ahead. Retry with identical request_id and deadline; never silently rebind to a new instance.'
+
+ADAPTER_LOADED_AT=time.time()
+TOOL_CATALOG_DIGEST=hashlib.sha256(json.dumps(TOOLS,sort_keys=True,ensure_ascii=False).encode()).hexdigest()
 
 def validate_schema(value,schema):
     """Validate the deliberately small tool-schema vocabulary without extra dependencies."""
@@ -139,6 +144,12 @@ def handle(message):
         if name not in allowed:raise ValueError('Unknown tool')
         try:
             result=bridge_call(name.removeprefix('stock_monitor_'),params.get('arguments',{}))
+            if name=='stock_monitor_health':
+                # App capabilities and this long-lived adapter's loaded tools
+                # can differ after deployment. Report both, never conflate them.
+                result={**result,'mcp_adapter':{'loaded_at':ADAPTER_LOADED_AT,
+                        'tool_catalog_digest':TOOL_CATALOG_DIGEST,
+                        'tools':[t['name'] for t in TOOLS]}}
             return {'content':[{'type':'text','text':json.dumps(result,ensure_ascii=False)}]}
         except Exception as exc:return {'content':[{'type':'text','text':str(exc)}],'isError':True}
     raise ValueError('Method not found')
