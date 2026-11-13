@@ -13,7 +13,7 @@
       "states": [
         "INPUT_CHANGED"
       ],
-      "status": "12 targeted scenarios; runtime verification pending",
+      "status": "12 targeted PASS; Windows ordinary queue publication verified 13Nov08:48CET",
       "steps": [
         "Рассчитать все TF на одном read-only состоянии Store/ReadCache; не останавливать загрузчик и не копировать базу.",
         "Собрать точные закрытые диапазоны обычного и owner-контекстов, проверить существующим validate_closed_inputs. Не покрытые доказательством зависимости проверять строго по ревизии.",
@@ -22,7 +22,9 @@
       ],
       "evidence": [
         "NVIDIA: штатная очередь 13Nov08:34:52 отклонена при cp_manual_risk 1835→1837 до сравнения содержимого.",
-        "Адресные сценарии: append вне окна, коррекция внутри, identity/unknown scopes, read-only/WAL release, исходные execution tokens/deadlines, переподтверждение/изменение/отзыв разрешения, retry и 53/200 зависимостей."
+        "Адресные сценарии: append вне окна, коррекция внутри, identity/unknown scopes, read-only/WAL release, исходные execution tokens/deadlines, переподтверждение/изменение/отзыв разрешения, retry и 53/200 зависимостей.",
+        "Observed grant1840→1841: only input_revisions/interval_evidence changed on three accepted entries; original1835/1837 payloads unavailable. Effectiveness is revalidated, not inferred from counters.",
+        "Windows Save/Close/writer exit/restart; ordinary queue published DE0005552004 assessment checked_at08:47:25CET, observed08:48:11CET,11candidates,CURRENT publication with concrete DATA BLOCKED reasons. No forced request, fetch or trade."
       ],
       "limits": "Не выдаёт новый допуск, не игнорирует INVALID/UNCONFIRMED и не продлевает срок. Нет автоматического изменения OHLCV или ручного восстановления инструмента."
     },
