@@ -71,28 +71,33 @@ def attach(app, parent):
     order_box=ttk.LabelFrame(parent,text='Поручение владельца • только PAPER');order_box.pack(fill='x',padx=10,pady=4)
     row=ttk.Frame(order_box);row.pack(fill='x')
     selected=tk.StringVar(value='Apple');quantity=tk.StringVar(value='1')
-    ttk.Combobox(row,textvariable=selected,values=list(PAIR.values()),state='readonly',width=12).pack(side='left',padx=4)
+    instrument_box=ttk.Combobox(row,textvariable=selected,values=list(PAIR.values()),state='readonly',width=12)
+    instrument_box.pack(side='left',padx=4)
     ttk.Label(row,text='Количество:').pack(side='left')
-    ttk.Entry(row,textvariable=quantity,width=10).pack(side='left',padx=4)
+    quantity_box=ttk.Entry(row,textvariable=quantity,width=10);quantity_box.pack(side='left',padx=4)
     message=tk.StringVar(value='WAIT V1 не запрещает ваше поручение. Качество, свежесть цены и риск обязательны.')
     ttk.Label(order_box,textvariable=message,wraplength=1000,justify='left').pack(anchor='w',padx=4,pady=4)
+    def changed(*_):message.set('Поручение изменено; проверьте цену выбранной акции заново.')
+    selected.trace_add('write',changed);quantity.trace_add('write',changed)
     order_buttons=[]
     def place(side,preview=False):
         try:qty=float(quantity.get().replace(',','.'))
         except ValueError:message.set('Укажите положительное количество акций.');return
         args=dict(isin=next(k for k,v in PAIR.items() if v==selected.get()),side=side,quantity=qty,
             timeframe='15m',request_id='manual-'+str(uuid4()))
+        instrument_box.configure(state='disabled');quantity_box.configure(state='disabled')
         for button in order_buttons:button.configure(state='disabled')
         message.set('Проверяю данные, цену и риск…')
         future=submit(app,args,'MANUAL',preview)
         def poll():
             if not parent.winfo_exists() or app.closing:return
             if not future.done():parent.after(100,poll);return
+            instrument_box.configure(state='readonly');quantity_box.configure(state='normal')
             for button in order_buttons:button.configure(state='normal')
             answer=future.result()
             if answer.get('status') in ('PREVIEW','COMPLETED'):
                 f=answer['fill'];plan=f.get('smart_eligibility',{}).get('protection') or {}
-                message.set(('Оценка' if preview else 'Исполнено')+f": {f['side']} {f['quantity']} по {price_text(f['price'])} EUR • "
+                message.set(('Оценка' if preview else 'Исполнено')+f": {PAIR.get(f['isin'],f['isin'])} {f['side']} {f['quantity']} по {price_text(f['price'])} EUR • "
                     f"комиссия {f['fee']} EUR • стоп {price_text(plan.get('stop'))} • цель {price_text(plan.get('target'))}"+
                     (' • при исполнении цена проверяется заново' if preview else ''))
                 refresh()
