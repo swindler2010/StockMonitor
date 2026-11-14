@@ -1,4 +1,4 @@
-"""One targeted archived-v3 receipt regression; isolated files, no market I/O."""
+"""One targeted v3 full-hash reconstruction regression; isolated files, no market I/O."""
 import copy
 import hashlib
 import json
@@ -33,7 +33,7 @@ class FlatStore(Store):
 
 
 class LegacyReference(unittest.TestCase):
-    def test_verified_archive_migrates_only_metadata_and_rechecks_before_publish(self):
+    def test_complete_v3_hash_survives_added_lock_and_rechecks_before_publish(self):
         files = []
         def temporary(suffix):
             with tempfile.NamedTemporaryFile(prefix='sm-tv-legacy-', suffix=suffix,
@@ -69,7 +69,7 @@ class LegacyReference(unittest.TestCase):
                 prior = dict(job)
                 job.update(observation=original, status='AWAITING_SOURCE')
                 rv._save_job(db, job, prior)
-            store.save_instrument(dict(info, name='Changed display name'))
+            store.save_instrument(dict(info, history_venue_lock='GETTEX'))
             store.set_setting(ctl.TV_POLICY, dict(version=ctl.TV_VERSION, enabled=True, approved=True))
             store.set_setting('data_quality:'+info['isin']+':'+meta['symbol']+':15m',
                 dict(state='UNCONFIRMED', identity=meta, base_tf='15m', missing_count=1,
@@ -78,15 +78,10 @@ class LegacyReference(unittest.TestCase):
                 current = rv._input(db, spec)
                 before = {t: db.execute('SELECT * FROM '+t+' ORDER BY 1').fetchall()
                           for t in ('instruments', 'candles', 'series')}
-            self.assertFalse(rv._observation_current(job, current))
-            migrated = rv._legacy_reference_observation(job, current, now)
-            self.assertEqual(migrated['at'], original['at'])
-            self.assertEqual(migrated['evidence'], original['evidence'])
-            self.assertEqual(migrated['previous_input_fingerprint'], original['input_fingerprint'])
-            self.assertEqual(migrated['input_fingerprint'], current['fingerprint'])
+            self.assertNotEqual(rv._fingerprint(current, version=3), original['input_fingerprint'])
+            self.assertTrue(rv._observation_current(job, current))
             self.assertEqual(original['fingerprint_version'], 3)
-
-            for change in ('price', 'proof', 'identity'):
+            for change in ('price', 'proof', 'identity', 'unproven_name', 'kind'):
                 with self.subTest(reject=change):
                     changed = copy.deepcopy(current)
                     if change == 'price':
@@ -94,17 +89,21 @@ class LegacyReference(unittest.TestCase):
                         changed['neighbors']['before'] = row
                     elif change == 'proof':
                         changed['proof']['trade_intervals'] = [[first, '2026-10-28 10:30:00']]
-                    else:
+                    elif change == 'identity':
                         changed['listing']['currency'] = 'USD'
+                    elif change == 'kind':
+                        changed['info']['kind'] = 'benchmark'
+                    else:
+                        changed['info']['name'] = 'Unproven previous name'
                     changed['fingerprint'] = rv._fingerprint(changed)
-                    self.assertIsNone(rv._legacy_reference_observation(job, changed, now))
-            reference.write_bytes(raw+b' ')
-            self.assertIsNone(rv._legacy_reference_observation(job, current, now))
-            reference.write_bytes(raw)
+                    self.assertFalse(rv._observation_current(job, changed))
             other = copy.deepcopy(job); other['observation']['input_fingerprint'] = 'unproven'
-            self.assertIsNone(rv._legacy_reference_observation(other, current, now))
-            other = copy.deepcopy(job); other['origin']['native_reference'] += '.missing'
-            self.assertIsNone(rv._legacy_reference_observation(other, current, now))
+            self.assertFalse(rv._observation_current(other, current))
+            other = copy.deepcopy(job); other['observation']['fingerprint_version'] = 4
+            self.assertFalse(rv._observation_current(other, current))
+            # The original full hash proves the complete old market inputs.
+            reference.unlink()
+            self.assertTrue(rv._observation_current(job, current))
 
             with patch('gettex_history.attach_known_interruptions', return_value=False):
                 result = rv.turn(store, info, now)
