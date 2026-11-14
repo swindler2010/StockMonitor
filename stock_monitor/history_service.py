@@ -443,9 +443,33 @@ def attach_parent_provenance(store,frame,isin,base):
     import data_quality as quality
     from performance_cache import _closed_rows,_digest
     records=store.setting(parent_provenance_key(isin,frame.attrs,base),{})
-    inputs=[];invalid=[]
+    inputs=[];invalid=[];retimed={};origins=[];empty=[]
     for stamp,proof in records.items():
         if pd.Timestamp(stamp) not in frame.index:continue
+        if proof.get('official_timebase'):
+            from revision_watcher import retime_current,RETIME_POLICY
+            key=proof['official_timebase']
+            if key not in retimed:
+                receipt=store.setting(key,{})
+                store.read_cache.depend('setting:'+RETIME_POLICY)
+                store.read_cache.depend('setting:interval_evidence:'+isin)
+                for tf in ('5m','15m'):store.read_cache.depend('market:'+isin+':'+tf)
+                with store.connect() as db:valid=bool(receipt) and retime_current(db,receipt)
+                retimed[key]=(receipt,valid)
+                if valid:
+                    origins.append(dict(receipt_key=key,first=receipt['first'],end=receipt['end'],source='gettex',original_provider=frame.attrs['source']))
+                    current=store.setting('interval_evidence:'+isin,{})
+                    authority={**current['identity'],'absence_evidence':{**receipt['source']['proof'],'checked_at':current['checked_at']}}
+                    empty.append(dict(first=receipt['first'],end=receipt['end'],authority=authority))
+            receipt,valid=retimed[key]
+            if not valid:invalid.append(stamp)
+            else:
+                # source identifies the retained archive; row origin records
+                # the explicit correction without claiming it came from LSEG.
+                frame.loc[pd.Timestamp(stamp),'origin_source']='gettex'
+                inputs.append(dict(parent_at=stamp,inputs=[dict(isin=isin,identity=receipt['source']['proof']['identity'],base_tf=tf,timeframe=tf,
+                    **{'from':receipt['first'],'through':pd.Timestamp(receipt['end']).tz_localize('Europe/Berlin').tz_convert('UTC').isoformat()}) for tf in ('5m','15m')]))
+            continue
         for spec in proof['inputs']:
             store.read_cache.depend('market:'+isin+':'+spec['base_tf'])
         with store.connect() as db:
@@ -457,6 +481,9 @@ def attach_parent_provenance(store,frame,isin,base):
         inputs.append(dict(parent_at=stamp,inputs=proof['inputs']))
     frame.attrs['parent_recovery_inputs']=inputs
     frame.attrs['invalid_parent_provenance']=invalid
+    if origins:
+        frame.attrs['source_corrections']=origins
+        frame.attrs['official_retiming_empty']=empty
     return frame
 
 
