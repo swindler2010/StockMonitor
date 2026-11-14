@@ -1393,6 +1393,37 @@
         "Пустой ответ не доказывает NO_TRADES.",
         "Оставшиеся исторические пробелы и срок исполнения не снимаются."
       ]
+    },
+    {
+      "id": "official_empty_exact_native_window",
+      "title": "Пустой интервал с полной локальной сверкой GETTEX и нативных 5m/15m",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "UNCONFIRMED",
+        "SOURCE_TIMEBASE_UNCONFIRMED"
+      ],
+      "status": "IMPLEMENTED; targeted tests PASS; Windows ordinary CP applied receipts for Palantir/Broadcom; full admission PARTIAL",
+      "steps": [
+        "Использовать существующий reconciliation turn и разрешённый official_gettex_conserved_window_v1.",
+        "Только один отсутствующий 15m между двумя соседними настоящими свечами той же сессии; окно45мин.",
+        "Проверить полные MUNC/MUND файлы всего окна, сделки, отсутствие нулевых/неполных публикаций и точное совпадение всех нативных5m/15m OHLCV с реконструкцией.",
+        "Сохранить receipt с added=0/changed=0; окончательно перепроверить identity, policy, inputs и источники в транзакции.",
+        "На каждом чтении проверять актуальность receipt; не подавлять новые нативные строки и не выдавать право исполнения.",
+        "Withdraw only absence corroboration when an empty-window receipt expires; unchanged native OHLCV remain valid. New evidence checks use ordinary queue capacity; unchanged input never resets the retry budget."
+      ],
+      "evidence": [
+        "test_cp_official_timebase.py"
+      ],
+      "limits": [
+        "Не расширять подтверждение на соседние непроверенные интервалы или другие листинги.",
+        "Пропуск в TV или пустой ответ источника сам по себе недостаточен.",
+        "Изменение OHLCV, политики, полного набора файлов или публикаций отзывает локальное подтверждение."
+      ],
+      "automatic_action": "Existing cp_reconciliation.turn / revision_watcher.retime_plan",
+      "manual_action": "Evidence missing: retain precise blocker; assisted TV observation remains separate owner risk"
     }
   ],
   "sources": [
