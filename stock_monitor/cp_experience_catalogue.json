@@ -4,6 +4,32 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "closed_session_paper_admission_and_recovered_proof_roles",
+      "title": "Подключение PAPER вне сессии и роли восстановленных входов",
+      "sources": [
+        "paper_preparation.closed_session_archive",
+        "performance_cache.primary_closed_series",
+        "cp_controls.manual_gate"
+      ],
+      "states": [
+        "PAPER_STALE_QUOTE",
+        "PAPER_AUTO_DEPENDENCY_BLOCKED"
+      ],
+      "steps": [
+        "Подключение инструмента отдельно от исполнения сделки: проверить закрытый CORE, права, ревизии, identity и последнюю закрытую сессию на реальном времени.",
+        "Если рынок закрыт и последняя 15m свеча и дневной вход соответствуют окончанию последней сессии, подключить штатной последовательной очередью; execution_permission остаётся false.",
+        "Источники восстановленного участка сохраняются в полном proof и перепроверяются. Только точные ссылки recovered_inputs отделяются от основных TF; неподтверждённый другой источник не допускается.",
+        "BUY/SELL продолжают проверять открытую сессию, свежесть, DQ и риск. Отсутствующий хвост, changed inputs, revoked permission и нестабильный CORE сохраняют блокировку."
+      ],
+      "evidence": [
+        "test_paper_archive_admission: 2 targeted scenarios; existing open-session stale/invalid quote regression rerun because admission code changed; 3 PASS0.379s."
+      ],
+      "limits": [
+        "Не доказательство полной истории или исполнения в открытой сессии.",
+        "Никакого ручного включения акции, подмены времени котировки, синтетических свечей или тестовых сделок в рабочем счёте."
+      ]
+    },
+    {
       "id": "official_gettex_conserved_timebase_repair",
       "title": "Автоматическое исправление распределения GETTEX по времени",
       "status": "Targeted regression PASS1.645s; ordinary CP Meta14Nov2026 09:18:32CET APPLIED,09:19:57CET RESOLVED_NATIVE",
