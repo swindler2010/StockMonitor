@@ -212,6 +212,21 @@ def capture_closed_inputs(db, specs, token):
     return dict(version=1,revisions=tracked,strict=strict,settings=settings,settings_start=settings_start,series=series)
 
 
+def primary_closed_series(guard, isin, identity):
+    """Separate named recovery evidence from the selected analytical series.
+
+    Recovery inputs stay in the full proof and are validated unchanged. Only
+    exact same-listing references of the selected series are auxiliary; an
+    unreferenced provider/venue cannot masquerade as a required timeframe.
+    """
+    own=[s for s in guard.get('series',[]) if s['spec'].get('isin')==isin]
+    refs={_digest(r) for s in own if s['spec'].get('identity')==identity
+          for r in s['spec'].get('recovered_inputs',[])
+          if r.get('isin')==isin and all(r.get('identity',{}).get(k)==identity.get(k)
+                                      for k in ('venue','currency','timezone'))}
+    return [s for s in own if _digest(s['spec']) not in refs]
+
+
 def validate_closed_inputs(db, guard, memo=None):
     """Return a current revision token only if the frozen inputs still match."""
     if not guard or guard.get('version')!=1:raise InputRevisionChanged('Closed input proof missing')
