@@ -57,8 +57,8 @@ def _official_window(db,isin,first,end,now,allow_zero_rows=False):
   right=left+pd.Timedelta(minutes=5)
   part=raw[(raw.index>=left)&(raw.index<right)]
   # A published zero-quantity price observation is not an empty interval.
-  # It may corroborate an IDENTICAL existing native bar, never create a trade
-  # or authorize a price correction. Keep its original zero evidence intact.
+  # Explicit verified modes may corroborate or retime this native price;
+  # it never creates turnover or proves NO_TRADES. Preserve zero evidence.
   zero_row=(allow_zero_rows and not part.empty and part.volume.eq(0).all()
     and any(pd.Timestamp(x)<=left and pd.Timestamp(y)>=right for x,y in scoped['zero_quantity_intervals']))
   if not (dq.no_trades_proof(authority,left,right,now) or dq.known_trade(authority,left,right,now) or zero_row):
