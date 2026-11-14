@@ -103,6 +103,12 @@ def no_trades_proof(meta,start,end,now=None):
     return _no_trades_proof(meta,start,end,now,_evidence_lookup(meta))
 
 def _no_trades_proof(meta,start,end,now,index):
+    # This scope is attached only after rechecking the official correction
+    # receipt and both archives. No generic cross-provider absence transfer.
+    for scope in meta.get('official_retiming_empty',[]):
+        if pd.Timestamp(scope['first'])<=pd.Timestamp(start)<pd.Timestamp(end)<=pd.Timestamp(scope['end']):
+            proof=no_trades_proof(scope['authority'],start,end,now)
+            if proof:return dict(proof,correction_origin='official GETTEX timebase')
     proof=meta.get('absence_evidence',{})
     if not all(proof.get('identity',{}).get(k)==meta.get(k) and meta.get(k) for k in IDENTITY):return None
     if proof.get('basis')!='complete_published_trade_files' or not proof.get('reference') or not proof.get('checked_at'):return None
@@ -183,7 +189,7 @@ def _known_trade(meta,start,end,now,index):
 
 def covered_empty(meta,stamps,base,now=None,*,closed_only=False):
     """Only proven empty intervals can be removed from expectations."""
-    if not meta.get('classify_absence') or not meta.get('absence_evidence') or base not in STEPS:return pd.DatetimeIndex([])
+    if not meta.get('classify_absence') or not (meta.get('absence_evidence') or meta.get('official_retiming_empty')) or base not in STEPS:return pd.DatetimeIndex([])
     from timeframes import schedule
     stamps=pd.DatetimeIndex(stamps)
     if stamps.empty:return stamps
@@ -436,6 +442,9 @@ def audit(frame,base,expected=None,now=None,check_stale=True):
     if meta.get('invalid_parent_provenance'):
         bad.extend(pd.Timestamp(x) for x in meta['invalid_parent_provenance'] if pd.Timestamp(x) in frame.index)
         if bad:issues.append('PARENT_PROVENANCE_CHANGED: повторная проверка исходных младших свечей обязательна')
+    if meta.get('source_corrections'):
+        report['source_corrections']=meta['source_corrections']
+        warnings.append('OFFICIAL_GETTEX_TIMEBASE: проверенное биржевое исправление; исходные значения сохранены в журнале ревизий')
     for field in IDENTITY:
         if not meta.get(field):issues.append('Не подтверждено '+field);global_invalid=True
         if expected and expected.get(field) and meta.get(field)!=expected[field]:
