@@ -463,15 +463,16 @@ def _seed_official_empty_checks(db,info,clock,progress,limit):
             if not dq.no_trades_proof(authority,a,a+pd.Timedelta(minutes=15),clock):continue
             spec=_spec(isin,meta,'15m',first,first);inputs=_input(db,spec)
             if not empty_native_span(spec,inputs):continue
+            if _classify(spec,inputs,clock)['state']=='NO_TRADES':continue
         except (ValueError,KeyError,TypeError) as error:
             progress['official_empty_wait']=dict(first=first,reason=str(error),at=clock.isoformat());continue
         job,_=_enqueue(db,spec,dict(kind='saved_official_empty_evidence'),clock)
         # One new algorithm check; hourly/monthly retry remains the existing
         # mechanism. A poll, unchanged source or restart cannot reset it.
-        if job.get('official_empty_algorithm')==2:continue
+        if job.get('official_empty_algorithm')==3:continue
         # Saved-source discovery uses ordinary capacity, not the two reserved
         # slots for explicit human observations.
-        old=dict(job);job.update(official_empty_algorithm=2,status='QUEUED',next_check=clock.isoformat())
+        old=dict(job);job.update(official_empty_algorithm=3,status='QUEUED',next_check=clock.isoformat())
         _save_job(db,job,old);queued.append((key(job),json.dumps(job,ensure_ascii=False)))
     return queued
 
@@ -543,7 +544,9 @@ def turn(store, info, now=None):
             result=_classify(prior,inputs,clock)
             from revision_watcher import retime_plan,publish_retime
             correction=None;correction_wait=None
-            if result['state'] in ('GAP','SOURCE_TIMEBASE_UNCONFIRMED','SOURCE_DISCREPANCY'):
+            if (result['state'] in ('GAP','SOURCE_TIMEBASE_UNCONFIRMED','SOURCE_DISCREPANCY')
+                    or (result.get('market_state')=='ZERO_QUANTITY_UNCONFIRMED'
+                        and prior.get('observation',{}).get('result')=='ZERO_VOLUME')):
                 try:
                     with store.connect() as db:
                         db.execute('BEGIN');correction=retime_plan(db,prior,inputs,clock)
