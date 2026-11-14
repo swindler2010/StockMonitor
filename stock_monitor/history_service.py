@@ -457,16 +457,21 @@ def attach_parent_provenance(store,frame,isin,base):
                 with store.connect() as db:valid=bool(receipt) and retime_current(db,receipt)
                 retimed[key]=(receipt,valid)
                 if valid:
-                    origins.append(dict(receipt_key=key,first=receipt['first'],end=receipt['end'],source='gettex',original_provider=frame.attrs['source']))
+                    origins.append(dict(receipt_key=key,first=receipt['first'],end=receipt['end'],source='gettex',original_provider=frame.attrs['source'],
+                        mode=receipt.get('mode','RETIMED')))
                     current=store.setting('interval_evidence:'+isin,{})
                     authority={**current['identity'],'absence_evidence':{**receipt['source']['proof'],'checked_at':current['checked_at']}}
                     empty.append(dict(first=receipt['first'],end=receipt['end'],authority=authority))
             receipt,valid=retimed[key]
-            if not valid:invalid.append(stamp)
+            if not valid:
+                # An expired empty-window proof withdraws only absence
+                # corroboration. It never invalidates unchanged native OHLCV.
+                if receipt.get('mode')!='VERIFIED_NATIVE_EMPTY':invalid.append(stamp)
             else:
                 # source identifies the retained archive; row origin records
                 # the explicit correction without claiming it came from LSEG.
-                frame.loc[pd.Timestamp(stamp),'origin_source']='gettex'
+                if receipt.get('mode')!='VERIFIED_NATIVE_EMPTY':
+                    frame.loc[pd.Timestamp(stamp),'origin_source']='gettex'
                 inputs.append(dict(parent_at=stamp,inputs=[dict(isin=isin,identity=receipt['source']['proof']['identity'],base_tf=tf,timeframe=tf,
                     **{'from':receipt['first'],'through':pd.Timestamp(receipt['end']).tz_localize('Europe/Berlin').tz_convert('UTC').isoformat()}) for tf in ('5m','15m')]))
             continue
