@@ -153,7 +153,11 @@ def retime_plan(db,job,inputs,now):
   native={base:_native(db,job['isin'],meta,base,left,end) for base in ('5m','15m')}
   if (all(native[base]==source['rows'][base] for base in native)
       and {r[0] for r in native['15m']}==stamps):
-   if observation and (observation.get('result')!='ABSENT' or not _observation_current(job,inputs)):
+   # This branch independently proves the complete current native window.
+   # A superseded ABSENT observation is not reused as evidence or permission;
+   # its obsolete neighbour fingerprint cannot veto this primary-source proof.
+   # A presence/difference observation still requires explicit reconciliation.
+   if observation and observation.get('result')!='ABSENT':
     raise ValueError('RETIME_VISUAL_REFERENCE_CONFLICT_OR_CHANGED')
    return dict(version=RETIME_VERSION,mode='VERIFIED_NATIVE_EMPTY',isin=job['isin'],identity=meta,
     first=left,end=end,empty_first=str(a),empty_end=str(a+pd.Timedelta(minutes=15)),
@@ -164,12 +168,23 @@ def retime_plan(db,job,inputs,now):
  if not after:return None
  b=pd.Timestamp(after[0])+pd.Timedelta(minutes=15)
  if not pd.Timedelta(minutes=15)<b-a<=pd.Timedelta(minutes=45) or a.normalize()!=b.normalize():return None
- if observation and (observation.get('result') not in ('PRESENT','DIFFERENT') or not _observation_current(job,inputs)):
+ zero_observed=bool(observation and observation.get('result')=='ZERO_VOLUME' and _observation_current(job,inputs))
+ if observation and (observation.get('result') not in ('PRESENT','DIFFERENT','ZERO_VOLUME') or not _observation_current(job,inputs)):
   raise ValueError('RETIME_VISUAL_REFERENCE_CONFLICT_OR_CHANGED')
- source=_official_window(db,job['isin'],str(a),str(b),now)
+ source=_official_window(db,job['isin'],str(a),str(b),now,allow_zero_rows=zero_observed)
  before={base:_native(db,job['isin'],meta,base,str(a),str(b)) for base in ('5m','15m')}
  if any(not before[base] or _aggregate(before[base])!=_aggregate(source['rows'][base]) for base in before):
   raise ValueError('RETIME_NOT_CONSERVED')
+ if zero_observed:
+  observed=[r for r in source['rows']['15m'] if r[0]==str(a)]
+  if len(observed)!=1 or observed[0][5]!=0 or len(set(observed[0][1:5]))!=1:
+   raise ValueError('RETIME_PRICE_OBSERVATION_NOT_CONFIRMED')
+  for r in source['rows']['5m']:
+   if r[5]!=0:continue
+   # Reassign an already published native price, not a new price guessed from
+   # a missing bar. Full official files determine the exact earlier timestamp.
+   if len(set(r[1:5]))!=1 or not any(n[1]==r[1] and pd.Timedelta(0)<=pd.Timestamp(n[0])-pd.Timestamp(r[0])<=pd.Timedelta(minutes=15) for n in before['5m']):
+    raise ValueError('RETIME_PRICE_OBSERVATION_NATIVE_BINDING_MISSING')
  if not any(pd.Timestamp(r[0])<pd.Timestamp(after[0]) for r in source['rows']['15m']):return None
  relocations=[]
  for base,native in before.items():
@@ -181,7 +196,8 @@ def retime_plan(db,job,inputs,now):
    # unique, exact 5m candle relocation into a previously absent native slot.
    # Complete official publications already prove the old slot empty; the
    # whole 5m/15m window must still conserve OHLCV above.
-   if base!='5m':raise ValueError('RETIME_WOULD_DELETE_NATIVE_CANDLE')
+   if base!='5m' and not (zero_observed and base=='15m' and values[4]==0 and len(set(values[:4]))==1):
+    raise ValueError('RETIME_WOULD_DELETE_NATIVE_CANDLE')
    matches=[stamp for stamp,v in official.items() if stamp not in native_stamps and v==values]
    if (len(matches)!=1 or matches[0] in used
        or abs(pd.Timestamp(matches[0])-pd.Timestamp(at))>pd.Timedelta(minutes=15)):
@@ -192,6 +208,8 @@ def retime_plan(db,job,inputs,now):
   job_id=job['id'],policy_digest=digest(policy),input_fingerprint=inputs['fingerprint'],
   before=before,source=source,source_digest=digest(source),created_at=now.isoformat(),
   **({'relocations':relocations} if relocations else {}),
+  **({'mode':'VERIFIED_PRICE_OBSERVATION_TIMEBASE','zero_observations_corroborated':True,
+      'price_only_note':'Published zero-quantity observations, not executed turnover or NO_TRADES'} if zero_observed else {}),
   origin='official GETTEX trade publications; TV observation is diagnostic only')
 
 
@@ -204,7 +222,7 @@ def retime_current(db,receipt,now=None):
   row=db.execute('SELECT payload FROM instruments WHERE isin=?',(receipt['isin'],)).fetchone()
   if not row or not stored_identity(db,json.loads(row[0]),receipt['identity'],'15m'):return False
   source=_official_window(db,receipt['isin'],receipt['first'],receipt['end'],pd.Timestamp(now or pd.Timestamp.now(tz='UTC')),
-   allow_zero_rows=receipt.get('mode')=='VERIFIED_NATIVE_EMPTY' and receipt.get('zero_observations_corroborated') is True)
+   allow_zero_rows=receipt.get('mode') in ('VERIFIED_NATIVE_EMPTY','VERIFIED_PRICE_OBSERVATION_TIMEBASE') and receipt.get('zero_observations_corroborated') is True)
   if digest(source)!=receipt['source_digest']:return False
   return all(digest(_native(db,receipt['isin'],receipt['identity'],base,receipt['first'],receipt['end']))==digest(rows)
              for base,rows in source['rows'].items())
