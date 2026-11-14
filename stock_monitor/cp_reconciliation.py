@@ -543,7 +543,7 @@ def turn(store, info, now=None):
             result=_classify(prior,inputs,clock)
             from revision_watcher import retime_plan,publish_retime
             correction=None;correction_wait=None
-            if result['state'] in ('GAP','SOURCE_TIMEBASE_UNCONFIRMED'):
+            if result['state'] in ('GAP','SOURCE_TIMEBASE_UNCONFIRMED','SOURCE_DISCREPANCY'):
                 try:
                     with store.connect() as db:
                         db.execute('BEGIN');correction=retime_plan(db,prior,inputs,clock)
