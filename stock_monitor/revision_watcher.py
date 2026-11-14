@@ -106,8 +106,41 @@ def retime_plan(db,job,inputs,now):
  if policy.get('version')!=RETIME_VERSION or policy.get('approved') is not True:return None
  meta=job['identity'];a=pd.Timestamp(job['first']);after=inputs['neighbors']['after']
  if (job['tf']!='15m' or meta['source']!='gettex_chart' or meta['venue']!='GETTEX'
-     or meta['currency']!='EUR' or meta['timezone']!='Europe/Berlin' or inputs['rows']):return None
+     or meta['currency']!='EUR' or meta['timezone']!='Europe/Berlin'):return None
  observation=job.get('observation')
+ if inputs['rows']:
+  # An explicitly reviewed existing candle can omit a real traded extreme.
+  # Keep this narrower than a general provider overwrite: identical timestamps,
+  # open/close/volume, unchanged neighbour and conserved complete parent window.
+  before=inputs['neighbors']['before']
+  if (len(inputs['rows'])!=1 or job['last']!=str(a) or not before
+      or pd.Timestamp(before[0])!=a-pd.Timedelta(minutes=15)
+      or before[0][:10]!=str(a)[:10] or not observation
+      or observation.get('result')!='DIFFERENT' or not _observation_current(job,inputs)):return None
+  first,end=before[0],str(a+pd.Timedelta(minutes=15))
+  source=_official_window(db,job['isin'],first,end,now)
+  native={base:_native(db,job['isin'],meta,base,first,end) for base in ('5m','15m')}
+  differences=0
+  for base,old in native.items():
+   new=source['rows'][base]
+   if [r[0] for r in old]!=[r[0] for r in new] or _aggregate(old)!=_aggregate(new):
+    raise ValueError('RETIME_EXTREMA_WINDOW_NOT_CONSERVED')
+   for original,confirmed in zip(old,new):
+    if original==confirmed:continue
+    if (original[0]<str(a) or any(original[k]!=confirmed[k] for k in (1,4,5))
+        or confirmed[2]<original[2] or confirmed[3]>original[3]):
+     raise ValueError('RETIME_EXTREMA_NOT_ISOLATED')
+    if base=='5m':
+     trades=[t for t in source['trades'] if pd.Timestamp(original[0])<=pd.Timestamp(t[0])
+             <pd.Timestamp(original[0])+pd.Timedelta(minutes=5) and t[2]>0]
+     if any(original[k]!=confirmed[k] and not any(t[1]==confirmed[k] for t in trades) for k in (2,3)):
+      raise ValueError('RETIME_EXTREMA_POSITIVE_TRADE_REQUIRED')
+    differences+=1
+  if not differences:return None
+  return dict(version=RETIME_VERSION,mode='VERIFIED_NATIVE_EXTREMA',isin=job['isin'],identity=meta,
+    first=first,end=end,job_id=job['id'],policy_digest=digest(policy),input_fingerprint=inputs['fingerprint'],
+    before=native,source=source,source_digest=digest(source),created_at=now.isoformat(),
+    origin='Current visual discrepancy plus complete official positive trades; isolated H/L; exact O/C/V and conserved window')
  # A complete official empty interval can corroborate the native timebase
  # locally only when BOTH bracketing real bars and every 5m/15m row agree.
  # Reuse the same bounded receipt/revalidation path; do not rewrite prices or
