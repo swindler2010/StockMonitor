@@ -143,6 +143,11 @@ def _input(db, job):
     report=read(db,report_key,{})
     result=dict(info=info,listing=listing,rows=rows,neighbors={'before':before,'after':after},proof=relevant,
                 native_retry=report.get('next_retry'),report_key=report_key)
+    from revision_watcher import RETIME_PREFIX,retime_current
+    correction=read(db,RETIME_PREFIX+isin+':'+job['id'],{})
+    if correction and retime_current(db,correction):
+        result['official_retiming_empty']=[dict(first=correction['first'],end=correction['end'],
+            authority={**proof['identity'],'absence_evidence':{**correction['source']['proof'],'checked_at':proof['checked_at']}})]
     result['fingerprint']=_fingerprint(result)
     return result
 
@@ -215,6 +220,8 @@ def _classify(job, inputs, now):
         frame=pd.DataFrame([r[1:] for r in rows],index=pd.to_datetime([r[0] for r in rows]),columns=dq.FIELDS)
         frame.attrs={**meta,'timeframe':job['tf'],'classify_absence':True,
                      'absence_evidence':proof if proof.get('isin')==job['isin'] else {}}
+        if inputs.get('official_retiming_empty'):
+            frame.attrs['official_retiming_empty']=inputs['official_retiming_empty']
         check=dq.audit(frame,job['tf'],expected=meta,now=now,check_stale=False)
         expected=dq.expected_index(meta,job['tf'],job['first'],job['last'],now)
         absent=expected.difference(frame.index)
@@ -487,6 +494,13 @@ def turn(store, info, now=None):
             with store.connect() as db:
                 db.execute('BEGIN');inputs=_input(db,prior);source_policy=read(db,SOURCE_POLICY,{})
             result=_classify(prior,inputs,clock)
+            from revision_watcher import retime_plan,publish_retime
+            correction=None;correction_wait=None
+            if result['state']=='GAP':
+                try:
+                    with store.connect() as db:
+                        db.execute('BEGIN');correction=retime_plan(db,prior,inputs,clock)
+                except (ValueError,KeyError,TypeError) as error:correction_wait=str(error)
             with store.connect() as db:
                 db.execute('BEGIN IMMEDIATE');current=read(db,key(prior))
                 if (digest(current)!=digest(prior) or _input(db,prior)['fingerprint']!=inputs['fingerprint']
@@ -496,6 +510,12 @@ def turn(store, info, now=None):
                 if changed:
                     current['history']=(current.get('history',[])+[dict(at=clock.isoformat(),finding=result)])[-20:]
                 old=dict(current)
+                if correction:
+                    current['official_timebase_repair']=publish_retime(db,current,inputs,correction,clock)
+                    current.update(status='RECHECK_QUEUED',next_check=clock.isoformat(),checked_at=clock.isoformat())
+                    _save_job(db,current,old);checked+=1
+                    continue
+                if correction_wait:current['official_timebase_repair']=dict(state='WAITING_EVIDENCE',reason=correction_wait)
                 if _observation_current(current,inputs) and current['observation']['input_fingerprint']!=inputs['fingerprint']:
                     current['observation']={**current['observation'],'previous_input_fingerprint':current['observation']['input_fingerprint'],
                         'input_fingerprint':inputs['fingerprint'],'binding_updated_at':clock.isoformat(),
