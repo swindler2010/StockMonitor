@@ -137,15 +137,38 @@ def closed_session_archive(db,info,identity,result,now):
     if row is None:raise ValueError('PAPER_PREPARATION_SESSION_TAIL_MISSING')
     frame=pd.DataFrame([row[1:]],columns=dq.FIELDS,index=pd.DatetimeIndex([pd.Timestamp(row[0])]))
     frame.attrs=dict(identity,timeframe='15m')
-    if bar_ends(frame)[0]!=end:
-        raise ValueError('PAPER_PREPARATION_SESSION_TAIL_MISSING')
-    quality=dq.audit(frame,'15m',identity,clock)
+    tail_end=bar_ends(frame)[0];empty_tail=None
+    if tail_end!=end:
+        # A real final empty slot does not require inventing a closing candle.
+        # Only the current, independently corroborated session-tail receipt is
+        # sufficient; an owner risk grant or TV absence alone is not.
+        from revision_watcher import RETIME_PREFIX,RETIME_POLICY,retime_current
+        if tail_end>end or end-tail_end!=pd.Timedelta(minutes=15):
+            raise ValueError('PAPER_PREPARATION_SESSION_TAIL_MISSING')
+        for key,raw in db.execute('SELECT key,value FROM settings WHERE key LIKE ?', (RETIME_PREFIX+info['isin']+':%',)):
+            receipt=json.loads(raw)
+            required={'setting:'+key,'setting:'+RETIME_POLICY,'setting:interval_evidence:'+info['isin'],
+                      'market:'+info['isin']+':5m','market:'+info['isin']+':15m'}
+            if (receipt.get('mode')!='VERIFIED_NATIVE_EMPTY' or receipt.get('identity')!=identity
+                    or receipt.get('empty_first')!=str(tail_end.tz_convert(identity['timezone']).tz_localize(None))
+                    or receipt.get('empty_end')!=str(end.tz_convert(identity['timezone']).tz_localize(None))
+                    or not required<=set(token) or not retime_current(db,receipt,clock)):
+                continue
+            from cp_controls import read
+            proof=read(db,'interval_evidence:'+info['isin'],{})
+            frame.attrs.update(classify_absence=True,official_retiming_empty=[dict(first=receipt['first'],end=receipt['end'],
+                authority={**proof['identity'],'absence_evidence':{**receipt['source']['proof'],'checked_at':proof['checked_at']}})])
+            empty_tail=dict(first=receipt['empty_first'],end=receipt['empty_end'],receipt_key=key)
+            break
+        if empty_tail is None:raise ValueError('PAPER_PREPARATION_SESSION_TAIL_MISSING')
+    quality=dq.audit(frame,'15m',frame.attrs,clock)
     if quality['state']!='READY':raise ValueError('PAPER_PREPARATION_TAIL_'+quality['state'])
     own=primary_closed_series(result['hourly']['proof'],info['isin'],identity)
     if not any(s['spec'].get('timeframe')=='1D' and pd.Timestamp(s['spec']['through'])==end for s in own):
         raise ValueError('PAPER_PREPARATION_DAILY_TAIL_MISSING')
     return dict(basis='CLOSED_SESSION_ARCHIVE',session_close=end.isoformat(),
                 checked_at=clock.isoformat(),tail_at=str(row[0]),tail_quality=quality['state'],
+                **({'confirmed_empty_tail':empty_tail} if empty_tail else {}),
                 execution_blocker='PAPER_SESSION_CLOSED')
 
 
