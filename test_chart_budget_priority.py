@@ -123,8 +123,36 @@ class BudgetTests(unittest.TestCase):
         result=schedule.decision(self.store,self.f.isin,self.f.identity,'15m',now)
         self.assertFalse(result['due']);self.assertEqual(result['reason'],'SOURCE_COOLDOWN')
         self.f.db.execute("DELETE FROM settings WHERE key='cp_source_retry:gettex_chart'")
+        # A real Friday catch-up has spent its time budget before Saturday.
+        friday=pd.Timestamp('2026-11-13T22:05Z')
+        p=schedule.decision(self.store,self.f.isin,self.f.identity,'15m',friday)
+        schedule.finish(self.store,self.f.isin,self.f.identity,'15m',p,now=friday)
         result=schedule.decision(self.store,self.f.isin,self.f.identity,'15m',pd.Timestamp('2026-11-14T12:00Z'))
         self.assertFalse(result['due'])
+
+    def test_weekend_first_catchup_uses_persisted_bounded_budget(self):
+        now=pd.Timestamp('2026-11-14T09:30Z');meta=self.f.identity
+        key='gettex_chart:'+self.f.isin+':15m'
+        saved=self.store.setting(key);saved['last']='2026-11-13 12:00:00';self.f.write(key,saved)
+        before=copy.deepcopy(saved)
+        for count in range(1,5):
+            p=schedule.decision(self.store,self.f.isin,meta,'15m',now)
+            self.assertTrue(p['due'],p);self.assertTrue(schedule.fresh_window(p,'15m',now))
+            self.assertEqual(p['intraday_publication_rechecks'],count)
+            self.assertEqual(p['publication_retry_until'],'2026-11-14T11:30:00+00:00')
+            schedule.finish(self.store,self.f.isin,meta,'15m',p,now=now)
+            pending=schedule.decision(self.store,self.f.isin,meta,'15m',now)
+            self.assertFalse(pending['due'])
+            now=pd.Timestamp(pending['next_publication_check'])
+        self.assertEqual(self.store.setting(key),before) # no data or permission writes
+        for later in ('2026-11-14T10:31Z','2026-11-15T10:00Z'):
+            self.assertFalse(schedule.decision(self.store,self.f.isin,meta,'15m',pd.Timestamp(later))['due'])
+        # Neither a later ordinary finish nor an error may reset progress.
+        schedule.finish(self.store,self.f.isin,meta,'15m',dict(key=p['key'],close_at=p['close_at']),RuntimeError('offline'),now)
+        kept=self.store.setting(p['key']);self.assertEqual(kept['intraday_publication_rechecks'],4)
+        self.assertEqual(kept['intraday_catchup_started_at'],'2026-11-14T09:30:00+00:00')
+        later=pd.Timestamp('2026-11-16T22:10Z')
+        self.assertEqual(schedule.decision(self.store,self.f.isin,meta,'15m',later)['intraday_publication_rechecks'],1)
 
 
 if __name__=='__main__':unittest.main()
