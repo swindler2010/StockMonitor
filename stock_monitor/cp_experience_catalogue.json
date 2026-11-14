@@ -4,6 +4,31 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "official_exact_five_minute_relocation",
+      "title": "Точный перенос ошибочно датированной 5m свечи GETTEX",
+      "sources": [
+        "revision_watcher.retime_plan",
+        "revision_watcher.publish_retime",
+        "cp_reconciliation.turn"
+      ],
+      "states": [
+        "RETIME_WOULD_DELETE_NATIVE_CANDLE",
+        "GAP"
+      ],
+      "steps": [
+        "Сначала проверить полные MUNC/MUND, сделки и 5m/15m того же ISIN, GETTEX/EUR, закрытое окно не более 45 минут; итоговые OHLCV обоих рядов должны совпасть.",
+        "Если исходная 5m отметка отсутствует в официальном ряду, разрешён только единственный точный перенос всех OHLCV в ранее отсутствовавшую отметку не дальше 15 минут. Неоднозначный перенос, изменение значений и удаление 15m запрещены.",
+        "В транзакции снова проверить весь план. Сохранить исходные OHLCV в candle_revision_history и before в квитанции, отдельно указать old_at/new_at и число relocated; не считать перенос новой загруженной свечой.",
+        "Повторный ответ провайдера не отменяет действующую официальную коррекцию. Изменение источника, identity или политики отзывает её доказательство. Далее обычная очередь пересчитывает DQ и анализ."
+      ],
+      "evidence": [
+        "test_cp_retime_relocation.py",
+        "Broadcom 02.11.2026 10:30–11:00 CET: TV совпадает с официальными GETTEX; штатный CP 14.11 13:33:22 CET added=1 changed=1 relocated=1"
+      ],
+      "limits": "TV используется для диагностики. Нет импорта TV OHLCV, синтетических свечей, безусловного допуска или изменения торговых правил.",
+      "status": "Один новый сценарий PASS 1.029s; два затронутых прежних сценария PASS 3.431s. Применено обычной очередью TEST после штатного перезапуска."
+    },
+    {
       "id": "closed_session_paper_admission_and_recovered_proof_roles",
       "title": "Подключение PAPER вне сессии и роли восстановленных входов",
       "sources": [
