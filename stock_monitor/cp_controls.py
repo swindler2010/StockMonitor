@@ -587,12 +587,12 @@ def manual_gate(db,isin,identity,entry_tf=None,dependency_proof=None):
     required=None
     if dependency_proof is not None:
         from trading_engine import profile
-        from performance_cache import validate_closed_inputs,InputRevisionChanged
+        from performance_cache import validate_closed_inputs,InputRevisionChanged,primary_closed_series
         if entry_tf in ('1H','4H'):
             from paper_hourly import authorize_hourly
             authorize_hourly(db,isin,identity)
         elif entry_tf not in ('5m','15m'):raise ValueError('PAPER_MANUAL_DEPENDENCY_SCOPE')
-        own=[s for s in dependency_proof.get('series',[]) if s['spec'].get('isin')==isin]
+        own=primary_closed_series(dependency_proof,isin,identity)
         if (not set((entry_tf,*profile(entry_tf)))<={s['spec'].get('timeframe') for s in own if s.get('count',0)>0}
                 or any(s['spec'].get('identity')!=identity for s in own)):
             raise ValueError('PAPER_MANUAL_DEPENDENCY_SCOPE')
