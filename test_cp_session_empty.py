@@ -85,6 +85,15 @@ class SessionEmpty(unittest.TestCase):
                     rw.retime_plan(db, spec, rv._input(db, spec), now)
             store.set_setting('interval_evidence:' + isin, proof)
             with store.connect() as db:
+                current_inputs=rv._input(db,spec)
+                stale=dict(spec,observation=dict(result='ABSENT',identity_confirmed=True,
+                    input_fingerprint='obsolete-before-independent-native-repair',fingerprint_version=4))
+                self.assertFalse(rv._observation_current(stale,current_inputs))
+                self.assertEqual(rw.retime_plan(db,stale,current_inputs,now)['mode'],'VERIFIED_NATIVE_EMPTY')
+                # No stale or current presence/discrepancy is silently ignored.
+                stale['observation']['result']='PRESENT'
+                with self.assertRaisesRegex(ValueError,'VISUAL_REFERENCE_CONFLICT'):
+                    rw.retime_plan(db,stale,current_inputs,now)
                 db.execute('BEGIN IMMEDIATE')
                 db.execute("UPDATE series SET high=152 WHERE base_tf='5m' AND ts='2026-11-13 22:40:00'")
                 self.assertIsNone(rw.retime_plan(db, spec, rv._input(db, spec), now))
