@@ -23,7 +23,7 @@ def _native(db,isin,meta,base,first,end):
   (isin,*[meta[k] for k in IDENTITY[:4]],base,first,end)).fetchall()
 
 
-def _official_window(db,isin,first,end,now):
+def _official_window(db,isin,first,end,now,allow_zero_rows=False):
  """Require complete native publication evidence and exact trade-built OHLCV."""
  import data_quality as dq
  from cp_controls import read
@@ -35,7 +35,8 @@ def _official_window(db,isin,first,end,now):
  fields=('no_trades','trade_intervals','zero_quantity_intervals','incomplete_publication_intervals')
  scoped={k:v for k,v in proof.items() if k not in (*fields,'reference','checked_at','limits')}
  for field in fields:scoped[field]=[p for p in proof.get(field,[]) if pd.Timestamp(p[0])<b and pd.Timestamp(p[1])>a]
- if scoped['zero_quantity_intervals'] or scoped['incomplete_publication_intervals']:raise ValueError('RETIME_INCOMPLETE_PUBLICATION')
+ if scoped['incomplete_publication_intervals'] or (scoped['zero_quantity_intervals'] and not allow_zero_rows):
+  raise ValueError('RETIME_INCOMPLETE_PUBLICATION')
  # Retain hashes of exactly the files covering this window, not later files.
  manifest=proof.get('reference',{}).get('GETTEX:'+a.strftime('%Y%m%d'),{})
  refs={}
@@ -47,15 +48,21 @@ def _official_window(db,isin,first,end,now):
    refs[name]=manifest[name]
  scoped['reference']={'GETTEX:'+a.strftime('%Y%m%d'):refs}
  authority={**meta,'absence_evidence':{**scoped,'checked_at':proof.get('checked_at')}}
- for left in pd.date_range(a,b,freq='5min',inclusive='left'):
-  right=left+pd.Timedelta(minutes=5)
-  if not (dq.no_trades_proof(authority,left,right,now) or dq.known_trade(authority,left,right,now)):
-   raise ValueError('RETIME_PUBLICATION_COVERAGE_MISSING')
  trades=db.execute('SELECT ts,price,volume FROM trades WHERE isin=? AND ts>=? AND ts<? ORDER BY ts',(isin,first,end)).fetchall()
  if not trades:raise ValueError('RETIME_NO_CONFIRMED_TRADES')
  raw=pd.DataFrame(trades,columns=['ts','price','volume']);raw.index=pd.to_datetime(raw.pop('ts'))
  if raw.index.has_duplicates:raise ValueError('RETIME_AMBIGUOUS_TRADE_ORDER')
  if not (raw['price'].gt(0).all() and raw['volume'].ge(0).all()):raise ValueError('RETIME_INVALID_TRADES')
+ for left in pd.date_range(a,b,freq='5min',inclusive='left'):
+  right=left+pd.Timedelta(minutes=5)
+  part=raw[(raw.index>=left)&(raw.index<right)]
+  # A published zero-quantity price observation is not an empty interval.
+  # It may corroborate an IDENTICAL existing native bar, never create a trade
+  # or authorize a price correction. Keep its original zero evidence intact.
+  zero_row=(allow_zero_rows and not part.empty and part.volume.eq(0).all()
+    and any(pd.Timestamp(x)<=left and pd.Timestamp(y)>=right for x,y in scoped['zero_quantity_intervals']))
+  if not (dq.no_trades_proof(authority,left,right,now) or dq.known_trade(authority,left,right,now) or zero_row):
+   raise ValueError('RETIME_PUBLICATION_COVERAGE_MISSING')
  result={}
  for base in ('5m','15m'):
   built=[]
@@ -74,6 +81,22 @@ def _official_window(db,isin,first,end,now):
  return dict(rows=result,trades=trades,proof=scoped)
 
 
+def empty_native_span(job,inputs):
+ """Exact two-sided hole, or the final slot at a verified session boundary."""
+ from timeframes import schedule
+ a=pd.Timestamp(job['first']);before=inputs['neighbors']['before'];after=inputs['neighbors']['after']
+ if (job['tf']!='15m' or job['last']!=str(a) or inputs['rows'] or not before
+     or pd.Timestamp(before[0])!=a-pd.Timedelta(minutes=15) or before[0][:10]!=str(a)[:10]):return None
+ end=a+pd.Timedelta(minutes=15)
+ if after and pd.Timestamp(after[0])==end and after[0][:10]==str(a)[:10]:
+  return before[0],str(end+pd.Timedelta(minutes=15)),{before[0],after[0]}
+ day=schedule(job['identity'],a,a)
+ if (len(day)==1 and end.tz_localize(job['identity']['timezone']).tz_convert('UTC')==day.close.iloc[0]
+     and (not after or pd.Timestamp(after[0])>=end)):
+  return before[0],str(end),{before[0]}
+ return None
+
+
 def retime_plan(db,job,inputs,now):
  """Recognise only conserved, same-session redistribution, at most 45 minutes."""
  from cp_controls import read,digest
@@ -83,32 +106,31 @@ def retime_plan(db,job,inputs,now):
  if policy.get('version')!=RETIME_VERSION or policy.get('approved') is not True:return None
  meta=job['identity'];a=pd.Timestamp(job['first']);after=inputs['neighbors']['after']
  if (job['tf']!='15m' or meta['source']!='gettex_chart' or meta['venue']!='GETTEX'
-     or meta['currency']!='EUR' or meta['timezone']!='Europe/Berlin' or not after or inputs['rows']):return None
- b=pd.Timestamp(after[0])+pd.Timedelta(minutes=15)
- if not pd.Timedelta(minutes=15)<b-a<=pd.Timedelta(minutes=45) or a.normalize()!=b.normalize():return None
+     or meta['currency']!='EUR' or meta['timezone']!='Europe/Berlin' or inputs['rows']):return None
  observation=job.get('observation')
  # A complete official empty interval can corroborate the native timebase
  # locally only when BOTH bracketing real bars and every 5m/15m row agree.
  # Reuse the same bounded receipt/revalidation path; do not rewrite prices or
  # infer absence from a provider's empty response, TV or a matching sample.
- before_neighbor=inputs['neighbors']['before']
+ span=empty_native_span(job,inputs)
  authority={**inputs['proof'].get('identity',{}),'absence_evidence':inputs['proof']}
- if (before_neighbor and pd.Timestamp(before_neighbor[0])==a-pd.Timedelta(minutes=15)
-     and pd.Timestamp(after[0])==a+pd.Timedelta(minutes=15)
-     and job['last']==str(a) and pd.Timestamp(before_neighbor[0]).normalize()==a.normalize()
-     and dq.no_trades_proof(authority,a,a+pd.Timedelta(minutes=15),now)):
-  left=before_neighbor[0]
-  source=_official_window(db,job['isin'],left,str(b),now)
-  native={base:_native(db,job['isin'],meta,base,left,str(b)) for base in ('5m','15m')}
+ if span and dq.no_trades_proof(authority,a,a+pd.Timedelta(minutes=15),now):
+  left,end,stamps=span
+  source=_official_window(db,job['isin'],left,end,now,allow_zero_rows=True)
+  native={base:_native(db,job['isin'],meta,base,left,end) for base in ('5m','15m')}
   if (all(native[base]==source['rows'][base] for base in native)
-      and {r[0] for r in native['15m']}=={left,after[0]}):
+      and {r[0] for r in native['15m']}==stamps):
    if observation and (observation.get('result')!='ABSENT' or not _observation_current(job,inputs)):
     raise ValueError('RETIME_VISUAL_REFERENCE_CONFLICT_OR_CHANGED')
    return dict(version=RETIME_VERSION,mode='VERIFIED_NATIVE_EMPTY',isin=job['isin'],identity=meta,
-    first=left,end=str(b),empty_first=str(a),empty_end=str(a+pd.Timedelta(minutes=15)),
+    first=left,end=end,empty_first=str(a),empty_end=str(a+pd.Timedelta(minutes=15)),
     job_id=job['id'],policy_digest=digest(policy),input_fingerprint=inputs['fingerprint'],
     before=native,source=source,source_digest=digest(source),created_at=now.isoformat(),
-    origin='Complete official GETTEX publications; exact bracketing 5m/15m native OHLCV; no price replacement')
+    zero_observations_corroborated=True,
+    origin='Complete official GETTEX publications; exact neighbouring 5m/15m native OHLCV and session boundary; no price replacement')
+ if not after:return None
+ b=pd.Timestamp(after[0])+pd.Timedelta(minutes=15)
+ if not pd.Timedelta(minutes=15)<b-a<=pd.Timedelta(minutes=45) or a.normalize()!=b.normalize():return None
  if observation and (observation.get('result') not in ('PRESENT','DIFFERENT') or not _observation_current(job,inputs)):
   raise ValueError('RETIME_VISUAL_REFERENCE_CONFLICT_OR_CHANGED')
  source=_official_window(db,job['isin'],str(a),str(b),now)
@@ -148,7 +170,8 @@ def retime_current(db,receipt,now=None):
   if policy.get('approved') is not True or digest(policy)!=receipt['policy_digest']:return False
   row=db.execute('SELECT payload FROM instruments WHERE isin=?',(receipt['isin'],)).fetchone()
   if not row or not stored_identity(db,json.loads(row[0]),receipt['identity'],'15m'):return False
-  source=_official_window(db,receipt['isin'],receipt['first'],receipt['end'],pd.Timestamp(now or pd.Timestamp.now(tz='UTC')))
+  source=_official_window(db,receipt['isin'],receipt['first'],receipt['end'],pd.Timestamp(now or pd.Timestamp.now(tz='UTC')),
+   allow_zero_rows=receipt.get('mode')=='VERIFIED_NATIVE_EMPTY' and receipt.get('zero_observations_corroborated') is True)
   if digest(source)!=receipt['source_digest']:return False
   return all(digest(_native(db,receipt['isin'],receipt['identity'],base,receipt['first'],receipt['end']))==digest(rows)
              for base,rows in source['rows'].items())
