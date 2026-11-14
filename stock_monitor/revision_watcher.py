@@ -6,6 +6,160 @@ from timeframes import endpoints
 
 IDENTITY=('source','venue','currency','symbol','timezone')
 
+# Standing owner permission; this is a bounded correction on CP's existing
+# writer, not a TV importer or a replacement history provider.
+RETIME_POLICY='cp_official_timebase_policy'
+RETIME_VERSION='official_gettex_conserved_window_v1'
+RETIME_PREFIX='cp_official_timebase_revision:'
+
+
+def _aggregate(rows):
+ if not rows:return None
+ return [rows[0][1],max(r[2] for r in rows),min(r[3] for r in rows),rows[-1][4],sum(r[5] for r in rows)]
+
+
+def _native(db,isin,meta,base,first,end):
+ return db.execute('SELECT ts,open,high,low,close,volume FROM series WHERE isin=? AND source=? AND venue=? AND currency=? AND symbol=? AND base_tf=? AND ts>=? AND ts<? ORDER BY ts',
+  (isin,*[meta[k] for k in IDENTITY[:4]],base,first,end)).fetchall()
+
+
+def _official_window(db,isin,first,end,now):
+ """Require complete native publication evidence and exact trade-built OHLCV."""
+ import data_quality as dq
+ from cp_controls import read
+ proof=read(db,'interval_evidence:'+isin,{})
+ meta=dict(source='gettex',venue='GETTEX',currency='EUR',symbol=isin,timezone='Europe/Berlin')
+ if proof.get('isin')!=isin or proof.get('identity')!=meta:raise ValueError('RETIME_OFFICIAL_IDENTITY')
+ a,b=pd.Timestamp(first),pd.Timestamp(end)
+ if b.tz_localize(meta['timezone']).tz_convert('UTC')+pd.Timedelta(minutes=15)>now:raise ValueError('RETIME_NOT_CLOSED')
+ fields=('no_trades','trade_intervals','zero_quantity_intervals','incomplete_publication_intervals')
+ scoped={k:v for k,v in proof.items() if k not in (*fields,'reference','checked_at','limits')}
+ for field in fields:scoped[field]=[p for p in proof.get(field,[]) if pd.Timestamp(p[0])<b and pd.Timestamp(p[1])>a]
+ if scoped['zero_quantity_intervals'] or scoped['incomplete_publication_intervals']:raise ValueError('RETIME_INCOMPLETE_PUBLICATION')
+ # Retain hashes of exactly the files covering this window, not later files.
+ manifest=proof.get('reference',{}).get('GETTEX:'+a.strftime('%Y%m%d'),{})
+ refs={}
+ for left in pd.date_range(a.floor('15min'),b,freq='15min',inclusive='left'):
+  right=(left+pd.Timedelta(minutes=15)).tz_localize(meta['timezone']).tz_convert('UTC')
+  for board in ('munc','mund'):
+   name='posttrade.'+right.strftime('%Y%m%d.%H.%M')+'.'+board+'.csv.gz'
+   if not isinstance(manifest.get(name),str) or len(manifest[name])!=64:raise ValueError('RETIME_PUBLICATION_PAIR_MISSING')
+   refs[name]=manifest[name]
+ scoped['reference']={'GETTEX:'+a.strftime('%Y%m%d'):refs}
+ authority={**meta,'absence_evidence':{**scoped,'checked_at':proof.get('checked_at')}}
+ for left in pd.date_range(a,b,freq='5min',inclusive='left'):
+  right=left+pd.Timedelta(minutes=5)
+  if not (dq.no_trades_proof(authority,left,right,now) or dq.known_trade(authority,left,right,now)):
+   raise ValueError('RETIME_PUBLICATION_COVERAGE_MISSING')
+ trades=db.execute('SELECT ts,price,volume FROM trades WHERE isin=? AND ts>=? AND ts<? ORDER BY ts',(isin,first,end)).fetchall()
+ if not trades:raise ValueError('RETIME_NO_CONFIRMED_TRADES')
+ raw=pd.DataFrame(trades,columns=['ts','price','volume']);raw.index=pd.to_datetime(raw.pop('ts'))
+ if raw.index.has_duplicates:raise ValueError('RETIME_AMBIGUOUS_TRADE_ORDER')
+ if not (raw['price'].gt(0).all() and raw['volume'].ge(0).all()):raise ValueError('RETIME_INVALID_TRADES')
+ result={}
+ for base in ('5m','15m'):
+  built=[]
+  for at,part in raw.groupby(pd.Grouper(freq=base.replace('m','min'))):
+   if part.empty:continue
+   built.append((str(at),float(part.price.iloc[0]),float(part.price.max()),float(part.price.min()),float(part.price.iloc[-1]),float(part.volume.sum())))
+  saved=db.execute("SELECT ts,open,high,low,close,volume FROM candles WHERE isin=? AND source='gettex' AND base_tf=? AND ts>=? AND ts<? ORDER BY ts",(isin,base,first,end)).fetchall()
+  if saved!=built:raise ValueError('RETIME_OFFICIAL_CANDLES_TRADE_MISMATCH:'+base)
+  frame=pd.DataFrame([r[1:] for r in saved],index=pd.to_datetime([r[0] for r in saved]),columns=FIELDS)
+  frame.attrs={**authority,'classify_absence':True,'timeframe':base};validate(frame)
+  if dq.audit(frame,base,meta,now,check_stale=False)['state']!='READY':raise ValueError('RETIME_OFFICIAL_DQ')
+  for left in pd.date_range(a,b,freq=base.replace('m','min'),inclusive='left'):
+   if str(left) not in {r[0] for r in saved} and not dq.no_trades_proof(authority,left,left+dq.STEPS[base],now):
+    raise ValueError('RETIME_EMPTY_INTERVAL_UNCONFIRMED')
+  result[base]=saved
+ return dict(rows=result,trades=trades,proof=scoped)
+
+
+def retime_plan(db,job,inputs,now):
+ """Recognise only conserved, same-session redistribution, at most 45 minutes."""
+ from cp_controls import read,digest
+ from cp_reconciliation import _observation_current
+ policy=read(db,RETIME_POLICY,{})
+ if policy.get('version')!=RETIME_VERSION or policy.get('approved') is not True:return None
+ meta=job['identity'];a=pd.Timestamp(job['first']);after=inputs['neighbors']['after']
+ if (job['tf']!='15m' or meta['source']!='gettex_chart' or meta['venue']!='GETTEX'
+     or meta['currency']!='EUR' or meta['timezone']!='Europe/Berlin' or not after or inputs['rows']):return None
+ b=pd.Timestamp(after[0])+pd.Timedelta(minutes=15)
+ if not pd.Timedelta(minutes=15)<b-a<=pd.Timedelta(minutes=45) or a.normalize()!=b.normalize():return None
+ observation=job.get('observation')
+ if observation and (observation.get('result') not in ('PRESENT','DIFFERENT') or not _observation_current(job,inputs)):
+  raise ValueError('RETIME_VISUAL_REFERENCE_CONFLICT_OR_CHANGED')
+ source=_official_window(db,job['isin'],str(a),str(b),now)
+ before={base:_native(db,job['isin'],meta,base,str(a),str(b)) for base in ('5m','15m')}
+ if any(not before[base] or _aggregate(before[base])!=_aggregate(source['rows'][base]) for base in before):
+  raise ValueError('RETIME_NOT_CONSERVED')
+ if not any(pd.Timestamp(r[0])<pd.Timestamp(after[0]) for r in source['rows']['15m']):return None
+ if any(r[0] not in {v[0] for v in source['rows'][base]} for base in before for r in before[base]):
+  raise ValueError('RETIME_WOULD_DELETE_NATIVE_CANDLE')
+ return dict(version=RETIME_VERSION,isin=job['isin'],identity=meta,first=str(a),end=str(b),
+  job_id=job['id'],policy_digest=digest(policy),input_fingerprint=inputs['fingerprint'],
+  before=before,source=source,source_digest=digest(source),created_at=now.isoformat(),
+  origin='official GETTEX trade publications; TV observation is diagnostic only')
+
+
+def retime_current(db,receipt,now=None):
+ from cp_controls import read,digest
+ from eur_listings import stored_identity
+ try:
+  policy=read(db,RETIME_POLICY,{})
+  if policy.get('approved') is not True or digest(policy)!=receipt['policy_digest']:return False
+  row=db.execute('SELECT payload FROM instruments WHERE isin=?',(receipt['isin'],)).fetchone()
+  if not row or not stored_identity(db,json.loads(row[0]),receipt['identity'],'15m'):return False
+  source=_official_window(db,receipt['isin'],receipt['first'],receipt['end'],pd.Timestamp(now or pd.Timestamp.now(tz='UTC')))
+  if digest(source)!=receipt['source_digest']:return False
+  return all(digest(_native(db,receipt['isin'],receipt['identity'],base,receipt['first'],receipt['end']))==digest(rows)
+             for base,rows in source['rows'].items())
+ except (ValueError,KeyError,TypeError):return False
+
+
+def publish_retime(db,job,inputs,plan,now):
+ """Caller owns BEGIN IMMEDIATE; recompute all evidence immediately before write."""
+ from cp_controls import read,write,digest
+ from cp_reconciliation import _input,PROGRESS
+ from history_service import parent_provenance_key
+ current=retime_plan(db,job,_input(db,job),now)
+ if digest(current)!=digest(plan):raise ValueError('RETIME_INPUT_CHANGED')
+ key=RETIME_PREFIX+job['isin']+':'+job['id']
+ if read(db,key,{}):raise ValueError('RETIME_RECEIPT_ALREADY_EXISTS')
+ added=changed=0;meta=job['identity'];isin=job['isin']
+ for base,rows in plan['source']['rows'].items():
+  lineage_key=parent_provenance_key(isin,meta,base);lineage=read(db,lineage_key,{})
+  old_rows={r[0]:list(r[1:]) for r in plan['before'][base]}
+  for at,*values in rows:
+   old=old_rows.get(at)
+   # The entire corrected window retains lineage, even equal native rows.
+   lineage[at]=dict(official_timebase=key,inputs=[],digests=[],ohlcv=values)
+   if old==values:continue
+   scope='market:'+isin+':'+base
+   prior=(db.execute('SELECT revision FROM input_revisions WHERE scope=?',(scope,)).fetchone() or [0])[0]
+   db.execute('INSERT OR REPLACE INTO series VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',(isin,*[meta[k] for k in IDENTITY[:4]],base,at,*values))
+   after=(db.execute('SELECT revision FROM input_revisions WHERE scope=?',(scope,)).fetchone() or [0])[0]
+   db.execute('INSERT INTO candle_revision_history(detected_at,isin,identity,base_tf,ts,old_ohlcv,new_ohlcv,revision_before,revision_after) VALUES (?,?,?,?,?,?,?,?,?)',
+    (now.isoformat(),isin,json.dumps(meta,sort_keys=True),base,at,json.dumps(dict(zip(FIELDS,old))) if old else '{}',json.dumps(dict(zip(FIELDS,values))),prior,after))
+   added+=int(old is None);changed+=int(old is not None)
+  write(db,lineage_key,lineage)
+ write(db,key,{**plan,'state':'APPLIED','added':added,'changed':changed})
+ progress=read(db,PROGRESS+isin,{});progress['analysis_requested_at']=now.isoformat();write(db,PROGRESS+isin,progress)
+ return dict(state='APPLIED',receipt_key=key,added=added,changed=changed,first=plan['first'],end=plan['end'])
+
+
+def retimed_rows(db,isin,meta,base):
+ """Keep a later provider response from undoing an independently proven repair."""
+ from cp_controls import read
+ from history_service import parent_provenance_key
+ records=read(db,parent_provenance_key(isin,meta,base),{});result={}
+ for key in {p['official_timebase'] for p in records.values() if p.get('official_timebase')}:
+  receipt=read(db,key,{})
+  if receipt and retime_current(db,receipt):
+   values={r[0]:list(r[1:]) for r in receipt['source']['rows'][base]}
+   for at in pd.date_range(receipt['first'],receipt['end'],freq=base.replace('m','min'),inclusive='left'):
+    result[str(at)]=values.get(str(at))
+ return result
+
 def install(db):
  db.execute("CREATE TABLE IF NOT EXISTS candle_revision_history(id INTEGER PRIMARY KEY, detected_at TEXT NOT NULL, isin TEXT NOT NULL, identity TEXT NOT NULL, base_tf TEXT NOT NULL, ts TEXT NOT NULL, old_ohlcv TEXT NOT NULL, new_ohlcv TEXT NOT NULL, revision_before INTEGER NOT NULL, revision_after INTEGER NOT NULL)")
 
