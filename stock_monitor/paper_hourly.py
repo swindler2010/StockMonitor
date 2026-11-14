@@ -274,7 +274,7 @@ def calculate_snapshot(store, values):
 def validate_analysis(db, info, result, now, cfg):
     """Shared closed CORE proof; this function cannot authorize an order."""
     import pandas as pd
-    from performance_cache import validate_closed_inputs
+    from performance_cache import validate_closed_inputs,primary_closed_series
     from calculation_window import benchmark_ready
     from cp_controls import manual_gate
     from trading_engine import VERSION as CORE_VERSION, profile
@@ -301,7 +301,7 @@ def validate_analysis(db, info, result, now, cfg):
         if h.get('timeframe_contract') != plan(signal_tf):
             raise ValueError('PAPER_AUTO_DEPENDENCY_BLOCKED')
     required = set(profile(signal_tf))
-    own = [s for s in h.get('proof', {}).get('series', []) if s['spec'].get('isin') == info['isin']]
+    own = primary_closed_series(h.get('proof', {}),info['isin'],result['identity'])
     if (set(h.get('required_tf', [])) != required
             or not required <= {s['spec'].get('timeframe') for s in own if s.get('count', 0) >= 35}
             or any(s['spec'].get('identity') != result['identity'] for s in own)):
