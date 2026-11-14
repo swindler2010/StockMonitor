@@ -988,8 +988,13 @@ def _fetch_turn(info, store, now=None, client=None, preferred_tf=None):
                 raise ValueError('INPUT_CHANGED: chart import not committed')
             where = 'isin=? AND source=? AND venue=? AND currency=? AND symbol=? AND base_tf=?'
             args = [isin,meta['source'],meta['venue'],meta['currency'],meta['symbol'],base]
+            from revision_watcher import retimed_rows
+            retained=retimed_rows(db,isin,meta,base) if base in ('5m','15m') else {}
             for stamp, row in frame.iterrows():
                 values = [float(row[k]) for k in FIELDS]; ts = str(stamp)
+                if ts in retained and retained[ts]!=values:
+                    result['official_retiming_preserved']=result.get('official_retiming_preserved',0)+1
+                    continue # Original provider response is already kept in its receipt.
                 old = db.execute('SELECT open,high,low,close,volume FROM series WHERE '+where+' AND ts=?',args+[ts]).fetchone()
                 if old is None:
                     db.execute('INSERT INTO series VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',args+[ts]+values);result['added']+=1
