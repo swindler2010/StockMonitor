@@ -1449,6 +1449,59 @@
       ],
       "automatic_action": "Existing cp_reconciliation.turn / revision_watcher.retime_plan",
       "manual_action": "Evidence missing: retain precise blocker; assisted TV observation remains separate owner risk"
+    },
+    {
+      "id": "official_session_tail_corroboration",
+      "title": "Подтверждённый пустой конец сессии рядом с неизменной записью V0",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "STALE",
+        "SOURCE_TIMEBASE_UNCONFIRMED"
+      ],
+      "status": "IMPLEMENTED; ordinary Windows CP RESOLVED_NATIVE 14Nov2026 13:48:19 CET; admission still gated",
+      "steps": [
+        "Use existing saved-source reconciliation with verified calendar close and exact previous bar.",
+        "Require complete MUNC/MUND, exact official trade-built and native 5m/15m; permit unchanged zero-quantity observations only for corroboration.",
+        "Do not create an empty candle, rewrite OHLCV, change price timestamp or treat a price-only record as NO_TRADES.",
+        "Preserve final receipt/identity/market/policy validation and separate session/freshness execution gates."
+      ],
+      "evidence": [
+        "test_cp_session_empty.py"
+      ],
+      "limits": [
+        "Missing pair, actual incomplete publication, changed inputs/policy, unverified calendar or midday one-sided hole remain blocked."
+      ],
+      "automatic_action": "Existing reconciliation discovery/retime_plan and closed_session_archive",
+      "manual_action": "Unavailable source evidence remains explicit."
+    },
+    {
+      "id": "scoped_tv_parent_aggregation",
+      "title": "Проверенный родитель не исчезает из-за другого непроверенного участка",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "UNCONFIRMED",
+        "STALE"
+      ],
+      "status": "IMPLEMENTED; targeted red/green tests PASS; ordinary TEST re-evaluation 14Nov2026 14:09:18 CET no false stale tail; overall analysis still blocked by historical gaps",
+      "steps": [
+        "For a closed-parent analytical input reuse exact currently bound TV absence receipts per child interval.",
+        "Build parent only when all its missing children are officially proved or explicitly accepted.",
+        "Keep other unknown parents excluded, factual DQ unchanged and whole-archive risk permission absent until all required ranges are covered."
+      ],
+      "evidence": [
+        "test_tv_accepted_display.py::AcceptedDisplay.test_closed_parent_uses_exact_accepted_slots_despite_unrelated_archive_gap"
+      ],
+      "limits": [
+        "This is aggregation only, never a new historical grant, synthetic candle or execution permission."
+      ],
+      "automatic_action": "Existing timeframes.covered_slots",
+      "manual_action": "Remaining unknown ranges still require source evidence/review."
     }
   ],
   "sources": [
