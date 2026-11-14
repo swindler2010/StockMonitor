@@ -622,20 +622,49 @@ def daily_candidate(store,info,tf,current,current_base,official,official_base,no
     return raw,base
 
 
-def reserve_request(db,now):
+def reserve_request(db,now,isin=None,base=None,recovery=False):
     """Shared by normal feed and bounded DQ recovery; caller holds write lock."""
     reservation=db.execute("SELECT value FROM settings WHERE key='gettex_chart_next_request'").fetchone()
     if reservation and now<pd.Timestamp(json.loads(reservation[0])):return False
+    # Queue rank alone cannot reserve a shared HTTP budget. Two operational
+    # requests, then one ordinary/archive request, reuse the same limiter.
+    # A reservation is counted even on HTTP failure; retries stay bounded.
+    due=scheduler.operational_chart_due(db,now)
+    key='gettex_chart_request_rotation'
+    row=db.execute('SELECT value FROM settings WHERE key=?',(key,)).fetchone()
+    prior=json.loads(row[0]) if row else {}
+    streak=prior.get('priority_streak',0)
+    priority=not recovery and any((isin,base)==(i,b) for _,i,b in due)
+    if due and streak<2 and not priority:return False
+    preparing=scheduler.preparation_chart_due(db,now) if not due or streak>=2 else []
+    preparation=not recovery and any((isin,base)==(i,b) for _,i,b in preparing)
+    # Alternate the ordinary HTTP slot between the one pending candidate and
+    # other archive work. Official-file jobs cannot consume or reset it.
+    if preparing and prior.get('preparation_turn',True) and not preparation:return False
     db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',('gettex_chart_next_request',json.dumps((now+pd.Timedelta(minutes=1)).isoformat())))
+    db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',(key,json.dumps(dict(
+        priority_streak=min(2,streak+1) if priority else 0,at=now.isoformat(),isin=isin,base=base,priority=priority,
+        preparation_turn=False if preparation else True if not priority else prior.get('preparation_turn',True)))))
     return True
+
+
+def recovery_key(isin,meta,base):
+    # Same scheduler/rate limiter, separate receipt for an old requested range.
+    # An empty historical response must not delay acquisition of a new bar.
+    return scheduler.unit_key(isin,meta,base).replace('cp_schedule:','cp_recovery_schedule:',1)
 
 
 def recovery_wait(store,info,meta,base,now=None):
     now=scheduler.clock(now);future=[]
-    for key in ('cp_source_retry:'+SOURCE,state_key(info['isin'],base),scheduler.unit_key(info['isin'],meta,base),'gettex_chart_next_request'):
+    for key in ('cp_source_retry:'+SOURCE,state_key(info['isin'],base),recovery_key(info['isin'],meta,base),'gettex_chart_next_request'):
         value=store.setting(key)
         retry=value.get('retry_after') if isinstance(value,dict) else value
         if retry and pd.Timestamp(retry)>now:future.append(pd.Timestamp(retry))
+    if not future:
+        with store.connect() as db:
+            row=db.execute("SELECT value FROM settings WHERE key='gettex_chart_request_rotation'").fetchone()
+            streak=json.loads(row[0]).get('priority_streak',0) if row else 0
+            if streak<2 and scheduler.operational_chart_due(db,now):future.append(now+pd.Timedelta(seconds=30))
     return max(future).isoformat() if future else None
 
 
@@ -650,7 +679,7 @@ def recovery_download(store,info,meta,base,start,end,now=None,client=None):
     if (base not in BASES or start.tzinfo is None or end.tzinfo is None or
         not pd.Timedelta(0)<end-start<=pd.Timedelta(days=1) or end>now):
         raise ValueError('GETTEX_RECOVERY_RANGE_BLOCKED')
-    unit=scheduler.unit_key(info['isin'],meta,base)
+    unit=recovery_key(info['isin'],meta,base)
     with store.connect() as db:
         db.execute('BEGIN IMMEDIATE')
         row=db.execute('SELECT payload FROM instruments WHERE isin=?',(info['isin'],)).fetchone()
@@ -661,7 +690,7 @@ def recovery_download(store,info,meta,base,start,end,now=None,client=None):
             value=json.loads(row[0]) if row else None
             retry=value.get('retry_after') if isinstance(value,dict) else value
             if retry and now<pd.Timestamp(retry):raise ValueError('GETTEX_RECOVERY_COOLDOWN')
-        if not reserve_request(db,now):raise ValueError('GETTEX_RECOVERY_RATE_WAIT')
+        if not reserve_request(db,now,info['isin'],base,recovery=True):raise ValueError('GETTEX_RECOVERY_RATE_WAIT')
     plan={'key':unit,'planned_at':now.isoformat(),'reason':'BOUNDED_DQ_RECOVERY'}
     try:
         payload,returned=(client or Client()).fetch(info['isin'],base,start.tz_convert('UTC'),end.tz_convert('UTC'))
@@ -685,10 +714,79 @@ def recovery_download(store,info,meta,base,start,end,now=None,client=None):
         raise
 
 
+def confirm_native_parents(store, info, base, now=None):
+    """Retire derived lineage only for exact, later verified native rows.
+
+    The receipt and original derived proof remain in the ordinary journal.
+    This is an origin correction, not an OHLCV write or a DQ permission.
+    """
+    from history_service import parent_provenance_key
+    from eur_listings import stored_identity
+    now=scheduler.clock(now);isin=info['isin'];key=state_key(isin,base)
+    saved=store.setting(key,{})
+    if base not in BASES or not confirmed_state(info,saved):return {'confirmed':0}
+    meta=saved['identity'];lineage=parent_provenance_key(isin,meta,base)
+    with store.connect() as db:
+        original=db.execute('SELECT value FROM settings WHERE key=?',(lineage,)).fetchone()
+        if not original or not json.loads(original[0]):return {'confirmed':0}
+        state=db.execute('SELECT value FROM settings WHERE key=?',(key,)).fetchone()
+        instrument=db.execute('SELECT payload FROM instruments WHERE isin=?',(isin,)).fetchone()
+    if not state or json.loads(state[0])!=saved or not instrument:return {'confirmed':0}
+    proofs=json.loads(original[0])
+    try:
+        path=Path(saved['receipt']).resolve()
+        root=(Path(store.directory)/'chart_cache'/isin).resolve()
+        if path.parent!=root or path.stat().st_size>8*1024*1024:raise ValueError('Receipt path/size')
+        raw=path.read_bytes()
+        if hashlib.sha256(raw).hexdigest()!=saved['sha256']:raise ValueError('Receipt hash')
+        received=pd.Timestamp(saved['received_at'])
+        if received>now:raise ValueError('Future receipt')
+        frame=decode(json.loads(raw),meta,isin,base,pd.Timestamp(saved['requested_from']),
+                     pd.Timestamp(saved['requested_to']),received)
+        candidates={}
+        for stamp,proof in proofs.items():
+            t=pd.Timestamp(stamp)
+            if t not in frame.index or pd.Timestamp(proof['detected_at'])>received:continue
+            row=frame.loc[[t],list(FIELDS)].copy();row.attrs=dict(meta,timeframe=base)
+            if quality.audit(row,base,meta,received,check_stale=False)['state']!='READY':continue
+            candidates[stamp]=[float(row.iloc[0][k]) for k in FIELDS]
+            if len(candidates)>=32:break
+    except (OSError,KeyError,ValueError,TypeError) as error:
+        return {'confirmed':0,'state':'UNCONFIRMED','reason':str(error)}
+    confirmed=[]
+    with store.connect() as db:
+        db.execute('BEGIN IMMEDIATE')
+        if (db.execute('SELECT value FROM settings WHERE key=?',(lineage,)).fetchone()!=original or
+            db.execute('SELECT value FROM settings WHERE key=?',(key,)).fetchone()!=state or
+            db.execute('SELECT payload FROM instruments WHERE isin=?',(isin,)).fetchone()!=instrument):
+            raise ValueError('INPUT_CHANGED: native parent confirmation')
+        actual=json.loads(instrument[0])
+        if not stored_identity(db,actual,meta,base):raise ValueError('Native parent identity changed')
+        for stamp,values in candidates.items():
+            row=db.execute('SELECT open,high,low,close,volume FROM series WHERE isin=? AND source=? AND venue=? AND currency=? AND symbol=? AND base_tf=? AND ts=?',
+                (isin,meta['source'],meta['venue'],meta['currency'],meta['symbol'],base,stamp)).fetchone()
+            if row is None or list(row)!=values:continue
+            receipt=dict(isin=isin,identity=meta,base=base,ts=stamp,ohlcv=values,
+                receipt=saved['receipt'],sha256=saved['sha256'],received_at=saved['received_at'],
+                confirmed_at=now.isoformat(),previous_derived_proof=proofs.pop(stamp))
+            db.execute('INSERT INTO journal(kind,payload) VALUES (?,?)',('cp_native_parent_confirmation',json.dumps(receipt)))
+            confirmed.append(stamp)
+        if confirmed:db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',(lineage,json.dumps(proofs)))
+    if confirmed:
+        # Existing DQ writer rechecks the full archive; restrict recovery to the
+        # now-confirmed row, never consume HTTP or repair other historical gaps.
+        quality.repair(info,store,meta['symbol'],base,meta,None,now,max_ranges=1,
+                       target_range=[confirmed[0],confirmed[0]],local_only=True)
+        from cp_assessment import request
+        request(store,isin)
+    return {'confirmed':len(confirmed),'timestamps':confirmed,'ohlcv_changed':False}
+
+
 def turn(info, store, now=None, client=None, preferred_tf=None):
     result = _fetch_turn(info, store, now, client, preferred_tf)
     if info.get('kind') != 'benchmark':
         try:
+            result['native_parent_confirmation']={b:confirm_native_parents(store,info,b,now) for b in BASES}
             result['daily_aggregation'] = prepare_daily(store, info, now)
             result['daily_tail_recovery'] = recover_closed_daily_tail(info,store,result['daily_aggregation'],now)
         except (ValueError,KeyError,TypeError) as error:
@@ -796,7 +894,7 @@ def _fetch_turn(info, store, now=None, client=None, preferred_tf=None):
                         'archive_prefix':{'state':'ALREADY_PRESENT','checked_at':now.isoformat(),'floor':daily_floor}}
                     db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',(state_key(isin,base),json.dumps(saved,ensure_ascii=False)))
                     return {'state':'UNCHANGED','base':base,'added':0,'changed':0,'archive_prefix':saved['archive_prefix']}
-        if not reserve_request(db,now):
+        if not reserve_request(db,now,isin,base):
             return {'state':'RATE_WAIT'}
         # At most one five-request public chart job/minute across CP workers.
         if preferred_tf:
@@ -890,8 +988,13 @@ def _fetch_turn(info, store, now=None, client=None, preferred_tf=None):
                 raise ValueError('INPUT_CHANGED: chart import not committed')
             where = 'isin=? AND source=? AND venue=? AND currency=? AND symbol=? AND base_tf=?'
             args = [isin,meta['source'],meta['venue'],meta['currency'],meta['symbol'],base]
+            from revision_watcher import retimed_rows
+            retained=retimed_rows(db,isin,meta,base) if base in ('5m','15m') else {}
             for stamp, row in frame.iterrows():
                 values = [float(row[k]) for k in FIELDS]; ts = str(stamp)
+                if ts in retained and retained[ts]!=values:
+                    result['official_retiming_preserved']=result.get('official_retiming_preserved',0)+1
+                    continue # Original provider response is already kept in its receipt.
                 old = db.execute('SELECT open,high,low,close,volume FROM series WHERE '+where+' AND ts=?',args+[ts]).fetchone()
                 if old is None:
                     db.execute('INSERT INTO series VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',args+[ts]+values);result['added']+=1

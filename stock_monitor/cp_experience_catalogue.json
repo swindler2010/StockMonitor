@@ -4,6 +4,500 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "official_exact_five_minute_relocation",
+      "title": "Точный перенос ошибочно датированной 5m свечи GETTEX",
+      "sources": [
+        "revision_watcher.retime_plan",
+        "revision_watcher.publish_retime",
+        "cp_reconciliation.turn"
+      ],
+      "states": [
+        "RETIME_WOULD_DELETE_NATIVE_CANDLE",
+        "GAP"
+      ],
+      "steps": [
+        "Сначала проверить полные MUNC/MUND, сделки и 5m/15m того же ISIN, GETTEX/EUR, закрытое окно не более 45 минут; итоговые OHLCV обоих рядов должны совпасть.",
+        "Если исходная 5m отметка отсутствует в официальном ряду, разрешён только единственный точный перенос всех OHLCV в ранее отсутствовавшую отметку не дальше 15 минут. Неоднозначный перенос, изменение значений и удаление 15m запрещены.",
+        "В транзакции снова проверить весь план. Сохранить исходные OHLCV в candle_revision_history и before в квитанции, отдельно указать old_at/new_at и число relocated; не считать перенос новой загруженной свечой.",
+        "Повторный ответ провайдера не отменяет действующую официальную коррекцию. Изменение источника, identity или политики отзывает её доказательство. Далее обычная очередь пересчитывает DQ и анализ."
+      ],
+      "evidence": [
+        "test_cp_retime_relocation.py",
+        "Broadcom 02.11.2026 10:30–11:00 CET: TV совпадает с официальными GETTEX; штатный CP 14.11 13:33:22 CET added=1 changed=1 relocated=1"
+      ],
+      "limits": "TV используется для диагностики. Нет импорта TV OHLCV, синтетических свечей, безусловного допуска или изменения торговых правил.",
+      "status": "Один новый сценарий PASS 1.029s; два затронутых прежних сценария PASS 3.431s. Применено обычной очередью TEST после штатного перезапуска."
+    },
+    {
+      "id": "closed_session_paper_admission_and_recovered_proof_roles",
+      "title": "Подключение PAPER вне сессии и роли восстановленных входов",
+      "sources": [
+        "paper_preparation.closed_session_archive",
+        "performance_cache.primary_closed_series",
+        "cp_controls.manual_gate"
+      ],
+      "states": [
+        "PAPER_STALE_QUOTE",
+        "PAPER_AUTO_DEPENDENCY_BLOCKED"
+      ],
+      "steps": [
+        "Подключение инструмента отдельно от исполнения сделки: проверить закрытый CORE, права, ревизии, identity и последнюю закрытую сессию на реальном времени.",
+        "Если рынок закрыт и последняя 15m свеча и дневной вход соответствуют окончанию последней сессии, подключить штатной последовательной очередью; execution_permission остаётся false.",
+        "Источники восстановленного участка сохраняются в полном proof и перепроверяются. Только точные ссылки recovered_inputs отделяются от основных TF; неподтверждённый другой источник не допускается.",
+        "BUY/SELL продолжают проверять открытую сессию, свежесть, DQ и риск. Отсутствующий хвост, changed inputs, revoked permission и нестабильный CORE сохраняют блокировку."
+      ],
+      "evidence": [
+        "test_paper_archive_admission: 2 targeted scenarios; existing open-session stale/invalid quote regression rerun because admission code changed; 3 PASS0.379s."
+      ],
+      "limits": [
+        "Не доказательство полной истории или исполнения в открытой сессии.",
+        "Никакого ручного включения акции, подмены времени котировки, синтетических свечей или тестовых сделок в рабочем счёте."
+      ]
+    },
+    {
+      "id": "official_gettex_conserved_timebase_repair",
+      "title": "Автоматическое исправление распределения GETTEX по времени",
+      "status": "Targeted regression PASS1.645s; ordinary CP Meta14Nov2026 09:18:32CET APPLIED,09:19:57CET RESOLVED_NATIVE",
+      "sources": [
+        "revision_watcher.retime_plan",
+        "cp_reconciliation.turn",
+        "history_service.attach_parent_provenance"
+      ],
+      "states": [
+        "GAP",
+        "TV_DIFFERENCE"
+      ],
+      "steps": [
+        "Standing owner authorization 14Nov2026 applies to existing/future stocks without a new question.",
+        "Only closed same-day <=45min windows: exact complete official MUNC/MUND evidence, stored trades and 5m/15m OHLCV agree; whole-window OHLCV/volume conserved.",
+        "Use existing CP writer, final transaction recheck, candle_revision_history and parent provenance; preserve original provider data and explicit official source.",
+        "No synthetic absent bar. Scope empty proof only to the validated corrected window. Changed official evidence/policy/identity invalidates the lineage; do not turn unknown data into READY.",
+        "Existing provider reload retains valid official correction. Ordinary DQ/CORE/quote/risk decide readiness. TV remains assisted diagnostic; no scraping or import rights inferred."
+      ],
+      "evidence": [
+        "test_cp_official_timebase: ordinary CP turn, input-change rejection, incomplete publication rejection, conservation, source change/revocation, restart, provider preservation map",
+        "Working TEST: 4 added + 4 corrected 5m/15m candles, full originals retained; empty13:45 independently confirmed; ordinary preparation CORE READY/WAIT, quote stale during closed session."
+      ],
+      "limits": [
+        "Not a blanket OHLCV override; nonconserved or unproven cases stay WAITING_EVIDENCE.",
+        "No execution or profit guarantee; no new trades for acceptance."
+      ]
+    },
+    {
+      "id": "tv_v3_review_survives_added_history_venue_lock",
+      "title": "Старая сверка TV не теряется при добавлении настройки GETTEX",
+      "sources": [
+        "cp_reconciliation._observation_current",
+        "cp_controls.tv_risk_turn"
+      ],
+      "states": [
+        "REVIEW_INPUT_CHANGED_OR_ROWS_PRESENT"
+      ],
+      "status": "Один адресный сценарий PASS; Windows restart14Nov2026 и автономное применение Meta08:02:51CET",
+      "steps": [
+        "Сначала _input подтверждает действующие identity, GETTEX/EUR и разрешённый листинг. Для наблюдения версии3 проверить полный исходный хеш.",
+        "Если после сверки добавлено только history_venue_lock, пересчитать полный хеш версии3 без этого единственного поля. При точном совпадении использовать существующие turn и tv_risk_turn.",
+        "Изменённые OHLCV, соседние свечи, доказательства, листинг, остальные поля старой карточки и несовпавший хеш остаются неподтверждёнными. Перед публикацией повторно проверять входы.",
+        "Сохранять исходные дату и доказательства TV. Прежняя политика владельца покрывает только точно совпадающие пропуски; DQ, свежесть и CORE не заменяются READY."
+      ],
+      "evidence": [
+        "test_cp_tv_legacy_reference.py: до правки FAIL, после PASS0.627s; v3→v4, штатная политика, сохранение SQLite и гонка изменения цены перед публикацией.",
+        "14Nov2026:32 из52 отклонённых сохранённых наблюдений совпали с полным старым хешем;20 не совпали. Штатный CP Meta08:02:51CET добавил2 допуска gettex, прежние121 nativegettex_chart сохранены."
+      ],
+      "limits": "Только существующая подтверждённая ABSENT-сверка и действующая политика владельца. Это не NO_TRADES, не восстановленная свеча и не полный торговый допуск. DIFFERENT и частичное покрытие диапазона не допускаются этим правилом."
+    },
+    {
+      "id": "dq_recovery_progress_is_not_analytical_input",
+      "title": "Служебный прогресс восстановления не отзывает неизменную оценку",
+      "sources": [
+        "data_quality.repair",
+        "performance_cache.install_input_revisions",
+        "performance_cache._setting_value"
+      ],
+      "states": [
+        "CURRENT",
+        "STALE"
+      ],
+      "status": "1 адресный сценарий PASS; штатный restart13Nov12:58:43CET; обычная очередь Apple13:07:18→CURRENT13:08:30CET, deadline13:15 сохранён",
+      "steps": [
+        "Сопоставить ревизии и точный diff отчёта DQ. Не считать next_retry, recovery_cursor и перечни выполненных попыток изменением рыночных фактов.",
+        "Одинаковый ограниченный список служебных полей исключён из сравнения ревизий DQ и хеша закрытых входов. Сами поля сохраняются; очередь читает действующий cooldown.",
+        "State, identity, ranges, stale_count, ошибки/качество источника и неизвестные поля остаются строгими. Изменения свечей и разрешений сохраняют отдельные ревизии. Срок оценки не продлевается.",
+        "Для closed-input proof отдельно отличать прирост expected_open_intervals/with_candles всего архива от изменения фактов внутри использованного окна. Убирать только эти два согласованных счётчика из семантического хеша; реальные OHLCV отдельно сверять по точному диапазону, остальные факты DQ сохранять строгими. Raw revisions и срок исполнения не перепривязывать."
+      ],
+      "evidence": [
+        "test_cp_recovery_metadata.py",
+        "13Nov2026 Apple: ordinary CURRENT observed12:51:16CET; STALE12:51:37 only DQ15m2313→2314, nine changed progress/check fields; no changed OHLCV/policy inputs. Ordinary queue request12:51:43, subsequent material market inputs preserved.",
+        "После правки запрос обслужен13:07:18, публикацияCURRENT13:08:30,72.157s. Девять аналитических кандидатов пригодны только в прежнем owner PAPER-контексте,1H/4H WAIT. Позднейший общий STALE по grant/DQ/reconciliation revisions не скрыт;1Hclosed proof13:09 остаётсяUNCHANGED, новый запрос13:08:43. Исправление не обещает постоянныйCURRENT или автоматический торговый допуск.",
+        "AG,13Nov: Apple13:53 calculation; at14:01 seven candidates lost validity only because archive census4736/4598→4737/4599; all used closed rows and138 UNCONFIRMED unchanged. test_cp_archive_tail_counts.py: reproducedFAIL before; PASS after, including material OHLCV/DQ/identity/unknown facts/inconsistent census rejection and unchanged execution deadline/revisions. Ordinary Windows cycles Apple checked14:05:33 and14:15:00CET both publishedCURRENT; nine analytical candidates current on observation14:06:48 and14:16:11. Real expired15m/30m at14:15 kept EXPIRED until second cycle; owner grants still temporarily revoke during recheck.",
+        "test_cp_archive_tail_counts.py"
+      ],
+      "limits": "Не восстанавливает свечи и не даёт READY неподтверждённым данным. Не меняет расписание, TTL, торговую стратегию или ручные разрешения."
+    },
+    {
+      "id": "paper_wait_during_cp_writer",
+      "title": "WAIT без заявки не должен конкурировать с записью CandlePilot",
+      "sources": [
+        "paper_hourly.run_turn",
+        "existing paper_protection.decision"
+      ],
+      "states": [
+        "OperationalError: database is locked"
+      ],
+      "status": "1 targeted scenario PASS; normal Windows restart13Nov10:42:40CET; fresh1H/4H WAIT confirmed10:43 and10:44",
+      "steps": [
+        "Для WAIT/HOLD сначала читать действующее условие защитного выхода без блокировки записи. При отсутствии заявки сохранить обычный WAIT.",
+        "Если защитный выход действительно нужен, заново вычислить его внутри прежней BEGIN IMMEDIATE и выполнить все исходные проверки исполнения. BUY/SELL продолжают прежний транзакционный путь.",
+        "Не прерывать writer CP, не менять тайм-аут, ревизии, данные или разрешения ради снятия конкуренции. Настоящая недоступность записи при заявке остаётся блокирующей до следующего штатного хода."
+      ],
+      "evidence": [
+        "13Nov10:35:06 и10:36:06CET NVIDIA1H: CORE READY/WAIT, позиции нет, но включённый bracket безусловно открывал write transaction и получал database is locked;4H следующий ход оставался WAIT.",
+        "test_paper_wait_contention: настоящий WAL writer, WAIT без заявки; существующий защитный выход при занятой записи; устаревшая котировка; исчезнувший trigger между чтением и транзакцией; подтверждённый stop через существующий executor. Только изолированная SQLite."
+      ],
+      "limits": "Не подтверждает свечи, не создаёт BUY и не заменяет DQ/CORE/freshness. Не обещает исполнение при недоступной базе; реальная заявка всегда проверяется транзакционно."
+    },
+    {
+      "id": "expired_assessment_durable_retry",
+      "title": "Оценка истекла во время расчёта: повтор без ожидания нового события загрузчика",
+      "sources": [
+        "cp_assessment.finish",
+        "existing eligibility publication"
+      ],
+      "states": [
+        "EXPIRED"
+      ],
+      "status": "2 new + 2 affected PASS; Windows normal restart applied 13Nov09:10CET",
+      "steps": [
+        "Сохранять EXPIRED как диагностический результат с исходными сроками и независимыми закрытыми доказательствами.",
+        "Не закрывать analysis_requested_at и не удалять запрос; сохранить retry_reason EXPIRED_AT_PUBLICATION, last_attempt_at и retry_at через60секунд.",
+        "Повторить через существующую очередь и прежнюю ротацию; при CURRENT завершить запрос. Не создавать отдельную очередь, не продлевать TTL и не считать EXPIRED торговым разрешением."
+      ],
+      "evidence": [
+        "Apple13Nov08:54:55.699CET→expiry08:55:00;compute65.000сек,finished08:56:00.672,receipt08:56:00.872. Новый запрос появился08:56:55.032 только благодаря отдельному событию feed.",
+        "Positive failure before fix: expired publication deleted its request. New tests cover durable retry, review acknowledgement, restart/current successor and53/200ordinary requests; related deadline/revision guards remain.",
+        "Windows Save/Close/writer exit/restart and local Bridge confirmed;9preservation comparisons matched. New natural EXPIRED not observed at verification, the retry transition was verified in isolated SQLite."
+      ],
+      "limits": "Не ускоряет сам расчёт и не гарантирует слот ровно через60секунд. Недостоверные данные, устаревшая цена и изменения допуска остаются блокирующими."
+    },
+    {
+      "id": "coherent_eligibility_receipt_publication",
+      "title": "Публикация оценки при служебном переподтверждении допуска",
+      "sources": [
+        "SQLite WAL read transaction",
+        "existing exact closed-input proof"
+      ],
+      "states": [
+        "INPUT_CHANGED"
+      ],
+      "status": "12 targeted PASS; Windows ordinary queue publication verified 13Nov08:48CET",
+      "steps": [
+        "Рассчитать все TF на одном read-only состоянии Store/ReadCache; не останавливать загрузчик и не копировать базу.",
+        "Собрать точные закрытые диапазоны обычного и owner-контекстов, проверить существующим validate_closed_inputs. Не покрытые доказательством зависимости проверять строго по ревизии.",
+        "При изменении зависимостей повторно проверять effective acceptance разрешения, даже если сама квитанция ещё не обновлена. Настоящее изменение данных/допуска отклонять с прежним retry очереди.",
+        "Обновлять только общий publication token; сохранить исходные closed proofs, execution_revisions и expires_at. Финальная проверка публикации остаётся обязательной."
+      ],
+      "evidence": [
+        "NVIDIA: штатная очередь 13Nov08:34:52 отклонена при cp_manual_risk 1835→1837 до сравнения содержимого.",
+        "Адресные сценарии: append вне окна, коррекция внутри, identity/unknown scopes, read-only/WAL release, исходные execution tokens/deadlines, переподтверждение/изменение/отзыв разрешения, retry и 53/200 зависимостей.",
+        "Observed grant1840→1841: only input_revisions/interval_evidence changed on three accepted entries; original1835/1837 payloads unavailable. Effectiveness is revalidated, not inferred from counters.",
+        "Windows Save/Close/writer exit/restart; ordinary queue published DE0005552004 assessment checked_at08:47:25CET, observed08:48:11CET,11candidates,CURRENT publication with concrete DATA BLOCKED reasons. No forced request, fetch or trade."
+      ],
+      "limits": "Не выдаёт новый допуск, не игнорирует INVALID/UNCONFIRMED и не продлевает срок. Нет автоматического изменения OHLCV или ручного восстановления инструмента."
+    },
+    {
+      "id": "closed_gettex_tail_progress",
+      "title": "Новые свечи источника не отменяют неизменный закрытый расчёт",
+      "sources": [
+        "GETTEX/LSEG saved state",
+        "exact SQLite closed-input proof"
+      ],
+      "states": [
+        "STALE",
+        "INPUT_CHANGED"
+      ],
+      "status": "8 NEW PASS; WINDOWS APPLY PENDING",
+      "steps": [
+        "Только для подтверждённого exact GETTEX/EUR listing в closed-input fingerprint исключить last транспортного ответа и сравнивать SAVED/UNCHANGED как один успешный результат.",
+        "Сохранять PARTIAL отдельно, DQ, rejected ranges, identity, listing evidence, native monthly proof, неизвестные поля и exact used OHLCV.",
+        "Не менять исходную SQLite запись, raw execution revisions или expiry. Старые proofs требуют штатного пересчёта; исправление не выдаёт разрешение сделки."
+      ],
+      "evidence": [
+        "Два сохранённых естественных обновления Apple/NVIDIA13:35–13:36CET: прежние fingerprints различались, новые совпали только после исключения last и SAVED/UNCHANGED.",
+        "Положительный append-after-window тест ERROR до0502090;8новых уникальныхPASS после, включая исправление/удаление/позднюю вставку внутри окна, identity/DQ/unknown, malformed,expiry/strict execution,serialization,53/200.",
+        "Первый отрицательный execution тест остановился на SMART_CONTEXT_MISMATCH из-за неполной test fixture; после добавления прежнего context подтвердил SMART_EXECUTION_INPUT_CHANGED."
+      ],
+      "limits": "Не игнорировать изменения действительных свечей, повреждения или условия исполнения. Новые данные требуют следующего расчёта по обычному расписанию. Это устранение ложного отзыва, не продление срока действия."
+    },
+    {
+      "id": "late_snapshot_publication_independence",
+      "title": "Изменение одной акции перед публикацией не отменяет независимые результаты",
+      "sources": [
+        "existing snapshot worker",
+        "final Windows publication guard"
+      ],
+      "states": [
+        "INPUT_CHANGED",
+        "STALE"
+      ],
+      "status": "8 NEW PASS; WINDOWS APPLY PENDING",
+      "steps": [
+        "Перед публикацией один раз прочитать текущие raw revision scopes. При изменении пометить все зависимые акции INVALIDATED/DATA BLOCKED, убрав свечи/сигнал из этого отчёта.",
+        "Сохранить только прежние proofs и revision tokens незатронутых акций. Общий benchmark отзывает все зависимые расчёты; неоднозначные/global/unbound dependencies сохраняют полный отказ.",
+        "Повторить строгую проверку сохранённого token непосредственно перед публикацией. Не переносить старую ревизию на новую и не выдавать trading permission.",
+        "В главном потоке только ограниченная обработка готовых metadata; OHLCV, DQ и индикаторы не пересчитывать. Тот же общий формат INVALIDATED и merger proofs применяется worker и публикацией."
+      ],
+      "evidence": [
+        "Natural13:35CET snapshot rejected485.875s after start, changed_inputs=[]; final raw revision guard discarded all stocks after worker had separately invalidated22.",
+        "Positive final-publication test FAIL on759debc, PASS after;8newtests including53/200,sharedbenchmark,allblocked,legacy/globalunknown,settings/identity/secondrace and actual in-memory SQLite OHLCV correction between worker and UI.",
+        "53/200 metadata-only test0.0019/0.0050s; not a Windows measurement or claim of faster total computation."
+      ],
+      "limits": "Не ослабляет исполнение, не меняет DQ/историю/разрешения. Не ускоряет сам полный snapshot. Неизменённые результаты могут остаться WAIT; настоящий новый вход требуется для изменившейся акции."
+    },
+    {
+      "id": "reconciliation_v4_bookkeeping_closed_proof",
+      "title": "Повторная сверка неизменного интервала без ложного отзыва анализа",
+      "sources": [
+        "CP exact v4 review",
+        "same-source SQLite closed input proof"
+      ],
+      "states": [
+        "STALE",
+        "INPUT_CHANGED"
+      ],
+      "status": "ПРОВЕРЕНО WINDOWS/MCP И ЕСТЕСТВЕННЫМ ОБНОВЛЕНИЕМ КВИТАНЦИЙ",
+      "steps": [
+        "Только при v4 current identity-confirmed observation и точном совпадении input_fingerprint сравнивать решение без служебных checked_at/next_check/checks/native_retry/history.",
+        "В finding заменить повторный timestamp-sensitive evidence_digest существующим полным v4 input_fingerprint; сохранить все фактические поля, scoped authoritative proof, observation, native rows/neighbours и неизвестные поля.",
+        "Не менять исходные квитанции, разрешения, TTL, DQ или raw execution revisions. Старые/неподтверждённые/ошибочные квитанции остаются строгими.",
+        "Старые расчётные proofs не мигрировать: штатная очередь должна рассчитать новые."
+      ],
+      "evidence": [
+        "Before13:18:41/after13:20:40 CET:7 real Apple15m records changed only bookkeeping and checked_at-sensitive proof digest; exact v4 inputs and decisions identical.",
+        "Positive unit reproduced ERROR on804ef813, then PASS.8unique new tests include53/200independence,changedOHLCV/evidence/identity,oldproof,expiry,strictexecution and malformedrecords.2directlyaffected receipt-policy guards PASS.",
+        "Same7saved real pairs:raw unequal7/7,canonical equal7/7; readonly/in-memory comparison only, no live edits.",
+        "11Nov13:27:32 CET normal restart;9preservationchecks PASS. At13:37:22 two NVIDIA15m jobs25Sep22:15/27Oct22:45 advanced58→59; new13:27:41proof retained matching scoped inputs. Real source changes and expiry still revoke1H. Seven authoritative digests reconstructed exactly by replacing only checked_at."
+      ],
+      "limits": "Не новый NO_TRADES, не принятие неизвестного риска, не исправление рыночной свечи. Текущая авторитетная evidence остаётся отдельной строгой зависимостью. Ни одна сделка не создана."
+    },
+    {
+      "id": "fresh_review_durable_assessment_handoff",
+      "title": "Передача свежего подтверждения в существующую очередь анализа",
+      "sources": [
+        "existing fresh feed",
+        "CP assessment worker"
+      ],
+      "states": [
+        "STALE",
+        "EXPIRED",
+        "AWAITING_ASSESSMENT"
+      ],
+      "status": "ПРОВЕРЕНО WINDOWS/MCP; ЕСТЕСТВЕННАЯ ПЕРЕДАЧА ЗАЯВКИ ПОДТВЕРЖДЕНА",
+      "steps": [
+        "После requested+fresh сохранять прежний analysis_requested_at и ставить metadata-only cp_assessment.request.",
+        "Не ждать следующего исторического прохода инструмента; не выполнять анализ или историю в свежем writer.",
+        "Существующие deduplication, original request age, retry_at,2priority:1background и строгая публикация продолжают действовать.",
+        "По завершении обычный worker подтверждает только фактически обработанный запрос; новая заявка не означает READY.",
+        "После перезапуска fresh turn подбирает уже сохранённый analysis_requested_at даже при неизменном ответе источника; не создаёт READY и не сбрасывает retry."
+      ],
+      "evidence": [
+        "Reproduced missing assessment request despite fresh review: FAIL before, PASS after",
+        "test_cp_fresh_assessment_request:5newPASS including53/200continuouspriority,duplicatecooldown,restart and realDQ error retained",
+        "test_cp_fresh_completion:3directlyaffectedPASS, heavy stages and history release preserved",
+        "Extra pending-marker restart case: reproduced FAIL on fbea7a3, PASS after; no-new-evidence negative rerun PASS",
+        "11Nov13:15:58 CET final047a332 normal restart; fresh NVIDIA request13:17:23.518 despite last history turn12:55:55.441; no manual refresh. Nine preservation checks PASS; both hourly CORE READY/WAIT with fresh13:10 quote at13:16:44. Existing all-TF worker still bounded and may wait for snapshot."
+      ],
+      "limits": "Не новый поток, не обход snapshot/eligibility dispatcher exclusion, не мгновенный результат при занятом worker, не изменение рынка/разрешений/исполнения."
+    },
+    {
+      "id": "validated_receipt_renewal_closed_proof",
+      "title": "Повторное подтверждение неизменного исторического разрешения",
+      "sources": [
+        "CP owner risk receipts",
+        "SQLite closed input proof"
+      ],
+      "states": [
+        "STALE",
+        "INPUT_CHANGED"
+      ],
+      "status": "ПРОВЕРЕНО WINDOWS/MCP И ЕСТЕСТВЕННЫМ ПОДТВЕРЖДЕНИЕМ",
+      "steps": [
+        "Сравнивать полное содержание разрешения, evidence, actor и набор связанных scopes.",
+        "Только для effective_accepted TV/reviewed/auto квитанций в расчётном fingerprint заменять номера счётчиков CURRENT; исходные разрешения и SQLite не изменять.",
+        "Неподтверждённые квитанции, новые условия/источник/policy и изменения реальных используемых OHLCV сохраняют отзыв.",
+        "Старые proofs не мигрировать; обычный CP повторяет расчёт. Исполнительные raw revision/freshness/risk проверки неизменны."
+      ],
+      "evidence": [
+        "test_cp_receipt_renewal: 8 new PASS including 53/200 separate receipts and strict execution token rejection",
+        "test_closed_receipt_metadata: 2 directly affected identity and expiry guards PASS",
+        "Saved NVIDIA four receipts differed only by renewed revision counters; no new owner decision",
+        "11Nov normal restart12:54:11; Windows indicators/VolumeProfile and9preservationchecks confirmed, hourlypairCOREreadyWAITfresh; no overall readiness claim",
+        "11Nov13:06:43 both Apple/NVIDIA1W/1M CURRENT on identical proof hashes after grant counters1915→1919 and1223→1225; changed15m inputs still revoke1H; transient invalid receipt stays blocked until revalidated"
+      ],
+      "limits": "Не создаёт разрешений/свечей/сделок, не скрывает DQ; не продлевает срок действия. Только fingerprint доказанного повторного подтверждения. Runtime PARTIAL."
+    },
+    {
+      "id": "grant_receipts_exact_base_dependencies",
+      "title": "Зависимости разрешений отслеживаются по используемому базовому ряду",
+      "sources": [
+        "saved owner-reviewed receipt"
+      ],
+      "states": [
+        "STALE",
+        "INPUT_CHANGED"
+      ],
+      "status": "ПРОВЕРЕНО WINDOWS/MCP И ЕСТЕСТВЕННОЙ ОЧЕРЕДЬЮ",
+      "steps": [
+        "В attach_tv_absence и accepted_gap_input фильтровать квитанции по ISIN, полной identity, базовому TF, archive/state/range до отслеживания их ревизий.",
+        "Даже отклонённые совпадающие TV-квитанции остаются зависимостями. Сам grant и политики по-прежнему отслеживаются полностью.",
+        "Если старший TF реально использует5m, отслеживать5m-квитанции. Изменение OHLCV, нужной квитанции или политики по-прежнему отзывает допуск."
+      ],
+      "evidence": [
+        "test_cp_receipt_dependencies:6newPASS; unrelated5m receipt→false15m invalidation reproduced before fix",
+        "2directly affected original tests PASS:changedOHLCV revokes aggregate;daily/weekly/monthly retain real sums and factualDQ",
+        "Readonly same SQLite snapshot Apple1D1274bars:132dependencies/122TVjobs before;3dependencies/0TVjobs after;sameOHLCV andmetadata exceptchecked_at,wholegrant tracked",
+        "11Nov normal assessment Apple12:42/12:51; 1W/1M CURRENT with0unrelated15mjobs;1H119relevant preserved"
+      ],
+      "implementation": [
+        "stock_monitor/cp_controls.py:_gap_entry_matches",
+        "stock_monitor/cp_controls.py:attach_tv_absence",
+        "stock_monitor/cp_controls.py:accepted_gap_input"
+      ],
+      "limitations": [
+        "Does not normalize or ignore any fields of a relevant receipt.",
+        "Whole-grant or actual input changes still require reassessment. No archive DQ or permission changed; natural all-TF readiness still requires validation."
+      ]
+    },
+    {
+      "id": "snapshot_exact_calculation_reuse",
+      "title": "Общая диагностика повторно использует только точные вычисления",
+      "sources": [
+        "saved same-provider OHLCV"
+      ],
+      "states": [
+        "SLOW_DIAGNOSTICS"
+      ],
+      "status": "5 NEW +3 AFFECTED PASS; WINDOWS FULL CYCLE ACCEPTED; OVERALL SPEED IMPROVEMENT NOT PROVEN",
+      "steps": [
+        "В snapshot_worker.calculate активировать уже существующий bounded calculation_reuse для DQ и индикаторов.",
+        "Ключ включает все OHLCV, identity, evidence, флаги и явное время расчёта. Не кэшировать разрешения или неявное текущее время.",
+        "Сохранять все revision guards, конечную проверку публикации и запрет одновременного snapshot/eligibility."
+      ],
+      "evidence": [
+        "test_snapshot_exact_reuse:5 PASS including53/200 bounded independent instruments, changed OHLCV/identity and real revision rejection",
+        "3 directly affected exact-cache negative scenarios PASS",
+        "Single readonly Apple4H comparison on one SQLite read snapshot:10.593s without reuse,8.953s with reuse; outputs identical except5checked_at timestamps. Not a whole-program speed claim.",
+        "Normal startup11Nov12:10:25CET; natural63instrument snapshot ACCEPTED12:17:14,400.906s total/355.031s compute,654dependencies current,17changed instrument results invalidated. No forced Refresh."
+      ],
+      "implementation": [
+        "stock_monitor/snapshot_worker.py:calculate",
+        "stock_monitor/calculation_reuse.py:using"
+      ],
+      "limitations": [
+        "Overall57-stock cycle speed must be measured separately in running Windows.",
+        "No new recovery, DQ permission, HTTP request or trading rule change."
+      ]
+    },
+    {
+      "id": "daily_review_timeframe_calendar",
+      "title": "Дневная сверка TV использует уже проверенный дневной календарь",
+      "sources": [
+        "saved assisted TradingView review"
+      ],
+      "states": [
+        "BLOCKED"
+      ],
+      "status": "ПРОВЕРЕНО WINDOWS И ЕСТЕСТВЕННОЙ ДНЕВНОЙ СВЕРКОЙ",
+      "steps": [
+        "Передавать timeframe задания в существующий timeframes.schedule; чистая identity его не содержит.",
+        "Сохранить прежние границы подтверждённых календарей: старый intraday и дневные периоды до подтверждённой истории отклоняются.",
+        "Сверка отсутствия остаётся UNCONFIRMED/MISSING_IN_BOTH; найденная в TV нулевая свеча остаётся TV_ROW_MISSING_IN_SM. Не создавать OHLCV, NO_TRADES или разрешения."
+      ],
+      "evidence": [
+        "test_cp_daily_review_calendar:6 PASS; two exact historical daily failures reproduced before fix",
+        "Existing test_cp_reconciliation:20 PASS,3 failures reproduced against HEAD _classify; not full suite PASS",
+        "Two saved daily review inputs reclassified read-only with current binding; natural runtime awaits existing next_check",
+        "Windows normal restart11Nov11:59:50CET; MCP and9preservation checks confirmed;31saved daily jobs readonly UNCONFIRMED,0can_affect_dq,not31resolved",
+        "11Nov13:25:26–13:28:58 CP naturally classified8newApple1D observations with no calendar exception. UNCONFIRMED preserved; no OHLCV import. Original10–11May2018 jobs still await ordinary rotation, not silently marked repaired."
+      ],
+      "limits": "Не расширяет календарь и не подтверждает native 1W/1M provenance. Не обеспечивает TV export/import. Старые BLOCKED задания сохраняют next_check; не ускорять ради отчёта."
+    },
+    {
+      "id": "unavailable_file_head_starvation",
+      "title": "Отсутствующий официальный файл не задерживает остальные срезы",
+      "sources": [
+        "gettex official posttrade"
+      ],
+      "states": [
+        "UNCONFIRMED",
+        "SOURCE_GAP"
+      ],
+      "status": "WINDOWS ЗАГРУЖЕНО; PROVIDER COOLDOWN",
+      "steps": [
+        "Только HTTP404 отдельного файла допускает переход к следующему независимому файлу внутри прежнего бюджета до8.",
+        "Сохранять file_cursor в стабильном порядке файлов сессии и в RUNNING lease до запроса; после restart и cooldown продолжать обход.",
+        "HTTP429 немедленно останавливает пачку, общий cooldown и Retry-After сохраняются. Повреждённые gzip и другие ошибки не обходить.",
+        "Сохранённые реальные файлы обрабатывает прежний валидатор. Отсутствующий файл не создаёт ни свечу, ни NO_TRADES, ни торговой допуск."
+      ],
+      "evidence": [
+        "test_cp_missing_file_rotation:6 new PASS; first404 before two available neighbours, bounded cursor restart/cooldown,429RetryAfter,wrap,corruptgzip,interruptedlease",
+        "57 related test executions PASS;4 unrelated baseline failures reproduced against original function and documented separately",
+        "11Nov final code loaded; earliest historical retry14:12:49CET, no bypass and no natural rotation PASS before receipt"
+      ],
+      "limits": "Не обещает доступность отсутствующих архивов. Недоступные файлы остаются в квитанции unavailable_files. Не увеличивает общий бюджет и не запускает повторную массовую загрузку."
+    },
+    {
+      "id": "preserve_analysis_after_failed_assessment",
+      "title": "Ошибка повторной оценки не стирает проверенные независимые результаты",
+      "sources": [
+        "saved assessment queue"
+      ],
+      "states": [
+        "ERROR",
+        "STALE",
+        "EXPIRED",
+        "INPUT_CHANGED"
+      ],
+      "status": "WINDOWS/MCP ЗАГРУЖЕНО; ЕСТЕСТВЕННЫЙ СБОЙ ОЖИДАЕТ",
+      "steps": [
+        "При ошибке повторной оценки сохранить прежнюю успешную квитанцию с неизменными закрытыми входами, сроками, identity и разрешениями; записать последнюю ошибку отдельно.",
+        "Каждый потребитель по-прежнему проверяет candidate_state и исполнительные ограничения. Сохранение квитанции не означает действительность или продление допуска.",
+        "Вернуть ошибку существующей очереди, чтобы остались cooldown и повторная попытка. Первый неуспешный расчёт без прежнего результата остаётся ERROR.",
+        "При следующем успешном расчёте заменить квитанцию обычной транзакционной публикацией. История не растёт цепочкой вложенных копий.",
+        "При успешном повторном использовании неизменной актуальной квитанции убрать прежнюю ошибку попытки, не продлевая срок и не изменяя proof."
+      ],
+      "evidence": [
+        "test_cp_assessment_preserve:4 new PASS; before fix a failed5mrefresh erased still-current1Wproof",
+        "3 affected PASS: changed identity, relevant revision and stale publication rejection",
+        "Follow-up:1 new FAIL before/PASS after for successful reuse;1 directly affected preservation test PASS;5 new unique cases total",
+        "Final normal restart11Nov11:45:19CET; Health UI/MCP loaded;9preservation comparisons true; natural error branch not observed yet"
+      ],
+      "limits": "Не восстанавливать утраченные старые результаты вручную, не скрывать ошибку, не выдавать новый допуск и не менять OHLCV. Изменённые входы и истёкший срок продолжают отзывать независимый контекст."
+    },
+    {
+      "id": "assessment_retry_waiting_age",
+      "title": "Повторная оценка не вытесняется новыми успешными заявками",
+      "sources": [
+        "saved assessment queue"
+      ],
+      "states": [
+        "ERROR",
+        "STALE",
+        "INPUT_CHANGED"
+      ],
+      "status": "ПРОВЕРЕНО WINDOWS/MCP",
+      "steps": [
+        "В существующей последовательной очереди сравнивать последнее фактическое ожидание: last_attempt_at либо requested_at для ещё не выполненной заявки.",
+        "Не считать отсутствующую попытку временем ноль: иначе новые заявки постоянно вытесняют старые ошибки.",
+        "Сохранить retry_at, два приоритетных хода перед обычным и строгую проверку входных ревизий перед публикацией."
+      ],
+      "evidence": [
+        "test_cp_assessment_retry_fairness:3 new PASS; reproduced starvation FAIL before fix; recurring53/200requests",
+        "test_cp_assessment_worker:3 affected PASS; priority fairness, persisted retry and revision-change rejection",
+        "11Nov11:24CET normal restart; natural Newmont retry11:32:12 replaced prior-evening error;9preservation checks true11:33"
+      ],
+      "limits": "Повторная попытка не гарантирует READY. Реальное изменение входных данных и недостаток доказательств продолжают блокировать публикацию; TTL и торговые разрешения не меняются."
+    },
+    {
       "id": "real_children",
       "title": "Восстановить родительскую свечу из реальных младших",
       "sources": [],
@@ -50,11 +544,13 @@
       "status": "ПРОВЕРЕНО",
       "steps": [
         "Проверить ещё не проверенные ревизии локальных children.",
-        "Не делать HTTP раньше Retry-After. Повтор неизменившихся входов ограничен существующим cooldown."
+        "Не делать HTTP раньше Retry-After. Повтор неизменившихся входов ограничен существующим cooldown.",
+        "Короткое ожидание источника сохраняет точный max(next_retry, network_not_before); отсутствие младших свечей не превращает его в 15 минут. Ограничение числа попыток и повторная проверка лимита перед HTTP сохраняются."
       ],
       "evidence": [
         "test_local_recovery_cooldown30.py",
-        "history64-evidence/readiness30/RESULT_RU.txt"
+        "history64-evidence/readiness30/RESULT_RU.txt",
+        "test_cp_automatic_repair.py::AutomaticRepair.test_short_provider_wait_keeps_deadline_then_records_unconfirmed_retry"
       ],
       "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
     },
@@ -323,11 +819,13 @@
       "steps": [
         "Сопоставить опубликованное время исполнения с временной семантикой провайдера.",
         "Не считать единичный сдвиг доказанной timezone-ошибкой.",
+        "Нулевая запись ограничивает только пересекающийся полуоткрытый интервал, а не весь архив. Проверить полное NO_TRADES для нужного участка, сохраняя source/timebase guard.",
         "Не переносить NO_TRADES и свечи между providers без доказательства совместимости.",
         "02Nov TradingView Desktop: targeted Apple28Oct13:30 observation differs from saved LSEG next bucket; official zero-quantity13:44:32.440233 vs LSEG13:47:57. Native time mismatch is not a proven Stock Monitor timezone defect. Do not shift timestamps or transfer absence proofs between providers."
       ],
       "evidence": [
         "history64-evidence/apple-recovery02/bucket-comparison.json",
+        "test_reconciliation_interval_scope.py",
         "history64-evidence/apple-recovery02/exchange-witness-check.json",
         "history64-evidence/apple-resolution02/RESULT_RU.txt",
         "history64-evidence/tradingview02/RESULT_RU.txt"
@@ -393,11 +891,15 @@
       "steps": [
         "Дождаться закрытия интервала и допустимого времени публикации.",
         "Проверить естественный GETTEX feed и фактическое время приёма/публикации аналитики.",
-        "Запретить исполнение при старой или недостоверной цене независимо от исторических исключений."
+        "Запретить исполнение при старой или недостоверной цене независимо от исторических исключений.",
+        "PAPER: последняя подтверждённая закрытая 5m/15m-свеча пригодна по свежести до 900 секунд включительно ПОСЛЕ закрытия. Отсутствие более новой 5m-свечи само по себе не блокирует пригодную 15m. Использовать прежний fresh_quote и финальный paper_account.quote, не прибавлять новый льготный срок при повторном чтении или задержке поставщика.",
+        "Свежесть цены отделять от сигнала и полного допуска. WAIT не становится BUY; пригодная цена не отменяет UNCONFIRMED/INVALID расчётных зависимостей, identity, ревизии, риск или закрытие сессии. Проверенный предел 900 секунд уже действовал; исторический DQ и торговые флаги этим правилом не переписывать."
       ],
       "evidence": [
         "stock_monitor/candle_schedule.py",
-        "history64-evidence/apple-recovery02/natural-cycle.jsonl"
+        "history64-evidence/apple-recovery02/natural-cycle.jsonl",
+        "test_paper_quote_delay.py: AH 13Nov2026 PASS; RAM fresh_quote with only 15m at ages 0/899/900s, rejection at900.001s; shared V1 executor BUY at900s rolled back in isolated account, stale/DQ/identity/WAIT refusals preserved. Production logic unchanged.",
+        "13Nov2026 MCP generated14:34:29CET: Apple quoteclose14:20 passed price guard, while CORE was blocked by separate UNCONFIRMED; NVIDIA quoteclose14:30 CORE READY/WAIT. This is a timed observation, not permanent readiness."
       ],
       "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
     },
@@ -571,11 +1073,15 @@
         "Не выполнять повторную визуальную проверку неизменившегося доказательства. Передавать действующее разрешение в существующую агрегацию и разметку графика.",
         "Считать покрытие принятым по TV отдельно от доказанного биржей NO_TRADES. Строить OHLCV только из реальных младших свечей; целиком пустой период не заполнять.",
         "Не рисовать полосу ошибки для принятого интервала. Непринятый соседний пропуск, INVALID и изменившаяся ревизия сохраняют блокировку и предупреждение.",
-        "Анализ и демоторговля требуют отдельного полного действующего разрешения расчётных зависимостей, прогрева, CORE и свежей цены. Принятие отсутствия не является восстановленной свечой."
+        "Анализ и демоторговля требуют отдельного полного действующего разрешения расчётных зависимостей, прогрева, CORE и свежей цены. Принятие отсутствия не является восстановленной свечой.",
+        "13Nov2026 Work1 AL: an issued GETTEX-chart 15m TV/scoped-review receipt may survive ONLY a higher market revision after rechecking its exact native missing range and neighbours against the saved binding. Policy, DQ, listing, observation, interval evidence and unknown revision changes remain strict. No receipt/token/expiry renewal in this read; new or changed problems still require the ordinary CP writer and final CORE/execution guards. Never infer NO_TRADES from this owner-risk check."
       ],
       "evidence": [
         "test_tv_accepted_display.py",
-        "СМ-Архив/TV принятые интервалы результат.json"
+        "СМ-Архив/TV принятые интервалы результат.json",
+        "13Nov2026 AD: Apple GETTEX/EUR15m12Nov22:45 и13Nov09:45 отсутствуют в Desktop TV; соседние OHLCV совпали с native gettex_chart. Существующий CP обработал точные наблюдения11:14:48/11:30:42CET и применил действующую owner TV policy.0 новых OHLCV; SOURCE_TIMEBASE_UNCONFIRMED остаётся отдельным ограничением, не NO_TRADES. PAPER1H/4H READY/WAIT после штатной переоценки; visual TV выполнен Work. docs/TRADING_ENGINE_PROGRESS_RU.md, раздел AD.",
+        "13Nov2026 AI Amazon US0231351067 GETTEX/EUR15m: Desktop GETTEX:AMZ confirmed ABSENT05Nov22:00 and10Nov22:00 CET. Adjacent pre-gap rows matched native; post-gap O/H or L/C/V differed and are explicitly recorded, not imported or certified equal. Existing register_prior_review queued exact revision-bound observations; ordinary CP processed14:54:11CET, renewed18/18 existing-policy intervals, paper_preparation admitted Amazon automatically14:54:18. First1H14:55:00/4H14:55:04 CORE READY/WAIT, no quote blocker.0 restored OHLCV;2 conditional historical absence acceptances, factual DQ/source-timebase limitation retained. No direct config/grant write, no production test orders, no new runtime code. Canonical MASTER G06/T13 Work1AI records restart and final result. Visual TV remains ASSISTED_ONLY; CP validates observations, renews grants, aggregates, reassesses and admits through existing mechanisms.",
+        "test_cp_scoped_tail.ScopedTail: unrelated tail preserved; restored interval, changed neighbour, every non-market/unknown scope rejected; no grant mutation. Work1 AL runtime evidence is in canonical MASTER."
       ]
     },
     {
@@ -601,6 +1107,506 @@
         "local-private-evidence/Apple влияние пяти интервалов.json"
       ],
       "limits": "Только явно принятый исторический риск демосчёта. Это не исправление OHLCV, не фактический DQ READY, не торговый сигнал и не обход исполнительных проверок."
+    },
+    {
+      "id": "closed_parent_dependency_window",
+      "title": "Незакрытый родитель не блокирует независимый закрытый CORE",
+      "sources": [
+        "gettex_chart",
+        "gettex"
+      ],
+      "states": [
+        "STALE",
+        "UNCONFIRMED",
+        "GAP"
+      ],
+      "status": "ПРОВЕРЕНО",
+      "steps": [
+        "В закрытом торговом контексте вычислить последнюю закрытую границу целевого TF по календарю площадки.",
+        "Проверить все необходимые младшие интервалы до этой границы; отсутствующий последний child включить в диапазон проблемы.",
+        "Проверять доказательства по текущему времени; применять только действующие разрешения точных интервалов.",
+        "Собирать родителя существующей агрегацией; финальные DQ и цена исполнения проверяются по текущему времени."
+      ],
+      "evidence": [
+        "stock_monitor/trading_context.py:closed_parent_input",
+        "stock_monitor/cp_controls.py:accepted_gap_input",
+        "test_closed_parent_input.py"
+      ],
+      "limits": "Новый неизвестный пропуск внутри обязательного окна, повреждённый OHLCV, identity и устаревшая цена не разрешаются. Никаких созданных свечей или автоматического NO_TRADES."
+    },
+    {
+      "id": "hourly_consistent_read",
+      "title": "Согласованное чтение CORE при работающем загрузчике",
+      "sources": [],
+      "states": [
+        "INPUT_CHANGED"
+      ],
+      "status": "ПРОВЕРЕНО",
+      "steps": [
+        "Один согласованный readonly WAL snapshot для расчёта; без копии SQLite и без блокировки писателя.",
+        "Перед публикацией перепроверить точные закрытые OHLCV, значимые DQ/identity/разрешения и benchmark.",
+        "Сравнить последние строки обеих дорожек цены исполнения отдельно; изменение котировки требует нового расчёта."
+      ],
+      "evidence": [
+        "stock_monitor/paper_hourly.py:calculate_snapshot",
+        "test_hourly_consistent_read.py"
+      ],
+      "limits": "Это устранение несогласованного чтения, не отключение проверки ревизий. Действительное изменение входов по-прежнему отклоняет результат."
+    },
+    {
+      "id": "partial_volume_profile_display",
+      "title": "Боковой объём доступен на проверенных участках частичного архива",
+      "sources": [],
+      "states": [
+        "GAP",
+        "UNCONFIRMED",
+        "INVALID",
+        "SOURCE_GAP"
+      ],
+      "status": "ПРОВЕРЕНО",
+      "steps": [
+        "Использовать только проверенные реальные сегменты графика.",
+        "Исключить некорректные и неполные строки; явно отметить частичную историю.",
+        "Сохранить независимые DQ и торговые блокировки."
+      ],
+      "evidence": [
+        "docs/TRADING_ENGINE_PROGRESS_RU.md",
+        "test_partial_volume_profile.py"
+      ],
+      "limits": "Профиль распределения по OHLCV является оценкой, не точным биржевым объёмом на каждом ценовом уровне."
+    },
+    {
+      "id": "sequential_candidate_fair_share",
+      "title": "Последовательная подготовка не голодает при постоянных обновлениях рабочих акций",
+      "sources": [
+        "gettex_chart"
+      ],
+      "states": [
+        "STALE",
+        "PENDING"
+      ],
+      "status": "ПРОВЕРЕНО",
+      "steps": [
+        "Сначала два имеющихся слота обновления рабочих акций и открытых позиций.",
+        "Третий слот свежих данных — единственному кандидату последовательной подготовки, если он существует и подошёл срок запроса.",
+        "Четвёртый слот и следующий исторический ход сохраняют обслуживание остальных инструментов.",
+        "Проверять фактически выданный общий HTTP-бюджет: задачи другого источника не сбрасывают его очерёдность.",
+        "После двух оперативных запросов чередовать кандидата и обычную архивную работу через существующую квитанцию резервирования."
+      ],
+      "evidence": [
+        "stock_monitor/candle_schedule.py:fresh_candidate",
+        "test_paper_preparation.py:PreparationTests.test_candidate_gets_bounded_third_slot_under_continuous_pair_updates",
+        "stock_monitor/gettex_chart.py:reserve_request",
+        "test_paper_preparation.py:PreparationTests.test_shared_http_budget_survives_official_file_turns_and_restart",
+        "test_chart_budget_priority.py"
+      ],
+      "limits": "Общие rate limit, cooldown и сроки публикации остаются обязательными. Подготовка не выдаёт разрешение на сделку и не принимает неизвестные пропуски. 53/200 ходов проверяют порядок, а не гарантируют время ответа поставщика."
+    },
+    {
+      "id": "preparation_recheck_changed_inputs",
+      "title": "Новые свечи и доказательства снимают ожидание старой неудачной оценки",
+      "sources": [
+        "gettex_chart"
+      ],
+      "states": [
+        "STALE",
+        "PENDING",
+        "UNCONFIRMED",
+        "GAP"
+      ],
+      "status": "ПРОВЕРЕНО",
+      "steps": [
+        "Сохранить ревизии исходных TF, DQ, инструмента и действующих разрешений при запуске подготовки.",
+        "Если ревизии изменились, направить единственного кандидата на повторную оценку в свободный ход торговой очереди.",
+        "Если изменилось только время получения того же HTTP-ответа или другая акция, сохранить установленную паузу.",
+        "После перезапуска использовать сохранённые ревизии; старую запись без них переоценить один раз."
+      ],
+      "evidence": [
+        "stock_monitor/paper_preparation.py:choose",
+        "stock_monitor/paper_preparation.py:retry_inputs",
+        "test_paper_preparation.py"
+      ],
+      "limits": "Служебный токен только планирует пересчёт. Он не является доказательством качества или разрешением на сделку; свежесть, CORE, benchmark, identity и окончательные ревизии проверяются заново. Ограничения HTTP не меняются."
+    },
+    {
+      "id": "paper_execution_quote_receipt_revision",
+      "title": "Повторная проверка PAPER после обновления квитанции котировки",
+      "sources": [
+        "gettex_chart"
+      ],
+      "states": [
+        "STALE"
+      ],
+      "status": "ПРОВЕРЕНО",
+      "steps": [
+        "Сравнить точный хвост 5m/15m и содержимое квитанции подтверждения листинга в согласованных снимках SQLite.",
+        "Обновить ревизию только при совпадении строк и значимых полей квитанции.",
+        "При изменении расчётных входов повторить чтение один раз, затем дождаться следующего хода торговой очереди."
+      ],
+      "evidence": [
+        "stock_monitor/paper_hourly.py:calculate_snapshot",
+        "test_hourly_consistent_read.py",
+        "test_paper_hourly.py"
+      ],
+      "limits": "Проверка свечей, качества, подтверждения листинга и актуальных ревизий при исполнении обязательна. Не устраняет реальные пропуски и не обновляет цену."
+    },
+    {
+      "id": "parent_scoped_absence",
+      "title": "Сохранить подтверждение восстановленной свечи при обновлении посторонних доказательств",
+      "sources": [
+        "gettex",
+        "gettex_chart",
+        "proxy"
+      ],
+      "states": [
+        "INVALID"
+      ],
+      "status": "ПРОВЕРЕНО: ТЕСТЫ И ШТАТНЫЙ RECOVERY",
+      "steps": [
+        "Диагностировать PARENT_PROVENANCE_CHANGED: сравнить отдельно дочерние строки, OHLCV родителя и доказательства отсутствия сделок.",
+        "В штатном локальном recovery сохранять для каждого родителя только реально использованные отсутствующие интервалы младшего TF.",
+        "При чтении повторно проверять эти интервалы через существующий covered_empty; отзыв, новая сделка, нулевой объём без доказательства, смена identity и будущее checked_at сохраняют блокировку.",
+        "Старые квитанции сохраняют строгую проверку полного digest до обычного восстановления. Не повышать статус массовой записью; не менять OHLCV ради снятия блокировки."
+      ],
+      "evidence": [
+        "test_parent_absence_scope.py",
+        "test_p1_parent_recovery.py"
+      ],
+      "limits": "49/49 минимальных реальных изолированных случаев; в TEST три parent proof исправлены штатным CP без изменения OHLCV и сохранены после restart и следующего естественного обновления evidence. Не повышает другие DQ-проблемы и торговые разрешения."
+    },
+    {
+      "id": "empty_partial_context",
+      "title": "Пустой проверенный графический контекст не прерывает обработку",
+      "sources": [],
+      "states": [
+        "SOURCE_UNAVAILABLE",
+        "UNCONFIRMED",
+        "INVALID"
+      ],
+      "status": "ПРОВЕРЕНО",
+      "steps": [
+        "Пустой результат после выбора периода или проверки источника не передавать в календарный расчёт уровней.",
+        "Штатный partial_chart.bind возвращает отсутствие уровней и DATA BLOCKED/WAIT; не создавать индикаторы, цены или разрешение.",
+        "Продолжать существующую очередь и повторять загрузку только по её расписанию/cooldown."
+      ],
+      "evidence": [
+        "test_empty_partial_context.py",
+        "test_partial_display_levels.py"
+      ],
+      "limits": "3 новых и 2 непосредственно затронутых теста PASS; отсутствие строк не доказывает NO_TRADES. Все 11 TF проверены в пустом сценарии."
+    },
+    {
+      "id": "legacy_diagnostic_identity",
+      "title": "Убрать дублирование старого INVALID без подмены качества",
+      "sources": [
+        "local diagnostics"
+      ],
+      "states": [
+        "INVALID"
+      ],
+      "status": "ПРОВЕРЕНО ИЗОЛИРОВАННО; RUNTIME ОЖИДАЕТ",
+      "steps": [
+        "В обычном history turn существующего serial writer проверить максимум 8 старых отчётов без identity, исправить максимум один.",
+        "Требовать единственную сохранённую series identity и совпадающий архивный INVALID с теми же ошибками. Добавить только identity/base_tf; исходные state/issues/checked_at сохранить.",
+        "Сохранить исходный отчёт в ограниченном receipt той же транзакции. Повреждённые metadata дают UNKNOWN/skip, не останавливая feed."
+      ],
+      "evidence": [
+        "test_cp_diagnostic_cleanup.py: 7 PASS",
+        "СМ-Архив/CP устаревшие дубликаты проверка.json: 3 реальные записи в изолированной памяти"
+      ],
+      "limits": "Убирается только дублирование диагностики. Архив не считается новой проверкой DQ. OHLCV, время ошибки, допуски и fresh-price slots не меняются. Не удалять актуальные ошибки. В TEST подтверждены две естественные нормализации с сохранением исходного INVALID; ещё одна найденная запись ожидает очереди."
+    },
+    {
+      "id": "archive_reaudit_scope_version",
+      "title": "Перепроверка сохранённой диагностики в действующей области",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "GAP",
+        "INVALID",
+        "UNCONFIRMED"
+      ],
+      "status": "ПРОВЕРЕНО WINDOWS/MCP",
+      "steps": [
+        "Разделять текущую область политики, архив других площадок, удалённые инструменты и неопределённую identity; не выдавать архивные ошибки за текущий торговый допуск.",
+        "В существующем serial history turn перепроверять один изменённый зарегистрированный GETTEX/EUR ряд, включая gettex_chart.",
+        "Сохранять версию правил аудита и зависимость от parent_provenance: изменение правил или proof при неизменном OHLCV требует новой проверки.",
+        "Не загружать сеть, не чинить OHLCV и не выдавать допуски из локального аудитора. Существующая очередь выполняет адресные восстановления отдельно.",
+        "Отдельно отмечать recovery_checked_at и валидность exact listing/наличие адаптера. Локальный audit не расходует pending recovery; future next_retry сохраняется. CAS не перезаписывает новый audit после recovery."
+      ],
+      "evidence": [
+        "test_cp_diagnostic_scopes.Scopes:2 PASS",
+        "test_cp_archive_reaudit.Reaudit:9 PASS (including reproduced FAIL then PASS for consumed recovery; real dq.repair cooldown)",
+        "test_cp_local_completion.LocalCompletion + WorkerRoutes:14 PASS including53/200fairness,revisionrace,freshskip"
+      ],
+      "limits": "Область политики не подтверждает качество. Удалённые инструменты и чужие площадки не загружать вопреки owner policy. Сохранённые сообщения о rejected source не считать существующими повреждёнными строками без проверки."
+    },
+    {
+      "id": "retire_removed_instrument_diagnostic",
+      "title": "Снять старый отчёт удалённого инструмента с сохранением истории",
+      "sources": [
+        "saved diagnostics"
+      ],
+      "states": [
+        "GAP",
+        "INVALID",
+        "SOURCE_UNAVAILABLE",
+        "SOURCE_GAP",
+        "UNCONFIRMED",
+        "READY"
+      ],
+      "status": "ПРОВЕРЕНО WINDOWS/MCP",
+      "steps": [
+        "В существующем history writer после NO_MATCH нормализации проверить ограниченные кандидаты data_quality, не более одного переноса за turn.",
+        "BEGIN IMMEDIATE, повторная проверка отсутствия ISIN в instruments, content-addressed receipt с точным before_raw; CAS удаляет только прежний диагностический ключ.",
+        "При лимите4096квитанций оригинал остаётся. Существующая уникальная квитанция не заменяется. Конфликт удаления откатывает и receipt.",
+        "Отдельно показывать число перенесённых в историю отчётов; уменьшение активного счётчика не считать восстановлением свечей.",
+        "Фильтровать форму диагностического ключа до LIMIT8, чтобы повреждённые старые ключи не блокировали валидные записи."
+      ],
+      "evidence": [
+        "test_cp_retired_diagnostics:6 PASS including eight malformed keys cannot starve valid orphan",
+        "test_cp_diagnostic_cleanup:7 related PASS",
+        "test_cp_diagnostic_scopes:2 PASS",
+        "72 real orphan metadata isolated in memory: exact before preserved72/72, live writes0"
+      ],
+      "limits": "Никаких OHLCV/deep archive deletes, HTTP, source switches или новых торговых допусков. Перерегистрированный инструмент защищён транзакцией. Старые отчёты доступны в cp_retired_diagnostic receipts."
+    },
+    {
+      "id": "native_after_derived_confirmation",
+      "title": "Нативная свеча ошибочно сохраняет происхождение прежнего агрегата",
+      "sources": [
+        "gettex_chart"
+      ],
+      "states": [
+        "INVALID"
+      ],
+      "status": "ПРОВЕРЕНО",
+      "steps": [
+        "Сверить сохранённый ответ источника: путь, SHA256, точные ISIN/GETTEX/EUR/TF, закрытость и OHLCV. Ответ должен быть не старше восстановления из младших свечей.",
+        "Если текущая строка точно совпадает с нативным ответом, атомарно перенести старое derived proof в существующий журнал и убрать только эту устаревшую зависимость. OHLCV не менять.",
+        "Штатно перепроверить DQ и поставить повторную оценку в существующую очередь. Изменённые входы, несовпадение строки, пустой ответ и непроверенные данные сохраняют блокировку."
+      ],
+      "evidence": [
+        "test_native_parent_confirmation.py",
+        "docs/TRADING_ENGINE_PROGRESS_RU.md"
+      ],
+      "limits": "32 подтверждения за один TF/ход; только существующий writer CP. Не доказывает отсутствие сделок, не выдаёт торговый допуск, не смешивает площадки и не заменяет исходные свечи."
+    },
+    {
+      "id": "late_closed_session_first_catchup",
+      "title": "Новая приоритетная акция пропускает заключительную загрузку после закрытия рынка",
+      "sources": [
+        "gettex_chart"
+      ],
+      "states": [
+        "STALE",
+        "UNCONFIRMED"
+      ],
+      "status": "ПРОВЕРЕНО: адресные тесты и штатная Windows/MCP переоценка",
+      "steps": [
+        "Отличать ни разу не выполненную заключительную загрузку от исчерпанных повторов поставщика.",
+        "В существующем candle_schedule начать ограниченное двухчасовое окно первой фактической попыткой; максимум четыре обращения с прежним backoff и source cooldown.",
+        "Сохранить начало окна и счётчик в SQLite; повторный запуск и нерелевантная ревизия не обнуляют бюджет.",
+        "Новые свечи проходят прежние identity/OHLCV/ревизии/DQ и обычную переоценку; сам план загрузки не выдаёт торговый допуск."
+      ],
+      "evidence": [
+        "test_chart_budget_priority.BudgetTests.test_weekend_first_catchup_uses_persisted_bounded_budget"
+      ],
+      "limits": [
+        "Пустой ответ не доказывает NO_TRADES.",
+        "Оставшиеся исторические пробелы и срок исполнения не снимаются."
+      ]
+    },
+    {
+      "id": "official_empty_exact_native_window",
+      "title": "Пустой интервал с полной локальной сверкой GETTEX и нативных 5m/15m",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "UNCONFIRMED",
+        "SOURCE_TIMEBASE_UNCONFIRMED"
+      ],
+      "status": "IMPLEMENTED; targeted tests PASS; Windows ordinary CP applied receipts for Palantir/Broadcom; full admission PARTIAL",
+      "steps": [
+        "Использовать существующий reconciliation turn и разрешённый official_gettex_conserved_window_v1.",
+        "Только один отсутствующий 15m между двумя соседними настоящими свечами той же сессии; окно45мин.",
+        "Проверить полные MUNC/MUND файлы всего окна, сделки, отсутствие нулевых/неполных публикаций и точное совпадение всех нативных5m/15m OHLCV с реконструкцией.",
+        "Сохранить receipt с added=0/changed=0; окончательно перепроверить identity, policy, inputs и источники в транзакции.",
+        "На каждом чтении проверять актуальность receipt; не подавлять новые нативные строки и не выдавать право исполнения.",
+        "Withdraw only absence corroboration when an empty-window receipt expires; unchanged native OHLCV remain valid. New evidence checks use ordinary queue capacity; unchanged input never resets the retry budget."
+      ],
+      "evidence": [
+        "test_cp_official_timebase.py"
+      ],
+      "limits": [
+        "Не расширять подтверждение на соседние непроверенные интервалы или другие листинги.",
+        "Пропуск в TV или пустой ответ источника сам по себе недостаточен.",
+        "Изменение OHLCV, политики, полного набора файлов или публикаций отзывает локальное подтверждение."
+      ],
+      "automatic_action": "Existing cp_reconciliation.turn / revision_watcher.retime_plan",
+      "manual_action": "Evidence missing: retain precise blocker; assisted TV observation remains separate owner risk"
+    },
+    {
+      "id": "official_session_tail_corroboration",
+      "title": "Подтверждённый пустой конец сессии рядом с неизменной записью V0",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "STALE",
+        "SOURCE_TIMEBASE_UNCONFIRMED"
+      ],
+      "status": "IMPLEMENTED; ordinary Windows CP RESOLVED_NATIVE 14Nov2026 13:48:19 CET; admission still gated",
+      "steps": [
+        "Use existing saved-source reconciliation with verified calendar close and exact previous bar.",
+        "Require complete MUNC/MUND, exact official trade-built and native 5m/15m; permit unchanged zero-quantity observations only for corroboration.",
+        "Do not create an empty candle, rewrite OHLCV, change price timestamp or treat a price-only record as NO_TRADES.",
+        "Preserve final receipt/identity/market/policy validation and separate session/freshness execution gates."
+      ],
+      "evidence": [
+        "test_cp_session_empty.py"
+      ],
+      "limits": [
+        "Missing pair, actual incomplete publication, changed inputs/policy, unverified calendar or midday one-sided hole remain blocked."
+      ],
+      "automatic_action": "Existing reconciliation discovery/retime_plan and closed_session_archive",
+      "manual_action": "Unavailable source evidence remains explicit."
+    },
+    {
+      "id": "scoped_tv_parent_aggregation",
+      "title": "Проверенный родитель не исчезает из-за другого непроверенного участка",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "UNCONFIRMED",
+        "STALE"
+      ],
+      "status": "IMPLEMENTED; ordinary Windows CP and MCP confirmed 14Nov2026 14:09:18 CET; unrelated gaps remain blocked",
+      "steps": [
+        "For a closed-parent analytical input reuse exact currently bound TV absence receipts per child interval.",
+        "Build parent only when all its missing children are officially proved or explicitly accepted.",
+        "Keep other unknown parents excluded, factual DQ unchanged and whole-archive risk permission absent until all required ranges are covered."
+      ],
+      "evidence": [
+        "test_tv_accepted_display.py::AcceptedDisplay.test_closed_parent_uses_exact_accepted_slots_despite_unrelated_archive_gap"
+      ],
+      "limits": [
+        "This is aggregation only, never a new historical grant, synthetic candle or execution permission."
+      ],
+      "automatic_action": "Existing timeframes.covered_slots",
+      "manual_action": "Remaining unknown ranges still require source evidence/review."
+    },
+    {
+      "id": "official_native_extrema_corroboration",
+      "title": "Пропущенный реальный экстремум в сохранённой свече",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "SOURCE_DISCREPANCY"
+      ],
+      "status": "IMPLEMENTED; ordinary Windows CP APPLIED 14Nov2026 14:14:23 CET; RESOLVED_NATIVE 14:15:11 CET",
+      "steps": [
+        "Require current DIFFERENT observation and complete MUNC/MUND publication pair with exact trade-built 5m/15m.",
+        "Only isolated H/L expansion supported by positive trades, identical timestamps/O/C/V, unchanged adjacent bar and conserved complete window.",
+        "Recompute evidence immediately before write; preserve originals, provenance and normal reassessment."
+      ],
+      "evidence": [
+        "test_cp_native_extrema.py"
+      ],
+      "limits": [
+        "No general provider overwrite, no invented extreme, no new historical or trading grant."
+      ],
+      "automatic_action": "Existing revision_watcher retime_plan/publish_retime",
+      "manual_action": "Missing independent evidence remains blocked."
+    },
+    {
+      "id": "official_price_observation_timebase",
+      "title": "Перенос опубликованной ценовой записи с нулевым объёмом",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "SOURCE_TIMEBASE_UNCONFIRMED",
+        "GAP"
+      ],
+      "status": "IMPLEMENTED; ordinary Windows CP Palantir APPLIED 14:22:37 and RESOLVED_NATIVE 14:24:06; Broadcom APPLIED 14:23:17 and RESOLVED_NATIVE 14:28:50 CET 14Nov2026",
+      "steps": [
+        "Require current ZERO_VOLUME visual observation and complete official GETTEX trade publication, identical listing and exact preserved whole-window OHLCV.",
+        "Bind flat zero-quantity price to an existing native open no more than 15 minutes later; preserve zero quantity.",
+        "Permit unique exact relocation only; retain original rows, provenance, final input checks and ordinary DQ/CORE reassessment.",
+        "A superseded ABSENT observation cannot veto an independent full current official empty-window proof, but is never reused as a risk grant."
+      ],
+      "evidence": [
+        "test_cp_price_observation.py",
+        "test_cp_session_empty.py"
+      ],
+      "limits": [
+        "A price observation is not executed turnover or NO_TRADES. Incomplete publications, conflicting PRESENT/DIFFERENT, changed policy or input remain blocked."
+      ],
+      "automatic_action": "Existing reconciliation and revision_watcher; no separate worker",
+      "manual_action": "Visual evidence and unavailable publication require assisted review."
+    },
+    {
+      "id": "official_unique_native_trade_partition",
+      "title": "Однозначное восстановление распределения реальных сделок по свечам",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "SOURCE_DISCREPANCY"
+      ],
+      "status": "IMPLEMENTED; ordinary Windows CP APPLIED14Nov2026 14:45:19 CET; two real Palantir windows RESOLVED_NATIVE14:45:58/14:46:24",
+      "steps": [
+        "Require current DIFFERENT visual observation, complete exact official GETTEX publication and confirmed same listing.",
+        "Uniquely partition the ordered official tape to reproduce every original native5m OHLCV, with at most15min native timestamp delay and all events accounted for.",
+        "Require exact parent-child aggregation and complete-window conservation of OHLCV for both5m/15m; preserve15m timestamps.",
+        "Use existing transactional publisher with exact original rows, lineage, final evidence/policy validation and normal re-evaluation."
+      ],
+      "evidence": [
+        "test_cp_trade_partition.py"
+      ],
+      "limits": [
+        "Ambiguous partition, changed individual native values, missing files, changed policy/revisions or non-conserved window rejected. Bounded9 native bars/5000 events/20000 partition attempts. No blanket risk grant."
+      ],
+      "automatic_action": "Existing revision_watcher and reconciliation lane",
+      "manual_action": "Current assisted discrepancy evidence and full source tape required."
+    },
+    {
+      "id": "official_positive_first_tick_prices",
+      "title": "Первая сделка учтена в объёме, но пропущена в ценах дочерней свечи",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "SOURCE_DISCREPANCY"
+      ],
+      "status": "IMPLEMENTED; ordinary Windows CP Palantir30Oct07:30 APPLIED14Nov14:44:07; RESOLVED_NATIVE14:45:58 CET",
+      "steps": [
+        "Require current DIFFERENT visual observation and complete exact official positive trade tape.",
+        "Reviewed15m open/close/volume and following real15m neighbour remain exact; only child open and expanded H/L may differ.",
+        "All native child prices must equal the official tape after dropping exactly its first positive tick, while native volume already includes that tick.",
+        "Restore only the independently confirmed first-tick prices; preserve originals and explicit price-repair provenance. Parse mixed second/microsecond timestamps without loss."
+      ],
+      "evidence": [
+        "test_cp_positive_opening_extreme.py"
+      ],
+      "limits": [
+        "This is a price correction, not conserved-timebase or NO_TRADES evidence. Non-positive, ambiguous, unrelated price/volume/close changes or missing source remain blocked. No trading grant."
+      ],
+      "automatic_action": "Existing revision_watcher and reconciliation lane",
+      "manual_action": "Confirmed current visual discrepancy remains required."
     }
   ],
   "sources": [

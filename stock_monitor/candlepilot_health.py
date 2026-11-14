@@ -8,6 +8,29 @@ from collections import Counter
 from datetime import datetime,timezone,timedelta
 FIELDS=('source','venue','currency','symbol')
 
+def diagnostic_scopes(rows,infos,policy):
+    """Describe saved report relevance without changing DQ or granting readiness."""
+    from eur_listings import owner_history_info,venue_allowed
+    groups={k:dict(series=0,problems=0,states={}) for k in ('current_scope','other_venue_archive','removed_instrument','unknown_identity')}
+    for row in rows:
+        if row['isin'] not in infos:scope='removed_instrument'
+        elif not all(row.get(k) for k in FIELDS):scope='unknown_identity'
+        elif venue_allowed(owner_history_info(infos[row['isin']],policy),row):scope='current_scope'
+        else:scope='other_venue_archive'
+        row['diagnostic_scope']=scope
+        unit=groups[scope];unit['series']+=1;unit['problems']+=row['state']!='READY'
+        unit['states'][row['state']]=unit['states'].get(row['state'],0)+1
+    return dict(groups=groups,meaning='Policy scope only; not current DQ validation or trading permission. Historical errors and rows preserved.')
+
+def diagnostic_scope_text(summary):
+    groups=summary.get('groups',{})
+    return 'Проблемные серии: текущая область {0}; архив других площадок {1}; удалённые инструменты {2}; источник не установлен {3}. Это не торговый допуск.'.format(
+        *(groups.get(k,{}).get('problems',0) for k in ('current_scope','other_venue_archive','removed_instrument','unknown_identity')))+\
+        '\nСнято в историю отчётов удалённых инструментов: {0}. Это очистка диагностики, не исправление свечей.'.format(summary.get('retired_reports',0))
+
+def retired_diagnostic_count(db):
+    return db.execute("SELECT count(*) FROM settings WHERE key LIKE 'cp_retired_diagnostic:%'").fetchone()[0]
+
 REVIEW_LABELS={
     'AWAITING_USER':'Нужна внешняя сверка; CP продолжает проверку источника',
     'AWAITING_SOURCE':'Ожидаются данные или подтверждение поставщика',
@@ -89,6 +112,9 @@ def collect(path,snapshot=None,problem_isin=None,problem_page=0):
         reconciliation['status_explanations']=REVIEW_LABELS.copy()
         reconciliation['awaiting_user_meaning']='Задания без внешнего подтверждения. CP продолжает ограниченную проверку собственных источников по next_check; это не число потерянных свечей и не остановка всей очереди.'
         infos={k:json.loads(v) for k,v in db.execute('SELECT isin,payload FROM instruments')}
+        policy_row=db.execute("SELECT value FROM settings WHERE key='cp_gettex_source_policy'").fetchone()
+        diagnostic_policy=json.loads(policy_row[0]) if policy_row else {}
+        retired_reports=retired_diagnostic_count(db)
         prefixes=('history_archive_progress:','data_quality:','interval_evidence:','cp_schedule:','cp_revision:','cp_eligibility:')
         settings={k:json.loads(v) for k,v in db.execute('SELECT key,value FROM settings WHERE '+ ' OR '.join('key LIKE ?' for _ in prefixes),[p+'%' for p in prefixes])}
         rows={};archive=set();success=[];no_trades=set()
@@ -147,6 +173,7 @@ def collect(path,snapshot=None,problem_isin=None,problem_page=0):
                         candidate['trade_blockers']=[*candidate.get('trade_blockers',[]),str(error)]
             live_candidates=[c for c in candidates if c['current_state']=='CURRENT']
             eligibility[isin]=dict(state=status,checked_at=saved.get('checked_at'),expires_at=saved.get('expires_at'),
+                last_failed_attempt=saved.get('last_failed_attempt'),
                 analysis_scope=saved.get('analysis_scope'),
                 error=saved.get('error'),context=saved.get('context'),candidates=live_candidates,
                 historical_candidates=[c for c in candidates if c.get('closed_inputs') and c['current_state']=='EXPIRED'],
@@ -162,6 +189,7 @@ def collect(path,snapshot=None,problem_isin=None,problem_page=0):
                 if approved:
                     shown=(approved.get('result') or {}).get('timeframe_context',{}).get(tf,{})
                 eligibility_rows.append(dict(isin=isin,name=info.get('name',isin),tf=tf,state='CURRENT' if row_valid else status,record_state=status,
+                    last_failed_attempt=saved.get('last_failed_attempt'),
                     identity=approved['identity'] if approved else unit.get('identity',{}),count=shown.get('count',shown.get('closed_bar_count')),first=shown.get('first'),last=shown.get('last'),
                     analysis_scope=saved.get('analysis_scope'),
                     context=approved['context'] if approved else 'full_closed_reference_v1' if full else unit.get('context'),bounded_blockers=unit.get('blockers',[]),
@@ -223,9 +251,12 @@ def collect(path,snapshot=None,problem_isin=None,problem_page=0):
                     as_of=(snapshot or {})['analysis_snapshot'].get('captured_at'),execution_permission=False)
 
     ordered=sorted(rows.values(),key=lambda r:(r['name'],r['source'] or '',r['venue'] or '',r['symbol'] or '',r['tf']))
+    scope_summary=diagnostic_scopes(ordered,infos,diagnostic_policy)
+    scope_summary['retired_reports']=retired_reports
     slots,unsupported=proof_slots(no_trades)
     result=dict(core=core,recovered_since_tracking=recovered,recovery_historical_total='UNKNOWN',no_trades_confirmed_5m_intervals=slots,no_trades_unquantified_ranges=unsupported,schema=1,generated_at=datetime.now(timezone.utc).isoformat(),instruments=len(infos),archive_series=len(archive),saved_dq_series=len(rows),states=dict(Counter(r['state'] for r in ordered)),rows=ordered,revision_changed_unique_candles=changes,revision_events=events,recovered_unique_candles=None,recovery_reason='Only new proven recovery writes tracked; historical total UNKNOWN; incoming raw rejection repairs not counted before persistence',no_trades_proof_ranges=len(no_trades),no_trades_unit='unique exact identity/start/end evidence ranges, NOT candles; different-sized overlapping ranges not merged',last_success=max(success,default=None),scope='Saved diagnostics only; READY reports are not current trading permission')
     tf_rows=[]
+    result['diagnostic_scopes']=scope_summary
     groups={tuple(r.get(k) for k in ('isin',*FIELDS)) for r in ordered}
     for group in sorted(groups,key=str):
         found={r['tf']:r for r in ordered if tuple(r.get(k) for k in ('isin',*FIELDS))==group}
@@ -385,6 +416,10 @@ def show(app):
             scope = row.get('analysis_scope')
             if scope:
                 context_text = tr('Область анализа: последние 5 лет, с ') + str(scope.get('start')) + tr('. Старые дефекты вне области; Max и архив сохранены.\n') + context_text
+            attempt=row.get('last_failed_attempt')
+            if attempt:
+                context_text+='\n'+tr('Последняя повторная оценка не завершена: ')+str(attempt.get('error'))
+                context_text+='\n'+tr('Предыдущие результаты проверяются по прежним данным и срокам; ошибка не продлевает допуск.')
             details.delete('1.0', 'end')
             details.insert('1.0', tr('{p0} · {p1}\n{p2}\n{p3}\nНастоящих свечей в контексте: {p4}\nПричины: ', p0=row['name'], p1=row['tf'], p2=labels.get(status.get('state'), tr('Неизвестно')), p3=context_text, p4=row.get('count')) + '; '.join((tr(eligibility_reason(x)) for x in row.get('blockers', []))) + tr('\nТорговля разрешается только действующим исполнительным контуром; эта панель не снимает ограничения.\n\nТехнические подробности:\n') + json.dumps(row, ensure_ascii=False, indent=2))
             return
@@ -414,6 +449,7 @@ def show(app):
         page_label.configure(text=tr('{p0}/{p1} · проблем {p2}; по 150 на странице', p0=review.get('page', 0) + 1, p1=review.get('pages', 1), p2=review.get('count', 0)) if review else '')
         header.configure(text=tr('CP: {p0} | Инструменты: {p1} | Архивные ряды: {p2} | DQ-ряды: {p3} | {p4}\nИзменено уникальных свечей (watcher): {p5} | Восстановлено с начала учёта: {p6} (исторически UNKNOWN) | NO_TRADES 5m-интервалов: {p7} (не квантовано: {p8})\nПоследнее успешное действие: {p9} | Чтение: {p10} с | Изменения: {p11}\nСохранённые DQ ≠ актуальный торговый допуск. Поиск фильтрует все сохранённые TF; отсутствующие отчёты не пересчитываются.', p0=result['activity'], p1=result['instruments'], p2=result['archive_series'], p3=result['saved_dq_series'], p4=result['states'], p5=result['revision_changed_unique_candles'], p6=result['recovered_since_tracking'], p7=result['no_trades_confirmed_5m_intervals'], p8=result['no_trades_unquantified_ranges'], p9=result['last_success'], p10=result['read_seconds'], p11=result['delta']))
         header.configure(text=header.cget('text').replace(str(result['activity']),activity_text,1))
+        header.configure(text=diagnostic_scope_text(result.get('diagnostic_scopes',{}))+'\n'+header.cget('text'))
         tv=[u['tv_risk'] for u in result.get('owner_controls',{}).values() if u.get('tv_risk')]
         if tv:
             header.configure(text=header.cget('text')+tr('\nПодобная проблема в TV: риск принят для {p0} диапазонов, актуальны {p1}. Остальные проверки анализа и демосчёта сохраняются.',p0=sum(x['reviewed_ranges'] for x in tv),p1=sum(x['active_ranges'] for x in tv)))

@@ -314,7 +314,7 @@ def _input_tracking(context):
 def _candidate_proof(store, specs, token):
     from performance_cache import capture_closed_inputs,InputRevisionChanged
     with store.connect() as db:
-        db.execute('BEGIN')
+        if not db.in_transaction:db.execute('BEGIN')
         if any((db.execute('SELECT revision FROM input_revisions WHERE scope=?',(k,)).fetchone() or [0])[0]!=v for k,v in token.items()):
             raise InputRevisionChanged('Candidate inputs changed before proof')
         return capture_closed_inputs(db,specs,token)
@@ -347,6 +347,12 @@ def _owner_analysis_candidate(context, info, tf, now):
 
 def assess_all(context, info, now, benchmark=None):
     """Read-only automatic assessment in the existing snapshot worker scope."""
+    from calculation_reuse import using
+    with using(getattr(getattr(context,'store',None),'read_cache',None)):
+        return _assess_all(context,info,now,benchmark)
+
+
+def _assess_all(context, info, now, benchmark=None):
     from analytics import TIMEFRAMES
     from trading_engine import evaluate, profile, VERSION
     from paper_account import instrument_allowed
@@ -394,7 +400,7 @@ def assess_all(context, info, now, benchmark=None):
                 key=(tuple(identity.get(k) for k in IDENTITY),t)
                 if key not in aligned_cache:
                     with _input_tracking(context) as aligned_token:
-                        frame=Desktop014._frame_uncached(context,info,t,required_identity=identity)
+                        frame=context.pinned_frame(info,t,identity)
                         row=bounded_features({**state,'expected_identity':identity},frame,t,now)
                     row['_input_revisions']=dict(aligned_token)
                     aligned_cache[key]=(row,frame)
@@ -571,32 +577,34 @@ def _owner_initialization_current(record):
     return all(c.get('owner_initialization_semantics')==3 for c in (record or {}).get('candidates',[]) if c.get('owner_reviewed_analysis'))
 
 
-def eligibility_turn(store, info):
-    """One instrument, all TF, in the existing CP writer process; no network."""
+def calculate_eligibility(store, info):
+    """Existing all-TF assessment, read-only; acquisition need not wait for it."""
     import json
     from snapshot_worker import SnapshotContext, Value
     from paper_account import UNIVERSE_VERSION
     isin=info['isin'];key='cp_eligibility:'+isin
-    # Any ordinary CP queue turn can fulfil a saved TV review request, not only
-    # the feed turn which originally created it. Capture before calculation;
-    # complete_analysis_request compares this exact request again atomically.
-    with store.connect() as db:
-        row=db.execute('SELECT value FROM settings WHERE key=?',('cp_reconciliation_progress:'+isin,)).fetchone()
-        requested=(json.loads(row[0]) if row else {}).get('analysis_requested_at')
-    def receipt(result):
-        if requested:
-            from cp_reconciliation import complete_analysis_request
-            complete_analysis_request(store,isin,requested,result)
-        return result
     reused=None
     with store.connect() as db:
         db.execute('BEGIN')
         prior=db.execute('SELECT value FROM settings WHERE key=?',(key,)).fetchone()
         prior=json.loads(prior[0]) if prior else None
         if prior and prior.get('paper_universe_version')==UNIVERSE_VERSION and prior.get('input_binding_version')==2 and prior.get('closed_input_semantics')==2 and _owner_initialization_current(prior) and eligibility_state(db,prior,pd.Timestamp.now(tz='UTC'))=='CURRENT': reused=prior
-    if reused is not None:return receipt(reused)
+    if reused is not None:return reused
     now=pd.Timestamp.now(tz='UTC')
+    # The same WAL read view must serve both Store and dependency tracking.
+    # Otherwise a verified receipt renewal can abort _record midway through
+    # the calculation, before the existing exact-input comparison is reached.
+    import copy
+    from contextlib import contextmanager
+    from performance_cache import ReadCache,capture_closed_inputs,validate_closed_inputs,InputRevisionChanged
+    live_store=store
+    store=copy.copy(live_store);store.read_cache=ReadCache(live_store.path)
+    @contextmanager
+    def connect():yield store.read_cache.db
+    store.connect=connect
     try:
+        captured_db=store.read_cache.db
+        captured_db.execute('PRAGMA query_only=ON');captured_db.execute('BEGIN')
         with store.read_cache.track_inputs(isolated=True) as token:
             store.read_cache.depend('instrument:'+isin)
             with store.connect() as db:
@@ -612,24 +620,75 @@ def eligibility_turn(store, info):
             result['paper_universe_version']=UNIVERSE_VERSION
             result['_input_revisions']=dict(token)
             store.read_cache.assert_current(token)
-        with store.connect() as db:
-            db.execute('BEGIN IMMEDIATE')
-            publication_state=eligibility_state(db,result,pd.Timestamp.now(tz='UTC'))
-            if publication_state not in ('CURRENT','EXPIRED'):
-                raise ValueError('ELIGIBILITY_INPUT_CHANGED: '+publication_state)
-            # A shorter TF can expire while all TF are calculated. Keep the
-            # checked evidence; every reader/executor still validates each
-            # candidate's original deadline and actual closed dependencies.
-            # Do not extend deadlines or publish an expired trading permission.
-            result['publication_state']=publication_state
-            db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',(key,json.dumps(result,ensure_ascii=False,allow_nan=False)))
-        return receipt(result)
+            # Owner contexts use clones with their own closed_specs. Include
+            # those exact ranges as well as the ordinary context/benchmark.
+            specs=list(ctx.closed_specs.values())
+            for candidate in result.get('candidates',[]):
+                specs.extend(item['spec'] for item in (candidate.get('closed_inputs') or {}).get('series',[]))
+            proof=capture_closed_inputs(captured_db,specs,token)
+        # Release the reader before validation; no database backup or writer
+        # lock during analysis. Uncovered inputs stay strictly revision-bound.
+        store.read_cache.close();store=None
+        with live_store.connect() as db:
+            db.execute('BEGIN')
+            current=validate_closed_inputs(db,proof)
+            for scope,revision in token.items():
+                if scope in current:continue
+                actual=(db.execute('SELECT revision FROM input_revisions WHERE scope=?',(scope,)).fetchone() or [0])[0]
+                if actual!=revision:raise InputRevisionChanged('Uncovered eligibility input changed: '+scope)
+                current[scope]=actual
+        # Rebind only the publication token. Candidate closed proofs, executor
+        # revisions and all deadlines remain exactly as calculated originally.
+        result['_input_revisions']=current
+        live_store.read_cache.assert_current(current)
+        return result
     except Exception as error:
-        # Never retain an old READY through a failed re-evaluation.
-        result=dict(isin=isin,error=type(error).__name__+': '+str(error),checked_at=now.isoformat(),
+        return dict(isin=isin,error=type(error).__name__+": "+str(error),checked_at=now.isoformat(),
                     expires_at=(now+pd.Timedelta(minutes=5)).isoformat())
-        store.set_setting(key,result)
-        return receipt(result)
+    finally:
+        if store is not None:store.read_cache.close()
+
+
+def publish_eligibility(store,info,result):
+    """Short validated publication; never publish stale dependencies as READY."""
+    import json
+    if result is None:return None
+    with store.connect() as db:
+        db.execute('BEGIN IMMEDIATE')
+        saved=result
+        if not result.get('error'):
+            state=eligibility_state(db,result,pd.Timestamp.now(tz='UTC'))
+            if state not in ('CURRENT','EXPIRED'):
+                raise ValueError('ELIGIBILITY_INPUT_CHANGED: '+state)
+            result=dict(result,publication_state=state)
+            result.pop('last_failed_attempt',None)
+            saved=result
+        else:
+            # A failed refresh is not a replacement calculation. Retain exact
+            # prior evidence: every consumer still validates its own inputs,
+            # expiry and execution guards. Return the error so retry stays due.
+            prior=db.execute('SELECT value FROM settings WHERE key=?',
+                ('cp_eligibility:'+info['isin'],)).fetchone()
+            prior=json.loads(prior[0]) if prior else None
+            if prior and not prior.get('error'):
+                saved=dict(prior,last_failed_attempt={k:result[k] for k in
+                    ('isin','error','checked_at','expires_at') if k in result})
+        db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',
+            ('cp_eligibility:'+info['isin'],json.dumps(saved,ensure_ascii=False,allow_nan=False)))
+    return result
+
+
+def eligibility_turn(store, info):
+    """Preserve the entry point; the live feed only requests the owned read worker."""
+    if getattr(store,'defer_eligibility',False):
+        from cp_assessment import request
+        return request(store,info['isin'])
+    requested=store.setting('cp_reconciliation_progress:'+info['isin'],{}).get('analysis_requested_at')
+    result=publish_eligibility(store,info,calculate_eligibility(store,info))
+    if requested:
+        from cp_reconciliation import complete_analysis_request
+        complete_analysis_request(store,info['isin'],requested,result)
+    return result
 
 
 def eligibility_due(store, infos, now):

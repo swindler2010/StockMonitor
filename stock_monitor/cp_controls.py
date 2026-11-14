@@ -388,8 +388,50 @@ def _revisions(db,scopes):
     return {s:(db.execute('SELECT revision FROM input_revisions WHERE scope=?',(s,)).fetchone() or [0])[0] for s in scopes}
 
 
+def _reviewed_market_tail_current(db,isin,entry,token,current):
+    """Revalidate an issued exact gap receipt after ONLY its market clock moved.
+
+    New bars outside the reviewed neighbourhood are not a changed permission.
+    Every policy, DQ, listing, observation and unknown scope remains strict.
+    This read does not renew tokens, extend deadlines or create a grant.
+    """
+    try:
+        p=entry['problem'];e=entry['evidence'];meta=p['identity']
+        market='market:'+isin+':'+p['tf']
+        required={'instrument:'+isin,market,'setting:'+p['report_key'],
+                  'setting:gettex_chart:'+isin+':'+p['tf']}
+        if (p['isin']!=isin or p['kind']!='archive' or p['tf']!='15m'
+                or meta.get('source')!='gettex_chart' or meta.get('venue')!='GETTEX'
+                or meta.get('currency')!='EUR' or not required<=set(token)
+                or {k for k in token if token[k]!=current[k]}!={market}
+                or not isinstance(token[market],int) or current[market]<=token[market]):return False
+        if entry['actor']==REVIEWED_ACTOR:
+            if 'setting:'+REVIEWED_PREFIX+isin not in token:return False
+            return _reviewed_binding(db,read_instrument(db,isin),p)==e['native_binding']
+        if entry['actor']!=TV_ACTOR or e.get('native_binding_version')!=2:return False
+        import cp_reconciliation as rv
+        import pandas as pd
+        jobs=e.get('job_ids',[])
+        if len(jobs)!=1:return False
+        job_key=rv.PREFIX+isin+':'+jobs[0]
+        if not {'setting:'+TV_POLICY,'setting:'+job_key,'setting:interval_evidence:'+isin,
+                'setting:history_identity:'+isin}<=set(token):return False
+        job=read(db,job_key,{})
+        obs=job.get('observation',{})
+        if (job.get('isin')!=isin or job.get('identity')!=meta or job.get('tf')!=p['tf']
+                or obs.get('result')!='ABSENT' or obs.get('identity_confirmed') is not True
+                or not obs.get('tv_symbol','').startswith('GETTEX:')
+                or not _covered([p['range']],[[job['first'],job['last']]])):return False
+        inputs=rv._input(db,job)
+        if inputs['rows'] or _tv_native_binding(job,inputs)!=e['native_binding']:return False
+        finding=rv._classify(job,inputs,pd.Timestamp.now(tz='UTC'))
+        return (finding.get('state') in ('GAP','UNCONFIRMED','SOURCE_TIMEBASE_UNCONFIRMED')
+                and not finding.get('reason','').startswith('EXCHANGE_NOTICE_CONFLICT'))
+    except (ValueError,KeyError,TypeError):return False
+
+
 def effective_accepted(db,isin,grant):
-    """Auto receipts expire on any consulted input change, even before CP runs."""
+    """Recheck issued receipts; material/unknown changes block before CP runs."""
     policy=read(db,AUTO_POLICY,{})
     enabled=(policy.get('enabled') is True and policy.get('version')==AUTO_VERSION and
              isin not in policy.get('excluded_isins',[]))
@@ -398,8 +440,10 @@ def effective_accepted(db,isin,grant):
         if entry.get('actor')==REVIEWED_ACTOR:
             policy=read(db,REVIEWED_PREFIX+isin,{})
             token=entry.get('input_revisions',{})
+            current=_revisions(db,token)
             if (policy.get('version')==REVIEWED_VERSION and policy.get('approved') is True
-                    and pid in policy.get('entries',{}) and token and _revisions(db,token)==token
+                    and pid in policy.get('entries',{}) and token
+                    and (current==token or _reviewed_market_tail_current(db,isin,entry,token,current))
                     and all(entry.get('problem',{}).get(k)==policy['entries'][pid]['problem'].get(k)
                             for k in ('id','isin','kind','identity','tf','range','report_key','state'))
                     and entry.get('evidence',{}).get('policy_digest')==digest(policy)):
@@ -407,7 +451,9 @@ def effective_accepted(db,isin,grant):
             continue
         if entry.get('actor')==TV_ACTOR:
             token=entry.get('input_revisions',{})
-            if not _tv_enabled(db,isin) or not token or _revisions(db,token)!=token:continue
+            if not _tv_enabled(db,isin) or not token:continue
+            current=_revisions(db,token)
+            if current!=token and not _reviewed_market_tail_current(db,isin,entry,token,current):continue
             result[pid]=entry
             continue # New explicit policy; never revive old historical grants.
         review=grant.get('historical_review',{})
@@ -541,12 +587,12 @@ def manual_gate(db,isin,identity,entry_tf=None,dependency_proof=None):
     required=None
     if dependency_proof is not None:
         from trading_engine import profile
-        from performance_cache import validate_closed_inputs,InputRevisionChanged
-        if entry_tf=='1H':
+        from performance_cache import validate_closed_inputs,InputRevisionChanged,primary_closed_series
+        if entry_tf in ('1H','4H'):
             from paper_hourly import authorize_hourly
             authorize_hourly(db,isin,identity)
         elif entry_tf not in ('5m','15m'):raise ValueError('PAPER_MANUAL_DEPENDENCY_SCOPE')
-        own=[s for s in dependency_proof.get('series',[]) if s['spec'].get('isin')==isin]
+        own=primary_closed_series(dependency_proof,isin,identity)
         if (not set((entry_tf,*profile(entry_tf)))<={s['spec'].get('timeframe') for s in own if s.get('count',0)>0}
                 or any(s['spec'].get('identity')!=identity for s in own)):
             raise ValueError('PAPER_MANUAL_DEPENDENCY_SCOPE')
@@ -613,6 +659,23 @@ def historical_review_turn(store,info,now=None):
         db.execute('BEGIN');grant=read(db,key,{})
         review=grant.get('historical_review',{})
         if review.get('version')!=1:return {'state':'NOT_REQUESTED'}
+        if _review_receipts_retired(grant):
+            # This was a review of OLD authorizations, not a second archive
+            # recovery loop. Once all targets were examined and every original
+            # receipt revoked, new quotes cannot reopen those permissions.
+            # Ordinary DQ/recovery and current independently issued grants
+            # remain revision-bound and continue through their normal queues.
+            if not review.get('receipts_retired') or review.get('execution_suspended') or review.get('state')!='COMPLETE':
+                db.execute('ROLLBACK');db.execute('BEGIN IMMEDIATE')
+                current=read(db,key,{})
+                if digest(current)!=digest(grant):raise ValueError('RISK_REVIEW_INPUT_CHANGED')
+                review=current['historical_review']
+                review.update(state='COMPLETE',execution_suspended=False,receipts_retired=True,
+                    retired_at=clock.isoformat(),retirement_basis='All original receipts reviewed and revoked; current DQ/recovery remain active')
+                write(db,key,current)
+                return dict(state='COMPLETE',reviewed=len(review['results']),total=len(review['targets']),
+                            summary=review.get('summary',{}),revoked=0,receipts_retired=True)
+            return dict(state='UNCHANGED',reviewed=len(review['results']),summary=review.get('summary',{}),receipts_retired=True)
         original=digest(grant);groups={}
         proven_auto={pid for pid,e in effective_accepted(db,isin,grant).items() if e.get('actor')==AUTO_ACTOR}
         for pid,entry in review.get('targets',{}).items():
@@ -704,11 +767,24 @@ def historical_review_due(store,infos,now=None):
     pending=[];clock=pd.Timestamp(now or stamp())
     with store.connect() as db:
         for info in infos:
-            review=read(db,'cp_manual_risk:'+info['isin'],{}).get('historical_review',{})
+            grant=read(db,'cp_manual_risk:'+info['isin'],{})
+            review=grant.get('historical_review',{})
+            if _review_receipts_retired(grant) and review.get('receipts_retired'):continue
             retry_due=any(r.get('state')=='WAITING' and r.get('next_retry') and pd.Timestamp(r['next_retry'])<=clock for r in review.get('results',{}).values())
             if review.get('state') in ('PENDING','RUNNING') or retry_due:
                 pending.append((review.get('checked_at',''),info))
     return [dict(min(pending,key=lambda x:x[0])[1],_review_only=True)] if pending else []
+
+
+def _review_receipts_retired(grant):
+    """No count-only or flag-only shortcut; inspect exact reviewed target IDs."""
+    review=grant.get('historical_review',{})
+    targets=review.get('targets',{})
+    results=review.get('results',{})
+    return bool(review.get('version')==1 and targets and set(targets)<=set(results)
+        and all(results[k].get('state') for k in targets)
+        and not any(_original_review_receipt(review,pid,entry)
+                    for pid,entry in grant.get('accepted',{}).items()))
 
 
 RISK_CONTEXT='owner_accepted_estimated_close_v2'
@@ -795,20 +871,28 @@ def _covered(ranges, approved):
         if i<0 or a>b or b>ends[i]:return False
     return True
 
+def _gap_entry_matches(entry, isin, identity, base):
+    p=entry.get('problem',{})
+    return (p.get('isin')==isin and p.get('kind')=='archive' and p.get('tf')==base
+            and p.get('identity')==identity and p.get('state') in ('GAP','UNCONFIRMED','SOURCE_GAP')
+            and bool(p.get('range')))
+
+
 def attach_tv_absence(store, frame, isin, base):
     """Current owner receipts, separate from exchange-proven NO_TRADES.
 
-    No OHLCV or DQ writes. Track even rejected receipts so cached display and
-    analysis cannot outlive a changed observation, policy, identity or revision.
+    No OHLCV or DQ writes. Track even rejected matching receipts so cached
+    display/analysis cannot outlive relevant evidence. Other bases/listings
+    are not inputs; changes to the grant itself remain strictly tracked.
     """
     frame.attrs.pop('tv_accepted_absence',None)
     key='cp_manual_risk:'+isin
     for scope in ('setting:'+key,'setting:'+TV_POLICY):store.read_cache.depend(scope)
     grant=store.setting(key,{})
-    for entry in grant.get('accepted',{}).values():
-        if entry.get('actor')==TV_ACTOR:
-            for scope in entry.get('input_revisions',{}):store.read_cache.depend(scope)
     identity={k:frame.attrs.get(k) for k in IDENTITY}
+    for entry in grant.get('accepted',{}).values():
+        if entry.get('actor')==TV_ACTOR and _gap_entry_matches(entry,isin,identity,base):
+            for scope in entry.get('input_revisions',{}):store.read_cache.depend(scope)
     if identity.get('venue')!='GETTEX' or identity.get('currency')!='EUR':return frame
     with store.connect() as db:accepted=effective_accepted(db,isin,grant)
     ranges=[];ids=[]
@@ -891,7 +975,9 @@ def accepted_gap_input(store,info,frame,base,now):
     if identity.get('currency')!='EUR' or not confirmed_listing(info,meta):return out
     inherited=meta.get('data_quality',{})
     if inherited.get('state') not in ('READY','GAP','UNCONFIRMED','SOURCE_GAP','STALE'):return out
-    report=dq.audit(frame,base,expected=identity,now=now)
+    from timeframes import MINUTES
+    report=dq.audit(frame,base,expected=identity,now=now,
+        check_stale=not bool(meta.get('closed_parent_input') and base in MINUTES))
     if report['state'] not in ('READY','GAP','UNCONFIRMED') or report.get('stale_count'):return out
     policy=initialization_policy_for(store,info,identity)
     # A verified clean daily archive has no gap grant to carry this policy.
@@ -902,10 +988,9 @@ def accepted_gap_input(store,info,frame,base,now):
     approved=[];ids=[];tv_ids=[];reviewed_ids=[]
     for pid,entry in accepted.items():
         if not instrument_allowed(info):continue
-        for scope in entry.get('input_revisions',{}):store.read_cache.depend(scope)
         p=entry.get('problem',{})
-        if (p.get('isin')==info['isin'] and p.get('kind')=='archive' and p.get('tf')==base
-                and p.get('identity')==identity and p.get('state') in ('GAP','UNCONFIRMED','SOURCE_GAP') and p.get('range')):
+        if _gap_entry_matches(entry,info['isin'],identity,base):
+            for scope in entry.get('input_revisions',{}):store.read_cache.depend(scope)
             approved.append(p['range']);ids.append(pid)
             if entry.get('actor') in (TV_ACTOR,REVIEWED_ACTOR):tv_ids.append(pid)
             if entry.get('actor')==REVIEWED_ACTOR:reviewed_ids.append(pid)
@@ -1207,6 +1292,8 @@ def service_request(info,store,recover_gettex,now=None):
             remaining=unit.get('blockers',[])
             out=dict(state='BLOCKED' if remaining or assessment.get('error') else 'RECHECKED',
                 reason='; '.join(remaining) or assessment.get('error') or 'Штатная оценка обновлена; это не разрешение сделки')
+            if assessment.get('deferred'):
+                out=dict(state='WAITING',next_retry=(clock+pd.Timedelta(minutes=5)).isoformat(),reason='Оценка поставлена в существующую очередь расчётов')
         elif not p.get('range') or p['tf'] not in ('5m','15m','1H','1D'):
             out=dict(state='BLOCKED',reason='Нет адресного повреждённого диапазона для recovery. CORE/прогрев нельзя исправить вымышленными свечами')
         else:
@@ -1219,26 +1306,41 @@ def service_request(info,store,recover_gettex,now=None):
                 from gettex_chart import recovery_wait
                 delays.append(recovery_wait(store,info,meta,p['tf'],clock))
             future=[pd.Timestamp(t) for t in delays if t and pd.Timestamp(t)>clock]
-            if future:out=dict(state='WAITING',next_retry=max(future).isoformat(),reason='Ожидание cooldown / Retry-After источника')
-            else:
-                if meta['source']=='gettex':callback=lambda symbol,interval,start,end=None:recover_gettex(symbol,start,end,p['tf'])
-                elif meta['source']=='gettex_chart':
-                    from gettex_chart import recovery_download
-                    callback=lambda symbol,interval,start,end=None:recovery_download(store,info,meta,p['tf'],start,end,clock)
-                elif meta['source']=='proxy':callback=lambda symbol,interval,start,end=None:history_service.download(symbol,interval,start,end,store=store,expected=meta)
-                else:raise ValueError('Для этого источника нет подтверждённого адресного recovery')
-                item['last_attempt_at']=clock.isoformat()
-                report=dq.repair(info,store,meta['symbol'],p['tf'],meta,callback,clock,max_ranges=1,target_range=p['range'])
-                a,b=map(pd.Timestamp,p['range']);remaining=any(pd.Timestamp(x)<=b and pd.Timestamp(y)>=a for x,y in report.get('ranges',[]))
-                if not remaining and report.get('state') not in ('INVALID','SOURCE_UNAVAILABLE','RECOVERING'):
-                    out=dict(state='COMPLETED',reason='Выбранный диапазон больше не имеет этой DQ-проблемы; остальные проверки сохранены')
-                elif report.get('next_retry'):
-                    out=dict(state='WAITING',next_retry=report['next_retry'],reason=report.get('recovery_error') or report.get('state'))
-                else:out=dict(state='BLOCKED',reason=report.get('recovery_constraints',{}).get('status') or report.get('state','UNCONFIRMED'))
-                out['quality']=report.get('state');item['attempts']=item.get('attempts',0)+1
+            # Validate available local data even during provider cooldown. The
+            # bounded budget covers legacy/owner requests as well as new ones.
+            capped=item.get('attempts',0)>=3
+            if meta['source']=='gettex':adapter=lambda symbol,interval,start,end=None:recover_gettex(symbol,start,end,p['tf'])
+            elif meta['source']=='gettex_chart':
+                from gettex_chart import recovery_download
+                adapter=lambda symbol,interval,start,end=None:recovery_download(store,info,meta,p['tf'],start,end,clock)
+            elif meta['source']=='proxy':adapter=lambda symbol,interval,start,end=None:history_service.download(symbol,interval,start,end,store=store,expected=meta)
+            else:raise ValueError('Для этого источника нет подтверждённого адресного recovery')
+            attempted=False
+            def callback(symbol,interval,start,end=None):
+                nonlocal attempted
+                attempted=True
+                return adapter(symbol,interval,start,end=end)
+            try:
+                report=dq.repair(info,store,meta['symbol'],p['tf'],meta,callback,clock,max_ranges=1,target_range=p['range'],
+                    local_only=capped or bool(future),network_not_before=max(future).isoformat() if future else None)
+            finally:
+                if attempted:
+                    item['last_attempt_at']=clock.isoformat();item['attempts']=item.get('attempts',0)+1
+            if report.get('recovery_provider_attempted') and not attempted:
+                item['last_attempt_at']=clock.isoformat();item['attempts']=item.get('attempts',0)+1
+            a,b=map(pd.Timestamp,p['range']);remaining=any(pd.Timestamp(x)<=b and pd.Timestamp(y)>=a for x,y in report.get('ranges',[]))
+            if not remaining and report.get('state') not in ('INVALID','SOURCE_UNAVAILABLE','RECOVERING'):
+                out=dict(state='COMPLETED',reason='Выбранный диапазон больше не имеет этой DQ-проблемы; остальные проверки сохранены')
+            elif report.get('next_retry') or future:
+                retries=[pd.Timestamp(t) for t in [report.get('next_retry'),*future] if t]
+                out=dict(state='WAITING',next_retry=max(retries).isoformat(),reason=report.get('recovery_error') or report.get('state'))
+                if report.get('recovery_wait')=='PROVIDER' and not report.get('recovery_error'):
+                    out['reason']='WAITING_PROVIDER: проверка источника не ранее '+out['next_retry']+'; DQ '+str(report.get('state'))
+            else:out=dict(state='BLOCKED',reason=report.get('recovery_constraints',{}).get('status') or report.get('state','UNCONFIRMED'))
+            out['quality']=report.get('state')
         item.update(out,finished_at=stamp())
     except Exception as error:item.update(state='BLOCKED',reason=str(error),finished_at=stamp())
-    if _automatic_request(item):
+    if _automatic_request(item) or item.get('attempts',0)>=3:
         if item.get('state')=='WAITING' and item.get('attempts',0)>=3:
             item.update(state='BLOCKED',reason='Три адресные попытки без исправления; новая попытка при новых доказательствах или плановой перепроверке. '+item.get('reason',''))
         if item.get('state')=='BLOCKED':

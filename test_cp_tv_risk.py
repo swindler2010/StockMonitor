@@ -43,7 +43,9 @@ class TVRisk(unittest.TestCase):
   self.prepare(False);self.assertEqual(self.turn()['state'],'DISABLED');self.assertFalse(self.accepted())
  def test_changed_native_rows_or_identity_revoke_without_waiting_for_cp(self):
   self.prepare();self.turn()
-  with self.s.connect() as d:d.execute('update candles set close=100.5 where isin=? and ts=?',(self.i['isin'],str(self.raw.index[-1])))
+  # A price adjacent to the reviewed gap is a material change. A distant
+  # tail/name is deliberately outside the existing v2 native binding.
+  with self.s.connect() as d:d.execute('update candles set close=100.5 where isin=? and ts=?',(self.i['isin'],'2026-10-28 10:00:00'))
   self.assertFalse(self.accepted())
   self.s.save_instrument(dict(self.i,name='Changed input'))
   self.assertEqual(self.turn()['accepted'],0)

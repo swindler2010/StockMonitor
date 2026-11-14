@@ -29,7 +29,9 @@ class Review(unittest.TestCase):
   self.assertEqual(r['summary'],{'UNCONFIRMED':1});self.assertEqual(self.store.setting('cp_manual_risk:'+self.isin)['accepted'],{})
   f=self.frame.copy();f.index=pd.to_datetime(['2026-10-26 10:00']);self.store.save_frame(self.isin,'gettex','5m',f)
   r=cp.historical_review_turn(self.store,self.info,self.now)
-  self.assertEqual(r['summary'],{'RESOLVED':1})
+  # Revoked original permission stays revoked. Current data belongs to normal
+  # DQ/recovery, not a perpetually reopened historical permission review.
+  self.assertTrue(r['receipts_retired']);self.assertEqual(r['summary'],{'UNCONFIRMED':1})
   with patch.object(dq,'audit',side_effect=AssertionError('unchanged data audited')):
    self.assertEqual(cp.historical_review_turn(self.store,self.info,self.now)['state'],'UNCHANGED')
  def test_invalid_real_candle_and_misaligned_range_stay_blocked(self):
@@ -65,7 +67,7 @@ class Review(unittest.TestCase):
   self.assertEqual(cp.historical_review_due(self.store,[self.info],self.now),[])
   self.assertEqual(len(cp.historical_review_due(self.store,[self.info],end)),1)
   result=cp.historical_review_turn(self.store,self.info,end)
-  self.assertEqual(result['summary'],{'UNCONFIRMED':1})
+  self.assertTrue(result['receipts_retired']);self.assertEqual(result['summary'],{'WAITING':1})
   self.assertEqual(cp.historical_review_due(self.store,[self.info],end),[])
   self.assertFalse(self.store.setting('cp_manual_risk:'+self.isin)['accepted'])
  def test_batched_progress_survives_restart(self):
@@ -74,14 +76,14 @@ class Review(unittest.TestCase):
   self.store.read_cache.close();self.store=Store(self.tmp.name)
   second=cp.historical_review_turn(self.store,self.info,self.now);self.assertEqual(second['reviewed'],2);self.assertEqual(second['state'],'COMPLETE')
   self.assertEqual(len(self.store.setting('cp_manual_risk:'+self.isin)['historical_review']['targets']),2)
- def test_changed_children_reopen_review_until_all_groups_current(self):
+ def test_changed_children_do_not_reopen_retired_authorizations(self):
   self.store.set_setting(dq.key(self.info,self.isin,'15m'),dict(self.q,base_tf='15m'))
   self.begin()
   for _ in range(2):cp.historical_review_turn(self.store,self.info,self.now)
   with self.store.connect() as db:db.execute('INSERT OR REPLACE INTO input_revisions VALUES (?,?)',('market:'+self.isin+':1m',99))
-  first=cp.historical_review_turn(self.store,self.info,self.now);self.assertEqual(first['state'],'RUNNING')
-  with self.assertRaisesRegex(ValueError,'REVIEW_PENDING'):self.gate()
-  second=cp.historical_review_turn(self.store,self.info,self.now);self.assertEqual(second['state'],'COMPLETE')
+  first=cp.historical_review_turn(self.store,self.info,self.now);self.assertTrue(first['receipts_retired'])
+  with self.assertRaisesRegex(ValueError,'NOT_GRANTED'):self.gate()
+  second=cp.historical_review_turn(self.store,self.info,self.now);self.assertEqual(second['state'],'UNCHANGED')
  def test_existing_worker_resumes_review_without_network_or_chart_open(self):
   from feed_worker import FeedContext
   self.begin();due=cp.historical_review_due(self.store,[self.info]);self.assertEqual(len(due),1)

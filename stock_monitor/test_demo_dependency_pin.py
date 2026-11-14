@@ -17,7 +17,7 @@ class ApprovedDependencyPin(unittest.TestCase):
   self.policy=dict(version=cp.DEMO_ALL_INITIALIZATION,isin=self.info['isin'],identity=self.identity,
    account=ACCOUNT,approved=True,authority=cp.DEMO_ALL_POLICY,entry_timeframes=['15m'],analysis_timeframes=list(LABELS),older_verified_warmup=True)
   self.c=SnapshotContext();self.c.analysis_only=True;self.c.analysis_at=pd.Timestamp('2026-11-02T22:00Z')
-  cache=SimpleNamespace(depend=lambda *a:None,dependencies=lambda **k:{},get=lambda k,f,**kw:f())
+  cache=SimpleNamespace(depend=lambda *a:None,dependencies=lambda **k:{},get=lambda k,f,**kw:f(),token_for=lambda scopes:{})
   self.c.store=SimpleNamespace(read_cache=cache,setting=lambda k,d=None:d)
   self.c.timeframe=Value('15m');self.c.period=Value('Max')
   self.c.user_state=lambda i:{'benchmark_id':'missing'};self.c.source_mode=lambda i:'gettex'

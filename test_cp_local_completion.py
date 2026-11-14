@@ -62,7 +62,7 @@ class LocalCompletion(unittest.TestCase):
   self.assertEqual(self.turn()['state'],'IDLE')
  def test_unregistered_and_other_provider_archives_are_not_selected(self):
   self.seed(SAP);self.s.db.execute('DELETE FROM instruments WHERE isin=?',(SAP,))
-  self.s.db.execute('INSERT INTO series VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',(APPLE,'gettex_chart','GETTEX','EUR','AAPL.GTX','15m','2026-11-03 11:00:00',100,101,99,100,2));self.s.db.commit()
+  self.s.db.execute('INSERT INTO series VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',(APPLE,'proxy','FRA','EUR','APC.F','15m','2026-11-03 11:00:00',100,101,99,100,2));self.s.db.commit()
   self.assertEqual(self.turn()['state'],'IDLE');self.assertIsNone(self.s.setting('history_archive_progress:'+SAP))
  def test_disabled_policy_cannot_start_local_stage(self):
   self.seed();self.s.set_setting('cp_gettex_source_policy',dict(POLICY,approved=False));before=self.s.db.total_changes

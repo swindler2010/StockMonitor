@@ -28,10 +28,8 @@ BG='#0b1220';TEXT='#e5e7eb';MUTED='#94a3b8';BLUE='#60a5fa'
 PERIODS={'день':None,'неделя':None,'месяц':1,'6 месяцев':6,'год':12,'2 года':24,'5 лет':60,'Max':None}
 ALIASES={'Последние':'неделя','1 месяц':'месяц','1 год':'год'}
 from timeframes import LABELS as TF, base_for
-DEFAULT_IND={'EMA':True,'SMA':False,'Bollinger':False,'VWAP':False,'RSI':False,'MACD':False,'ATR':False,'Объём':True,'Средний объём':False,'Относительный объём':False,'ema_fast':10,'ema_slow':30,'sma':20,'rsi':14,'atr':14,'bb':20,'bb_dev':2,'volume':20}
-DEFAULT_IND.update(macd_fast=12,macd_slow=26,macd_signal=9)
-DEFAULT_IND['Volume Profile']=False
-DEFAULT_IND['Уровни анализа']=True
+from indicator_controls import DEFAULT_IND
+
 
 def number(value):
     try:return f'{float(value):.2f}' if math.isfinite(float(value)) else 'недостаточно истории'
@@ -55,6 +53,8 @@ class Desktop014:
             style.map(name,fieldbackground=[('readonly',palette['panel'])],foreground=[('readonly',TEXT)],background=[('selected',BLUE)])
         for name in ('Muted.TLabel','PanelMuted.TLabel'):style.configure(name,foreground=MUTED)
         for name in ('Title.TLabel','Price.TLabel','Decision.TLabel'):style.configure(name,foreground=TEXT,font=('Segoe UI',16,'bold'))
+        from compact_theme import install
+        install(self.root,palette)
         self.root.option_add('*TCombobox*Listbox.background',palette['panel']);self.root.option_add('*TCombobox*Listbox.foreground',TEXT)
         self.root.option_add('*Text.background',BG);self.root.option_add('*Text.foreground',TEXT)
         def recolor(widget):
@@ -121,7 +121,8 @@ class Desktop014:
         signature=self.current_quality_signature()
         if signature!=self.quality_signature:
             self.quality_signature=signature
-            self.render_key=None;self.refresh_chart()
+            # New data/quality is not a new user selection. Preserve zoom/pan.
+            self.refresh_chart()
         self.root.after(1000,self.quality_tick)
 
     def _load_cached(self):
@@ -133,15 +134,16 @@ class Desktop014:
     def build_ui(self):
         from text_menu import install_text_menus
         install_text_menus(self.root)
-        self._styles();style=ttk.Style();style.configure('TButton',padding=(5,3));style.configure('Title.TLabel',font=('Segoe UI',16,'bold'))
+        self._styles();style=ttk.Style();style.configure('Title.TLabel',font=('Segoe UI',16,'bold'))
         from freshness_panel import show as show_freshness, label as freshness_label
+        from development_advisor_view import show as show_development_advisor
         menu=tk.Menu(self.root)
         for title,entries in [
             ('Файл',[('Добавить инструмент',self.add_stock_dialog),('Копия базы',self.backup_data),('Импорт базы',self.import_legacy_data),('Выход',self.close)]),
             ('Правка',[('Позиция и уровни',self.position_dialog),('Удалить инструмент',self.remove_instrument),('Сохранить',self.save_user_changes)]),
             ('Вид',[('Портфель',self.show_portfolio),('Журнал решений',self.show_decision_journal),('Карточка',self.show_card),('Новости',self.show_news),('Индикаторы',self.show_indicators),('Рисование',self.show_drawing)]),
             ('Настройки',[('Параметры',self.show_settings),('Оформление',self.show_theme)]),
-            ('Справка',[(freshness_label('title'),lambda:show_freshness(self)),('Связь с ChatGPT / MCP',self.show_connection),('Диагностика',self.show_ai),('Обновить программу',lambda:self.check_updates(False))])]:
+            ('Справка',[(freshness_label('title'),lambda:show_freshness(self)),('Советы по развитию',lambda:show_development_advisor(self)),('Связь с ChatGPT / MCP',self.show_connection),('Диагностика',self.show_ai),('Логотипы: Elbstream',lambda:__import__('webbrowser').open('https://elbstream.com')),('Обновить программу',lambda:self.check_updates(False))])]:
             sub=tk.Menu(menu,tearoff=False)
             for label,command in entries:sub.add_command(label=tr(label),command=command)
             menu.add_cascade(label=tr(title),menu=sub)
@@ -379,8 +381,13 @@ class Desktop014:
                 raw.attrs.update(required_identity,timeframe=tf,data_quality=report)
             return raw
         from data_quality import audit as audit_quality
+        input_clock=clock
+        if scoped and getattr(self,'closed_parent_inputs',False):
+            from trading_context import closed_parent_input
+            raw,input_clock=closed_parent_input(raw,base,tf,clock)
         derived_quality=raw.attrs.get('data_quality') if raw.attrs.get('daily_origin') or raw.attrs.get('archive_invalid') else None
-        raw.attrs['data_quality']=audit_quality(raw,base,now=clock)
+        raw.attrs['data_quality']=audit_quality(raw,base,now=input_clock,
+            check_stale=not bool(raw.attrs.get('closed_parent_input') and base in MINUTES))
         if derived_quality and derived_quality.get('state') in ('INVALID','SOURCE_GAP','UNCONFIRMED','GAP','RECOVERING','SOURCE_UNAVAILABLE'):
             # A valid-looking daily OHLC must not erase a blocked child archive.
             raw.attrs['data_quality']=derived_quality
@@ -399,7 +406,7 @@ class Desktop014:
         if markers:raw=raw.loc[~raw.index.isin(pd.to_datetime(markers))]
         if scoped:
             from cp_controls import accepted_gap_input
-            raw=accepted_gap_input(self.store,info,raw,base,clock)
+            raw=accepted_gap_input(self.store,info,raw,base,input_clock)
         meta=raw.attrs.copy();out=resample(raw,base,tf,now=clock)
         if scoped:
             from cp_controls import accepted_gap_output
@@ -719,6 +726,8 @@ class Desktop014:
         self.source_choice.set(tr('Proxy — автоматически · EUR'))
         key=(info['isin'],self.timeframe.get(),self.period.get(),mode)
         if key!=self.render_key:self.user_view=None
+        prior_index=self.current_df.index if self.user_view and self.current_df is not None else None
+        prior_identity=getattr(self,'_viewport_identity',None)
         self.render_key=key;self.cursor=[];self.drag=None;self.drawing_start=None
         if getattr(self,'hover_overlay',None):self.hover_overlay.close();self.hover_overlay=None
         render_timing.mark('state_sqlite')
@@ -726,7 +735,7 @@ class Desktop014:
         render_timing.mark('clear_figure')
         settings={**DEFAULT_IND,**self.store.setting('global_indicators',{})}
         panel_names=[k for k in ('Объём','RSI','MACD','ATR','Относительный объём') if settings.get(k)]
-        heights=[4]+[1]*len(panel_names);grid=self.fig.add_gridspec(len(heights),1,height_ratios=heights,left=.085,right=.81 if settings['Volume Profile'] else .97,top=.93,bottom=.12,hspace=.10)
+        heights=[4]+[1.4 if name=='Объём' else 1 for name in panel_names];grid=self.fig.add_gridspec(len(heights),1,height_ratios=heights,left=.085,right=.80 if settings['Volume Profile'] else .97,top=.93,bottom=.12,hspace=.10)
         self.ax_price=self.fig.add_subplot(grid[0]);self.ax_vol=self.ax_price
         for index,name in enumerate(panel_names,1):
             ax=self.fig.add_subplot(grid[index],sharex=self.ax_price);self.panels.append((name,ax));self.ax_vol=ax
@@ -737,6 +746,12 @@ class Desktop014:
         for ax in axes[:-1]:ax.tick_params(labelbottom=False)
         render_timing.mark('create_axes')
         frame=self.frame_for(info,self.timeframe.get());self.current_df=None
+        identity=tuple(frame.attrs.get(k) for k in ('source','venue','currency','symbol'))
+        if prior_identity is not None and identity!=prior_identity:self.user_view=None
+        elif self.user_view:
+            from chart_viewport import rebase
+            self.user_view=rebase(self.user_view,prior_index,frame.index)
+        self._viewport_identity=identity
         self.instrument.set(info['name'])
         from trading_view import bind_engine
         bind_engine(self,(getattr(self,'_prepared_chart',None) or {}).get('trading_engine'))
@@ -766,11 +781,11 @@ class Desktop014:
             for zone in self.level_zones(info,frame):
                 color='#22c55e' if zone['side']=='support' else '#ef4444'
                 self.ax_price.axhspan(zone['low'],zone['high'],color=color,alpha=.09 if zone['historical'] else .16)
-                self.ax_price.axhline((zone['low']+zone['high'])/2,color=color,lw=1,ls='--' if zone['historical'] else '-',alpha=.5)
+                self.ax_price.axhline((zone['low']+zone['high'])/2,color=color,lw=1.5,ls='--' if zone['historical'] else '-',alpha=.8)
             self.ax_price.text(.01,.98,tr('S/R: сплошные — ближайшие; пунктир — исторические'),transform=self.ax_price.transAxes,va='top',fontsize=7,color=MUTED)
             if result.get('display_levels_available'):
                 for field,color,label in (('support','#22c55e','Поддержка'),('resistance','#ef4444','Сопротивление')):
-                    self.ax_price.axhline(result[field],color=color,lw=1,ls='--',label=label+' · закрытые свечи')
+                    self.ax_price.axhline(result[field],color=color,lw=1.5,ls='--',label=label+' · закрытые свечи')
         render_timing.mark('zones')
         partial=frame.attrs.get('partial_chart')
         if not partial:
@@ -794,20 +809,33 @@ class Desktop014:
             low=float(requested.low.min());high=float(requested.high.max());padding=max((high-low)*.06,abs(high)*.001)
             self.ax_price.set_ylim(low-padding,high+padding)
         if self.user_view:self.ax_price.set_xlim(self.user_view[0]);self.ax_price.set_ylim(self.user_view[1])
+        from chart_modes import fit_volume, compact_number
+        for name,axis in self.panels:
+            if name=='Объём':
+                def update_volume(price,volume_axis=axis):fit_volume(volume_axis,visible,price.get_xlim())
+                update_volume(self.ax_price)
+                self.ax_price.callbacks.connect('xlim_changed',update_volume)
         render_timing.mark('labels_limits')
-        if settings['Volume Profile'] and result.get('ohlcv_valid',False):
-            self.profile_axis=self.ax_price.inset_axes([1.03,0,.16,1],sharey=self.ax_price)
+        from chart_indicators import volume_profile_rows
+        profile_rows=volume_profile_rows(visible,result.get('ohlcv_valid',False)) if settings['Volume Profile'] else None
+        if profile_rows is not None and not profile_rows.empty:
+            profile_title='Volume Profile\nоценка OHLCV'+('\nчастичная история' if frame.attrs.get('partial_chart') else '')
+            self.profile_axis=self.ax_price.inset_axes([1.025,0,.20,1],sharey=self.ax_price)
             self.profile_axis.set_facecolor(BG)
             self.profile_axis.tick_params(colors=MUTED,labelsize=6,labelleft=False)
-            self.profile_axis.set_title('Volume Profile\nоценка OHLCV',color=TEXT,fontsize=7)
+            self.profile_axis.set_title(profile_title,color=TEXT,fontsize=7)
             def update_profile(axis):
                 left,right=axis.get_xlim()
                 portion=visible.iloc[max(0,int(np.ceil(left))):min(len(visible),int(np.floor(right))+1)]
+                portion=volume_profile_rows(portion,result.get('ohlcv_valid',False))
                 prices,volumes,widths=volume_profile(portion)
                 self.profile_axis.clear();self.profile_axis.set_facecolor(BG)
-                self.profile_axis.barh(prices,volumes,height=widths*.9,color=BLUE,alpha=.6)
-                self.profile_axis.set_title('Volume Profile\nоценка OHLCV',color=TEXT,fontsize=7)
-                self.profile_axis.tick_params(colors=MUTED,labelsize=6,labelleft=False)
+                self.profile_axis.barh(prices,volumes,height=widths*.92,color=BLUE,alpha=.92)
+                self.profile_axis.set_title(profile_title,color=TEXT,fontsize=7)
+                self.profile_axis.tick_params(colors=MUTED,labelsize=8,labelleft=False)
+                from matplotlib.ticker import MaxNLocator
+                self.profile_axis.xaxis.set_major_locator(MaxNLocator(3))
+                self.profile_axis.xaxis.set_major_formatter(FuncFormatter(compact_number))
                 self.profile_axis.set_ylim(axis.get_ylim())
             update_profile(self.ax_price)
             self.ax_price.callbacks.connect('xlim_changed',update_profile)
@@ -875,13 +903,13 @@ class Desktop014:
                 series['VWAP (с начала архива)']=((full.high+full.low+close)/3*full.volume).cumsum()/full.volume.cumsum().replace(0,np.nan)
             else:
                 group=full.index.normalize();series['VWAP (сессия)']=(((full.high+full.low+close)/3*full.volume).groupby(group).cumsum()/full.volume.groupby(group).cumsum().replace(0,np.nan))
-        for name,values in series.items():self.ax_price.plot(np.arange(len(visible)),values.reindex(visible.index),label=name,lw=1)
+        for name,values in series.items():self.ax_price.plot(np.arange(len(visible)),values.reindex(visible.index),label=name,lw=1.8)
         x=np.arange(len(visible));volume_mean=full.volume.rolling(s['volume']).mean()
         for name,ax in self.panels:
             ax.set_ylabel(name,color=MUTED,fontsize=8)
             if name=='Объём':
-                from chart_modes import draw_segments
-                draw_segments(ax,np.stack((np.column_stack((x,np.zeros(len(x)))),np.column_stack((x,visible.volume.to_numpy()))),axis=1),color=BLUE,lw=1);ax.autoscale_view()
+                from chart_modes import draw_volume
+                draw_volume(ax,visible)
                 if s['Средний объём']:ax.plot(x,volume_mean.reindex(visible.index),color='#f59e0b')
             elif name=='Относительный объём':ax.plot(x,(full.volume/volume_mean.replace(0,np.nan)).reindex(visible.index),color=BLUE)
             elif name=='RSI':
@@ -1019,8 +1047,10 @@ class Desktop014:
         def apply():
             try:
                 selected={k:v.get() if isinstance(s[k],bool) else (float(v.get()) if k=='bb_dev' else int(v.get())) for k,v in values.items()}
-                if any(not 1<=v<=500 for k,v in selected.items() if not isinstance(v,bool)):raise ValueError('Периоды: от 1 до 500')
-                if selected['macd_fast']>=selected['macd_slow']:raise ValueError('MACD: быстрый период должен быть меньше медленного')
+                if getattr(self,'_indicator_write_busy',False):raise ValueError('Настройки сохраняются из чата. Повторите после завершения.')
+                if s!={**DEFAULT_IND,**self.store.setting('global_indicators',{})}:raise ValueError('Настройки изменились. Откройте окно индикаторов заново.')
+                from indicator_controls import validate
+                selected=validate(selected,s)
                 self.store.set_setting('global_indicators',selected);win.destroy();self.refresh_chart()
             except ValueError as e:messagebox.showerror(tr('Параметры'),tr(str(e)),parent=win)
         ttk.Button(actions,text=tr('Применить'),command=apply).pack(side='right')
@@ -1320,6 +1350,12 @@ class Desktop014:
             tf=args.get('timeframe',self.timeframe.get());period=ALIASES.get(args.get('period'),args.get('period',self.period.get()))
             if tf not in TF or period not in PERIODS:raise ValueError('Неподдерживаемый интервал/период')
             self.symbol.set(info['name']);self.timeframe.set(tf);self.period.set(period);self.refresh_chart();self.publish_bridge();return {'selected':info['isin'],'source_mode':self.source_mode(info)}
+        if action=='get_indicators':
+            from indicator_controls import snapshot
+            return snapshot(self)
+        if action=='set_indicators':
+            from indicator_controls import dispatch
+            return dispatch(self,args)
         if action=='set_levels':
             info=next((i for i in self.watchlist if i['isin']==args.get('isin')),None)
             if info is None:raise ValueError('Неизвестный ISIN')

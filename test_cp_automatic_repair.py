@@ -93,7 +93,7 @@ class AutomaticRepair(unittest.TestCase):
   self.plan()
   for n in range(3):
    at=self.now+pd.Timedelta(minutes=n*20)
-   report=dict(state='UNCONFIRMED',ranges=[self.span],next_retry=(at+pd.Timedelta(minutes=5)).isoformat())
+   report=dict(state='UNCONFIRMED',ranges=[self.span],recovery_provider_attempted=True,next_retry=(at+pd.Timedelta(minutes=5)).isoformat())
    with patch('data_quality.repair',return_value=report) as repair:
     result=cp.service_request(self.info,self.s,Mock(),at)
     if result is None:result=cp.service_request(self.info,self.s,Mock(),at)
@@ -102,8 +102,8 @@ class AutomaticRepair(unittest.TestCase):
   self.assertEqual(self.plan(at+pd.Timedelta(days=1))['state'],'CHECKED');self.assertIsNone(self.s.setting('cp_manual_risk:'+self.isin))
  def test_retry_after_blocks_network_without_consuming_attempt(self):
   self.plan();self.s.set_setting('cp_source_retry:gettex',(self.now+pd.Timedelta(hours=1)).isoformat())
-  with patch('data_quality.repair') as repair:result=cp.service_request(self.info,self.s,Mock(),self.now)
-  repair.assert_not_called();self.assertEqual(result['state'],'WAITING');self.assertEqual(result['attempts'],0)
+  with patch('data_quality.repair',return_value=dict(state='UNCONFIRMED',ranges=[self.span])) as repair:result=cp.service_request(self.info,self.s,Mock(),self.now)
+  self.assertTrue(repair.call_args.kwargs['local_only']);self.assertEqual(result['state'],'WAITING');self.assertEqual(result['attempts'],0)
   self.assertIsNone(cp.due_request(self.s.db,self.isin,self.now))
  def test_daily_subset_is_revalidated_and_changed_identity_or_resolved_range_skipped(self):
   q=dict(self.q,ranges=[['2026-11-06 11:15:00','2026-11-09 11:15:00']]);self.s.set_setting(self.qkey,q)
@@ -206,5 +206,38 @@ class AutomaticRepair(unittest.TestCase):
   self.assertNotEqual(result['state'],'COMPLETED');self.assertEqual(self.s.db.execute('SELECT count(*) FROM candles').fetchone()[0],2)
   if self.s.db.execute("SELECT 1 FROM sqlite_master WHERE name='candle_recoveries'").fetchone():
    self.assertEqual(self.s.db.execute('SELECT count(*) FROM candle_recoveries').fetchone()[0],0)
+
+ def test_short_provider_wait_keeps_deadline_then_records_unconfirmed_retry(self):
+  import data_quality as dq
+  rows,reply=self.real_fixture();self.plan()
+  wait=self.now+pd.Timedelta(seconds=30)
+  self.s.set_setting('cp_source_retry:gettex',wait.isoformat())
+  fetch=Mock(return_value=reply.iloc[:0].copy())
+  with patch('requests.get',side_effect=AssertionError('No external HTTP in replay')):
+   first=cp.service_request(self.info,self.s,fetch,self.now)
+   fetch.assert_not_called()
+   self.assertEqual(first['state'],'WAITING');self.assertEqual(first['attempts'],0)
+   self.assertEqual(pd.Timestamp(first['next_retry']),wait)
+   self.assertIn('WAITING_PROVIDER',first['reason'])
+   self.assertEqual(self.s.setting(self.qkey)['recovery_wait'],'PROVIDER')
+   self.assertIsNone(cp.due_request(self.s.db,self.isin,wait-pd.Timedelta(seconds=1)))
+   self.assertIsNotNone(cp.due_request(self.s.db,self.isin,wait))
+   # Keep the existing regular-feed turn between automatic recovery visits.
+   self.assertIsNone(cp.service_request(self.info,self.s,fetch,wait))
+   # A later authoritative provider wait must still be respected.
+   later=wait+pd.Timedelta(seconds=30)
+   self.s.set_setting('cp_source_retry:gettex',later.isoformat())
+   delayed=cp.service_request(self.info,self.s,fetch,wait)
+   self.assertEqual(pd.Timestamp(delayed['next_retry']),later)
+   self.assertEqual(delayed['attempts'],0);fetch.assert_not_called()
+   self.assertIsNone(cp.service_request(self.info,self.s,fetch,later))
+   result=cp.service_request(self.info,self.s,fetch,later)
+  fetch.assert_called_once()
+  self.assertEqual(result['attempts'],1);self.assertEqual(result['state'],'WAITING')
+  self.assertGreater(pd.Timestamp(result['next_retry']),later)
+  self.assertTrue(result['reason']);self.assertNotEqual(result['quality'],'READY')
+  self.assertEqual(self.jobs()[cp.repair_id(result['problem'])],result)
+  self.assertEqual(self.s.db.execute('SELECT count(*) FROM candles').fetchone()[0],2)
+  self.assertIsNone(self.s.setting('cp_manual_risk:'+self.isin))
 
 if __name__=='__main__':unittest.main()

@@ -574,6 +574,9 @@ def display_levels(enriched,now=None):
     """
     from analytics import bar_ends
     from significant_levels import zones
+    if enriched.empty:
+        return dict(display_levels_available=False,
+                    levels_note='Уровни: нет проверенных свечей в выбранном контексте'),[]
     status=enriched.attrs.get('partial_indicators',{})
     if status.get('blocked_reason') or 'chart_segment' not in enriched:return {},[]
     now=pd.Timestamp(now or pd.Timestamp.now(tz='UTC'))

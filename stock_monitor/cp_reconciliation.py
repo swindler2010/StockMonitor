@@ -143,6 +143,11 @@ def _input(db, job):
     report=read(db,report_key,{})
     result=dict(info=info,listing=listing,rows=rows,neighbors={'before':before,'after':after},proof=relevant,
                 native_retry=report.get('next_retry'),report_key=report_key)
+    from revision_watcher import RETIME_PREFIX,retime_current
+    correction=read(db,RETIME_PREFIX+isin+':'+job['id'],{})
+    if correction and retime_current(db,correction):
+        result['official_retiming_empty']=[dict(first=correction['first'],end=correction['end'],
+            authority={**proof['identity'],'absence_evidence':{**correction['source']['proof'],'checked_at':proof['checked_at']}})]
     result['fingerprint']=_fingerprint(result)
     return result
 
@@ -164,7 +169,10 @@ def _fingerprint(inputs, proof=None, legacy=False, version=FINGERPRINT_VERSION):
     proof=dict(inputs['proof'] if proof is None else proof)
     if not legacy:proof.pop('checked_at',None)
     instrument=inputs['info'] if version<4 else _instrument_identity(inputs['info'])
-    return digest([instrument,listing,inputs['rows'],inputs['neighbors']['before'],inputs['neighbors']['after'],proof])
+    bound=[instrument,listing,inputs['rows'],inputs['neighbors']['before'],inputs['neighbors']['after'],proof]
+    if inputs.get('official_retiming_empty'):
+        bound.append(inputs['official_retiming_empty'])
+    return digest(bound)
 
 
 def _observation_current(job, inputs):
@@ -175,6 +183,13 @@ def _observation_current(job, inputs):
     # cannot be revived merely by removing non-market fields from the binding.
     if (observation.get('fingerprint_version')==3 and
             _fingerprint(inputs,version=3)==observation.get('input_fingerprint')):return True
+    # The GETTEX owner policy added this display/history selection field after
+    # some v3 reviews. Reconstruct their COMPLETE old hash with that field
+    # absent, never accept an arbitrary metadata or market-data difference.
+    # _input already validates the current listing under the current lock.
+    if observation.get('fingerprint_version')==3 and 'history_venue_lock' in inputs['info']:
+        previous=dict(inputs,info={k:v for k,v in inputs['info'].items() if k!='history_venue_lock'})
+        if _fingerprint(previous,version=3)==observation.get('input_fingerprint'):return True
     # Reconstruct the exact prior v2 hash, not a blanket migration. If any
     # native row, neighbor, instrument, source or proof content changed, no
     # previous check timestamp can make the old observation match.
@@ -208,6 +223,8 @@ def _classify(job, inputs, now):
         frame=pd.DataFrame([r[1:] for r in rows],index=pd.to_datetime([r[0] for r in rows]),columns=dq.FIELDS)
         frame.attrs={**meta,'timeframe':job['tf'],'classify_absence':True,
                      'absence_evidence':proof if proof.get('isin')==job['isin'] else {}}
+        if inputs.get('official_retiming_empty'):
+            frame.attrs['official_retiming_empty']=inputs['official_retiming_empty']
         check=dq.audit(frame,job['tf'],expected=meta,now=now,check_stale=False)
         expected=dq.expected_index(meta,job['tf'],job['first'],job['last'],now)
         absent=expected.difference(frame.index)
@@ -231,7 +248,9 @@ def _classify(job, inputs, now):
                     native_dq=check['state'],market_state=market,can_affect_dq=False,
                     confirmed_empty_intervals=len(confirmed),actual_candles=len(frame),
                     observation_current=current)
-    sessions=schedule(meta,a,b)
+    # Identity alone omits TF; otherwise historical daily reviews incorrectly
+    # take the narrower intraday calendar and fail before comparing evidence.
+    sessions=schedule({**meta,'timeframe':job['tf']},a,b)
     lo=a.tz_localize(meta['timezone']).tz_convert('UTC');hi=b.tz_localize(meta['timezone']).tz_convert('UTC')
     if not any(r.open<hi and r.close>lo for _,r in sessions.iterrows()):
         state=market='MARKET_CLOSED';reason='Подтверждённый календарь: торговая сессия отсутствует'
@@ -250,7 +269,13 @@ def _classify(job, inputs, now):
                      min(b,r.close.tz_convert(meta['timezone']).tz_localize(None)))
                     for _,r in sessions.iterrows() if r.open<hi and r.close>lo]
             if any(dq.known_trade(authority,x,y,now) for x,y in active):market='GAP'
-            elif proof.get('zero_quantity_intervals'):market='ZERO_QUANTITY_UNCONFIRMED'
+            # A zero-quantity publication elsewhere in the archive is not
+            # evidence about this interval. Keep half-open session boundaries;
+            # overlapping unresolved records still forbid NO_TRADES.
+            elif any(pd.Timestamp(x)<right and pd.Timestamp(y)>left
+                     for left,right in active
+                     for x,y in proof.get('zero_quantity_intervals',[])):
+                market='ZERO_QUANTITY_UNCONFIRMED'
             elif active and all(dq.no_trades_proof(authority,x,y,now) for x,y in active):market='NO_TRADES'
         closure=dq.market_closed_proof({**meta,'absence_evidence':proof},a,b,now)
         if closure and not dq.closure_conflict({**meta,'absence_evidence':proof},a,b,now):
@@ -258,7 +283,12 @@ def _classify(job, inputs, now):
         elif closure:
             state=market='UNCONFIRMED';reason='EXCHANGE_NOTICE_CONFLICT: биржевое уведомление противоречит опубликованным записям'
         elif market=='NO_TRADES':
-            if all(source_meta.get(k)==meta.get(k) for k in dq.IDENTITY):
+            verified_local=any(pd.Timestamp(s['first'])<=a<b<=pd.Timestamp(s['end'])
+                and dq.no_trades_proof(s['authority'],a,b,now)
+                for s in inputs.get('official_retiming_empty',[]))
+            if verified_local:
+                state='NO_TRADES';reason='Полные публикации GETTEX и точное совпадение окружающего окна 5m/15m; локальная временная привязка перепроверена'
+            elif all(source_meta.get(k)==meta.get(k) for k in dq.IDENTITY):
                 state='NO_TRADES';reason='Полное собственное доказательство совпадает с source/identity/timebase'
             else:
                 state='SOURCE_TIMEBASE_UNCONFIRMED';reason='Биржевые сделки отсутствуют, но временная семантика исходного ряда другая; доказательство не переносится'
@@ -408,6 +438,45 @@ def _comparison_summary(comparisons):
     return sorted(result,key=lambda x:(x['isin'],x['tf'],x['identity']['source']))
 
 
+def _seed_official_empty_checks(db,info,clock,progress,limit):
+    """Bounded saved-evidence discovery, not a grant or another download queue."""
+    import pandas as pd
+    import data_quality as dq
+    from revision_watcher import RETIME_POLICY,RETIME_VERSION,empty_native_span
+    policy=read(db,RETIME_POLICY,{})
+    if limit<=0 or policy.get('approved') is not True or policy.get('version')!=RETIME_VERSION:return []
+    isin=info['isin'];meta=read(db,'gettex_chart:'+isin+':15m',{}).get('identity',{})
+    if meta.get('source')!='gettex_chart' or meta.get('venue')!='GETTEX' or meta.get('currency')!='EUR':return []
+    report=read(db,'data_quality:'+isin+':'+meta.get('symbol','')+':15m',{})
+    if report.get('identity')!=meta or report.get('state') not in ('UNCONFIRMED','GAP','SOURCE_GAP','STALE'):return []
+    reported=list(report.get('ranges',[]))
+    if report.get('stale_range'):reported.append(report['stale_range'])
+    ranges=sorted({r[0] for r in reported if len(r)==2 and r[0]==r[1]},reverse=True)
+    cursor=progress.get('official_empty_cursor');ordered=ranges if cursor is None else [x for x in ranges if x<cursor]+[x for x in ranges if x>=cursor]
+    proof=read(db,'interval_evidence:'+isin,{})
+    if proof.get('isin')!=isin:return []
+    authority={**proof.get('identity',{}),'absence_evidence':proof};queued=[]
+    for first in ordered[:limit]:
+        progress['official_empty_cursor']=first
+        try:
+            a=pd.Timestamp(first)
+            if not dq.no_trades_proof(authority,a,a+pd.Timedelta(minutes=15),clock):continue
+            spec=_spec(isin,meta,'15m',first,first);inputs=_input(db,spec)
+            if not empty_native_span(spec,inputs):continue
+            if _classify(spec,inputs,clock)['state']=='NO_TRADES':continue
+        except (ValueError,KeyError,TypeError) as error:
+            progress['official_empty_wait']=dict(first=first,reason=str(error),at=clock.isoformat());continue
+        job,_=_enqueue(db,spec,dict(kind='saved_official_empty_evidence'),clock)
+        # One new algorithm check; hourly/monthly retry remains the existing
+        # mechanism. A poll, unchanged source or restart cannot reset it.
+        if job.get('official_empty_algorithm')==3:continue
+        # Saved-source discovery uses ordinary capacity, not the two reserved
+        # slots for explicit human observations.
+        old=dict(job);job.update(official_empty_algorithm=3,status='QUEUED',next_check=clock.isoformat())
+        _save_job(db,job,old);queued.append((key(job),json.dumps(job,ensure_ascii=False)))
+    return queued
+
+
 def turn(store, info, now=None):
     """At most four recovery events and four checks per existing feed turn."""
     import pandas as pd
@@ -444,6 +513,7 @@ def turn(store, info, now=None):
             except (ValueError,TypeError,KeyError) as error:
                 progress['cursor']=rowid;progress.pop('next_range_first',None)
                 progress['last_ineligible_event']={'event_id':event,'reason':str(error),'at':clock.isoformat()}
+        seeded=_seed_official_empty_checks(db,info,clock,progress,max(0,INGEST_LIMIT-segments))
         # Rotate a bounded page. New short-TF jobs cannot monopolize checks.
         cursor=progress.get('scan_cursor','');pattern=PREFIX+isin+':%'
         page=db.execute('SELECT key,value FROM settings WHERE key LIKE ? AND key>? ORDER BY key LIMIT ?', (pattern,cursor,SCAN_LIMIT)).fetchall()
@@ -455,7 +525,7 @@ def turn(store, info, now=None):
             AND julianday(COALESCE(json_extract(value,'$.next_check'),json_extract(value,'$.created_at')))<=julianday(?)
             ORDER BY COALESCE(json_extract(value,'$.checked_at'),''),json_extract(value,'$.created_at'),key LIMIT 2""",
             (pattern,clock.isoformat())).fetchall()
-        jobs=[json.loads(v) for v in dict(page+explicit).values()]
+        jobs=[json.loads(v) for v in dict(page+seeded+explicit).values()]
         due=sorted((j for j in jobs if closure_updated or j.get('fingerprint_version',1)<FINGERPRINT_VERSION or pd.Timestamp(j.get('next_check',j['created_at']))<=clock),key=lambda j:(j.get('checked_at',''),j['created_at'],j['id']))
         # Reserve two slots for explicit observations, two for ordinary work.
         manual=[j for j in due if j['status']=='RECHECK_QUEUED'][:2]
@@ -472,6 +542,15 @@ def turn(store, info, now=None):
             with store.connect() as db:
                 db.execute('BEGIN');inputs=_input(db,prior);source_policy=read(db,SOURCE_POLICY,{})
             result=_classify(prior,inputs,clock)
+            from revision_watcher import retime_plan,publish_retime
+            correction=None;correction_wait=None
+            if (result['state'] in ('GAP','SOURCE_TIMEBASE_UNCONFIRMED','SOURCE_DISCREPANCY')
+                    or (result.get('market_state')=='ZERO_QUANTITY_UNCONFIRMED'
+                        and prior.get('observation',{}).get('result')=='ZERO_VOLUME')):
+                try:
+                    with store.connect() as db:
+                        db.execute('BEGIN');correction=retime_plan(db,prior,inputs,clock)
+                except (ValueError,KeyError,TypeError) as error:correction_wait=str(error)
             with store.connect() as db:
                 db.execute('BEGIN IMMEDIATE');current=read(db,key(prior))
                 if (digest(current)!=digest(prior) or _input(db,prior)['fingerprint']!=inputs['fingerprint']
@@ -481,6 +560,18 @@ def turn(store, info, now=None):
                 if changed:
                     current['history']=(current.get('history',[])+[dict(at=clock.isoformat(),finding=result)])[-20:]
                 old=dict(current)
+                if correction:
+                    current['official_timebase_repair']=publish_retime(db,current,inputs,correction,clock)
+                    if correction.get('mode')=='VERIFIED_NATIVE_EMPTY':
+                        # No rows changed: finish the proof on this same writer
+                        # transaction instead of adding a second queued pass.
+                        inputs=_input(db,current);result=_classify(current,inputs,clock)
+                        if result['state']!='NO_TRADES':raise ValueError('RETIME_EMPTY_PUBLICATION_RECHECK_FAILED')
+                    else:
+                        current.update(status='RECHECK_QUEUED',next_check=clock.isoformat(),checked_at=clock.isoformat())
+                        _save_job(db,current,old);checked+=1
+                        continue
+                if correction_wait:current['official_timebase_repair']=dict(state='WAITING_EVIDENCE',reason=correction_wait)
                 if _observation_current(current,inputs) and current['observation']['input_fingerprint']!=inputs['fingerprint']:
                     current['observation']={**current['observation'],'previous_input_fingerprint':current['observation']['input_fingerprint'],
                         'input_fingerprint':inputs['fingerprint'],'binding_updated_at':clock.isoformat(),
@@ -621,6 +712,7 @@ def observe_batch(store,isin,packet,answers,submission_id,confirmed=False):
 
 def complete_analysis_request(store,isin,requested,result):
     """Receipt of existing eligibility pipeline, not a new admission mechanism."""
+    if not requested or (result or {}).get('deferred'):return
     with store.connect() as db:
         db.execute('BEGIN IMMEDIATE');p=read(db,PROGRESS+isin,{})
         if p.get('analysis_requested_at')!=requested:return

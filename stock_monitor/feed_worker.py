@@ -8,6 +8,7 @@ class FeedContext(StockMonitor):
     def __init__(self,store):
         # Deliberately skip UI initialization, migration, timers and Bridge.
         self.store=store;self.closing=False
+        self.store.defer_eligibility=True
         self.feed_slots=nullcontext();self.events=queue.Queue()
         self.http_cache={};self.http_lock=threading.Lock()
 
@@ -25,6 +26,8 @@ class FeedContext(StockMonitor):
                     local['cached_history']=accumulate_cached_batch(self.store,self._parse_gettex_csv,max_pairs=2,max_seconds=1)
                 from history_service import inspect_changed_official_archive
                 local['archive_quality']=inspect_changed_official_archive(self.store)
+                from cp_diagnostic_cleanup import turn as normalize_diagnostics
+                local['diagnostic_cleanup']=normalize_diagnostics(self.store,info)
             except Exception as error:
                 local['error']=str(error)
         planned=None
@@ -55,15 +58,19 @@ class FeedContext(StockMonitor):
             from cp_controls import reviewed_risk_turn
             result['cp_reviewed_risk']=reviewed_risk_turn(self.store,info)
             requested=result['cp_reviewed_risk'].get('analysis_requested_at') or result['cp_tv_risk'].get('analysis_requested_at') or result.get('cp_reconciliation',{}).get('analysis_requested_at')
+            if fresh and not requested:
+                # Resume an already durable request after restart, including an
+                # unchanged provider reply. Only the read worker acknowledges it.
+                requested=self.store.setting('cp_reconciliation_progress:'+info['isin'],{}).get('analysis_requested_at')
             repair=result.get('cp_priority') or {}
             if repair.get('state')=='COMPLETED':
                 requested=max(requested or '',repair['finished_at'])
             if requested and (fresh or repair.get('state')=='COMPLETED'):
                 # Keep the lightweight exact-scope risk revalidation above:
                 # new market revisions revoke its old receipts immediately.
-                # Defer only historical reconciliation and the expensive all-TF
-                # assessment to existing history slots. Persist the same request
-                # so a restart cannot lose it; do not publish a readiness result.
+                # Defer historical reconciliation to history slots. Preserve its
+                # request until the owned read worker completes the assessment;
+                # the fresh writer must not calculate or publish readiness.
                 from cp_reconciliation import PROGRESS,read,write
                 with self.store.connect() as db:
                     db.execute('BEGIN IMMEDIATE')
@@ -71,6 +78,11 @@ class FeedContext(StockMonitor):
                     progress['analysis_requested_at']=max(progress.get('analysis_requested_at') or requested,requested)
                     write(db,PROGRESS+info['isin'],progress)
             if requested and fresh:
+                # Queue metadata only. Waiting for this ISIN's history slot used
+                # to leave a working stock stale despite regular fresh feeds.
+                # Existing request/choose keep deduplication, retry and fairness.
+                from cp_assessment import request
+                request(self.store,info['isin'])
                 result['cp_analysis_deferred']=requested
             elif requested:
                 from calculation_window import eligibility_turn

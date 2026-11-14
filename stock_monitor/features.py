@@ -53,6 +53,8 @@ class Features:
         from compute_process import Client
         self.compute_chart=Client(self.store.path);self.compute_snapshot=Client(self.store.path)
         self.compute_feed=Client(self.store.path)
+        self.compute_eligibility=Client(self.store.path)
+        self.compute_trading=Client(self.store.path)
         self.compute_feed_update=Client(self.store.path,feed_updates=True)
         self.events=queue.Queue(); self.closing=False; self.feed_active=set(); self.feed_slots=threading.Semaphore(2)
         from performance_dispatcher import Dispatcher
@@ -77,6 +79,8 @@ class Features:
         self.paper_runtime=PaperRuntime(self);self.paper_runtime.start()
         from paper_strategy_shadow import Runtime as ShadowRuntime
         self.paper_shadow=ShadowRuntime(self);self.paper_shadow.start()
+        from cp_assessment import Runtime as AssessmentRuntime
+        self.cp_assessment=AssessmentRuntime(self);self.cp_assessment.start()
         from watchlist_order import Runtime as WatchlistOrder
         self.stock_order=WatchlistOrder(self);self.stock_order.start()
         if self.ai_config['open_on_start']:self.root.after(750,self.show_ai)
@@ -249,17 +253,25 @@ class Features:
         # Feed error text is presentation telemetry, not a CORE/DQ input.
         # Refresh both views from the same current copy, without recalculation.
         for stock in state.get('stocks',[]):stock['error']=current['feed_errors'].get(stock['isin'])
-        state['diagnostics']=diagnostics(state)
-        state['diagnostic_detail']=[diagnostic_detail(stock) for stock in state.get('stocks',[])]
         timing=state.setdefault('_calculation_timing',{})
         now=time.time()
         if timing.get('finished_at') is not None:timing['publication_wait_seconds']=round(max(0,now-timing['finished_at']),3)
         if state.get('at'):timing['snapshot_age_at_publication_seconds']=round(max(0,now-datetime.fromisoformat(state['at']).timestamp()),3)
         timing['instrument_count']=len(state.get('stocks',[]))
         token=state.get('_input_revisions')
-        if token is None or not self.store.read_cache.current(token):
+        if token is None:
             self.bridge.revision_rejected(state,'INPUT_REVISION_CHANGED')
             return False
+        current_token=self.store.read_cache.token_for(token)
+        if current_token!=token:
+            self.bridge.revision_rejected(state,'INPUT_REVISION_CHANGED')
+            from snapshot_worker import retain_current_publication
+            filter_started=time.monotonic()
+            if not retain_current_publication(state,current_token):return False
+            timing['publication_invalidation_seconds']=round(time.monotonic()-filter_started,6)
+            if not self.store.read_cache.current(state['_input_revisions']):return False
+        state['diagnostics']=diagnostics(state)
+        state['diagnostic_detail']=[diagnostic_detail(stock) for stock in state.get('stocks',[])]
         if state.get('analysis_snapshot'):
             state['analysis_selection']=dict(state.get('selected',{}))
             selected=next((i for i in current['watchlist'] if i['name']==current['symbol']),None)
@@ -277,6 +289,9 @@ class Features:
 
     def bridge_dispatch(self,action,args):
         if action=='paper_trade':
+            from paper_orders import owner_route, submit
+            if owner_route(self.store.setting('paper_auto_1h',{}),args.get('isin')):
+                return submit(self,args,'CHATGPT')
             from analytical_read import capture
             from paper_account import execute, instrument_allowed
             from concurrent.futures import Future
@@ -300,7 +315,10 @@ class Features:
                     future.set_result(answer)
                 except Exception as error:
                     code=str(error)
-                    future.set_result({'status':'BLOCKED','code':code if code.startswith('PAPER_') else 'PAPER_EXECUTION_UNAVAILABLE'})
+                    if code.startswith('PAPER_DATA_BLOCKED ('):
+                        future.set_result({'status':'BLOCKED','code':'PAPER_DATA_BLOCKED','detail':code})
+                    else:
+                        future.set_result({'status':'BLOCKED','code':code if code.startswith('PAPER_') else 'PAPER_EXECUTION_UNAVAILABLE'})
             def failed(message):
                 self._paper_busy=False;future.set_result({'status':'BLOCKED','code':'PAPER_DATA_UNAVAILABLE'})
             self.job(lambda:self.compute_chart.calculate('read_analytics',values),done,failed,lane='chart',key='paper_quote')

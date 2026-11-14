@@ -78,7 +78,7 @@ class ParentRecovery(unittest.TestCase):
   self.assertEqual(self.rows().loc['2026-10-26 10:00','volume'],120.)
   self.assertEqual(len(self.store.load_series('TEST','1m','proxy','TEST.DE','GER','EUR')),60);self.assertNotIn('1m',LABELS)
   with patch.object(hs.requests,'get') as network:
-   with self.assertRaisesRegex(ValueError,'OUTSIDE_BOUNDED'):hs.download('TEST.DE','1m',pd.Timestamp('2026-04-20T07:00Z'),pd.Timestamp('2026-04-20T08:00Z'))
+   with self.assertRaisesRegex(ValueError,'OUTSIDE_BOUNDED'):hs.download('TEST.DE','1m',pd.Timestamp('2026-04-20T07:00Z'),pd.Timestamp('2026-04-20T08:00Z'),expected=self.meta)
    network.assert_not_called()
  def test_existing_queue_automatically_attempts_parent_without_manual_instrument_work(self):
   with patch.object(hs,'download',side_effect=AssertionError('network')):

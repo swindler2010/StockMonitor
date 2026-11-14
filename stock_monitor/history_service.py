@@ -6,6 +6,14 @@ import pandas as pd
 import market
 
 HEADERS={'User-Agent':'Mozilla/5.0 StockMonitor/0.15'}
+ARCHIVE_AUDIT_VERSION='scoped-parent-and-gettex-chart-v2'
+
+def _archive_recovery_binding(info,store,identity,base,recover_gettex=None):
+    # Only proof validity for this exact listing matters here, not receipt or
+    # next-request timestamps. The actual recovery resolves proof again.
+    from eur_listings import stored_identity
+    with store.connect() as db:confirmed=bool(stored_identity(db,info,identity,base))
+    return dict(confirmed=confirmed,adapter_available=identity['source']!='gettex' or recover_gettex is not None)
 
 
 def _archive_scopes(isin,identity,base,selected):
@@ -14,6 +22,7 @@ def _archive_scopes(isin,identity,base,selected):
     children=[tf for tf in ('1m','5m','15m','1H') if MINUTES[tf]<(1440 if base=='1D' else MINUTES[base])]
     scopes=['instrument:'+isin,'market:'+isin+':'+base,'setting:interval_evidence:'+isin,
             'setting:history_coverage:'+isin+':'+identity['symbol']+':'+base,
+            'setting:'+parent_provenance_key(isin,identity,base),
             *('market:'+isin+':'+tf for tf in children)]
     if selected.get('listing_proof') and all(selected.get(k)==identity[k] for k in quality.IDENTITY):
         scopes.append('setting:history_identity:'+isin)
@@ -49,8 +58,10 @@ def inspect_saved_archive(info,store,now=None,recover_gettex=None,*,unit=None,lo
         retry_due=False
         if not local_only and old.get('quality',{}).get('state') in ('GAP','INVALID','UNCONFIRMED') and old.get('quality',{}).get('repairable'):
             retry=store.setting(quality.key(info,symbol,base),{}).get('next_retry')
-            retry_due=bool(retry and pd.Timestamp(now or pd.Timestamp.now(tz='UTC'))>=pd.Timestamp(retry))
-        if old.get('input_revisions')!=token or retry_due:pending.append((bool(old),old.get('audit_order',0),token_key,identity,base,token,scopes))
+            due=not retry or pd.Timestamp(now or pd.Timestamp.now(tz='UTC'))>=pd.Timestamp(retry)
+            unserved=not old.get('recovery_checked_at') or old.get('recovery_binding')!=_archive_recovery_binding(info,store,identity,base,recover_gettex)
+            retry_due=bool(due and (retry or unserved))
+        if old.get('audit_version')!=ARCHIVE_AUDIT_VERSION or old.get('input_revisions')!=token or retry_due:pending.append((bool(old),old.get('audit_order',0),token_key,identity,base,token,scopes))
     eligible=pending if unit is None else [p for p in pending if json.loads(p[2])==list(unit)]
     if not eligible:return {'state':'DONE' if catalog else 'NOT_LOADED','series':len(catalog),'pending':len(pending)}
     # Never-visited series first, then oldest successful audit. Persist the
@@ -63,7 +74,7 @@ def inspect_saved_archive(info,store,now=None,recover_gettex=None,*,unit=None,lo
     # Audit is not a readiness override: rejected upstream archives stay intact.
     report.update(count=len(frame),first=str(frame.index.min()) if len(frame) else None,last=str(frame.index.max()) if len(frame) else None)
     order=max((x.get('audit_order',0) for x in progress.get('series',{}).values()),default=0)+1
-    entry={'audit_order':order,'input_revisions':token,'quality':report,'scope':'entire saved base series; runtime freshness remains mandatory'}
+    entry={'audit_order':order,'audit_version':ARCHIVE_AUDIT_VERSION,'input_revisions':token,'quality':report,'scope':'entire saved base series; runtime freshness remains mandatory'}
     with store.connect() as db:
         db.execute('BEGIN IMMEDIATE')
         if revisions(db)!=token:raise ValueError('Archive audit input changed; resume on next feed')
@@ -76,6 +87,7 @@ def inspect_saved_archive(info,store,now=None,recover_gettex=None,*,unit=None,lo
     if not local_only and report['state'] in ('GAP','INVALID','UNCONFIRMED') and report.get('repairable'):
         # Use existing bounded recovery, never a second recovery queue. Unknown
         # intervals need evidence; do not refetch them on every archive pass.
+        binding=_archive_recovery_binding(info,store,identity,base,recover_gettex)
         callback=None;network_not_before=None
         if identity['source']=='gettex' and recover_gettex:
             callback=lambda symbol,interval,start,end=None:recover_gettex(symbol,start,end,base)
@@ -104,6 +116,19 @@ def inspect_saved_archive(info,store,now=None,recover_gettex=None,*,unit=None,lo
             result['recovery']=repaired['state']
             if repaired.get('recovery_wait')=='PROVIDER':
                 result.update(recovery='WAITING_PROVIDER',next_retry=repaired['next_retry'])
+        result.setdefault('recovery','NO_CONFIRMED_ADAPTER')
+        # Audit and recovery are different stages. A local-only inspection must
+        # not consume the normal writer's recovery opportunity. Record only a
+        # completed bounded visit, and never overwrite a concurrent new audit.
+        with store.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            current_row=db.execute('SELECT value FROM settings WHERE key=?',(key,)).fetchone()
+            current=json.loads(current_row[0]) if current_row else {}
+            if current.get('series',{}).get(token_key)==entry:
+                current['series'][token_key].update(recovery_checked_at=pd.Timestamp(now or pd.Timestamp.now(tz='UTC')).isoformat(),
+                    recovery_binding=binding,recovery_state=result['recovery'])
+                db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',(key,json.dumps(current)))
+            else:result['recovery_progress']='CHANGED_DURING_RECOVERY'
     return result
 
 
@@ -124,25 +149,26 @@ def inspect_changed_official_archive(store,now=None):
         return {'state':'NOT_ENABLED'}
     infos={i['isin']:owner_history_info(i,policy) for i in store.instruments() if instrument_allowed(i)}
     with store.connect() as db:
-        catalog=db.execute("SELECT DISTINCT isin,base_tf FROM candles WHERE source='gettex' AND base_tf IN ('5m','15m','1H','1D')").fetchall()
+        catalog=db.execute("SELECT DISTINCT isin,source,'GETTEX','EUR',isin,base_tf FROM candles WHERE source='gettex' AND base_tf IN ('5m','15m','1H','1D') "
+            "UNION SELECT DISTINCT isin,source,venue,currency,symbol,base_tf FROM series WHERE source='gettex_chart' AND venue='GETTEX' AND currency='EUR' AND base_tf IN ('5m','15m','1H','1D')").fetchall()
         # Read only progress metadata, not all historical reports/evidence into
         # Python. The chosen inspector rechecks its full revision token at commit.
-        previous=db.execute("SELECT s.key,j.key,json_extract(j.value,'$.input_revisions'),json_extract(j.value,'$.quality.checked_at') "
+        previous=db.execute("SELECT s.key,j.key,json_extract(j.value,'$.input_revisions'),json_extract(j.value,'$.quality.checked_at'),json_extract(j.value,'$.audit_version') "
             "FROM settings s,json_each(s.value,'$.series') j WHERE s.key LIKE 'history_archive_progress:%' "
-            "AND json_extract(j.key,'$[0]')='gettex'").fetchall()
+            "AND json_extract(j.key,'$[0]') IN ('gettex','gettex_chart')").fetchall()
         revisions=dict(db.execute("SELECT scope,revision FROM input_revisions WHERE scope LIKE 'market:%' OR scope LIKE 'instrument:%' "
-            "OR scope LIKE 'setting:interval_evidence:%' OR scope LIKE 'setting:history_coverage:%' OR scope LIKE 'setting:history_identity:%'"))
-    prior={(key.split(':',1)[1],unit):(json.loads(token) if token else {},checked or '') for key,unit,token,checked in previous}
+            "OR scope LIKE 'setting:interval_evidence:%' OR scope LIKE 'setting:history_coverage:%' OR scope LIKE 'setting:history_identity:%' OR scope LIKE 'setting:parent_provenance:%'"))
+    prior={(key.split(':',1)[1],unit):(json.loads(token) if token else {},checked or '',version) for key,unit,token,checked,version in previous}
     pending=[]
-    for isin,base in catalog:
+    for isin,source,venue,currency,symbol,base in catalog:
         if isin not in infos:continue
-        identity=dict(source='gettex',venue='GETTEX',currency='EUR',symbol=isin,timezone='Europe/Berlin')
+        identity=dict(source=source,venue=venue,currency=currency,symbol=symbol,timezone='Europe/Berlin')
         if not venue_allowed(infos[isin],identity):continue
-        unit=['gettex','GETTEX','EUR',isin,base]
-        old,checked=prior.get((isin,json.dumps(unit)),({},''))
+        unit=[source,venue,currency,symbol,base]
+        old,checked,version=prior.get((isin,json.dumps(unit)),({},'',None))
         scopes=_archive_scopes(isin,identity,base,store.setting('history_identity:'+isin,{}))
         token={s:revisions.get(s,0) for s in scopes}
-        if old!=token:pending.append((checked,isin,base,unit))
+        if old!=token or version!=ARCHIVE_AUDIT_VERSION:pending.append((checked,isin,base,unit))
     if not pending:return {'state':'IDLE','pending':0}
     _,isin,base,unit=min(pending)
     result=inspect_saved_archive(infos[isin],store,now,unit=unit,local_only=True)
@@ -386,26 +412,83 @@ def parent_provenance_key(isin,meta,base):
     return 'parent_provenance:'+isin+':'+base+':'+hashlib.sha256(json.dumps([meta.get(k) for k in ('source','symbol','venue','currency','timezone')]).encode()).hexdigest()[:20]
 
 
+def _parent_absence_valid(proof,meta):
+    """Revalidate only the empty child slots used by this recovered parent.
+
+    A refreshed publication manifest is not a change to historical children.
+    Legacy receipts keep their conservative digest gate until ordinary repair
+    creates a scoped proof; no read-time migration or permission is written.
+    """
+    from performance_cache import _digest
+    import data_quality as quality
+    if 'absence_scope' not in proof:
+        return proof.get('absence_digest') is None or proof['absence_digest']==_digest(meta.get('absence_evidence'))
+    try:
+        scope=proof['absence_scope'];spec=proof['inputs'][0]
+        if scope.get('version')!=1 or scope.get('base')!=spec['base_tf']:return False
+        if any(spec['identity'].get(k)!=meta.get(k) for k in quality.IDENTITY):return False
+        stamps=pd.DatetimeIndex(scope['stamps'])
+        if stamps.hasnans or stamps.has_duplicates or stamps.tz is not None:return False
+        start=pd.Timestamp(spec['from']);end=pd.Timestamp(spec['through']).tz_convert(meta['timezone']).tz_localize(None)
+        if any(t<start or t>=end for t in stamps):return False
+        if stamps.empty:return True
+        covered=quality.covered_empty(meta,stamps,scope['base'])
+        return stamps.isin(covered).all()
+    except (KeyError,TypeError,ValueError,IndexError):return False
+
+
 def attach_parent_provenance(store,frame,isin,base):
     """Read-time lineage gate. Child corrections revoke parents without deleting OHLCV."""
     if frame.empty:return frame
     import data_quality as quality
     from performance_cache import _closed_rows,_digest
     records=store.setting(parent_provenance_key(isin,frame.attrs,base),{})
-    inputs=[];invalid=[]
+    inputs=[];invalid=[];retimed={};origins=[];empty=[]
     for stamp,proof in records.items():
         if pd.Timestamp(stamp) not in frame.index:continue
+        if proof.get('official_timebase'):
+            from revision_watcher import retime_current,RETIME_POLICY
+            key=proof['official_timebase']
+            if key not in retimed:
+                receipt=store.setting(key,{})
+                store.read_cache.depend('setting:'+RETIME_POLICY)
+                store.read_cache.depend('setting:interval_evidence:'+isin)
+                for tf in ('5m','15m'):store.read_cache.depend('market:'+isin+':'+tf)
+                with store.connect() as db:valid=bool(receipt) and retime_current(db,receipt)
+                retimed[key]=(receipt,valid)
+                if valid:
+                    origins.append(dict(receipt_key=key,first=receipt['first'],end=receipt['end'],source='gettex',original_provider=frame.attrs['source'],
+                        mode=receipt.get('mode','RETIMED')))
+                    current=store.setting('interval_evidence:'+isin,{})
+                    authority={**current['identity'],'absence_evidence':{**receipt['source']['proof'],'checked_at':current['checked_at']}}
+                    empty.append(dict(first=receipt['first'],end=receipt['end'],authority=authority))
+            receipt,valid=retimed[key]
+            if not valid:
+                # An expired empty-window proof withdraws only absence
+                # corroboration. It never invalidates unchanged native OHLCV.
+                if receipt.get('mode')!='VERIFIED_NATIVE_EMPTY':invalid.append(stamp)
+            else:
+                # source identifies the retained archive; row origin records
+                # the explicit correction without claiming it came from LSEG.
+                if receipt.get('mode')!='VERIFIED_NATIVE_EMPTY':
+                    frame.loc[pd.Timestamp(stamp),'origin_source']='gettex'
+                inputs.append(dict(parent_at=stamp,inputs=[dict(isin=isin,identity=receipt['source']['proof']['identity'],base_tf=tf,timeframe=tf,
+                    **{'from':receipt['first'],'through':pd.Timestamp(receipt['end']).tz_localize('Europe/Berlin').tz_convert('UTC').isoformat()}) for tf in ('5m','15m')]))
+            continue
         for spec in proof['inputs']:
             store.read_cache.depend('market:'+isin+':'+spec['base_tf'])
         with store.connect() as db:
             current=[_digest(_closed_rows(db,s)) for s in proof['inputs']]
         observed=[float(frame.loc[pd.Timestamp(stamp),k]) for k in quality.FIELDS]
         if (current!=proof['digests'] or observed!=proof['ohlcv'] or
-            (proof.get('absence_digest') is not None and proof['absence_digest']!=_digest(frame.attrs.get('absence_evidence')))):
+            not _parent_absence_valid(proof,frame.attrs)):
             invalid.append(stamp)
         inputs.append(dict(parent_at=stamp,inputs=proof['inputs']))
     frame.attrs['parent_recovery_inputs']=inputs
     frame.attrs['invalid_parent_provenance']=invalid
+    if origins:
+        frame.attrs['source_corrections']=origins
+        frame.attrs['official_retiming_empty']=empty
     return frame
 
 
@@ -527,6 +610,8 @@ def recover_from_children(info,store,meta,base,first,last,now,allow_download=Fal
                     digests[0]=_digest([(str(t),*[float(r[k]) for k in quality.FIELDS]) for t,r in part.iterrows()])
                 proofs[str(stamp)]=dict(inputs=specs,digests=digests,ohlcv=[float(row[k]) for k in quality.FIELDS],
                     absence_digest=_digest(raw.attrs.get('absence_evidence')) if len(missing) else None,
+                    absence_scope=dict(version=1,base=child,stamps=[str(t) for t in missing
+                        if stamp<=t<closing.tz_convert(meta['timezone']).tz_localize(None)]),
                     detected_at=now.isoformat(),basis='complete verified real child coverage; existing calendar aggregation')
             window.attrs.update(parent_recovery_proofs=proofs,auxiliary_children=auxiliary,auxiliary_base=child if auxiliary is not None else None,recovery_method='children:'+child)
             outcome='CANDIDATE'

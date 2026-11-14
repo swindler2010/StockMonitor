@@ -103,6 +103,12 @@ def no_trades_proof(meta,start,end,now=None):
     return _no_trades_proof(meta,start,end,now,_evidence_lookup(meta))
 
 def _no_trades_proof(meta,start,end,now,index):
+    # This scope is attached only after rechecking the official correction
+    # receipt and both archives. No generic cross-provider absence transfer.
+    for scope in meta.get('official_retiming_empty',[]):
+        if pd.Timestamp(scope['first'])<=pd.Timestamp(start)<pd.Timestamp(end)<=pd.Timestamp(scope['end']):
+            proof=no_trades_proof(scope['authority'],start,end,now)
+            if proof:return dict(proof,correction_origin='official GETTEX timebase')
     proof=meta.get('absence_evidence',{})
     if not all(proof.get('identity',{}).get(k)==meta.get(k) and meta.get(k) for k in IDENTITY):return None
     if proof.get('basis')!='complete_published_trade_files' or not proof.get('reference') or not proof.get('checked_at'):return None
@@ -183,7 +189,7 @@ def _known_trade(meta,start,end,now,index):
 
 def covered_empty(meta,stamps,base,now=None,*,closed_only=False):
     """Only proven empty intervals can be removed from expectations."""
-    if not meta.get('classify_absence') or not meta.get('absence_evidence') or base not in STEPS:return pd.DatetimeIndex([])
+    if not meta.get('classify_absence') or not (meta.get('absence_evidence') or meta.get('official_retiming_empty')) or base not in STEPS:return pd.DatetimeIndex([])
     from timeframes import schedule
     stamps=pd.DatetimeIndex(stamps)
     if stamps.empty:return stamps
@@ -416,6 +422,9 @@ def ranges(stamps,expected):
         else:out.append([stamp,stamp])
     return [[str(a),str(b)] for a,b in out]
 
+from calculation_reuse import exact as _exact_calculation
+
+@_exact_calculation
 def audit(frame,base,expected=None,now=None,check_stale=True):
     meta=dict(frame.attrs);issues=[];warnings=[];bad=[];global_invalid=False
     # Audit numeric views, not pandas' repeated deep copies of archive evidence.
@@ -433,6 +442,9 @@ def audit(frame,base,expected=None,now=None,check_stale=True):
     if meta.get('invalid_parent_provenance'):
         bad.extend(pd.Timestamp(x) for x in meta['invalid_parent_provenance'] if pd.Timestamp(x) in frame.index)
         if bad:issues.append('PARENT_PROVENANCE_CHANGED: повторная проверка исходных младших свечей обязательна')
+    if meta.get('source_corrections'):
+        report['source_corrections']=meta['source_corrections']
+        warnings.append('OFFICIAL_GETTEX_TIMEBASE: проверенное биржевое исправление; исходные значения сохранены в журнале ревизий')
     for field in IDENTITY:
         if not meta.get(field):issues.append('Не подтверждено '+field);global_invalid=True
         if expected and expected.get(field) and meta.get(field)!=expected[field]:
@@ -663,7 +675,7 @@ def repair(info,store,symbol,base,meta,download,now=None,max_ranges=8,target_ran
     persist(store,info,symbol,base,{**report,'state':'RECOVERING'})
     interval={'1D':'1d','5m':'5m','15m':'15m','1H':'60m'}[base]
     before={};attempt_method='local_children'
-    failures=[];completed=[];visited=[];waiting=None;local_skips=0
+    failures=[];completed=[];visited=[];waiting=None;local_skips=0;provider_attempted=False
     for first,last in batch:
         visited.append([first,last])
         try:
@@ -683,18 +695,22 @@ def repair(info,store,symbol,base,meta,download,now=None,max_ranges=8,target_ran
                 lambda:recover_from_children(info,store,meta,base,first,last,clock,observations=observations))
             local_skips+=int(local_reused)
             if replacement is None:
+                waits=[pd.Timestamp(x) for x in (previous.get('next_retry'),network_not_before) if x and clock<pd.Timestamp(x)]
                 if local_only:
-                    waiting=(clock+pd.Timedelta(minutes=15)).isoformat()
+                    # A short shared-provider reservation is not a failed
+                    # recovery attempt. Keep its actual deadline; use the
+                    # bounded local-only delay only when none was supplied.
+                    waiting=max(waits).isoformat() if waits else (clock+pd.Timedelta(minutes=15)).isoformat()
                     break
                 # Local recovery does not consume a provider request. Preserve
                 # Retry-After/rate reservations at the actual network boundary.
-                waits=[pd.Timestamp(x) for x in (previous.get('next_retry'),network_not_before) if x and clock<pd.Timestamp(x)]
                 if waits:
                     waiting=max(waits).isoformat()
                     break
                 if meta['source']=='proxy' and cutoff is not None and start<cutoff:
                     raise ValueError('SOURCE_LIMITED: no complete compatible local children; historical HTTP skipped')
                 attempt_method='provider_range'
+                provider_attempted=True
                 try:replacement=download(symbol,interval,start,end=end)
                 except Exception as provider_error:
                     # A provider-wide wait/error is not permission to try its
@@ -707,6 +723,13 @@ def repair(info,store,symbol,base,meta,download,now=None,max_ranges=8,target_ran
             replacement_report=audit(replacement,base,meta,now,check_stale=False)
             required=expected_index(meta,base,first,last,now)
             if replacement_report['state']!='READY' or not required.isin(replacement.index).all():
+                # A partial local candidate is not permission to bypass the
+                # provider wait through an auxiliary child-data endpoint.
+                waits=[pd.Timestamp(x) for x in (previous.get('next_retry'),network_not_before) if x and clock<pd.Timestamp(x)]
+                if local_only or waits:
+                    waiting=max(waits).isoformat() if waits else (clock+pd.Timedelta(minutes=15)).isoformat()
+                    break
+                provider_attempted=True
                 alternative=recover_from_children(info,store,meta,base,first,last,clock,allow_download=True,observations=observations)
                 if alternative is not None:
                     replacement=alternative;replacement_report=audit(replacement,base,meta,now,check_stale=False)
@@ -773,6 +796,7 @@ def repair(info,store,symbol,base,meta,download,now=None,max_ranges=8,target_ran
     after['recovery_completed_ranges']=completed
     after['recovery_failed_ranges']=[{k:v for k,v in f.items() if k!='error'} for f in failures]
     after['local_recovery_reused']=local_skips
+    after['recovery_provider_attempted']=provider_attempted
     after['recovery_cursor']=previous.get('recovery_cursor') if target_range is not None else visited[-1][0] if visited else None
     if waiting:
         after['next_retry']=waiting

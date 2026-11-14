@@ -1,7 +1,7 @@
 """Owner-enabled hourly demo runner. Reuses CORE, Dispatcher and paper executor.
 
 No feed, broker, alternative indicators, inferred gap permission or market orders.
-One position per authorized instrument; one deterministic operation per 1H bar.
+One position per authorized instrument; deterministic operations per signal bar.
 """
 import copy
 import hashlib
@@ -9,13 +9,13 @@ import json
 import sqlite3
 import time
 from decimal import Decimal
-from pathlib import Path
 
 CONFIG = 'paper_auto_1h'
 EPOCH = 'paper_epoch'
 STATUS = 'paper_auto_status:'
 VERSION = 'core_hourly_demo_v1'
 SIZING = 'cash_volatility_v1'
+SIGNAL_TIMEFRAMES = ('1H', '4H')
 
 
 def variable_size(cfg):
@@ -34,10 +34,10 @@ def read(db, key, default=None):
     return json.loads(row[0]) if row else default
 
 
-def authority(db, isin, identity=None):
+def authority(db, isin, identity=None, *, allow_paused=False):
     from paper_account import ACCOUNT
     cfg = read(db, CONFIG, {})
-    if (cfg.get('version') != VERSION or cfg.get('enabled') is not True
+    if (cfg.get('version') != VERSION or (cfg.get('enabled') is not True and not allow_paused)
             or cfg.get('approved') is not True or cfg.get('account') != ACCOUNT
             or cfg.get('timeframe') != '1H'
             or not (variable_size(cfg) or ('sizing' not in cfg and cfg.get('quantity') == 1 and cfg.get('max_position') == 1))
@@ -53,22 +53,28 @@ def authority(db, isin, identity=None):
 
 
 def authorize_hourly(db, isin, identity):
-    authority(db, isin, identity)
+    # Historical-risk analysis may examine the one owner-approved preparation
+    # candidate. Execution still requires authority(), which excludes it.
+    try:authority(db, isin, identity, allow_paused=True)
+    except ValueError:
+        from paper_preparation import candidate_authority
+        candidate_authority(db, isin, identity)
 
 
 def ledger_token(db):
     return digest(db.execute('SELECT id,digest FROM paper_fills ORDER BY rowid').fetchall())
 
 
-def order_size(db, info, result, side, now):
+def order_size(db, info, result, side, now, *, allow_paused=False):
     """Integer entry size from free cash and existing CORE volatility/structure.
 
     This is a sizing estimate, not a stop order or a guaranteed loss ceiling.
-    Existing CORE alone decides exits. No leverage, averaging or new indicators.
+    CORE decides entries/exits; an explicit optional PAPER bracket can add
+    protective exits. No leverage, averaging or new indicators.
     """
     from paper_account import ledger, quote, POLICY, money
     from eur_listings import stored_identity
-    cfg = authority(db, info['isin'], result.get('identity'))
+    cfg = authority(db, info['isin'], result.get('identity'), allow_paused=allow_paused)
     state = ledger(db)
     held = [p for p in state['positions'] if p['isin'] == info['isin'] and Decimal(p['quantity'])]
     if side == 'SELL':
@@ -89,7 +95,7 @@ def order_size(db, info, result, side, now):
         raise ValueError('PAPER_AUTO_QUOTE_IDENTITY_BLOCKED')
     _, bar = quote(info, q, now,
         stored_listing=stored_identity(db, info, result['identity'], q.get('timeframe')))
-    facts = result.get('execution_context', {}).get('trading_engine', {}).get('timeframe_context', {}).get('1H', {}).get('facts', {})
+    facts = result.get('execution_context', {}).get('trading_engine', {}).get('timeframe_context', {}).get(result['timeframe'], {}).get('facts', {})
     try:
         atr, support = (Decimal(str(facts[k])) for k in ('atr', 'support'))
         if not all(v.is_finite() and v > 0 for v in (atr, support)):
@@ -116,7 +122,7 @@ def order_size(db, info, result, side, now):
         risk_is_estimate=True, target_equity=cfg['target_equity'])
 
 
-def fresh_quote(store, info, identity, now):
+def fresh_quote(store, info, identity, now, timeframes=('15m', '5m')):
     """Current real 15m/5m quote, independent of the hourly signal's price."""
     import pandas as pd
     import data_quality as dq
@@ -125,7 +131,7 @@ def fresh_quote(store, info, identity, now):
     from paper_account import quote, POLICY
     candidates = []
     with store.connect() as db:
-        for tf in ('15m', '5m'):
+        for tf in timeframes:
             store.read_cache.depend('market:' + info['isin'] + ':' + tf)
             store.read_cache.depend('setting:gettex_chart:' + info['isin'] + ':' + tf)
             rows = db.execute('SELECT ts,open,high,low,close,volume FROM series WHERE '
@@ -155,65 +161,123 @@ def fresh_quote(store, info, identity, now):
 def calculate(store, values):
     """Owned readonly worker: exact closed CORE context and existing proof."""
     import pandas as pd
-    from snapshot_worker import SnapshotContext, Value
-    from desktop014 import Desktop014
-    from calculation_window import _candidate_proof, context_deadline
-    from cp_controls import manual_context
+    from calculation_window import context_deadline
+    from trading_context import plan,calculate as calculate_context
     from paper_account import ledger
-    from trading_engine import profile
     info = values['watchlist'][0]
     for key in (CONFIG, EPOCH):
         store.read_cache.depend('setting:' + key)
     store.read_cache.depend('instrument:' + info['isin'])
     with store.connect() as db:
-        cfg = authority(db, info['isin'])
+        preparing = values.get('_paper_prepare') is True
+        if preparing:
+            from paper_preparation import candidate_authority, STATE
+            store.read_cache.depend('setting:'+STATE)
+            cfg, identity = candidate_authority(db, info['isin'])
+        else:
+            cfg = authority(db, info['isin'], allow_paused=bool(values.get('_paper_order')))
+            identity = cfg['identities'][info['isin']]
         position = next((p for p in ledger(db)['positions'] if p['isin'] == info['isin'] and Decimal(p['quantity'])), {})
         position_token = ledger_token(db)
-    identity = cfg['identities'][info['isin']]
     now = pd.Timestamp.now(tz='UTC')
 
-    class HourlyContext(SnapshotContext):
-        def user_state(self, instrument):
-            state = copy.deepcopy(super().user_state(instrument))
-            state['position'] = {'quantity': position.get('quantity', '0')}
-            return state
-
-        def frame_for(self, instrument, tf):
-            return self.closed_frame(instrument,
-                Desktop014._frame_uncached(self, instrument, tf, required_identity=identity), tf)
-
-    context = HourlyContext();context.store = store
-    for key, value in values.items():
-        setattr(context, key, Value(value) if key in ('symbol', 'timeframe', 'period') else value)
-    context.closed_specs = {};context.set_analysis_scope(now)
-    engine = context.trading_analysis(info, analysis_only=True)
-    proof = _candidate_proof(store, list(context.closed_specs.values()), store.read_cache.dependencies())
-    manual = manual_context(store, info['isin'], identity, '1H', proof)
-    result = dict(isin=info['isin'], timeframe='1H', identity=identity,
+    signal_tf = values.get('timeframe', '1H')
+    if signal_tf not in SIGNAL_TIMEFRAMES or (preparing and signal_tf != '1H'):
+        raise ValueError('PAPER_AUTO_TIMEFRAME_BLOCKED')
+    contract=plan(signal_tf)
+    calculated=calculate_context(store,values,identity,contract,position,now)
+    engine,proof,manual=(calculated[k] for k in ('engine','proof','manual'))
+    result = dict(isin=info['isin'], timeframe=signal_tf, identity=identity,
         execution_context=dict(status='MANUAL_RISK_ACCEPTED' if manual else 'HOURLY_DEMO_READY',
             isin=info['isin'], checked_at=now.isoformat(), analysis_ready=engine.get('status') == 'READY',
             trading_engine=engine, manual_risk=manual, manual_inputs=proof),
         hourly=dict(version=VERSION, config_digest=digest(cfg), ledger_token=position_token,
             epoch=cfg['epoch'], checked_at=now.isoformat(),
-            expires_at=min(now+pd.Timedelta(seconds=60), context_deadline(identity, '1H', now)).isoformat(),
-            proof=proof, required_tf=list(dict.fromkeys(profile('1H')))))
+            expires_at=min(now+pd.Timedelta(seconds=60), context_deadline(identity, signal_tf, now)).isoformat(),
+            proof=proof, required_tf=contract['required_tf'],timeframe_contract=contract))
+    if preparing:result['hourly']['preparation_only']=True
     # Analysis is useful even while prices are stale. Its status cannot place a fill.
     try:
-        result['execution_quote'] = fresh_quote(store, info, identity, now)
+        from paper_orders import check_intent, quote_timeframes
+        order = values.get('_paper_order')
+        if order:
+            check_intent(order, info['isin'])
+            result['discretionary'] = copy.deepcopy(order)
+        result['execution_quote'] = fresh_quote(store, info, identity, now,
+            quote_timeframes(order))
     except ValueError as error:
         result['quote_blocker'] = str(error)
     return result
 
 
-def validate(db, info, result, args, now):
-    """Inside paper_account's BEGIN IMMEDIATE, immediately before execution."""
+def calculate_snapshot(store, values):
+    """One WAL read transaction, then existing exact closed-input validation.
+
+    No database copy or writer lock. Independent DQ receipts can change while
+    reading; they are not inputs of this exact closed context. Any new relevant
+    or unidentified archive problem is checked again by the manual gate.
+    """
+    from contextlib import contextmanager
+    from performance_cache import ReadCache,validate_closed_inputs,InputRevisionChanged,_setting_value
+    from cp_controls import manual_gate
+    def quote_tail(db, result):
+        meta=result['identity'];rows=[]
+        for tf in ('5m','15m'):
+            rows.append((tf,db.execute('SELECT ts,open,high,low,close,volume FROM series WHERE '
+                'isin=? AND source=? AND venue=? AND currency=? AND symbol=? AND base_tf=? '
+                'ORDER BY ts DESC LIMIT 4',(result['isin'],meta['source'],meta['venue'],meta['currency'],meta['symbol'],tf)).fetchall()))
+        return rows
+    captured=copy.copy(store);captured.read_cache=ReadCache(store.path)
+    @contextmanager
+    def connect():yield captured.read_cache.db
+    captured.connect=connect
+    try:
+        db=captured.read_cache.db
+        db.execute('PRAGMA query_only=ON');db.execute('BEGIN')
+        with captured.read_cache.track_inputs() as token:
+            expected=values.get('instrument_revisions',{})
+            captured.read_cache.assert_current(expected);captured.read_cache._record(expected)
+            result=calculate(captured,values)
+            quote_rows=quote_tail(db,result)
+            listing_prefix='setting:gettex_chart:'+result['isin']+':'
+            quote_listings={scope:_setting_value(db,scope[len('setting:'):]) for scope in token
+                if scope in (listing_prefix+'5m',listing_prefix+'15m')}
+        token=dict(token)
+    finally:captured.read_cache.close()
+    proof=result['hourly']['proof']
+    with store.connect() as db:
+        db.execute('BEGIN')
+        current=validate_closed_inputs(db,proof)
+        # A quote lane can share a market revision with old closed CORE input.
+        # Never rebase its token over a changed/newer quote or invalid tail.
+        if quote_tail(db,result)!=quote_rows:
+            raise InputRevisionChanged('Hourly execution quote changed')
+        # capture_closed_inputs already excludes unrelated DQ reports by exact
+        # ISIN/symbol/base. Preserve every other dependency, notably the quote
+        # lanes, configuration, owner receipts and benchmark provenance.
+        for scope,revision in token.items():
+            if scope in current:continue
+            if scope.startswith('setting:data_quality:'):continue
+            row=db.execute('SELECT revision FROM input_revisions WHERE scope=?',(scope,)).fetchone()
+            revision_now=row[0] if row else 0
+            if revision_now!=revision and (scope not in quote_listings
+                    or quote_listings[scope]!=_setting_value(db,scope[len('setting:'):])):
+                raise InputRevisionChanged('PAPER input changed: '+scope)
+            current[scope]=revision_now
+        manual=result['execution_context'].get('manual_risk')
+        if manual is not None and manual_gate(db,result['isin'],result['identity'],result['timeframe'],proof)!=manual:
+            raise InputRevisionChanged('Hourly historical-risk permission changed')
+    result['_input_revisions']=current
+    return result
+
+
+def validate_analysis(db, info, result, now, cfg):
+    """Shared closed CORE proof; this function cannot authorize an order."""
     import pandas as pd
-    from performance_cache import validate_closed_inputs
+    from performance_cache import validate_closed_inputs,primary_closed_series
     from calculation_window import benchmark_ready
     from cp_controls import manual_gate
-    from paper_account import ledger
     from trading_engine import VERSION as CORE_VERSION, profile
-    cfg = authority(db, info['isin'], result.get('identity'))
     h = result.get('hourly', {});contract = result.get('execution_context', {})
     engine = contract.get('trading_engine', {})
     if h.get('version') != VERSION or h.get('config_digest') != digest(cfg) or h.get('epoch') != cfg['epoch']:
@@ -225,12 +289,19 @@ def validate(db, info, result, args, now):
         raise ValueError('PAPER_STALE_WINDOW')
     if engine.get('status') != 'READY' or not contract.get('analysis_ready'):
         raise ValueError('PAPER_ENGINE_DATA_BLOCKED')
-    if engine.get('rules_version') != CORE_VERSION or engine.get('signal') not in ('BUY', 'SELL') or engine['signal'] != args.get('side'):
-        raise ValueError('PAPER_AUTO_SIGNAL_MISMATCH')
+    if engine.get('rules_version') != CORE_VERSION:
+        raise ValueError('PAPER_AUTO_RULES_CHANGED')
     if engine.get('demo_initialization') and not engine['demo_initialization'].get('consistent'):
         raise ValueError('PAPER_AUTO_SEED_BLOCKED')
-    required = set(profile('1H'))
-    own = [s for s in h.get('proof', {}).get('series', []) if s['spec'].get('isin') == info['isin']]
+    signal_tf = result.get('timeframe')
+    if signal_tf not in SIGNAL_TIMEFRAMES:
+        raise ValueError('PAPER_AUTO_TIMEFRAME_BLOCKED')
+    if signal_tf == '4H':
+        from trading_context import plan
+        if h.get('timeframe_contract') != plan(signal_tf):
+            raise ValueError('PAPER_AUTO_DEPENDENCY_BLOCKED')
+    required = set(profile(signal_tf))
+    own = primary_closed_series(h.get('proof', {}),info['isin'],result['identity'])
     if (set(h.get('required_tf', [])) != required
             or not required <= {s['spec'].get('timeframe') for s in own if s.get('count', 0) >= 35}
             or any(s['spec'].get('identity') != result['identity'] for s in own)):
@@ -238,7 +309,7 @@ def validate(db, info, result, args, now):
     validate_closed_inputs(db, h['proof'])
     manual = None
     if contract.get('status') == 'MANUAL_RISK_ACCEPTED':
-        manual = manual_gate(db, info['isin'], result['identity'], '1H', h['proof'])
+        manual = manual_gate(db, info['isin'], result['identity'], signal_tf, h['proof'])
         if manual != contract.get('manual_risk'):
             raise ValueError('PAPER_MANUAL_CONTEXT_CHANGED')
     elif contract.get('status') != 'HOURLY_DEMO_READY' or any(
@@ -247,24 +318,74 @@ def validate(db, info, result, args, now):
         raise ValueError('PAPER_AUTO_DQ_BLOCKED')
     if not benchmark_ready(engine.get('benchmark_context', {})):
         raise ValueError('PAPER_AUTO_BENCHMARK_BLOCKED')
+    return manual
+
+
+def validate(db, info, result, args, now):
+    """Inside paper_account's BEGIN IMMEDIATE, immediately before execution."""
+    from trading_engine import VERSION as CORE_VERSION
+    cfg = authority(db, info['isin'], result.get('identity'))
+    if result.get('hourly',{}).get('preparation_only'):
+        raise ValueError('PAPER_PREPARATION_CANNOT_EXECUTE')
+    manual = validate_analysis(db,info,result,now,cfg)
+    engine = result.get('execution_context',{}).get('trading_engine',{})
+    protective = None
+    if args.get('_protection'):
+        from paper_protection import decision
+        protective = decision(db, info, result, now)
+        if not protective or protective != args['_protection'] or args.get('side') != 'SELL':
+            raise ValueError('PAPER_PROTECTION_TRIGGER_CHANGED')
+    if not protective and (engine.get('signal') not in ('BUY','SELL') or engine['signal'] != args.get('side')):
+        raise ValueError('PAPER_AUTO_SIGNAL_MISMATCH')
+    if not protective and result['timeframe']=='4H' and args['side']!='BUY':
+        raise ValueError('PAPER_4H_ENTRY_ONLY')
+    if result.get('quote_blocker'):
+        raise ValueError(result['quote_blocker'])
     size = order_size(db, info, result, args['side'], now)
     if Decimal(str(args.get('quantity'))) != Decimal(str(size['quantity'])):
         raise ValueError('PAPER_AUTO_SIZE_BLOCKED')
     signal_at = engine.get('timestamp')
-    if not signal_at or args.get('request_id') != request_id(cfg, info['isin'], signal_at):
+    command = protective['request_id'] if protective else request_id(cfg, info['isin'], signal_at, result['timeframe'])
+    if not signal_at or args.get('request_id') != command:
         raise ValueError('PAPER_AUTO_REQUEST_MISMATCH')
-    if result.get('quote_blocker'):
-        raise ValueError(result['quote_blocker'])
     q = result.get('execution_quote', {})
     if q.get('identity') != result['identity'] or q.get('isin') != info['isin']:
         raise ValueError('PAPER_AUTO_QUOTE_IDENTITY_BLOCKED')
-    return dict(context=VERSION, strategy='CORE:'+CORE_VERSION, timeframe='1H', signal=engine['signal'],
+    receipt = dict(context=VERSION, strategy='CORE:'+CORE_VERSION, timeframe=result['timeframe'], signal=engine['signal'],
         signal_at=signal_at, quote_timeframe=q['timeframe'], manual_risk=manual, epoch=cfg['epoch'], sizing=size)
+    if protective:receipt['protective_exit']=protective
+    elif args['side']=='BUY':
+        from paper_protection import entry_plan
+        plan=entry_plan(cfg,result,size,now)
+        if plan:receipt['protection']=plan
+    return receipt
 
 
-def request_id(cfg, isin, signal_at):
+def request_id(cfg, isin, signal_at, timeframe='1H'):
     # Side/revision deliberately excluded: no second opposite trade on the same bar.
-    return 'auto1h-' + digest([cfg['epoch'], isin, signal_at])
+    return 'auto'+timeframe.lower()+'-' + digest([cfg['epoch'], isin, signal_at])
+
+
+def order_command(db, info, result, now):
+    """Existing CORE order, or an explicitly configured protective exit."""
+    from paper_protection import decision
+    isin=info['isin'];cfg=authority(db,isin,result['identity'])
+    engine=result['execution_context']['trading_engine']
+    protective=decision(db,info,result,now)
+    side=protective['side'] if protective else engine.get('signal')
+    signal_tf=result['timeframe']
+    if side not in ('BUY','SELL') or (signal_tf=='4H' and side=='SELL' and not protective):return None
+    if result.get('quote_blocker'):raise ValueError(result['quote_blocker'])
+    command=protective['request_id'] if protective else request_id(cfg,isin,engine['timestamp'],signal_tf)
+    prior=db.execute('SELECT payload FROM paper_fills WHERE id=?',(command,)).fetchone()
+    if prior:
+        receipt=json.loads(prior[0])
+        if receipt['side']!=side:raise ValueError('PAPER_REQUEST_REUSED')
+        qty=float(receipt['quantity']);qty=int(qty) if qty.is_integer() else qty
+    else:qty=order_size(db,info,result,side,now)['quantity']
+    args=dict(isin=isin,timeframe=signal_tf,side=side,quantity=qty,request_id=command,_deadline=now+30)
+    if protective:args['_protection']=protective
+    return args
 
 
 def reset(db, epoch):
@@ -286,16 +407,71 @@ def reset(db, epoch):
 
 def compact(result):
     engine = result.get('execution_context', {}).get('trading_engine', {})
-    return dict(at=time.time(), core=engine.get('status', 'UNKNOWN'), signal=engine.get('signal', 'WAIT'),
+    return dict(at=time.time(), calculation_seconds=result.get('_calculation_timing',{}).get('compute_seconds'),
+        core=engine.get('status', 'UNKNOWN'), signal=engine.get('signal', 'WAIT'),
         signal_at=engine.get('timestamp'), reason=engine.get('reason'),
         quote_blocker=result.get('quote_blocker'),
         quote_at=(result.get('execution_quote', {}).get('bars') or [{}])[-1].get('close_at'))
 
 
+def run_turn(app, info, values, cfg):
+    """Evaluate both signals in sequence and persist each admission outcome."""
+    from paper_account import execute
+    from paper_preparation import retry_inputs
+    isin=info['isin']
+    with app.store.connect() as db:
+        wake=retry_inputs(db,isin,cfg['identities'][isin])
+    reports={}
+    filled=False
+    for signal_tf in SIGNAL_TIMEFRAMES:
+        report=dict(timeframe=signal_tf,at=time.time())
+        try:
+            result=app.compute_trading.calculate('paper_hourly',dict(values,timeframe=signal_tf))
+            report.update(compact(result))
+            ready=report['core']=='READY'
+            report['state']='WAIT' if ready else 'BLOCKED'
+            if ready and (report['signal'] in ('BUY','SELL') or cfg.get('protection')):
+                if app.closing or app.user_dirty:
+                    raise ValueError('PAPER_APP_NOT_READY')
+                actionable=report['signal'] in ('BUY','SELL')
+                if not actionable:
+                    # WAIT/HOLD must not contend with a CP writer merely because
+                    # brackets are enabled. Read the existing protective trigger;
+                    # a real exit is re-evaluated under the original write lock.
+                    from paper_protection import decision
+                    with app.store.connect() as db:
+                        actionable=bool(decision(db,info,result,time.time()))
+                answer=None
+                if actionable:
+                    with sqlite3.connect(app.store.path,timeout=.2) as db:
+                        db.execute('BEGIN IMMEDIATE')
+                        args=order_command(db,info,result,time.time())
+                        if args and filled and args['side']=='BUY':
+                            raise ValueError('PAPER_AUTO_FILL_ALREADY_IN_TURN')
+                        answer=execute(db,info,result,args) if args else None
+                if answer:
+                    filled=filled or not answer.get('idempotent',False)
+                    report.update(state='COMPLETED',request_id=args['request_id'],quantity=args['quantity'],
+                        idempotent=answer.get('idempotent',False),
+                        sizing=answer['fill'].get('smart_eligibility',{}).get('sizing'),
+                        protective_exit=answer['fill'].get('smart_eligibility',{}).get('protective_exit'))
+        except Exception as error:
+            message=str(error)
+            if not message.startswith('InputRevisionChanged:'):
+                message=type(error).__name__+': '+message
+            report.update(state='BLOCKED',execution_blocker=message)
+        reports[signal_tf]=report
+    retry=any(row.get('execution_blocker','').startswith(('InputRevisionChanged:','ValueError: PAPER_STALE_INPUTS'))
+        for row in reports.values())
+    status=dict(reports['1H'],timeframes=reports,retry_inputs=wake,next_check=time.time()+(15 if retry else 60))
+    app.store.set_setting(STATUS+isin,status)
+    return status
+
+
 class Runtime:
-    """One bounded job, existing serial read client and Dispatcher; durable receipts."""
+    """One bounded trading job; owned read client, existing Dispatcher and ledger."""
     def __init__(self, app):
-        self.app = app;self.busy = False;self.cursor = 0
+        self.app = app;self.busy = False;self.cursor = 0;self.preparation_after = 0
 
     def start(self):
         self.app.root.after(15000, self.tick)
@@ -306,51 +482,22 @@ class Runtime:
             return
         cfg = app.store.setting(CONFIG, {})
         ids = list(cfg.get('identities', {})) if cfg.get('enabled') else []
+        submitted = False
         if ids and not self.busy and not app.user_dirty:
             isin = ids[self.cursor % len(ids)];self.cursor += 1
             info = next((i for i in app.watchlist if i['isin'] == isin), None)
             previous = app.store.setting(STATUS+isin, {})
-            if info and time.time() >= previous.get('next_check', 0):
+            wake=previous.get('retry_inputs',{})
+            inputs_changed=bool(wake) and app.store.read_cache.token_for(wake)!=wake
+            if info and (inputs_changed or time.time() >= previous.get('next_check', 0)):
                 values = dict(watchlist=[copy.deepcopy(info)], drafts={}, feed_errors={}, symbol=info['name'],
                     timeframe='1H', period='Max', ai_config=copy.deepcopy(app.ai_config),
                     instrument_revisions=app.store.read_cache.token_for(['instrument:'+isin]))
                 self.busy = True
+                submitted = True
 
                 def work():
-                    # All computation, proof verification and the write transaction stay off Tk.
-                    result = app.compute_feed.calculate('paper_hourly', values)
-                    report = compact(result)
-                    engine = result['execution_context']['trading_engine']
-                    report['state'] = 'WAIT' if engine.get('status') == 'READY' else 'BLOCKED'
-                    if engine.get('status') == 'READY' and engine.get('signal') in ('BUY', 'SELL'):
-                        from paper_account import execute
-                        try:
-                            if app.closing or app.user_dirty:
-                                raise ValueError('PAPER_APP_NOT_READY')
-                            with sqlite3.connect(app.store.path, timeout=.2) as db:
-                                db.execute('BEGIN IMMEDIATE')
-                                live = authority(db, isin, result['identity'])
-                                command = request_id(live, isin, engine['timestamp'])
-                                prior = db.execute('SELECT payload FROM paper_fills WHERE id=?', (command,)).fetchone()
-                                if prior:
-                                    receipt = json.loads(prior[0])
-                                    if receipt['side'] != engine['signal']:
-                                        raise ValueError('PAPER_REQUEST_REUSED')
-                                    qty = float(receipt['quantity'])
-                                    qty = int(qty) if qty.is_integer() else qty
-                                else:
-                                    qty = order_size(db, info, result, engine['signal'], time.time())['quantity']
-                                args = dict(isin=isin, timeframe='1H', side=engine['signal'], quantity=qty,
-                                    request_id=command, _deadline=time.time()+30)
-                                answer = execute(db, info, result, args)
-                            report.update(state='COMPLETED', request_id=args['request_id'], quantity=qty,
-                                idempotent=answer.get('idempotent', False),
-                                sizing=answer.get('fill', {}).get('smart_eligibility', {}).get('sizing'))
-                        except Exception as error:
-                            report.update(state='BLOCKED', execution_blocker=type(error).__name__+': '+str(error))
-                    report['next_check'] = time.time()+60
-                    app.store.set_setting(STATUS+isin, report)
-                    return report
+                    return run_turn(app,info,values,cfg)
 
                 def done(_):
                     self.busy = False
@@ -361,6 +508,18 @@ class Runtime:
                     report = dict(state='BLOCKED', at=time.time(), execution_blocker=message, next_check=time.time()+60)
                     app.job(lambda:app.store.set_setting(STATUS+isin, report), lambda _:None, lane='misc', key='paper_auto_error')
 
-                if app.job(work, done, failed, lane='read', key='paper_auto_hourly', isin=isin) is False:
+                if app.job(work, done, failed, lane='trading', key='paper_auto_hourly', isin=isin) is False:
                     self.busy = False
+        # Idle trading slots only. The existing owned client and dispatcher do
+        # one sequential candidate; no new threads, downloads or order path.
+        if (ids and not submitted and not self.busy and not app.user_dirty
+                and cfg.get('automatic_admission',{}).get('enabled')
+                and time.time() >= self.preparation_after):
+            self.busy = True;self.preparation_after = time.time()+60
+            def prepare():
+                from paper_preparation import turn
+                return turn(app)
+            def prepared(_):self.busy = False
+            if app.job(prepare,prepared,prepared,lane='trading',key='paper_preparation') is False:
+                self.busy = False
         app.root.after(15000, self.tick)

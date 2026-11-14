@@ -54,6 +54,30 @@ def decision(store,isin,meta,base,now=None):
  rev=revision(store,isin,base)
  if not b['close_at']:return {**b,'due':False,'reason':'NO_PUBLISHED_CLOSED_INTERVAL','key':key}
  reason='RETRY_DUE' if prior.get('outcome')=='ERROR' else 'NEW_CLOSED_INTERVAL' if prior.get('close_at')!=b['close_at'] else 'INPUT_REVISION' if prior.get('revisions')!=rev else 'UNCHANGED'
+ # The final session bar can arrive after the first post-close request.
+ # A successful HTTP receipt does not prove that this candle was published.
+ # Reuse the durable scheduler, with four bounded checks, never an overnight
+ # loop or a claim that an absent response proves NO_TRADES.
+ if not b['session_open'] and base in ('5m','15m') and meta.get('source')=='gettex_chart':
+  saved=store.setting('gettex_chart:'+isin+':'+base,{})
+  try:
+   target=pd.Timestamp(b['close_at']);observed=pd.Timestamp(saved['last']).tz_localize(meta['timezone'])+pd.Timedelta(minutes=MINUTES[base])
+   if saved.get('identity')==meta and saved.get('state') in ('SAVED','UNCHANGED','PARTIAL') and observed<target:
+    count=prior.get('intraday_publication_rechecks',0) if prior.get('pending_intraday_close')==b['close_at'] else 0
+    elapsed=pd.Timestamp(prior.get('finished_at') or b['eligible_at'])
+    due_at=max(pd.Timestamp(b['eligible_at']),elapsed+pd.Timedelta(minutes=(0,5,15,30)[min(count,3)]))
+    # A stock first serviced on the weekend has not spent its post-close
+    # retry budget. Start that bounded window at its first actual catch-up,
+    # then persist it; later plans/restarts must never slide the deadline.
+    same_close=prior.get('pending_intraday_close')==b['close_at']
+    started=pd.Timestamp(prior.get('intraday_catchup_started_at') or target) if same_close else now
+    until=max(target,started)+pd.Timedelta(hours=2);due=count<4 and now<until and now>=due_at
+    return {**b,'due':due,'reason':'PENDING_INTRADAY_PUBLICATION' if due else 'INTRADAY_PUBLICATION_WAIT' if count<4 and now<until else 'INTRADAY_PUBLICATION_UNCONFIRMED',
+      'key':key,'revisions':rev,'planned_at':now.isoformat(),'pending_intraday_close':b['close_at'],
+      'intraday_publication_rechecks':count+1 if due else count,'next_publication_check':due_at.isoformat(),
+      'intraday_catchup_started_at':started.isoformat(),
+      'publication_retry_until':until.isoformat(),'publication_delay_status':'UNKNOWN'}
+  except (ValueError,TypeError,KeyError):pass
  # A checked HTTP response is not proof that the last daily candle arrived.
  # Recheck a delayed GETTEX daily tail after session close, with durable bounded
  # backoff. Never change DQ or invent a candle for an empty provider response.
@@ -85,6 +109,10 @@ def finish(store,isin,meta,base,plan,error=None,now=None):
  if prior.get('pending_daily_close') and prior['pending_daily_close']==plan.get('close_at'):
   row['pending_daily_close']=prior['pending_daily_close']
   row['publication_rechecks']=max(prior.get('publication_rechecks',0),row.get('publication_rechecks',0))
+ if prior.get('pending_intraday_close') and prior['pending_intraday_close']==plan.get('close_at'):
+  row['pending_intraday_close']=prior['pending_intraday_close']
+  row['intraday_publication_rechecks']=max(prior.get('intraday_publication_rechecks',0),row.get('intraday_publication_rechecks',0))
+  if prior.get('intraday_catchup_started_at'):row['intraday_catchup_started_at']=prior['intraday_catchup_started_at']
  if error:
   row['error']=type(error).__name__;row['retry_after']=(now+pd.Timedelta(minutes=15)).isoformat()
   response=getattr(error,'response',None);status=getattr(error,'code',None) or getattr(response,'status_code',None)
@@ -156,6 +184,8 @@ def trade_maintenance(store,infos,now):
  from cp_controls import DEMO_INITIALIZATION,DEMO_ALL_INITIALIZATION
  result={}
  with store.connect() as db:
+  from paper_preparation import maintenance
+  preparing=maintenance(db)
   for info in infos:
    if info.get('kind')=='benchmark':continue
    isin=info['isin']
@@ -167,8 +197,12 @@ def trade_maintenance(store,infos,now):
     cfg=authority(db,isin);exact=cfg['identities'][isin]
     if stored_identity(db,info,exact,'15m'):
      result.setdefault(isin,[]).append(dict(identity=exact,timeframe='1H',required_tf=['15m','1H','4H','1D'],
-       strategy='CORE:'+VERSION,proof_state='OWNER_HOURLY_MAINTENANCE',execution_permission=False))
+       execution_tf=['5m','15m'],strategy='CORE:'+VERSION,proof_state='OWNER_HOURLY_MAINTENANCE',execution_permission=False))
    except ValueError:pass
+   if preparing and preparing[0]==isin:
+    result.setdefault(isin,[]).append(dict(identity=preparing[1],timeframe='1H',
+      required_tf=['15m','1H','4H','1D'],execution_tf=['5m','15m'],
+      strategy='CORE:'+VERSION,proof_state='SEQUENTIAL_PREPARATION',execution_permission=False))
    # Project only positive receipts; avoid decoding each full 11-TF payload.
    rows=db.execute("""SELECT json_extract(s.value,'$.isin','$.execution_version','$.context',
              '$.error','$.expires_at','$._input_revisions'),c.value
@@ -234,6 +268,72 @@ def trade_maintenance(store,infos,now):
       execution_permission=False))
  return result
 
+def fresh_window(plan,base,now):
+ """Include the last publication just after close, not an overnight poll loop."""
+ if plan.get('session_open') or base=='1D':return True
+ if plan.get('reason')=='PENDING_INTRADAY_PUBLICATION':
+  return pd.Timestamp(plan['next_publication_check'])<=now<pd.Timestamp(plan['publication_retry_until'])
+ try:
+  eligible=pd.Timestamp(plan['eligible_at'])
+  return pd.notna(eligible) and eligible<=now<eligible+pd.Timedelta(minutes=15)
+ except (KeyError,TypeError,ValueError):return False
+
+
+def operational_chart_due(db,now):
+ """Bounded configured/held instruments only; no all-stock audit or IO."""
+ from contextlib import contextmanager
+ from paper_hourly import read,authority,CONFIG
+ from paper_account import ledger
+ from gettex_chart import confirmed_state
+ class ExistingSnapshot:
+  @contextmanager
+  def connect(self):yield db
+  def setting(self,k,d=None):return read(db,k,d)
+ store=ExistingSnapshot();identities={}
+ for isin in read(db,CONFIG,{}).get('identities',{}):
+  try:identities[isin]=authority(db,isin)['identities'][isin]
+  except ValueError:pass
+ for p in ledger(db).get('positions',[]):
+  if float(p['quantity'])>0:identities[p['isin']]=p['identity']
+ return _identities_chart_due(store,db,identities,now)
+
+
+def preparation_chart_due(db,now):
+ """The one existing sequential candidate, under the same source/calendar gates."""
+ from contextlib import contextmanager
+ from paper_hourly import read
+ from paper_preparation import maintenance
+ class ExistingSnapshot:
+  @contextmanager
+  def connect(self):yield db
+  def setting(self,k,d=None):return read(db,k,d)
+ pending=maintenance(db)
+ return _identities_chart_due(ExistingSnapshot(),db,{pending[0]:pending[1]} if pending else {},now)
+
+
+def _identities_chart_due(store,db,identities,now):
+ from gettex_chart import confirmed_state
+ due=[]
+ for isin,meta in identities.items():
+  if meta.get('source')!='gettex_chart' or meta.get('venue')!='GETTEX' or meta.get('currency')!='EUR':continue
+  row=db.execute('SELECT payload FROM instruments WHERE isin=?',(isin,)).fetchone()
+  if not row:continue
+  info=json.loads(row[0])
+  for base in ('5m','15m','1D'):
+   saved=store.setting('gettex_chart:'+isin+':'+base,{})
+   if not confirmed_state(info,saved) or saved['identity']!=meta:continue
+   if saved.get('retry_after') and now<pd.Timestamp(saved['retry_after']):continue
+   request=decision(store,isin,meta,base,now)
+   # The daily trend filter is an operational dependency too. Only reserve
+   # a missing already-closed session, not archive work or a forming day.
+   if base=='1D':
+    try:
+     observed=pd.Timestamp(saved['last']);target=pd.Timestamp(request['close_at'])
+     if pd.isna(observed) or pd.isna(target) or observed.date()>=target.tz_convert(meta['timezone']).date():continue
+    except (KeyError,ValueError,TypeError):continue
+   if request['due'] and fresh_window(request,base,now):due.append((saved.get('received_at',''),isin,base))
+ return sorted(due)
+
 def fresh_candidate(store,infos,now,focus=None):
  """One short job on the existing serial feed lane, for the whole watchlist."""
  from gettex_chart import confirmed_state
@@ -251,7 +351,7 @@ def fresh_candidate(store,infos,now,focus=None):
  reserved=store.setting('gettex_chart_next_request')
  chart_allowed=not reserved or now>=pd.Timestamp(reserved)
  stats['chart_rate_limited']=not chart_allowed
- candidates=[]
+ candidates=[];chart_candidates=[]
  for info in infos:
   if info.get('kind')=='benchmark':continue
   isin=info['isin'];choices=[]
@@ -276,13 +376,13 @@ def fresh_candidate(store,infos,now,focus=None):
      observed=pd.Timestamp(saved['last']);target=pd.Timestamp(plan['close_at'])
      if pd.isna(observed) or pd.isna(target) or observed.date()>=target.tz_convert(saved['identity']['timezone']).date():continue
     except (KeyError,ValueError,TypeError):continue
-   if plan['due'] and (plan.get('session_open') or base=='1D') and (not retry or now>=pd.Timestamp(retry)):
+   if plan['due'] and fresh_window(plan,base,now) and (not retry or now>=pd.Timestamp(retry)):
     stats['due']+=1
     if chart_allowed:choices.append((saved.get('received_at',''),'gettex_chart',base))
   # Official GETTEX files are shared on disk by all instruments. The existing
   # downloader verifies EUR trades and downloads only files not already cached.
   meta=gettex_meta(isin);plan=decision(store,isin,meta,'5m',now)
-  if plan['due'] and plan.get('session_open'):
+  if plan['due'] and fresh_window(plan,'5m',now):
    prior=store.setting(plan['key'],{});choices.append((prior.get('finished_at',''),'gettex','5m'));stats['due']+=1
   if not choices:continue
   last,source,base=min(choices)
@@ -292,6 +392,9 @@ def fresh_candidate(store,infos,now,focus=None):
    for proof in trades.get(isin,[]):
     # Use the strategy's real base lanes, not optional 1m/5m chart detail.
     bases={'1D' if tf in ('1D','1W','1M') else '5m' if tf in ('5m','10m') or choice[1]=='gettex' else '15m' for tf in proof['required_tf']}
+    # Execution may use either native closed quote lane. Keeping 5m fresh is
+    # not a 5m analysis/warmup dependency of the hourly strategy.
+    bases.update(proof.get('execution_tf',[]))
     if choice[2] in bases and all(meta.get(k)==proof['identity'].get(k) for k in FIELDS):
      trade_choice=choice;trade_proof=proof;break
    if trade_choice:break
@@ -315,6 +418,12 @@ def fresh_candidate(store,infos,now,focus=None):
   if trade_choice:last,source,base=trade_choice
   if position_choice and rotation.get('position_streak',0)<2:last,source,base=position_choice
   candidates.append((last,isin,info,source,base,is_focus,bool(position_choice),trade_proof))
+  chart_choices=[x for x in choices if x[1]=='gettex_chart']
+  if chart_choices:
+   chart_choice=next((x for x in chart_choices if x[2]==base),None) or min(chart_choices)
+   chart_proof=trade_proof if trade_proof and trade_proof['identity'].get('source')=='gettex_chart' else None
+   chart_candidates.append((chart_choice[0],isin,info,chart_choice[1],chart_choice[2],is_focus,
+       bool(position_choice and position_choice[1]=='gettex_chart'),chart_proof))
  if not candidates:return None,stats
  oldest=lambda items:min(items,key=lambda x:(x[0],x[1]),default=None)
  chosen=oldest(candidates)
@@ -325,11 +434,30 @@ def fresh_candidate(store,infos,now,focus=None):
  slot=rotation.get('consecutive',0)
  position=oldest(x for x in candidates if x[6])
  foreground=oldest(x for x in candidates if x[5])
- trading=oldest(x for x in candidates if x[7])
+ # A newly prepared archive must not displace an already enabled stock's
+ # fresh quote just because its last historical receipt is much older.
+ trading=(oldest(x for x in candidates if x[7] and x[7].get('proof_state')!='SEQUENTIAL_PREPARATION')
+          or oldest(x for x in candidates if x[7]))
+ preparing=oldest(x for x in candidates if x[7] and x[7].get('proof_state')=='SEQUENTIAL_PREPARATION')
  if slot==0:chosen=position or trading or foreground or chosen
  elif trades and slot==1:chosen=trading or foreground or position or chosen
- elif slot==(2 if trades else 1):chosen=foreground or trading or position or chosen
+ # After two active-stock slots, let the single candidate make progress.
+ # Otherwise continuous quote updates plus visible-chart work can starve it.
+ # The fourth fresh slot and following history turn retain their fair share.
+ elif slot==(2 if trades else 1):chosen=preparing or foreground or trading or position or chosen
  else:chosen=oldest(x for x in candidates if not x[5] and not x[6] and not x[7]) or chosen
+ # File-provider turns may reset the queue while the chart HTTP minute is
+ # occupied. Allocate its actual request budget independently of those turns,
+ # using the existing persisted reservation receipt, not a second queue.
+ budget=store.setting('gettex_chart_request_rotation')
+ if chart_allowed and budget is not None and chart_candidates:
+  with store.connect() as db:urgent={(i,b) for _,i,b in operational_chart_due(db,now)}
+  active=oldest(x for x in chart_candidates if (x[1],x[4]) in urgent)
+  pending=oldest(x for x in chart_candidates if x[7] and x[7].get('proof_state')=='SEQUENTIAL_PREPARATION')
+  ordinary=oldest(x for x in chart_candidates if (x[1],x[4]) not in urgent and x is not pending)
+  if active and budget.get('priority_streak',0)<2:chosen=active
+  elif pending and budget.get('preparation_turn',True):chosen=pending
+  else:chosen=ordinary or pending or active or chosen
  _,isin,info,source,base,is_focus,is_position,trade_proof=chosen
  details=({'priority_reason':'TRADE_CONTEXT_MAINTENANCE','required_tf':trade_proof['required_tf'],
            'strategy':trade_proof['strategy'],'proof_state':trade_proof['proof_state'],'execution_permission':False} if trade_proof else {})

@@ -469,9 +469,16 @@ def acquire_missing_evidence(info,store,http,now=None,budget=8):
             corrected_validator=(old.get('validation_policy',0)<2 and old.get('state')=='UNCONFIRMED'
                 and old.get('reason','').startswith('ValueError: INVALID_REPLACEMENT_TIME_OR_VALUE:'))
             if not corrected_validator and old.get('retry_after') and pd.Timestamp(old['retry_after'])>clock:continue
-            lease={'state':'RUNNING','date':date,'checked_at':clock.isoformat(),'retry_after':(clock+pd.Timedelta(minutes=30)).isoformat(),'attempts':old.get('attempts',0)+1,'validation_policy':2}
+            lease={'state':'RUNNING','date':date,'checked_at':clock.isoformat(),'retry_after':(clock+pd.Timedelta(minutes=30)).isoformat(),'attempts':old.get('attempts',0)+1,'validation_policy':2,'file_cursor':old.get('file_cursor')}
             db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',(key,json.dumps(lease)))
-        result={**lease,'downloaded':0,'unchanged_files':0,'missing_before':len(missing)}
+        # A missing individual file must not permanently hide later slices.
+        # Resume in the stable session order, across restarts, within the same
+        # request budget and provider cooldown. 404 is never absence evidence.
+        cursor=old.get('file_cursor')
+        if cursor in required:
+            position=required.index(cursor)
+            missing=[n for n in missing if required.index(n)>position]+[n for n in missing if required.index(n)<=position]
+        result={**lease,'downloaded':0,'unchanged_files':0,'missing_before':len(missing),'file_cursor':cursor,'unavailable_files':[]}
         try:
             # Only derive locations from an actually published official URL.
             html=http(PAGE).decode('utf8','ignore')
@@ -483,7 +490,13 @@ def acquire_missing_evidence(info,store,http,now=None,budget=8):
                 url=locations.get(name) or u._replace(path=u.path.rsplit('/',1)[0]+'/'+name,query='',fragment='').geturl()
                 target=cache/name
                 original=target.read_bytes() if target.exists() else None
-                raw=http(url);content=gzip.decompress(raw)
+                try:raw=http(url)
+                except HTTPError as error:
+                    if error.code!=404:raise
+                    result['file_cursor']=name
+                    result['unavailable_files'].append(name)
+                    continue
+                content=gzip.decompress(raw)
                 if original is not None:
                     # Trade IDs are not published by this endpoint. Automatic
                     # replacement may add proven rows, but must not silently
@@ -508,8 +521,11 @@ def acquire_missing_evidence(info,store,http,now=None,budget=8):
                         if original is not None:result['replaced_invalid_files']=result.get('replaced_invalid_files',0)+1
                     elif raw==original:result['unchanged_files']+=1
                 result['downloaded']+=1
+                result['file_cursor']=name
             result.update(state='UNCHANGED_UNCONFIRMED' if result['unchanged_files']==result['downloaded'] else 'FILES_ACQUIRED',
                           retry_after=(clock+(pd.Timedelta(days=1) if result['unchanged_files']==result['downloaded'] else pd.Timedelta(minutes=15))).isoformat())
+            if result['unavailable_files'] and not result['downloaded']:
+                result.update(state='UNCONFIRMED',reason='HTTPError: HTTP Error 404: Not Found; bounded file rotation will resume')
         except Exception as error:
             result.update(state='UNCONFIRMED',reason=type(error).__name__+': '+str(error),retry_after=(clock+pd.Timedelta(hours=24)).isoformat())
             if isinstance(error,HTTPError) and error.code==429:

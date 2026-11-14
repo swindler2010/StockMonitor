@@ -3,6 +3,14 @@ import copy,sqlite3,threading
 from collections import OrderedDict
 from contextlib import contextmanager
 
+# Repair scheduling/progress is persisted for CP, but is not candle quality.
+# Keep state, identity, ranges, stale facts, provider quality/errors and every
+# unknown field strict. The writer/reader must use the same small allowlist.
+DQ_PROGRESS_FIELDS = ('checked_at', 'raw_retry_after', 'parent_child_revisions',
+    'next_retry', 'recovery_cursor', 'recovery_ranges', 'recovery_completed_ranges',
+    'recovery_failed_ranges', 'local_recovery_reused', 'recovery_provider_attempted',
+    'recovery_wait')
+
 def install_input_revisions(db):
     """Transactional dependency revisions; no journal or global setting clock."""
     db.execute('CREATE TABLE IF NOT EXISTS input_revisions(scope TEXT PRIMARY KEY, revision INTEGER NOT NULL)')
@@ -18,8 +26,9 @@ def install_input_revisions(db):
             # Keep every other field, including state, ranges, session and source.
             def meaningful(prefix):
                 key=prefix+'key';value=prefix+'value'
+                dq_paths=','.join("'$."+field+"'" for field in DQ_PROGRESS_FIELDS)
                 return (f"CASE WHEN json_valid({value}) THEN CASE "
-                    f"WHEN {key} LIKE 'data_quality:%' THEN json_remove({value},'$.checked_at','$.raw_retry_after','$.parent_child_revisions') "
+                    f"WHEN {key} LIKE 'data_quality:%' THEN json_remove({value},{dq_paths}) "
                     f"WHEN {key} LIKE 'history_identity:%' OR {key} LIKE 'history_coverage:%' THEN json_remove({value},'$.fetched_at') "
                     f"ELSE {value} END ELSE {value} END")
             same='NEW.key IS key AND '+meaningful('NEW.')+' IS '+meaningful('')
@@ -71,21 +80,82 @@ def _setting_value(db, key, start=None):
     value=json.loads(row[0])
     if isinstance(value,dict):
         if key.startswith('data_quality:'):
-            value={k:v for k,v in value.items() if k not in ('checked_at','raw_retry_after','parent_child_revisions')}
+            value={k:v for k,v in value.items() if k not in DQ_PROGRESS_FIELDS}
             if start:
                 from calculation_window import scope_report
                 value=scope_report(value,start)
+            classification=value.get('interval_classification')
+            # These two totals cover the entire growing archive, not the
+            # frozen range. Exact used OHLCV are independently hashed below.
+            # Normalize only a consistent census; all gap/absence/delay facts,
+            # evidence, unknown fields and malformed counters remain strict.
+            # Do not change stored DQ or its raw revision/execution binding.
+            counts=('with_candles','NO_TRADES','UNCONFIRMED','GAP','market_closed_intervals')
+            if (isinstance(classification,dict)
+                and all(type(classification.get(k)) is int and classification[k]>=0
+                        for k in ('expected_open_intervals',*counts))
+                and classification['expected_open_intervals']==sum(classification[k] for k in counts)):
+                value={**value,'interval_classification':{k:v for k,v in classification.items()
+                    if k not in ('expected_open_intervals','with_candles')}}
         elif key.startswith(('history_identity:','history_coverage:')):
             value={k:v for k,v in value.items() if k!='fetched_at'}
         elif key.startswith('gettex_chart:'):
+            # A verified provider tail is acquisition progress, not part of
+            # an earlier closed range. SAVED/UNCHANGED differ only by this
+            # receipt's added/changed count. Preserve PARTIAL, faults, quality,
+            # identity and every unknown field; execution keeps raw revisions.
+            from gettex_chart import confirmed_state
+            bound=(isinstance(value.get('identity'),dict) and isinstance(value.get('listing_proof'),dict)
+                   and confirmed_state({'isin':key.split(':')[1]},value))
+            if bound:
+                value={k:v for k,v in value.items() if k!='last'}
+                if value.get('state') in ('SAVED','UNCHANGED'):value['state']='SAVED_OR_UNCHANGED'
             # A later HTTP receipt can contain exactly the same candles.
             # Closed OHLCV have their own digest; retain identity, listing
             # status/evidence, quality, archive faults and native-month proof.
-            value={k:v for k,v in value.items() if k not in ('received_at','planned_at','requested_to','receipt','sha256','live_receipt','provisional_only')}
+            # Incremental fetch counts/ranges and receipt paths describe the
+            # HTTP attempt, not the retained series. Unresolved rejected rows
+            # remain in archive_invalid; exact used OHLCV have their own digest.
+            # In particular invalid_receipts grows on every PARTIAL refresh,
+            # even when the original rejected observations have not changed.
+            value={k:v for k,v in value.items() if k not in (
+                'received_at','planned_at','requested_from','requested_to','receipt','sha256',
+                'live_receipt','provisional_only','invalid_receipts','count','added','changed',
+                'input_revisions_before','input_revisions_after')}
             if isinstance(value.get('listing_proof'),dict):
                 value['listing_proof']={k:v for k,v in value['listing_proof'].items() if k!='verified_at'}
         elif key.startswith('benchmark_history:'):
             value={k:v for k,v in value.items() if k!='attempted_at'}
+        elif key.startswith('cp_reconciliation_job:'):
+            observation=value.get('observation') or {};finding=value.get('finding') or {}
+            fingerprint=value.get('input_fingerprint','')
+            # v4 already binds exact rows/neighbours, verified listing and
+            # scoped authoritative proof, excluding only its check timestamp.
+            # Retain every decision, evidence, identity and unknown field. A
+            # legacy/unbound/failed review stays byte-sensitive as before.
+            if (isinstance(observation,dict) and isinstance(finding,dict)
+                and value.get('fingerprint_version')==4 and isinstance(fingerprint,str)
+                and len(fingerprint)==64 and all(c in '0123456789abcdef' for c in fingerprint)
+                and observation.get('fingerprint_version')==4 and observation.get('identity_confirmed') is True
+                and observation.get('input_fingerprint')==fingerprint and finding.get('observation_current') is True
+                and value.get('review_required') is False and value.get('status') in ('AWAITING_SOURCE','RESOLVED_NATIVE','REVIEW_WEEKLY')):
+                value={k:v for k,v in value.items() if k not in ('checked_at','next_check','checks','native_retry','history')}
+                value['finding']={k:v for k,v in finding.items() if k!='evidence_checked_at'}
+                if 'evidence_digest' in finding:value['finding']['evidence_digest']='v4-scoped:'+fingerprint
+                if isinstance(value.get('source_comparison'),dict):
+                    value['source_comparison']={k:v for k,v in value['source_comparison'].items() if k!='native_checked_at'}
+        elif key.startswith('cp_manual_risk:'):
+            # The CP writer may reconfirm the SAME decision after a later bar
+            # or transport receipt. Compare its contents and bound scope set,
+            # not the numeric counters of an independently validated renewal.
+            # Invalid receipts keep their exact counters; unknown actors and
+            # every other grant/evidence field remain strict. Used OHLCV,
+            # policies and execution tokens retain their separate guards.
+            from cp_controls import effective_accepted,TV_ACTOR,REVIEWED_ACTOR,AUTO_ACTOR
+            for pid,entry in effective_accepted(db,key.split(':',1)[1],value).items():
+                token=entry.get('input_revisions')
+                if entry.get('actor') in (TV_ACTOR,REVIEWED_ACTOR,AUTO_ACTOR) and token:
+                    value['accepted'][pid]={**entry,'input_revisions':{scope:'CURRENT' for scope in token}}
     return value
 
 
@@ -142,6 +212,21 @@ def capture_closed_inputs(db, specs, token):
     return dict(version=1,revisions=tracked,strict=strict,settings=settings,settings_start=settings_start,series=series)
 
 
+def primary_closed_series(guard, isin, identity):
+    """Separate named recovery evidence from the selected analytical series.
+
+    Recovery inputs stay in the full proof and are validated unchanged. Only
+    exact same-listing references of the selected series are auxiliary; an
+    unreferenced provider/venue cannot masquerade as a required timeframe.
+    """
+    own=[s for s in guard.get('series',[]) if s['spec'].get('isin')==isin]
+    refs={_digest(r) for s in own if s['spec'].get('identity')==identity
+          for r in s['spec'].get('recovered_inputs',[])
+          if r.get('isin')==isin and all(r.get('identity',{}).get(k)==identity.get(k)
+                                      for k in ('venue','currency','timezone'))}
+    return [s for s in own if _digest(s['spec']) not in refs]
+
+
 def validate_closed_inputs(db, guard, memo=None):
     """Return a current revision token only if the frozen inputs still match."""
     if not guard or guard.get('version')!=1:raise InputRevisionChanged('Closed input proof missing')
@@ -149,9 +234,16 @@ def validate_closed_inputs(db, guard, memo=None):
     token=guard['revisions'];current={k:(db.execute('SELECT revision FROM input_revisions WHERE scope=?',(k,)).fetchone() or [0])[0] for k in token}
     changed={k for k,v in token.items() if current[k]!=v}
     for k in changed & guard['strict'].keys():raise InputRevisionChanged('Closed input changed: '+k)
-    for k in changed & guard['settings'].keys():
+    settings_changed=changed & guard['settings'].keys()
+    if changed:
+        # A receipt can lose effective acceptance when its referenced data
+        # changes, even BEFORE the CP writer renews the receipt itself.
+        settings_changed |= {k for k in guard['settings'] if k.startswith('setting:cp_manual_risk:')}
+    for k in settings_changed:
         start=guard.get('settings_start',{}).get(k)
         cache=('setting',k,current[k],start)
+        if k.startswith('setting:cp_manual_risk:'):
+            cache += (tuple(sorted(current.items())),)
         if cache not in memo:memo[cache]=_digest(_setting_value(db,k[len('setting:'):],start))
         if memo[cache]!=guard['settings'][k]:raise InputRevisionChanged('Closed input changed: '+k)
     for item in guard['series']:
@@ -238,14 +330,15 @@ class ReadCache:
     def version(self):
         with self.lock:return self.db.execute('PRAGMA data_version').fetchone()[0]
 
-    def get(self,key,loader,*,scoped=False,inputs=None,category=None):
+    def get(self,key,loader,*,scoped=False,inputs=None,category=None,content_addressed=False):
         if category not in (None,'analytics'):raise ValueError('Unknown cache category')
+        if content_addressed and (scoped or inputs):raise ValueError('Pure calculation cannot use database dependencies')
         items=self.analytics_items if category=='analytics' else self.items
         limit=self.analytics_limit if category=='analytics' else self.limit
         with self.lock:
             version=self.version()
             cached=items.get(key)
-            if cached is not None and (self.current(cached[2]) if scoped and cached[2] else cached[0]==version):
+            if cached is not None and ((content_addressed and not cached[2]) or (self.current(cached[2]) if scoped and cached[2] else cached[0]==version)):
                 self._record(cached[2]);items.move_to_end(key)
             else:cached=None
         # Cached objects are private immutable copies. Copying large frames and
@@ -254,10 +347,13 @@ class ReadCache:
         with self.track_inputs() as dependencies:
             if inputs:self._record(inputs)
             result=loader()
+        # Only exact, fully serialized pure-function inputs may outlive an
+        # unrelated database commit. Any actual DB dependency rejects this path.
+        if content_addressed and dependencies:raise ValueError('Pure calculation read database dependencies')
         saved=copy.deepcopy(result)
         with self.lock:
             # Never cache a read that overlaps a commit.
-            if (self.current(dependencies) if scoped and dependencies else version==self.version()):
+            if content_addressed or (self.current(dependencies) if scoped and dependencies else version==self.version()):
                 items[key]=(version,saved,dict(dependencies));items.move_to_end(key)
                 while len(items)>limit:items.popitem(last=False)
         return result

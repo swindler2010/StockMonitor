@@ -46,11 +46,26 @@ class SnapshotContext:
             if hasattr(self,'used_closed_keys'):self.used_closed_keys.add(key)
         return data
 
+    def pinned_frame(self,info,tf,identity):
+        """Same exact prepared series across this calculation's TF candidates.
+
+        Return independent copies and replay every captured dependency through
+        ReadCache. closed_frame still registers each caller's actual proof.
+        """
+        state=json.dumps(self.user_state(info),sort_keys=True,default=str)
+        key=('pinned_frame_v1',info['isin'],tf,tuple(sorted(identity.items())),state,
+            str(getattr(self,'analysis_at','')),bool(getattr(self,'five_year_scope',False)),
+            bool(getattr(self,'closed_parent_inputs',False)),
+            int(time.time()//60) if not hasattr(self,'analysis_at') else None)
+        return self.store.read_cache.get(key,
+            lambda:Desktop014._frame_uncached(self,info,tf,required_identity=identity),
+            scoped=True,inputs=self.store.read_cache.token_for(['instrument:'+info['isin']]))
+
     def frame_for(self,info,tf):
         from cp_controls import reviewed_entry_identity
         required=reviewed_entry_identity(self.store,info,tf)
         if required:
-            return self.closed_frame(info,Desktop014._frame_uncached(self,info,tf,required_identity=required),tf)
+            return self.closed_frame(info,self.pinned_frame(info,tf,required),tf)
         return self.closed_frame(info,Desktop014.frame_for(self,info,tf),tf)
     def _frame_uncached(self,info,tf):
         if info.get('kind')=='benchmark':return BenchmarkMixin._frame_uncached(self,info,tf)
@@ -81,6 +96,11 @@ class SnapshotContext:
         """
         if info.get('kind')=='benchmark':return None
         now=getattr(self,'analysis_at',pd.Timestamp.now(tz='UTC'));tf=self.timeframe.get()
+        required=getattr(self,'trading_required_tf',None)
+        if required is not None:
+            from trading_context import plan
+            required=tuple(plan(tf,required)['required_tf'])
+        else:required=profile(tf)
         state=copy.deepcopy(self.user_state(info));frames={}
         from cp_controls import demo_initialization_policy,initialization_policy_for
         policy_key='cp_manual_risk:'+info['isin']
@@ -95,10 +115,10 @@ class SnapshotContext:
         approved_analysis=(demo_initialization_policy(policy,info['isin'])
             and tf in policy.get('analysis_timeframes',[])
             and (tf not in policy['entry_timeframes'] or getattr(self,'analysis_only',False)))
-        for interval in dict.fromkeys((tf,*profile(tf),'1D')):
+        for interval in dict.fromkeys((tf,*required,'1D')):
             try:
                 if approved_analysis:
-                    frames[interval]=self.closed_frame(info,Desktop014._frame_uncached(self,info,interval,required_identity=policy['identity']),interval)
+                    frames[interval]=self.closed_frame(info,self.pinned_frame(info,interval,policy['identity']),interval)
                 else:
                     frames[interval]=self.frame_for_entry(info,interval,frames[tf]) if interval!=tf and tf in frames else self.frame_for(info,interval)
             except ValueError as error:
@@ -117,7 +137,7 @@ class SnapshotContext:
             data=frame.copy(deep=False);data.attrs={**frame.attrs,'timeframe':interval}
             try:return (analytics.bar_ends(data)<=now).tobytes()
             except (ValueError,TypeError,KeyError):return b'invalid'
-        key=('trading_engine',generation,info['isin'],tf,self.period.get(),
+        key=('trading_engine',generation,info['isin'],tf,self.period.get(),tuple(required),
              json.dumps(state,sort_keys=True,default=str),str(now.date()),
              tuple((interval,tuple(frame.attrs.get(k) for k in ('source','symbol','venue','currency','timezone')),closed_token(frame,interval),json.dumps({k:frame.attrs.get('data_quality',{}).get(k) for k in ('state','issues')},sort_keys=True,default=str)) for interval,frame in frames.items()),
              closed_token(benchmark_frame,'1D'))
@@ -145,7 +165,7 @@ class SnapshotContext:
                 # this provider. Legacy Proxy preferences are not its inputs.
                 # Every dependent frame still has to match this exact identity.
                 state['expected_identity']=dict(reviewed_identity)
-            result=analytics.analyse_multiframe({interval:frames[interval] for interval in dict.fromkeys((tf,*profile(tf)))},tf,state,market,now=now)
+            result=analytics.analyse_multiframe({interval:frames[interval] for interval in dict.fromkeys((tf,*required))},tf,state,market,now=now,required_tf=required)
             result['analysis_scope']=frames[tf].attrs.get('analysis_scope')
             return result
         result=self.store.read_cache.get(key,calculate_engine,scoped=True,inputs=dict(generation),category='analytics')
@@ -272,6 +292,15 @@ def diagnostic_detail(stock):
             'upstream_root_cause':'UNCONFIRMED' if causes else 'No blocking cause established by this snapshot'}
 
 def calculate(store,values,last_client):
+    # Reuse the same bounded pure-calculation cache as CP assessment. Exact
+    # OHLCV, evidence and as-of clocks remain part of every calculation key;
+    # revision tracking and final snapshot validation still run below.
+    from calculation_reuse import using
+    with using(store.read_cache):
+        return _calculate(store,values,last_client)
+
+
+def _calculate(store,values,last_client):
     context=SnapshotContext()
     for key,value in values.items():setattr(context,key,Value(value) if key in ('symbol','timeframe','period') else value)
     context.store=store;context.bridge=SimpleNamespace(last_client=last_client)
@@ -354,9 +383,68 @@ def calculate(store,values,last_client):
     return state
 
 
+def _invalidated_stock(stock,reason):
+    result={k:stock[k] for k in ('isin','name','timeframe','source_mode') if k in stock}
+    result.update(candles=[],count=0,input_state='INVALIDATED',
+        data_quality={'state':'STALE','issues':['Closed calculation inputs changed; re-evaluation required'],
+                      'basis':'calculation validity; saved archive DQ not modified'},
+        trading_engine={'status':'DATA BLOCKED','signal':'WAIT','confidence':0,'score':0,
+                        'blockers':['CLOSED_INPUT_CHANGED'],'input_change':str(reason)})
+    return result
+
+
+def _merge_snapshot_proofs(guards):
+    from performance_cache import _digest
+    merged=dict(version=1,revisions={},strict={},settings={},settings_start={},series=[]);series={}
+    for guard in guards:
+        for field in ('revisions','strict','settings','settings_start'):merged[field].update(guard.get(field,{}))
+        for item in guard['series']:series[_digest(item['spec'])]=item
+    merged['series']=list(series.values())
+    return merged
+
+
+def retain_current_publication(state,current):
+    """Bounded metadata filter at the final UI boundary; never reads candles.
+
+    A late raw revision revokes every dependent stock. No token is rebased
+    over that change, and missing/global unowned proofs still reject all.
+    Exact validation remains on the worker; this is deliberately stricter.
+    """
+    token=state.get('_input_revisions')
+    if not isinstance(state.get('analysis_snapshot'),dict) or not isinstance(token,dict) or set(token)!=set(current):return False
+    changed={k for k,v in token.items() if current[k]!=v}
+    records=[];owned=set()
+    for stock in state.get('stocks',[]):
+        if stock.get('input_state')=='INVALIDATED':continue
+        guard=stock.get('_closed_inputs')
+        if (not isinstance(guard,dict) or guard.get('version')!=1 or not isinstance(guard.get('series'),list)
+            or not all(isinstance(guard.get(k),dict) for k in ('revisions','strict','settings','settings_start'))):return False
+        scopes=set(guard['revisions'])
+        if not scopes.issubset(token):return False
+        if ('instrument:'+stock['isin'] not in scopes and
+            (stock.get('candles') or stock.get('trading_engine',{}).get('status')=='READY')):return False
+        records.append((stock,guard,scopes));owned.update(scopes)
+    if set(token)!=owned:return False
+    invalidated={s['isin']:'Late publication revision changed: '+', '.join(sorted(scopes & changed)[:12])
+                 for s,_,scopes in records if scopes & changed}
+    guards=[g for s,g,_ in records if s['isin'] not in invalidated]
+    retained={k:token[k] for g in guards for k in g['revisions']}
+    state['stocks']=[_invalidated_stock(s,invalidated[s['isin']]) if s['isin'] in invalidated else s for s in state['stocks']]
+    state['_input_revisions']=retained;state['_closed_inputs']=_merge_snapshot_proofs(guards)
+    snapshot=state['analysis_snapshot'];snapshot.setdefault('invalidated_inputs',{}).update(invalidated)
+    snapshot['validated_instruments']=len(guards)
+    state.setdefault('_calculation_timing',{}).update(publication_invalidated_instruments=len(invalidated),
+        invalidated_instruments=len(snapshot['invalidated_inputs']))
+    state['_revision_trace']={k:v for k,v in state.get('_revision_trace',{}).items()
+        if len(v.get('scope','').split(':'))>=2 and v['scope'].split(':')[1] not in invalidated}
+    if state.get('selected',{}).get('isin') in invalidated:
+        state['market_context']={'state':'UNAVAILABLE','reason':'Selected closed inputs changed before publication'}
+    return True
+
+
 def validate_snapshot(store,state):
     """Retain valid instruments; a changed instrument cannot keep old signals."""
-    from performance_cache import validate_closed_inputs,InputRevisionChanged,_digest
+    from performance_cache import validate_closed_inputs,InputRevisionChanged
     union={};guards=[];invalidated={};memo={}
     with store.connect() as db:
         db.execute('BEGIN')
@@ -367,18 +455,8 @@ def validate_snapshot(store,state):
                 union.update(current);guards.append(guard)
             except InputRevisionChanged as error:
                 invalidated[stock['isin']]=str(error)
-                state['stocks'][index]={k:stock[k] for k in ('isin','name','timeframe','source_mode') if k in stock}
-                state['stocks'][index].update(candles=[],count=0,input_state='INVALIDATED',
-                    data_quality={'state':'STALE','issues':['Closed calculation inputs changed; re-evaluation required'],
-                                  'basis':'calculation validity; saved archive DQ not modified'},
-                    trading_engine={'status':'DATA BLOCKED','signal':'WAIT','confidence':0,'score':0,
-                                    'blockers':['CLOSED_INPUT_CHANGED'],'input_change':str(error)})
-    merged=dict(version=1,revisions={},strict={},settings={},settings_start={},series=[]);series={}
-    for guard in guards:
-        for field in ('revisions','strict','settings','settings_start'):merged[field].update(guard.get(field,{}))
-        for item in guard['series']:series[_digest(item['spec'])]=item
-    merged['series']=list(series.values())
-    state['_closed_inputs']=merged;state['_input_revisions']=union
+                state['stocks'][index]=_invalidated_stock(stock,error)
+    state['_closed_inputs']=_merge_snapshot_proofs(guards);state['_input_revisions']=union
     state['analysis_snapshot'].update(invalidated_inputs=invalidated,validated_instruments=len(guards))
     state['_calculation_timing']['invalidated_instruments']=len(invalidated)
     if state.get('selected',{}).get('isin') in invalidated:

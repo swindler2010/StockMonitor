@@ -5,6 +5,7 @@ import tempfile
 import threading
 import time
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 from urllib.request import Request,build_opener,ProxyHandler
 from urllib.error import HTTPError
@@ -73,6 +74,42 @@ class QueueTests(unittest.TestCase):
         self.assertNotIn('private-test-value',json.dumps(events));self.assertNotIn('command_id',events[0])
 
 class TransportTests(unittest.TestCase):
+    def test_health_does_not_read_archive_or_grant_readiness(self):
+        with tempfile.TemporaryDirectory() as d:
+            b=Bridge(Path(d),queue.Queue(),lambda a,x:None)
+            try:
+                def call(token):
+                    req=Request(json.loads((Path(d)/'bridge.json').read_text())['url'],
+                                data=json.dumps({'action':'health','arguments':{}}).encode(),
+                                headers={'Authorization':'Bearer '+token})
+                    with build_opener(ProxyHandler({})).open(req,timeout=2) as r:return json.load(r)
+                # Fail immediately if the connection check touches any SQLite
+                # collector; real health previously exceeded the 15s deadline.
+                with patch('sqlite3.connect',side_effect=AssertionError('archive query')) as database:
+                    before=call(b.token)
+                    self.assertIsNone(before['snapshot_published_at'])
+                    b.publish({'ready':True})
+                    h=call(b.token)
+                    database.assert_not_called()
+                    self.assertEqual(h['instance_id'],b.instance_id)
+                    self.assertEqual(h['readiness'],'NOT_EVALUATED_BY_HEALTH')
+                    self.assertEqual(h['candlepilot_health']['status'],'NOT_READ')
+                    self.assertEqual(h['paper_account']['status'],'NOT_READ')
+                    self.assertGreaterEqual(h['snapshot_age_seconds'],0)
+                    self.assertNotIn('ready',h)
+                    self.assertNotIn(b.token,json.dumps(h))
+                    self.assertIn('stock_monitor_set_indicators',h['capabilities'])
+                    with patch.object(mcp_server,'bridge_call',return_value=h):
+                        response=mcp_server.handle({'method':'tools/call','params':{'name':'stock_monitor_health'}})
+                    served=json.loads(response['content'][0]['text'])
+                    self.assertEqual(served['mcp_adapter']['tools'],[t['name'] for t in mcp_server.TOOLS])
+                    self.assertEqual(served['mcp_adapter']['tool_catalog_digest'],mcp_server.TOOL_CATALOG_DIGEST)
+                    self.assertEqual(served['mcp_adapter']['loaded_at'],mcp_server.ADAPTER_LOADED_AT)
+                    self.assertEqual(served['readiness'],'NOT_EVALUATED_BY_HEALTH')
+                    with self.assertRaises(HTTPError) as e:call('wrong')
+                    self.assertEqual(e.exception.code,401)
+            finally:b.close();b.server.server_close()
+
     def test_live_authenticated_health_snapshot_and_wrong_token(self):
         with tempfile.TemporaryDirectory() as d:
             b=Bridge(Path(d),queue.Queue(),lambda a,x:None)

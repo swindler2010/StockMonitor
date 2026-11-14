@@ -79,14 +79,20 @@ class CommandQueue:
                     record['status']='EXPIRED';record['done'].set();return
                 record['status']='RUNNING'
             try:
-                if action!='read_analytics' and not self.writable():raise PermissionError('Application edits are disabled')
+                if action not in ('read_analytics','get_indicators') and not self.writable():raise PermissionError('Application edits are disabled')
                 self.record_event(record)
                 dispatch_args={**arguments,'_deadline':deadline} if action in ('paper_trade','read_analytics') else arguments
-                if action=='set_levels':dispatch_args={**arguments,'_command_id':cid}
+                if action in ('set_levels','set_indicators'):dispatch_args={**arguments,'_command_id':cid}
                 result=self.dispatch(action,dispatch_args)
-                if action in ('read_analytics','paper_trade') and isinstance(result,Future):
+                if action in ('read_analytics','paper_trade','set_indicators') and isinstance(result,Future):
                     def finish(future):
                         with self.lock:
+                            if action=='set_indicators':
+                                try:
+                                    answer=future.result()
+                                    record.update(status='COMPLETED',result=answer)
+                                except Exception:record.update(status='FAILED',result={'code':'INDICATORS_WRITE_FAILED','saved':False})
+                                self.record_event(record);record['done'].set();return
                             if self.closed or time.monotonic()>=record['expires']:record.update(status='EXPIRED')
                             else:
                                 try:
@@ -108,7 +114,7 @@ class CommandQueue:
                 # Exceptions can contain provider credentials/URLs; do not expose them.
                 with self.lock:record.update(status='FAILED',result={'error':'Command rejected or failed; inspect local application diagnostics'})
             finally:
-                if not (action in ('read_analytics','paper_trade') and isinstance(locals().get('result'),Future)):
+                if not (action in ('read_analytics','paper_trade','set_indicators') and isinstance(locals().get('result'),Future)):
                     try:self.record_event(record)
                     finally:record['done'].set()
         self.events.put((call,()))
