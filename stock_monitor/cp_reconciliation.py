@@ -175,6 +175,13 @@ def _observation_current(job, inputs):
     # cannot be revived merely by removing non-market fields from the binding.
     if (observation.get('fingerprint_version')==3 and
             _fingerprint(inputs,version=3)==observation.get('input_fingerprint')):return True
+    # The GETTEX owner policy added this display/history selection field after
+    # some v3 reviews. Reconstruct their COMPLETE old hash with that field
+    # absent, never accept an arbitrary metadata or market-data difference.
+    # _input already validates the current listing under the current lock.
+    if observation.get('fingerprint_version')==3 and 'history_venue_lock' in inputs['info']:
+        previous=dict(inputs,info={k:v for k,v in inputs['info'].items() if k!='history_venue_lock'})
+        if _fingerprint(previous,version=3)==observation.get('input_fingerprint'):return True
     # Reconstruct the exact prior v2 hash, not a blanket migration. If any
     # native row, neighbor, instrument, source or proof content changed, no
     # previous check timestamp can make the old observation match.
@@ -195,43 +202,6 @@ def _observation_current(job, inputs):
         'native_rows' in job and digest(job['native_rows'])==digest(inputs['rows']) and
         digest(job.get('native_neighbors'))==digest(inputs['neighbors']) and
         job.get('finding',{}).get('evidence_digest')==digest(inputs['proof']))
-
-
-def _legacy_reference_observation(job, inputs, clock):
-    """Recover a v3 binding only from its originally hashed native receipt.
-
-    Called on the existing bounded feed worker, outside the write transaction.
-    Read-only UI paths never open archive files. A missing/changed receipt or
-    any material difference stays unconfirmed; no fresh TV review is invented.
-    """
-    observation=job.get('observation') or {}
-    if (observation.get('fingerprint_version')!=3 or
-            _observation_current(job,inputs)):return None
-    origin=job.get('origin') or {}
-    if origin.get('kind')!='prior_human_diagnosis':return None
-    try:
-        path=Path(origin['native_reference'])
-        if path.suffix.lower()!='.json' or not path.is_file() or path.stat().st_size>10_000_000:return None
-        with path.open('rb') as source:raw=source.read(10_000_001)
-        if len(raw)>10_000_000 or hashlib.sha256(raw).hexdigest()!=origin.get('native_sha256'):return None
-        packet=json.loads(raw)
-        if 'records' in packet:records=packet['records']
-        elif 'spec' in packet and 'native' in packet:records=[packet]
-        elif len(packet.get('specs',[]))==len(packet.get('inputs',[])):
-            records=[dict(spec=s,native=n) for s,n in zip(packet.get('specs',[]),packet.get('inputs',[]))]
-        else:return None
-        spec=_spec(job['isin'],job['identity'],job['tf'],job['first'],job['last'])
-        matching=[record for record in records if record['spec']==spec]
-        if len(matching)!=1:return None
-        native=matching[0]['native'];previous=observation.get('input_fingerprint')
-        if (native.get('fingerprint')!=previous or _fingerprint(native,version=3)!=previous
-                or _fingerprint(native)!=inputs['fingerprint']):return None
-    except (OSError,ValueError,KeyError,TypeError,AttributeError):
-        return None
-    return dict(observation,previous_input_fingerprint=previous,
-        input_fingerprint=inputs['fingerprint'],fingerprint_version=FINGERPRINT_VERSION,
-        binding_updated_at=clock.isoformat(),native_reference_sha256=origin['native_sha256'],
-        binding_reason='v3 archive verified: unchanged native rows/neighbours/listing/proof; only non-market metadata changed')
 
 
 def _classify(job, inputs, now):
@@ -516,9 +486,7 @@ def turn(store, info, now=None):
         try:
             with store.connect() as db:
                 db.execute('BEGIN');inputs=_input(db,prior);source_policy=read(db,SOURCE_POLICY,{})
-            migrated=_legacy_reference_observation(prior,inputs,clock)
-            candidate=dict(prior,observation=migrated) if migrated else prior
-            result=_classify(candidate,inputs,clock)
+            result=_classify(prior,inputs,clock)
             with store.connect() as db:
                 db.execute('BEGIN IMMEDIATE');current=read(db,key(prior))
                 if (digest(current)!=digest(prior) or _input(db,prior)['fingerprint']!=inputs['fingerprint']
@@ -528,9 +496,7 @@ def turn(store, info, now=None):
                 if changed:
                     current['history']=(current.get('history',[])+[dict(at=clock.isoformat(),finding=result)])[-20:]
                 old=dict(current)
-                if migrated:
-                    current['observation']=migrated
-                elif _observation_current(current,inputs) and current['observation']['input_fingerprint']!=inputs['fingerprint']:
+                if _observation_current(current,inputs) and current['observation']['input_fingerprint']!=inputs['fingerprint']:
                     current['observation']={**current['observation'],'previous_input_fingerprint':current['observation']['input_fingerprint'],
                         'input_fingerprint':inputs['fingerprint'],'binding_updated_at':clock.isoformat(),
                         'fingerprint_version':FINGERPRINT_VERSION,
