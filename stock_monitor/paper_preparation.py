@@ -1,7 +1,8 @@
 """One sequential PAPER candidate on the existing hourly worker and CP queue.
 
 Preparation is analysis only. Promotion requires a current closed-input proof,
-existing owner risk receipts, benchmark, fresh real quote and unchanged epoch.
+existing owner risk receipts, benchmark and unchanged epoch. Closed-session
+archive admission is separate from current quote permission to execute.
 It neither creates a risk grant nor places an order.
 """
 import copy
@@ -68,6 +69,8 @@ def retry_inputs(db,isin,identity):
 
 def choose(db,now):
     """Persist one candidate and its retry time. Called off the UI thread."""
+    import pandas as pd
+    from candle_schedule import boundary
     from paper_hourly import read,STATUS
     from paper_account import registered_instrument
     cfg,p=policy(db);old=read(db,STATE,{})
@@ -82,7 +85,9 @@ def choose(db,now):
         # Pair stability is a scheduling condition, never a permission proof.
         for isin in p['prerequisites']:
             s=read(db,STATUS+isin,{})
-            if (s.get('core')!='READY' or s.get('quote_blocker') or not s.get('quote_at')
+            closed=not boundary(cfg['identities'][isin],'15m',
+                pd.Timestamp(now,unit='s',tz='UTC'),delay_seconds=0)['session_open']
+            if not closed and (s.get('core')!='READY' or s.get('quote_blocker') or not s.get('quote_at')
                     or not 0<=now-s.get('at',0)<=180):return None
         candidates=[]
         for isin,payload in db.execute('SELECT isin,payload FROM instruments ORDER BY isin'):
@@ -99,9 +104,49 @@ def choose(db,now):
         identity=saved.get('identity',{}),state='PREPARING',execution_permission=False,
         requested_at=old.get('requested_at',now) if active else now,
         retry_inputs=retry_inputs(db,isin,saved.get('identity',{})),
-        at=now,next_check=now+300,reason='Проверка закрытых 1H/4H/1D и актуальной цены; сделок нет')
+        at=now,next_check=now+300,reason='Проверка закрытых 1H/4H/1D; подключение отдельно от исполнения; сделок нет')
     write(db,STATE,item)
     return info
+
+
+def closed_session_archive(db,info,identity,result,now):
+    """Validate the saved final session bar at real now, never backdate a quote."""
+    import pandas as pd
+    import data_quality as dq
+    from candle_schedule import boundary
+    from analytics import bar_ends
+    from performance_cache import primary_closed_series
+    clock=pd.Timestamp(now,unit='s',tz='UTC')
+    due=boundary(identity,'15m',clock,delay_seconds=0)
+    if due['session_open'] or not due.get('close_at'):
+        raise ValueError('PAPER_PREPARATION_REQUIRES_CLOSED_SESSION')
+    end=pd.Timestamp(due['close_at'])
+    # This is the final bar of the latest completed session, not a lunch break
+    # or an arbitrary earlier bar which happens to be closed.
+    daily=boundary(identity,'1D',clock,delay_seconds=0)
+    if daily.get('close_at')!=due['close_at']:
+        raise ValueError('PAPER_PREPARATION_SESSION_NOT_COMPLETE')
+    token=result.get('_input_revisions',{})
+    if not {'market:'+info['isin']+':15m',
+            'setting:gettex_chart:'+info['isin']+':15m'}<=set(token):
+        raise ValueError('PAPER_PREPARATION_REVISIONS_REQUIRED')
+    row=db.execute('SELECT ts,open,high,low,close,volume FROM series WHERE '
+        'isin=? AND source=? AND venue=? AND currency=? AND symbol=? AND base_tf=? '
+        'ORDER BY ts DESC LIMIT 1',(info['isin'],identity['source'],identity['venue'],
+            identity['currency'],identity['symbol'],'15m')).fetchone()
+    if row is None:raise ValueError('PAPER_PREPARATION_SESSION_TAIL_MISSING')
+    frame=pd.DataFrame([row[1:]],columns=dq.FIELDS,index=pd.DatetimeIndex([pd.Timestamp(row[0])]))
+    frame.attrs=dict(identity,timeframe='15m')
+    if bar_ends(frame)[0]!=end:
+        raise ValueError('PAPER_PREPARATION_SESSION_TAIL_MISSING')
+    quality=dq.audit(frame,'15m',identity,clock)
+    if quality['state']!='READY':raise ValueError('PAPER_PREPARATION_TAIL_'+quality['state'])
+    own=primary_closed_series(result['hourly']['proof'],info['isin'],identity)
+    if not any(s['spec'].get('timeframe')=='1D' and pd.Timestamp(s['spec']['through'])==end for s in own):
+        raise ValueError('PAPER_PREPARATION_DAILY_TAIL_MISSING')
+    return dict(basis='CLOSED_SESSION_ARCHIVE',session_close=end.isoformat(),
+                checked_at=clock.isoformat(),tail_at=str(row[0]),tail_quality=quality['state'],
+                execution_blocker='PAPER_SESSION_CLOSED')
 
 
 def admit(db,info,result,now):
@@ -123,15 +168,20 @@ def admit(db,info,result,now):
         current=db.execute('SELECT revision FROM input_revisions WHERE scope=?',(key,)).fetchone()
         if (current[0] if current else 0)!=revision:raise ValueError('PAPER_STALE_INPUTS')
     validate_analysis(db,info,result,now,cfg)
-    if result.get('quote_blocker'):raise ValueError(result['quote_blocker'])
-    q=result.get('execution_quote',{})
-    if q.get('identity')!=identity or q.get('isin')!=info['isin']:
-        raise ValueError('PAPER_AUTO_QUOTE_IDENTITY_BLOCKED')
-    if 'setting:gettex_chart:'+info['isin']+':'+str(q.get('timeframe')) not in token:
-        raise ValueError('PAPER_NO_LISTING_REVISION')
-    quote(info,q,now,stored_listing=stored_identity(db,info,identity,q.get('timeframe')))
+    admission=dict(basis='CURRENT_QUOTE')
+    if result.get('quote_blocker')=='PAPER_STALE_QUOTE':
+        admission=closed_session_archive(db,info,identity,result,now)
+    else:
+        if result.get('quote_blocker'):raise ValueError(result['quote_blocker'])
+        q=result.get('execution_quote',{})
+        if q.get('identity')!=identity or q.get('isin')!=info['isin']:
+            raise ValueError('PAPER_AUTO_QUOTE_IDENTITY_BLOCKED')
+        if 'setting:gettex_chart:'+info['isin']+':'+str(q.get('timeframe')) not in token:
+            raise ValueError('PAPER_NO_LISTING_REVISION')
+        quote(info,q,now,stored_listing=stored_identity(db,info,identity,q.get('timeframe')))
     report={**read(db,STATE,{}),**compact(result), 'state':'ADMITTED','at':now,
-        'reason':'Данные проверены; часовой деморежим подключён автоматически. Исполнение проверяется заново.',
+        'reason':'Данные проверены; деморежим подключён автоматически. Исполнение проверяется заново.',
+        'admission':admission,
         'execution_permission':False,'proof_digest':digest(result['hourly']['proof']),
         'input_revisions':token,'next_check':now+300}
     cfg=copy.deepcopy(cfg);cfg['identities'][info['isin']]=identity
