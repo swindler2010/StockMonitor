@@ -66,10 +66,16 @@ def decision(store,isin,meta,base,now=None):
     count=prior.get('intraday_publication_rechecks',0) if prior.get('pending_intraday_close')==b['close_at'] else 0
     elapsed=pd.Timestamp(prior.get('finished_at') or b['eligible_at'])
     due_at=max(pd.Timestamp(b['eligible_at']),elapsed+pd.Timedelta(minutes=(0,5,15,30)[min(count,3)]))
-    until=target+pd.Timedelta(hours=2);due=count<4 and now<until and now>=due_at
+    # A stock first serviced on the weekend has not spent its post-close
+    # retry budget. Start that bounded window at its first actual catch-up,
+    # then persist it; later plans/restarts must never slide the deadline.
+    same_close=prior.get('pending_intraday_close')==b['close_at']
+    started=pd.Timestamp(prior.get('intraday_catchup_started_at') or target) if same_close else now
+    until=max(target,started)+pd.Timedelta(hours=2);due=count<4 and now<until and now>=due_at
     return {**b,'due':due,'reason':'PENDING_INTRADAY_PUBLICATION' if due else 'INTRADAY_PUBLICATION_WAIT' if count<4 and now<until else 'INTRADAY_PUBLICATION_UNCONFIRMED',
       'key':key,'revisions':rev,'planned_at':now.isoformat(),'pending_intraday_close':b['close_at'],
       'intraday_publication_rechecks':count+1 if due else count,'next_publication_check':due_at.isoformat(),
+      'intraday_catchup_started_at':started.isoformat(),
       'publication_retry_until':until.isoformat(),'publication_delay_status':'UNKNOWN'}
   except (ValueError,TypeError,KeyError):pass
  # A checked HTTP response is not proof that the last daily candle arrived.
@@ -106,6 +112,7 @@ def finish(store,isin,meta,base,plan,error=None,now=None):
  if prior.get('pending_intraday_close') and prior['pending_intraday_close']==plan.get('close_at'):
   row['pending_intraday_close']=prior['pending_intraday_close']
   row['intraday_publication_rechecks']=max(prior.get('intraday_publication_rechecks',0),row.get('intraday_publication_rechecks',0))
+  if prior.get('intraday_catchup_started_at'):row['intraday_catchup_started_at']=prior['intraday_catchup_started_at']
  if error:
   row['error']=type(error).__name__;row['retry_after']=(now+pd.Timedelta(minutes=15)).isoformat()
   response=getattr(error,'response',None);status=getattr(error,'code',None) or getattr(response,'status_code',None)
