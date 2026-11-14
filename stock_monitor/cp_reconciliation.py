@@ -442,14 +442,16 @@ def _seed_official_empty_checks(db,info,clock,progress,limit):
     """Bounded saved-evidence discovery, not a grant or another download queue."""
     import pandas as pd
     import data_quality as dq
-    from revision_watcher import RETIME_POLICY,RETIME_VERSION
+    from revision_watcher import RETIME_POLICY,RETIME_VERSION,empty_native_span
     policy=read(db,RETIME_POLICY,{})
     if limit<=0 or policy.get('approved') is not True or policy.get('version')!=RETIME_VERSION:return []
     isin=info['isin'];meta=read(db,'gettex_chart:'+isin+':15m',{}).get('identity',{})
     if meta.get('source')!='gettex_chart' or meta.get('venue')!='GETTEX' or meta.get('currency')!='EUR':return []
     report=read(db,'data_quality:'+isin+':'+meta.get('symbol','')+':15m',{})
-    if report.get('identity')!=meta or report.get('state') not in ('UNCONFIRMED','GAP','SOURCE_GAP'):return []
-    ranges=sorted((r[0] for r in report.get('ranges',[]) if len(r)==2 and r[0]==r[1]),reverse=True)
+    if report.get('identity')!=meta or report.get('state') not in ('UNCONFIRMED','GAP','SOURCE_GAP','STALE'):return []
+    reported=list(report.get('ranges',[]))
+    if report.get('stale_range'):reported.append(report['stale_range'])
+    ranges=sorted({r[0] for r in reported if len(r)==2 and r[0]==r[1]},reverse=True)
     cursor=progress.get('official_empty_cursor');ordered=ranges if cursor is None else [x for x in ranges if x<cursor]+[x for x in ranges if x>=cursor]
     proof=read(db,'interval_evidence:'+isin,{})
     if proof.get('isin')!=isin:return []
@@ -460,20 +462,16 @@ def _seed_official_empty_checks(db,info,clock,progress,limit):
             a=pd.Timestamp(first)
             if not dq.no_trades_proof(authority,a,a+pd.Timedelta(minutes=15),clock):continue
             spec=_spec(isin,meta,'15m',first,first);inputs=_input(db,spec)
+            if not empty_native_span(spec,inputs):continue
         except (ValueError,KeyError,TypeError) as error:
             progress['official_empty_wait']=dict(first=first,reason=str(error),at=clock.isoformat());continue
-        before,after=inputs['neighbors']['before'],inputs['neighbors']['after']
-        if (inputs['rows'] or not before or not after
-                or pd.Timestamp(before[0])!=a-pd.Timedelta(minutes=15)
-                or pd.Timestamp(after[0])!=a+pd.Timedelta(minutes=15)
-                or before[0][:10]!=after[0][:10]):continue
         job,_=_enqueue(db,spec,dict(kind='saved_official_empty_evidence'),clock)
         # One new algorithm check; hourly/monthly retry remains the existing
         # mechanism. A poll, unchanged source or restart cannot reset it.
-        if job.get('official_empty_algorithm')==1:continue
+        if job.get('official_empty_algorithm')==2:continue
         # Saved-source discovery uses ordinary capacity, not the two reserved
         # slots for explicit human observations.
-        old=dict(job);job.update(official_empty_algorithm=1,status='QUEUED',next_check=clock.isoformat())
+        old=dict(job);job.update(official_empty_algorithm=2,status='QUEUED',next_check=clock.isoformat())
         _save_job(db,job,old);queued.append((key(job),json.dumps(job,ensure_ascii=False)))
     return queued
 
