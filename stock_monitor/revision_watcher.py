@@ -78,6 +78,7 @@ def retime_plan(db,job,inputs,now):
  """Recognise only conserved, same-session redistribution, at most 45 minutes."""
  from cp_controls import read,digest
  from cp_reconciliation import _observation_current
+ import data_quality as dq
  policy=read(db,RETIME_POLICY,{})
  if policy.get('version')!=RETIME_VERSION or policy.get('approved') is not True:return None
  meta=job['identity'];a=pd.Timestamp(job['first']);after=inputs['neighbors']['after']
@@ -86,6 +87,28 @@ def retime_plan(db,job,inputs,now):
  b=pd.Timestamp(after[0])+pd.Timedelta(minutes=15)
  if not pd.Timedelta(minutes=15)<b-a<=pd.Timedelta(minutes=45) or a.normalize()!=b.normalize():return None
  observation=job.get('observation')
+ # A complete official empty interval can corroborate the native timebase
+ # locally only when BOTH bracketing real bars and every 5m/15m row agree.
+ # Reuse the same bounded receipt/revalidation path; do not rewrite prices or
+ # infer absence from a provider's empty response, TV or a matching sample.
+ before_neighbor=inputs['neighbors']['before']
+ authority={**inputs['proof'].get('identity',{}),'absence_evidence':inputs['proof']}
+ if (before_neighbor and pd.Timestamp(before_neighbor[0])==a-pd.Timedelta(minutes=15)
+     and pd.Timestamp(after[0])==a+pd.Timedelta(minutes=15)
+     and job['last']==str(a) and pd.Timestamp(before_neighbor[0]).normalize()==a.normalize()
+     and dq.no_trades_proof(authority,a,a+pd.Timedelta(minutes=15),now)):
+  left=before_neighbor[0]
+  source=_official_window(db,job['isin'],left,str(b),now)
+  native={base:_native(db,job['isin'],meta,base,left,str(b)) for base in ('5m','15m')}
+  if (all(native[base]==source['rows'][base] for base in native)
+      and {r[0] for r in native['15m']}=={left,after[0]}):
+   if observation and (observation.get('result')!='ABSENT' or not _observation_current(job,inputs)):
+    raise ValueError('RETIME_VISUAL_REFERENCE_CONFLICT_OR_CHANGED')
+   return dict(version=RETIME_VERSION,mode='VERIFIED_NATIVE_EMPTY',isin=job['isin'],identity=meta,
+    first=left,end=str(b),empty_first=str(a),empty_end=str(a+pd.Timedelta(minutes=15)),
+    job_id=job['id'],policy_digest=digest(policy),input_fingerprint=inputs['fingerprint'],
+    before=native,source=source,source_digest=digest(source),created_at=now.isoformat(),
+    origin='Complete official GETTEX publications; exact bracketing 5m/15m native OHLCV; no price replacement')
  if observation and (observation.get('result') not in ('PRESENT','DIFFERENT') or not _observation_current(job,inputs)):
   raise ValueError('RETIME_VISUAL_REFERENCE_CONFLICT_OR_CHANGED')
  source=_official_window(db,job['isin'],str(a),str(b),now)
@@ -154,6 +177,9 @@ def retimed_rows(db,isin,meta,base):
  records=read(db,parent_provenance_key(isin,meta,base),{});result={}
  for key in {p['official_timebase'] for p in records.values() if p.get('official_timebase')}:
   receipt=read(db,key,{})
+  # Corroboration is not an override: a later real native candle must be saved
+  # and invalidate the receipt, rather than being suppressed as absent.
+  if receipt.get('mode')=='VERIFIED_NATIVE_EMPTY':continue
   if receipt and retime_current(db,receipt):
    values={r[0]:list(r[1:]) for r in receipt['source']['rows'][base]}
    for at in pd.date_range(receipt['first'],receipt['end'],freq=base.replace('m','min'),inclusive='left'):
