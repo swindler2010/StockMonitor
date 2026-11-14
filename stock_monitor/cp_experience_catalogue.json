@@ -1488,7 +1488,7 @@
         "UNCONFIRMED",
         "STALE"
       ],
-      "status": "IMPLEMENTED; targeted red/green tests PASS; ordinary TEST re-evaluation 14Nov2026 14:09:18 CET no false stale tail; overall analysis still blocked by historical gaps",
+      "status": "IMPLEMENTED; ordinary Windows CP and MCP confirmed 14Nov2026 14:09:18 CET; unrelated gaps remain blocked",
       "steps": [
         "For a closed-parent analytical input reuse exact currently bound TV absence receipts per child interval.",
         "Build parent only when all its missing children are officially proved or explicitly accepted.",
@@ -1502,6 +1502,59 @@
       ],
       "automatic_action": "Existing timeframes.covered_slots",
       "manual_action": "Remaining unknown ranges still require source evidence/review."
+    },
+    {
+      "id": "official_native_extrema_corroboration",
+      "title": "Пропущенный реальный экстремум в сохранённой свече",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "SOURCE_DISCREPANCY"
+      ],
+      "status": "IMPLEMENTED; ordinary Windows CP APPLIED 14Nov2026 14:14:23 CET; RESOLVED_NATIVE 14:15:11 CET",
+      "steps": [
+        "Require current DIFFERENT observation and complete MUNC/MUND publication pair with exact trade-built 5m/15m.",
+        "Only isolated H/L expansion supported by positive trades, identical timestamps/O/C/V, unchanged adjacent bar and conserved complete window.",
+        "Recompute evidence immediately before write; preserve originals, provenance and normal reassessment."
+      ],
+      "evidence": [
+        "test_cp_native_extrema.py"
+      ],
+      "limits": [
+        "No general provider overwrite, no invented extreme, no new historical or trading grant."
+      ],
+      "automatic_action": "Existing revision_watcher retime_plan/publish_retime",
+      "manual_action": "Missing independent evidence remains blocked."
+    },
+    {
+      "id": "official_price_observation_timebase",
+      "title": "Перенос опубликованной ценовой записи с нулевым объёмом",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "SOURCE_TIMEBASE_UNCONFIRMED",
+        "GAP"
+      ],
+      "status": "IMPLEMENTED; ordinary Windows CP Palantir APPLIED 14:22:37 and RESOLVED_NATIVE 14:24:06; Broadcom APPLIED 14:23:17 and RESOLVED_NATIVE 14:28:50 CET 14Nov2026",
+      "steps": [
+        "Require current ZERO_VOLUME visual observation and complete official GETTEX trade publication, identical listing and exact preserved whole-window OHLCV.",
+        "Bind flat zero-quantity price to an existing native open no more than 15 minutes later; preserve zero quantity.",
+        "Permit unique exact relocation only; retain original rows, provenance, final input checks and ordinary DQ/CORE reassessment.",
+        "A superseded ABSENT observation cannot veto an independent full current official empty-window proof, but is never reused as a risk grant."
+      ],
+      "evidence": [
+        "test_cp_price_observation.py",
+        "test_cp_session_empty.py"
+      ],
+      "limits": [
+        "A price observation is not executed turnover or NO_TRADES. Incomplete publications, conflicting PRESENT/DIFFERENT, changed policy or input remain blocked."
+      ],
+      "automatic_action": "Existing reconciliation and revision_watcher; no separate worker",
+      "manual_action": "Visual evidence and unavailable publication require assisted review."
     }
   ],
   "sources": [
