@@ -169,7 +169,10 @@ def _fingerprint(inputs, proof=None, legacy=False, version=FINGERPRINT_VERSION):
     proof=dict(inputs['proof'] if proof is None else proof)
     if not legacy:proof.pop('checked_at',None)
     instrument=inputs['info'] if version<4 else _instrument_identity(inputs['info'])
-    return digest([instrument,listing,inputs['rows'],inputs['neighbors']['before'],inputs['neighbors']['after'],proof])
+    bound=[instrument,listing,inputs['rows'],inputs['neighbors']['before'],inputs['neighbors']['after'],proof]
+    if inputs.get('official_retiming_empty'):
+        bound.append(inputs['official_retiming_empty'])
+    return digest(bound)
 
 
 def _observation_current(job, inputs):
