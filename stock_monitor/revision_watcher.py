@@ -50,7 +50,7 @@ def _official_window(db,isin,first,end,now,allow_zero_rows=False):
  authority={**meta,'absence_evidence':{**scoped,'checked_at':proof.get('checked_at')}}
  trades=db.execute('SELECT ts,price,volume FROM trades WHERE isin=? AND ts>=? AND ts<? ORDER BY ts',(isin,first,end)).fetchall()
  if not trades:raise ValueError('RETIME_NO_CONFIRMED_TRADES')
- raw=pd.DataFrame(trades,columns=['ts','price','volume']);raw.index=pd.to_datetime(raw.pop('ts'))
+ raw=pd.DataFrame(trades,columns=['ts','price','volume']);raw.index=pd.to_datetime(raw.pop('ts'),format='mixed')
  if raw.index.has_duplicates:raise ValueError('RETIME_AMBIGUOUS_TRADE_ORDER')
  if not (raw['price'].gt(0).all() and raw['volume'].ge(0).all()):raise ValueError('RETIME_INVALID_TRADES')
  for left in pd.date_range(a,b,freq='5min',inclusive='left'):
@@ -97,8 +97,105 @@ def empty_native_span(job,inputs):
  return None
 
 
+def _trade_partition(native,trades):
+ """Unique ordered tape partition reproducing every original 5m OHLCV."""
+ if not native or len(native)>9 or len(trades)>5000:return None
+ solutions=[];attempts=0
+ def visit(i,j,parts):
+  nonlocal attempts
+  if len(solutions)>1:return
+  if i==len(native):
+   if j==len(trades):solutions.append(parts)
+   return
+  row=native[i];at=pd.Timestamp(row[0]);volume=0.;prices=[]
+  for k in range(j,len(trades)):
+   attempts+=1
+   if attempts>20000:raise ValueError('RETIME_PARTITION_COMPLEXITY_LIMIT')
+   stamp,price,qty=trades[k];t=pd.Timestamp(stamp)
+   if not at-pd.Timedelta(minutes=15)<=t<at+pd.Timedelta(minutes=5):break
+   volume+=qty;prices.append(price)
+   if volume>row[5]:break
+   if [prices[0],max(prices),min(prices),prices[-1],volume]==list(row[1:]):
+    visit(i+1,k+1,parts+[(j,k+1)])
+ visit(0,0,[])
+ return solutions[0] if len(solutions)==1 else None
+
+
+def _reviewed_partition_plan(db,job,inputs,now,policy):
+ """A real timestamp redistribution, proved by every original native value."""
+ from cp_controls import digest
+ a=pd.Timestamp(job['first']);meta=job['identity']
+ for left,end in ((a,a+pd.Timedelta(minutes=30)),(a-pd.Timedelta(minutes=15),a+pd.Timedelta(minutes=15))):
+  if left.normalize()!=end.normalize():continue
+  try:
+   source=_official_window(db,job['isin'],str(left),str(end),now)
+   native={base:_native(db,job['isin'],meta,base,str(left),str(end)) for base in ('5m','15m')}
+   if any(not native[base] or _aggregate(native[base])!=_aggregate(source['rows'][base]) for base in native):continue
+   if [r[0] for r in native['15m']]!=[r[0] for r in source['rows']['15m']]:continue
+   if native==source['rows']:continue
+   # The original parent must itself be exactly built from its native children.
+   if any(_aggregate([r for r in native['5m'] if pd.Timestamp(p[0])<=pd.Timestamp(r[0])<pd.Timestamp(p[0])+pd.Timedelta(minutes=15)])!=list(p[1:]) for p in native['15m']):continue
+   partition=_trade_partition(native['5m'],source['trades'])
+   if partition is None:continue
+   official_stamps={r[0] for r in source['rows']['5m']};moves=[]
+   for row,(start,stop) in zip(native['5m'],partition):
+    if row[0] not in official_stamps:
+     target=str(pd.Timestamp(source['trades'][start][0]).floor('5min'))
+     moves.append(dict(base_tf='5m',old_at=row[0],new_at=target,ohlcv=list(row[1:]),
+       binding='exact unique ordered official trade partition'))
+   return dict(version=RETIME_VERSION,mode='VERIFIED_NATIVE_TRADE_PARTITION',isin=job['isin'],identity=meta,
+     first=str(left),end=str(end),job_id=job['id'],policy_digest=digest(policy),input_fingerprint=inputs['fingerprint'],
+     before=native,source=source,source_digest=digest(source),created_at=now.isoformat(),relocations=moves,
+     native_trade_partition=partition,origin='Current visual discrepancy; complete official tape uniquely reproduces all original OHLCV with bounded native timestamp delay; conserved 5m/15m window')
+  except (ValueError,KeyError,TypeError):continue
+ return None
+
+
+def _reviewed_positive_extreme(db,job,inputs,now,policy):
+ """Restore a missing positive tick at the opening of a native child bar.
+
+ The reviewed 15m open/close/volume and the following neighbour stay exact.
+ Only a child's missing first tick and its resulting H/L can change. This is
+ an explicit price repair, not a conserved-timebase or historical-risk grant.
+ """
+ from cp_controls import digest
+ a=pd.Timestamp(job['first']);end=a+pd.Timedelta(minutes=30);meta=job['identity']
+ if a.normalize()!=end.normalize():return None
+ try:
+  source=_official_window(db,job['isin'],str(a),str(end),now)
+  native={base:_native(db,job['isin'],meta,base,str(a),str(end)) for base in ('5m','15m')}
+  if len(native['15m'])!=2 or native['15m'][1]!=source['rows']['15m'][-1]:return None
+  for base in native:
+   if [r[0] for r in native[base]]!=[r[0] for r in source['rows'][base]]:return None
+  changed_child=False
+  for base,old in native.items():
+   for original,confirmed in zip(old,source['rows'][base]):
+    if original==confirmed:continue
+    if (pd.Timestamp(original[0])>=a+pd.Timedelta(minutes=15)
+        or original[4:]!=confirmed[4:] or confirmed[2]<original[2] or confirmed[3]>original[3]):return None
+    if base=='15m':
+     if original[1]!=confirmed[1]:return None
+     continue
+    ticks=[t for t in source['trades'] if pd.Timestamp(original[0])<=pd.Timestamp(t[0])<pd.Timestamp(original[0])+pd.Timedelta(minutes=5)]
+    # Exactly one initial positive tick was omitted in prices, not in volume.
+    # All remaining published values must reproduce the complete native bar.
+    if len(ticks)<2 or ticks[0][2]<=0 or any(t[2]<=0 for t in ticks):return None
+    rest=[t[1] for t in ticks[1:]]
+    if list(original[1:5])!=[rest[0],max(rest),min(rest),rest[-1]]:return None
+    if sum(t[2] for t in ticks)!=original[5] or confirmed[1]!=ticks[0][1]:return None
+    if any(original[k]!=confirmed[k] and confirmed[k]!=ticks[0][1] for k in (1,2,3)):return None
+    changed_child=True
+  if not changed_child:return None
+  if any(_aggregate([r for r in native['5m'] if pd.Timestamp(p[0])<=pd.Timestamp(r[0])<pd.Timestamp(p[0])+pd.Timedelta(minutes=15)])!=list(p[1:]) for p in native['15m']):return None
+  return dict(version=RETIME_VERSION,mode='VERIFIED_NATIVE_POSITIVE_OPENING_EXTREME',isin=job['isin'],identity=meta,
+    first=str(a),end=str(end),job_id=job['id'],policy_digest=digest(policy),input_fingerprint=inputs['fingerprint'],
+    before=native,source=source,source_digest=digest(source),created_at=now.isoformat(),
+    origin='Current visual discrepancy; complete official positive first tick omitted only from native child prices, all quantities and reviewed 15m open/close preserved; original OHLCV retained')
+ except (ValueError,KeyError,TypeError,IndexError):return None
+
+
 def retime_plan(db,job,inputs,now):
- """Recognise only conserved, same-session redistribution, at most 45 minutes."""
+ """Bounded verified same-session repairs, retaining original native OHLCV."""
  from cp_controls import read,digest
  from cp_reconciliation import _observation_current
  import data_quality as dq
@@ -109,6 +206,12 @@ def retime_plan(db,job,inputs,now):
      or meta['currency']!='EUR' or meta['timezone']!='Europe/Berlin'):return None
  observation=job.get('observation')
  if inputs['rows']:
+  if (len(inputs['rows'])==1 and job['last']==str(a) and observation
+      and observation.get('result')=='DIFFERENT' and _observation_current(job,inputs)):
+   partition=_reviewed_partition_plan(db,job,inputs,now,policy)
+   if partition:return partition
+   opening=_reviewed_positive_extreme(db,job,inputs,now,policy)
+   if opening:return opening
   # An explicitly reviewed existing candle can omit a real traded extreme.
   # Keep this narrower than a general provider overwrite: identical timestamps,
   # open/close/volume, unchanged neighbour and conserved complete parent window.
