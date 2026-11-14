@@ -110,7 +110,14 @@ def covered_slots(meta,missing,base,now):
     from cp_controls import tv_absent_slots,TV_PRICE_MODEL
     official=quality.covered_empty(meta,missing,base,now)
     risk=meta.get('accepted_gap_input',{});proof=meta.get('tv_accepted_absence',{})
-    allowed=(meta.get('tv_display_projection') or (risk.get('approved')
+    # A currently bound receipt covers its exact children even when another
+    # historical bucket remains unknown. This retains a verified closed parent;
+    # it does not grant the whole archive analytical permission. Unknown buckets
+    # remain excluded and accepted_gap_output still requires full risk coverage.
+    closed_input=meta.get('closed_parent_input',{})
+    allowed=(meta.get('tv_display_projection')
+        or (closed_input.get('input_base')==base and closed_input.get('target'))
+        or (risk.get('approved')
         and risk.get('price_model')==TV_PRICE_MODEL and risk.get('base')==base
         and risk.get('grant_digest')==proof.get('grant_digest')))
     tv=tv_absent_slots(meta,missing,base,now) if allowed else pd.DatetimeIndex([])
