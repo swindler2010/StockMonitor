@@ -1555,6 +1555,58 @@
       ],
       "automatic_action": "Existing reconciliation and revision_watcher; no separate worker",
       "manual_action": "Visual evidence and unavailable publication require assisted review."
+    },
+    {
+      "id": "official_unique_native_trade_partition",
+      "title": "Однозначное восстановление распределения реальных сделок по свечам",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "SOURCE_DISCREPANCY"
+      ],
+      "status": "IMPLEMENTED; ordinary Windows CP APPLIED14Nov2026 14:45:19 CET; two real Palantir windows RESOLVED_NATIVE14:45:58/14:46:24",
+      "steps": [
+        "Require current DIFFERENT visual observation, complete exact official GETTEX publication and confirmed same listing.",
+        "Uniquely partition the ordered official tape to reproduce every original native5m OHLCV, with at most15min native timestamp delay and all events accounted for.",
+        "Require exact parent-child aggregation and complete-window conservation of OHLCV for both5m/15m; preserve15m timestamps.",
+        "Use existing transactional publisher with exact original rows, lineage, final evidence/policy validation and normal re-evaluation."
+      ],
+      "evidence": [
+        "test_cp_trade_partition.py"
+      ],
+      "limits": [
+        "Ambiguous partition, changed individual native values, missing files, changed policy/revisions or non-conserved window rejected. Bounded9 native bars/5000 events/20000 partition attempts. No blanket risk grant."
+      ],
+      "automatic_action": "Existing revision_watcher and reconciliation lane",
+      "manual_action": "Current assisted discrepancy evidence and full source tape required."
+    },
+    {
+      "id": "official_positive_first_tick_prices",
+      "title": "Первая сделка учтена в объёме, но пропущена в ценах дочерней свечи",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "SOURCE_DISCREPANCY"
+      ],
+      "status": "IMPLEMENTED; ordinary Windows CP Palantir30Oct07:30 APPLIED14Nov14:44:07; RESOLVED_NATIVE14:45:58 CET",
+      "steps": [
+        "Require current DIFFERENT visual observation and complete exact official positive trade tape.",
+        "Reviewed15m open/close/volume and following real15m neighbour remain exact; only child open and expanded H/L may differ.",
+        "All native child prices must equal the official tape after dropping exactly its first positive tick, while native volume already includes that tick.",
+        "Restore only the independently confirmed first-tick prices; preserve originals and explicit price-repair provenance. Parse mixed second/microsecond timestamps without loss."
+      ],
+      "evidence": [
+        "test_cp_positive_opening_extreme.py"
+      ],
+      "limits": [
+        "This is a price correction, not conserved-timebase or NO_TRADES evidence. Non-positive, ambiguous, unrelated price/volume/close changes or missing source remain blocked. No trading grant."
+      ],
+      "automatic_action": "Existing revision_watcher and reconciliation lane",
+      "manual_action": "Confirmed current visual discrepancy remains required."
     }
   ],
   "sources": [
