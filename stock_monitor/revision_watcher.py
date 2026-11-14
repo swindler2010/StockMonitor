@@ -116,11 +116,27 @@ def retime_plan(db,job,inputs,now):
  if any(not before[base] or _aggregate(before[base])!=_aggregate(source['rows'][base]) for base in before):
   raise ValueError('RETIME_NOT_CONSERVED')
  if not any(pd.Timestamp(r[0])<pd.Timestamp(after[0]) for r in source['rows']['15m']):return None
- if any(r[0] not in {v[0] for v in source['rows'][base]} for base in before for r in before[base]):
-  raise ValueError('RETIME_WOULD_DELETE_NATIVE_CANDLE')
+ relocations=[]
+ for base,native in before.items():
+  official={r[0]:list(r[1:]) for r in source['rows'][base]}
+  native_stamps={r[0] for r in native};used=set()
+  for at,*values in native:
+   if at in official:continue
+   # A missing native timestamp is NOT generally deletable. Permit only a
+   # unique, exact 5m candle relocation into a previously absent native slot.
+   # Complete official publications already prove the old slot empty; the
+   # whole 5m/15m window must still conserve OHLCV above.
+   if base!='5m':raise ValueError('RETIME_WOULD_DELETE_NATIVE_CANDLE')
+   matches=[stamp for stamp,v in official.items() if stamp not in native_stamps and v==values]
+   if (len(matches)!=1 or matches[0] in used
+       or abs(pd.Timestamp(matches[0])-pd.Timestamp(at))>pd.Timedelta(minutes=15)):
+    raise ValueError('RETIME_RELOCATION_NOT_EXACT_OR_AMBIGUOUS')
+   used.add(matches[0])
+   relocations.append(dict(base_tf=base,old_at=at,new_at=matches[0],ohlcv=values))
  return dict(version=RETIME_VERSION,isin=job['isin'],identity=meta,first=str(a),end=str(b),
   job_id=job['id'],policy_digest=digest(policy),input_fingerprint=inputs['fingerprint'],
   before=before,source=source,source_digest=digest(source),created_at=now.isoformat(),
+  **({'relocations':relocations} if relocations else {}),
   origin='official GETTEX trade publications; TV observation is diagnostic only')
 
 
@@ -148,10 +164,20 @@ def publish_retime(db,job,inputs,plan,now):
  if digest(current)!=digest(plan):raise ValueError('RETIME_INPUT_CHANGED')
  key=RETIME_PREFIX+job['isin']+':'+job['id']
  if read(db,key,{}):raise ValueError('RETIME_RECEIPT_ALREADY_EXISTS')
- added=changed=0;meta=job['identity'];isin=job['isin']
+ added=changed=relocated=0;meta=job['identity'];isin=job['isin']
  for base,rows in plan['source']['rows'].items():
   lineage_key=parent_provenance_key(isin,meta,base);lineage=read(db,lineage_key,{})
   old_rows={r[0]:list(r[1:]) for r in plan['before'][base]}
+  moves=[r for r in plan.get('relocations',[]) if r['base_tf']==base]
+  for move in moves:
+   at=move['old_at'];scope='market:'+isin+':'+base
+   prior=(db.execute('SELECT revision FROM input_revisions WHERE scope=?',(scope,)).fetchone() or [0])[0]
+   db.execute('DELETE FROM series WHERE isin=? AND source=? AND venue=? AND currency=? AND symbol=? AND base_tf=? AND ts=?',
+    (isin,*[meta[k] for k in IDENTITY[:4]],base,at))
+   after=(db.execute('SELECT revision FROM input_revisions WHERE scope=?',(scope,)).fetchone() or [0])[0]
+   db.execute('INSERT INTO candle_revision_history(detected_at,isin,identity,base_tf,ts,old_ohlcv,new_ohlcv,revision_before,revision_after) VALUES (?,?,?,?,?,?,?,?,?)',
+    (now.isoformat(),isin,json.dumps(meta,sort_keys=True),base,at,json.dumps(dict(zip(FIELDS,old_rows[at]))),'{}',prior,after))
+   lineage.pop(at,None);relocated+=1
   for at,*values in rows:
    old=old_rows.get(at)
    # The entire corrected window retains lineage, even equal native rows.
@@ -163,11 +189,11 @@ def publish_retime(db,job,inputs,plan,now):
    after=(db.execute('SELECT revision FROM input_revisions WHERE scope=?',(scope,)).fetchone() or [0])[0]
    db.execute('INSERT INTO candle_revision_history(detected_at,isin,identity,base_tf,ts,old_ohlcv,new_ohlcv,revision_before,revision_after) VALUES (?,?,?,?,?,?,?,?,?)',
     (now.isoformat(),isin,json.dumps(meta,sort_keys=True),base,at,json.dumps(dict(zip(FIELDS,old))) if old else '{}',json.dumps(dict(zip(FIELDS,values))),prior,after))
-   added+=int(old is None);changed+=int(old is not None)
+   added+=int(old is None and at not in {r['new_at'] for r in moves});changed+=int(old is not None)
   write(db,lineage_key,lineage)
- write(db,key,{**plan,'state':'APPLIED','added':added,'changed':changed})
+ write(db,key,{**plan,'state':'APPLIED','added':added,'changed':changed,'relocated':relocated})
  progress=read(db,PROGRESS+isin,{});progress['analysis_requested_at']=now.isoformat();write(db,PROGRESS+isin,progress)
- return dict(state='APPLIED',receipt_key=key,added=added,changed=changed,first=plan['first'],end=plan['end'])
+ return dict(state='APPLIED',receipt_key=key,added=added,changed=changed,relocated=relocated,first=plan['first'],end=plan['end'])
 
 
 def retimed_rows(db,isin,meta,base):
