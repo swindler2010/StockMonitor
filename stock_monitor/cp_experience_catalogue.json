@@ -4,6 +4,35 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "official_gettex_conserved_timebase_repair",
+      "title": "Автоматическое исправление распределения GETTEX по времени",
+      "status": "Targeted regression PASS1.645s; ordinary CP Meta14Nov2026 09:18:32CET APPLIED,09:19:57CET RESOLVED_NATIVE",
+      "sources": [
+        "revision_watcher.retime_plan",
+        "cp_reconciliation.turn",
+        "history_service.attach_parent_provenance"
+      ],
+      "states": [
+        "GAP",
+        "TV_DIFFERENCE"
+      ],
+      "steps": [
+        "Standing owner authorization 14Nov2026 applies to existing/future stocks without a new question.",
+        "Only closed same-day <=45min windows: exact complete official MUNC/MUND evidence, stored trades and 5m/15m OHLCV agree; whole-window OHLCV/volume conserved.",
+        "Use existing CP writer, final transaction recheck, candle_revision_history and parent provenance; preserve original provider data and explicit official source.",
+        "No synthetic absent bar. Scope empty proof only to the validated corrected window. Changed official evidence/policy/identity invalidates the lineage; do not turn unknown data into READY.",
+        "Existing provider reload retains valid official correction. Ordinary DQ/CORE/quote/risk decide readiness. TV remains assisted diagnostic; no scraping or import rights inferred."
+      ],
+      "evidence": [
+        "test_cp_official_timebase: ordinary CP turn, input-change rejection, incomplete publication rejection, conservation, source change/revocation, restart, provider preservation map",
+        "Working TEST: 4 added + 4 corrected 5m/15m candles, full originals retained; empty13:45 independently confirmed; ordinary preparation CORE READY/WAIT, quote stale during closed session."
+      ],
+      "limits": [
+        "Not a blanket OHLCV override; nonconserved or unproven cases stay WAITING_EVIDENCE.",
+        "No execution or profit guarantee; no new trades for acceptance."
+      ]
+    },
+    {
       "id": "tv_v3_review_survives_added_history_venue_lock",
       "title": "Старая сверка TV не теряется при добавлении настройки GETTEX",
       "sources": [
