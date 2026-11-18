@@ -34,22 +34,34 @@
 6. Не начинать платные API, не переписывать готовые движки, не менять Store 0.15, реальные деньги и торговые guards без отдельного разрешения.
 7. Каждая будущая правка обязана ссылаться на **один G-ID**, остальные алиасы направляются сюда. Work1/Work2 не изменяют общие файлы/SQLite одновременно.
 
+## Учёт дат всех задач — исправление 18.11.2026
+
+**Охват:** 141 исходный ID (№1–62, N01–N23, D01–D14, T01–T14, CP01–CP28), 6 исторических этапов 6.1–6.6 и 9 ссылок FIX-1–FIX-9. Они объединены в 10 групп G; это не 17 отдельных GitHub Issues. Даты добавлены непосредственно в существующие строки задач разделов I–III. Поздние 31 записи от 13–14 ноября снабжены датами этапа и результата; продолжения одной задачи не посчитаны новыми задачами. Срочная постановка G10 от 17–18 ноября перенесена сюда из #19.
+
+**Как читать даты:** «не позднее» означает, что задача уже существовала в указанном датированном источнике; это не выдуманная точная дата её первоначальной постановки. Исходный план содержит версию **11.10.2026** и дополнение **12.10.2026**. Номерной статус в исторической колонке сохранён. Дата создания MASTER/консолидации G/T/CP **11.11.2026** не заменяет более ранние даты требований. Все часы — **Europe/Berlin** (CET/CEST по календарю).
+
+**Завершение:** точный DONE, исторический PASS, дата подтверждения ограниченного объёма, отмена требования и продолжающееся правило подписаны раздельно. Дата 13.11 у шести ID — дата документированной проверки в её указанном объёме, а не доказанный день первой реализации. Архивное закрытие Issues #1–#16 как duplicate **11.11.2026 не является завершением задач**. Если точный день не сохранился, он прямо отмечен неизвестным. Новая регрессия не стирает прежнюю датированную приёмку, но требует отдельной записи о повторном открытии/новом дефекте.
+
+**Источники дат:** [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) — исходный PDF, версия 11.10, страницы 1 и 3–7, дополнение 12.10; [S2](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L25281-L25328) — проверка 28 ID от 13.11 с шестью ограниченными подтверждениями; [S3](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L25462-L25484) — полная приёмка именно №47 от 13.11, 23:15 CET; [S4](https://github.com/swindler2010/StockMonitor/commit/aa3218cf6149e953bea383ce468d507871f7d1a1) — создание файла MASTER 11.11; [S5](https://github.com/swindler2010/StockMonitor/issues/13#issuecomment-6426973281) — решение об отмене перевода новостей 26.10. Для T/CP приведены также прямые ссылки на исходные датированные комментарии. Полный состав CP11/16/19/23 надёжно зафиксирован 11.11; более ранние связанные требования сохранены как свидетельства предыстории. Ссылки S1–S3 указывают на неизменяемый снимок до этой правки.
+
+**Обязательное ведение дат дальше:** при постановке нового задания или самостоятельного этапа сразу указывать дату создания и исходный G-ID/алиасы; при приёмке — дату, точный принятый объём, evidence и SHA. Для незакрытой работы дата завершения остаётся пустой/«не подтверждено». При отмене, переносе или архивировании записывать именно это событие, не DONE. Все записи ведутся в этом MASTER.
+
 ## I. Канонические задачи без двойного назначения
 
 **Каждая из 62 исходных задач находится в одной группе, и только в одной.** Дополнительные коды N/D/T/CP являются отдельными критериями/подзадачами. Группы ссылаются друг на друга только по необходимости, а не создают параллельные заказы Work.
 
-| Группа | Единое направление | Основные старые номера | Связанные условия | GitHub |
-|---|---|---|---|---|
-| G01 | Desktop UI, watchlist, drawing and windows | 1,2,3,4,5,6,9,10,50,51,52 | D02,D09,N09,N20 | #4,#10 |
-| G02 | Charts, indicators and timeframes | 7,8,22,25,47 | D10,N19 | #5,#6,#10 |
-| G03 | GETTEX / EUR history, provenance and DQ | 14,21,23,24,26,27,28 | D01,D11,D12,D13,D14,N14–N18 | #5,#15 |
-| G04 | MCP / Bridge / cloud access and security | 18,19,20,43,44,45,46 | N21 | #1,#2,#3,#6,#7 |
-| G05 | Trading Engine, benchmark, Scalable portfolio | 29,30,31,32,33,34,35,36 | D03,D04 | #3,#11,#13 |
-| G06 | PAPER / demo, AI strategy and journal | 37,38,39,40,41,42,48,49 | T01–T14 | #11,#13,#16 |
-| G07 | News | 11 | D05,N10–N13 | #8 |
-| G08 | Fundamentals, dividends and localization | 12,13 | D06–D08,N01–N08 | #9 |
-| G09 | Performance, releases, backup and process | 15,16,17,53,54,55,56,57,58,59,60,61,62 | N22,N23 | #12,#14 |
-| G10 | CandlePilot autonomous source reconciliation | Отдельные CP-подзадачи | CP01–CP28 | #5,#13 |
+| Группа | Единое направление | Основные старые номера | Связанные условия | GitHub | Создана как группа MASTER | Полное завершение |
+|---|---|---|---|---|---|---|
+| G01 | Desktop UI, watchlist, drawing and windows | 1,2,3,4,5,6,9,10,50,51,52 | D02,D09,N09,N20 | #4,#10 | 11.11.2026 — консолидация, [S4](https://github.com/swindler2010/StockMonitor/commit/aa3218cf6149e953bea383ce468d507871f7d1a1); даты исходных задач ниже | —; дата полной приёмки группы не подтверждена |
+| G02 | Charts, indicators and timeframes | 7,8,22,25,47 | D10,N19 | #5,#6,#10 | 11.11.2026 — консолидация, [S4](https://github.com/swindler2010/StockMonitor/commit/aa3218cf6149e953bea383ce468d507871f7d1a1); даты исходных задач ниже | —; дата полной приёмки группы не подтверждена |
+| G03 | GETTEX / EUR history, provenance and DQ | 14,21,23,24,26,27,28 | D01,D11,D12,D13,D14,N14–N18 | #5,#15 | 11.11.2026 — консолидация, [S4](https://github.com/swindler2010/StockMonitor/commit/aa3218cf6149e953bea383ce468d507871f7d1a1); даты исходных задач ниже | —; дата полной приёмки группы не подтверждена |
+| G04 | MCP / Bridge / cloud access and security | 18,19,20,43,44,45,46 | N21 | #1,#2,#3,#6,#7 | 11.11.2026 — консолидация, [S4](https://github.com/swindler2010/StockMonitor/commit/aa3218cf6149e953bea383ce468d507871f7d1a1); даты исходных задач ниже | —; дата полной приёмки группы не подтверждена |
+| G05 | Trading Engine, benchmark, Scalable portfolio | 29,30,31,32,33,34,35,36 | D03,D04 | #3,#11,#13 | 11.11.2026 — консолидация, [S4](https://github.com/swindler2010/StockMonitor/commit/aa3218cf6149e953bea383ce468d507871f7d1a1); даты исходных задач ниже | —; дата полной приёмки группы не подтверждена |
+| G06 | PAPER / demo, AI strategy and journal | 37,38,39,40,41,42,48,49 | T01–T14 | #11,#13,#16 | 11.11.2026 — консолидация, [S4](https://github.com/swindler2010/StockMonitor/commit/aa3218cf6149e953bea383ce468d507871f7d1a1); даты исходных задач ниже | —; дата полной приёмки группы не подтверждена |
+| G07 | News | 11 | D05,N10–N13 | #8 | 11.11.2026 — консолидация, [S4](https://github.com/swindler2010/StockMonitor/commit/aa3218cf6149e953bea383ce468d507871f7d1a1); даты исходных задач ниже | —; дата полной приёмки группы не подтверждена |
+| G08 | Fundamentals, dividends and localization | 12,13 | D06–D08,N01–N08 | #9 | 11.11.2026 — консолидация, [S4](https://github.com/swindler2010/StockMonitor/commit/aa3218cf6149e953bea383ce468d507871f7d1a1); даты исходных задач ниже | —; дата полной приёмки группы не подтверждена |
+| G09 | Performance, releases, backup and process | 15,16,17,53,54,55,56,57,58,59,60,61,62 | N22,N23 | #12,#14 | 11.11.2026 — консолидация, [S4](https://github.com/swindler2010/StockMonitor/commit/aa3218cf6149e953bea383ce468d507871f7d1a1); даты исходных задач ниже | —; дата полной приёмки группы не подтверждена |
+| G10 | CandlePilot autonomous source reconciliation | Отдельные CP-подзадачи | CP01–CP28 | #5,#13 | 11.11.2026 — консолидация, [S4](https://github.com/swindler2010/StockMonitor/commit/aa3218cf6149e953bea383ce468d507871f7d1a1); даты исходных задач ниже | —; дата полной приёмки группы не подтверждена |
 
 Повторные тематические постановки: GETTEX/DQ #5/#13/#15; MCP #1/#2/#3/#6/#7; PAPER #11/#13; окна #4/#10; документация и backup #12/#14. Они не считаются несколькими реализациями, а исходные результаты сохраняются в полном архиве ниже.
 
@@ -57,169 +69,198 @@
 
 ## II. Полный первоначальный реестр №1–62 (исходный статус 12.10, НЕ текущий)
 
-| № | Историческая задача | Статус на 12.10 |
-|---:|---|---|
-| 1 | Базовое desktop-приложение | PASS |
-| 2 | Search/Add/Delete, ISIN | PASS |
-| 3 | Watchlist и сохранение | PASS |
-| 4 | Свечной график OHLCV | PASS |
-| 5 | Zoom/Pan/навигация | PARTIAL |
-| 6 | Разметка, crosshair, линии | PARTIAL |
-| 7 | Индикаторы EMA/SMA/Bollinger/VWAP/RSI/MACD/ATR/Volume/RelVol/Volume Profile | PASS |
-| 8 | Параметры индикаторов и их сохранение | PASS |
-| 9 | Типы графика/fullscreen/hide-show | PARTIAL |
-| 10 | Support/Resistance/Analysis Levels | PASS |
-| 11 | Новости компаний | PARTIAL |
-| 12 | Fundamentals/Metrics/Earnings/Company Data | PARTIAL |
-| 13 | Дивиденды/Total Return | PASS |
-| 14 | EUR источники GETTEX/Xetra/Yahoo/listings | PARTIAL |
-| 15 | Автообновление/Store | PARTIAL |
-| 16 | Installer/Smart App Control | PASS |
-| 17 | Миграция 0.15→0.16 | OPEN |
-| 18 | MCP/Bridge | PARTIAL |
-| 19 | Single-instance Bridge | PASS |
-| 20 | Tunnel/reconnect/reboot | PARTIAL |
-| 21 | Universal Candle History | PARTIAL |
-| 22 | 11 TF | PASS |
-| 23 | Глубина истории | PARTIAL |
-| 24 | Data Quality Engine | PARTIAL |
-| 25 | 4H alignment/DST | PASS |
-| 26 | Реальные цены EUR | OPEN |
-| 27 | EUR history/symbol/proxy/fallback | OPEN |
-| 28 | Persistence ISIN/listing/venue/currency | OPEN |
-| 29 | Benchmarks/relative performance | PASS |
-| 30 | Trading Engine CORE | PASS |
-| 31 | Trading Engine background | PASS |
-| 32 | Trading Engine UI binding | PASS |
-| 33 | Engine smoke/stress/restart | PASS |
-| 34 | Trading Engine READY path | PASS |
-| 35 | Scalable↔Stock Monitor portfolio | PARTIAL |
-| 36 | Position quantity/entry/cost/P&L | PARTIAL |
-| 37 | Paper Trading €10000 | OPEN |
-| 38 | Demo BUY/SELL/orders/spread/execution | OPEN |
-| 39 | Demo balance/positions/P&L/persistence | OPEN |
-| 40 | Trade/decision journal | OPEN |
-| 41 | Journal statistics and signal quality | OPEN |
-| 42 | TradingView webhooks | OPEN |
-| 43 | MCP diagnostics | OPEN |
-| 44 | Full MCP read/write | OPEN |
-| 45 | ChatGPT cloud control | OPEN |
-| 46 | Stale/foreign command protection | OPEN |
-| 47 | MCP indicator control+persistence | OPEN |
-| 48 | Autonomous demo-cycle via ChatGPT | OPEN |
-| 49 | AI development adviser | OPEN |
-| 50 | Save/Don't Save/Cancel | OPEN |
-| 51 | Launcher without CMD/PowerShell window | OPEN |
-| 52 | Icon/desktop presentation | OPEN |
-| 53 | Performance/background/worker leaks | PARTIAL |
-| 54 | Clean worker shutdown | PASS |
-| 55 | SQLite integrity | PASS |
-| 56 | Architecture baseline 0.16→0.17 | OPEN |
-| 57 | Regression registry | OPEN |
-| 58 | Full E2E regression | OPEN |
-| 59 | Migration user environment | OPEN |
-| 60 | Release Candidate | OPEN |
-| 61 | Formal 0.16 CLOSED/PASS | OPEN |
-| 62 | Microsoft Store 0.16 release | OPEN |
+| № | Историческая задача | Статус на 12.10 (история) | Создана / первое документальное свидетельство | Завершена / дата приёмки | Основание дат |
+|---:|---|---|---|---|---|
+| 1 | Базовое desktop-приложение | PASS | Не позднее 11.10.2026; точная дата не установлена | Исторический PASS не позднее 11.10.2026; точная дата неизвестна, не означает приёмку текущей версии | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 2 | Search/Add/Delete, ISIN | PASS | Не позднее 11.10.2026; точная дата не установлена | Исторический PASS не позднее 11.10.2026; точная дата неизвестна, не означает приёмку текущей версии | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 3 | Watchlist и сохранение | PASS | Не позднее 11.10.2026; точная дата не установлена | Исторический PASS не позднее 11.10.2026; точная дата неизвестна, не означает приёмку текущей версии | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 4 | Свечной график OHLCV | PASS | Не позднее 11.10.2026; точная дата не установлена | Исторический PASS не позднее 11.10.2026; точная дата неизвестна, не означает приёмку текущей версии | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 5 | Zoom/Pan/навигация | PARTIAL | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 6 | Разметка, crosshair, линии | PARTIAL | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 7 | Индикаторы EMA/SMA/Bollinger/VWAP/RSI/MACD/ATR/Volume/RelVol/Volume Profile | PASS | Не позднее 11.10.2026; точная дата не установлена | Исторический PASS не позднее 11.10.2026; точная дата неизвестна, не означает приёмку текущей версии | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 8 | Параметры индикаторов и их сохранение | PASS | Не позднее 11.10.2026; точная дата не установлена | Исторический PASS не позднее 11.10.2026; точная дата неизвестна, не означает приёмку текущей версии | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 9 | Типы графика/fullscreen/hide-show | PARTIAL | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 10 | Support/Resistance/Analysis Levels | PASS | Не позднее 11.10.2026; точная дата не установлена | Исторический PASS не позднее 11.10.2026; точная дата неизвестна, не означает приёмку текущей версии | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 11 | Новости компаний | PARTIAL | Не позднее 11.10.2026; точная дата не установлена | 13.11.2026 — подтверждено в указанном объёме; точная дата первоначального завершения неизвестна | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393); [S2](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L25281-L25328) |
+| 12 | Fundamentals/Metrics/Earnings/Company Data | PARTIAL | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 13 | Дивиденды/Total Return | PASS | Не позднее 11.10.2026; точная дата не установлена | Исторический PASS не позднее 11.10.2026; точная дата неизвестна, не означает приёмку текущей версии | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 14 | EUR источники GETTEX/Xetra/Yahoo/listings | PARTIAL | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 15 | Автообновление/Store | PARTIAL | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 16 | Installer/Smart App Control | PASS | Не позднее 11.10.2026; точная дата не установлена | Исторический PASS не позднее 11.10.2026; точная дата неизвестна, не означает приёмку текущей версии | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 17 | Миграция 0.15→0.16 | OPEN | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 18 | MCP/Bridge | PARTIAL | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 19 | Single-instance Bridge | PASS | Не позднее 11.10.2026; точная дата не установлена | Исторический PASS не позднее 11.10.2026; точная дата неизвестна, не означает приёмку текущей версии | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 20 | Tunnel/reconnect/reboot | PARTIAL | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 21 | Universal Candle History | PARTIAL | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 22 | 11 TF | PASS | Не позднее 11.10.2026; точная дата не установлена | Исторический PASS не позднее 11.10.2026; точная дата неизвестна, не означает приёмку текущей версии | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 23 | Глубина истории | PARTIAL | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 24 | Data Quality Engine | PARTIAL | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 25 | 4H alignment/DST | PASS | Не позднее 11.10.2026; точная дата не установлена | Исторический PASS не позднее 11.10.2026; точная дата неизвестна, не означает приёмку текущей версии | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 26 | Реальные цены EUR | OPEN | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 27 | EUR history/symbol/proxy/fallback | OPEN | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 28 | Persistence ISIN/listing/venue/currency | OPEN | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 29 | Benchmarks/relative performance | PASS | Не позднее 11.10.2026; точная дата не установлена | Исторический PASS не позднее 11.10.2026; точная дата неизвестна, не означает приёмку текущей версии | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 30 | Trading Engine CORE | PASS | Не позднее 11.10.2026; точная дата не установлена | Исторический PASS не позднее 11.10.2026; точная дата неизвестна, не означает приёмку текущей версии | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 31 | Trading Engine background | PASS | Не позднее 11.10.2026; точная дата не установлена | Исторический PASS не позднее 11.10.2026; точная дата неизвестна, не означает приёмку текущей версии | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 32 | Trading Engine UI binding | PASS | Не позднее 11.10.2026; точная дата не установлена | Исторический PASS не позднее 11.10.2026; точная дата неизвестна, не означает приёмку текущей версии | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 33 | Engine smoke/stress/restart | PASS | Не позднее 11.10.2026; точная дата не установлена | Исторический PASS не позднее 11.10.2026; точная дата неизвестна, не означает приёмку текущей версии | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 34 | Trading Engine READY path | PASS | Не позднее 11.10.2026; точная дата не установлена | Исторический PASS не позднее 11.10.2026; точная дата неизвестна, не означает приёмку текущей версии | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 35 | Scalable↔Stock Monitor portfolio | PARTIAL | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 36 | Position quantity/entry/cost/P&L | PARTIAL | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 37 | Paper Trading €10000 | OPEN | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 38 | Demo BUY/SELL/orders/spread/execution | OPEN | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 39 | Demo balance/positions/P&L/persistence | OPEN | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 40 | Trade/decision journal | OPEN | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 41 | Journal statistics and signal quality | OPEN | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 42 | TradingView webhooks | OPEN | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 43 | MCP diagnostics | OPEN | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 44 | Full MCP read/write | OPEN | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 45 | ChatGPT cloud control | OPEN | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 46 | Stale/foreign command protection | OPEN | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 47 | MCP indicator control+persistence | OPEN | Не позднее 11.10.2026; точная дата не установлена | 13.11.2026, 23:15 CET — DONE, №47: облачный вызов → сохранение → Windows → restart → readback | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393); [S3](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L25462-L25484) |
+| 48 | Autonomous demo-cycle via ChatGPT | OPEN | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 49 | AI development adviser | OPEN | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 50 | Save/Don't Save/Cancel | OPEN | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 51 | Launcher without CMD/PowerShell window | OPEN | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 52 | Icon/desktop presentation | OPEN | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 53 | Performance/background/worker leaks | PARTIAL | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 54 | Clean worker shutdown | PASS | Не позднее 11.10.2026; точная дата не установлена | Исторический PASS не позднее 11.10.2026; точная дата неизвестна, не означает приёмку текущей версии | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 55 | SQLite integrity | PASS | Не позднее 11.10.2026; точная дата не установлена | Исторический PASS не позднее 11.10.2026; точная дата неизвестна, не означает приёмку текущей версии | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 56 | Architecture baseline 0.16→0.17 | OPEN | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 57 | Regression registry | OPEN | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 58 | Full E2E regression | OPEN | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 59 | Migration user environment | OPEN | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 60 | Release Candidate | OPEN | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 61 | Formal 0.16 CLOSED/PASS | OPEN | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 62 | Microsoft Store 0.16 release | OPEN | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
 
 ## III. Все дополнительные условия и дефекты
 
 ### N01–N23
-- **N01** — RU/DE/EN switch.
-- **N02** — Русский по умолчанию и сохранение языка.
-- **N03** — Локализация компаний/фундаментала/отчётов/новостей (новые решения имеют приоритет).
-- **N04** — Компактное форматирование больших чисел.
-- **N05** — KPI-карточки.
-- **N06** — Графики revenue/net income/EPS/margin/cash flow.
-- **N07** — Структура разделов отчётности.
-- **N08** — Логотипы: автозагрузка/кеш/fallback.
-- **N09** — Одно окно каждого типа.
-- **N10** — Автоновости по всем бумагам.
-- **N11** — Перевод новостей (уточнить позднее решение об отмене).
-- **N12** — Источник/дата/заголовок/резюме/ссылка новостей.
-- **N13** — Бесплатные запасные новостные источники.
-- **N14** — EUR fallback GETTEX→Xetra/Frankfurt/others.
-- **N15** — Максимальная бесплатная история 11 TF.
-- **N16** — Полная сессия выбранной биржи.
-- **N17** — Отдельный ручной USD proxy.
-- **N18** — SQLite checkpoints/cache, incremental no full re-download.
-- **N19** — Источник/валюта/DQ/range/count на графике.
-- **N20** — Неблокирующее переключение TF и источника.
-- **N21** — Максимальная интеграция ChatGPT.
-- **N22** — Не дублировать задачи/не переписывать готовое.
-- **N23** — Экономить лимит Work, точечные тесты.
+
+| ID | Задача / требование | Создана / первое документальное свидетельство | Завершена / дата приёмки | Основание дат |
+|---|---|---|---|---|
+| N01 | RU/DE/EN switch. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| N02 | Русский по умолчанию и сохранение языка. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| N03 | Локализация компаний/фундаментала/отчётов/новостей (новые решения имеют приоритет). | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| N04 | Компактное форматирование больших чисел. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| N05 | KPI-карточки. | Не позднее 11.10.2026; точная дата не установлена | 13.11.2026 — подтверждено в указанном объёме; точная дата первоначального завершения неизвестна | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393); [S2](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L25281-L25328) |
+| N06 | Графики revenue/net income/EPS/margin/cash flow. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| N07 | Структура разделов отчётности. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| N08 | Логотипы: автозагрузка/кеш/fallback. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| N09 | Одно окно каждого типа. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| N10 | Автоновости по всем бумагам. | Не позднее 11.10.2026; точная дата не установлена | 13.11.2026 — подтверждено в указанном объёме; точная дата первоначального завершения неизвестна | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393); [S2](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L25281-L25328) |
+| N11 | Перевод новостей (уточнить позднее решение об отмене). | Не позднее 11.10.2026; точная дата не установлена | Не завершение: перевод новостей отменён владельцем 26.10.2026 | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393); [S5](https://github.com/swindler2010/StockMonitor/issues/13#issuecomment-6426973281) |
+| N12 | Источник/дата/заголовок/резюме/ссылка новостей. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| N13 | Бесплатные запасные новостные источники. | Не позднее 11.10.2026; точная дата не установлена | 13.11.2026 — подтверждено в указанном объёме; точная дата первоначального завершения неизвестна | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393); [S2](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L25281-L25328) |
+| N14 | EUR fallback GETTEX→Xetra/Frankfurt/others. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| N15 | Максимальная бесплатная история 11 TF. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| N16 | Полная сессия выбранной биржи. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| N17 | Отдельный ручной USD proxy. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| N18 | SQLite checkpoints/cache, incremental no full re-download. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| N19 | Источник/валюта/DQ/range/count на графике. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| N20 | Неблокирующее переключение TF и источника. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| N21 | Максимальная интеграция ChatGPT. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| N22 | Не дублировать задачи/не переписывать готовое. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| N23 | Экономить лимит Work, точечные тесты. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
 
 ### D01–D14
-- **D01** — Недостаточная глубина EUR истории.
-- **D02** — UI freeze source switching.
-- **D03** — Apple EUR trading engine identity mismatch.
-- **D04** — Nasdaq-100 benchmark STALE.
-- **D05** — Пустые новости.
-- **D06** — Английский fundamental в RU UI.
-- **D07** — Длинные неформатированные финансовые значения.
-- **D08** — Отсутствующие логотипы.
-- **D09** — Повторные окна «Акции».
-- **D10** — Нет 11TF EUR E2E.
-- **D11** — Apple Close>High.
-- **D12** — Пробелы Xetra/Frankfurt.
-- **D13** — Полнота GETTEX files не доказана.
-- **D14** — Не универсально подключены EUR venues.
+
+| ID | Задача / требование | Создана / первое документальное свидетельство | Завершена / дата приёмки | Основание дат |
+|---|---|---|---|---|
+| D01 | Недостаточная глубина EUR истории. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| D02 | UI freeze source switching. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| D03 | Apple EUR trading engine identity mismatch. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| D04 | Nasdaq-100 benchmark STALE. | Не позднее 11.10.2026; точная дата не установлена | 13.11.2026 — подтверждено в указанном объёме; точная дата первоначального завершения неизвестна | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393); [S2](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L25281-L25328) |
+| D05 | Пустые новости. | Не позднее 11.10.2026; точная дата не установлена | 13.11.2026 — подтверждено в указанном объёме; точная дата первоначального завершения неизвестна | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393); [S2](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L25281-L25328) |
+| D06 | Английский fundamental в RU UI. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| D07 | Длинные неформатированные финансовые значения. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| D08 | Отсутствующие логотипы. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| D09 | Повторные окна «Акции». | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| D10 | Нет 11TF EUR E2E. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| D11 | Apple Close>High. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| D12 | Пробелы Xetra/Frankfurt. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| D13 | Полнота GETTEX files не доказана. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| D14 | Не универсально подключены EUR venues. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
 
 ### Universal History и FIX
-- **6.1** Search/Add/Autoload: исторический PASS.
-- **6.2** Resolver/identity: исторический PASS.
-- **6.3** Intraday normalization/DST: исторический PASS.
-- **6.4** Maximum universal history: PARTIAL/BLOCKED, многочисленные позднейшие адресные фиксы.
-- **6.5** Incremental backfill/persistence: E2E не закрыт.
-- **6.6** 11TF history E2E/restart/UI/DQ: OPEN.
+
+| ID | Задача / требование | Создана / первое документальное свидетельство | Завершена / дата приёмки | Основание дат |
+|---|---|---|---|---|
+| 6.1 | Search/Add/Autoload: исторический PASS. | Не позднее 11.10.2026; точная дата не установлена | Исторический PASS не позднее 11.10.2026; точная дата неизвестна, не означает приёмку текущей версии | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 6.2 | Resolver/identity: исторический PASS. | Не позднее 11.10.2026; точная дата не установлена | Исторический PASS не позднее 11.10.2026; точная дата неизвестна, не означает приёмку текущей версии | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 6.3 | Intraday normalization/DST: исторический PASS. | Не позднее 11.10.2026; точная дата не установлена | Исторический PASS не позднее 11.10.2026; точная дата неизвестна, не означает приёмку текущей версии | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 6.4 | Maximum universal history: PARTIAL/BLOCKED, многочисленные позднейшие адресные фиксы. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 6.5 | Incremental backfill/persistence: E2E не закрыт. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| 6.6 | 11TF history E2E/restart/UI/DQ: OPEN. | Не позднее 11.10.2026; точная дата не установлена | Не подтверждено полное завершение | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+
 - **FIX-1–FIX-9** историческая цепь: null/holiday Yahoo → SOURCE_GAP/partial buckets → SOURCE_LIMITED/venue DQ → Windows GETTEX → OpenFIGI/listings → Nordex deep series/UI freeze → source-switch tracing → универсальные EUR venues/history. Исходный план не свидетельствует о полном 6.4 PASS.
 
+Даты исторических ссылок FIX (не новые независимые поручения):
+
+| Исторический ID | Создана / первое свидетельство | Завершена | Основание |
+|---|---|---|---|
+| FIX-1 | Не позднее 11.10.2026; точная дата не установлена | Точная дата полного завершения не установлена; см. ограниченный исторический результат | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| FIX-2 | Не позднее 11.10.2026; точная дата не установлена | Точная дата полного завершения не установлена; см. ограниченный исторический результат | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| FIX-3 | Не позднее 11.10.2026; точная дата не установлена | Точная дата полного завершения не установлена; см. ограниченный исторический результат | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| FIX-4 | Не позднее 11.10.2026; точная дата не установлена | Точная дата полного завершения не установлена; см. ограниченный исторический результат | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| FIX-5 | Не позднее 11.10.2026; точная дата не установлена | Точная дата полного завершения не установлена; см. ограниченный исторический результат | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| FIX-6 | Не позднее 11.10.2026; точная дата не установлена | Точная дата полного завершения не установлена; см. ограниченный исторический результат | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| FIX-7 | Не позднее 11.10.2026; точная дата не установлена | Точная дата полного завершения не установлена; см. ограниченный исторический результат | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| FIX-8 | Не позднее 11.10.2026; точная дата не установлена | Точная дата полного завершения не установлена; см. ограниченный исторический результат | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+| FIX-9 | Не позднее 11.10.2026; точная дата не установлена | Точная дата полного завершения не установлена; см. ограниченный исторический результат | [S1](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L19355-L20393) |
+
 ### T01–T14: торговые дополнения 11.11
-- **T01** — Authoritative INPUT_REVISION_CHANGED / ложный отзыв разрешений.
-- **T02** — PAPER_DATA_BLOCKED ручного BUY.
-- **T03** — Возраст фактических данных ≤15 минут (Work2 #16).
-- **T04** — AI-managed PAPER независимое решение.
-- **T05** — BUY/SELL кнопки и позиции GUI «Демо».
-- **T06** — BUY→SL/TP→SELL + journal/persistence.
-- **T07** — Живая синхронизация 5m/1H.
-- **T08** — Latency/stability MCP Bridge.
-- **T09** — CP queue STALE/EXPIRED/fairness.
-- **T10** — Изоляция Engine от archive recovery.
-- **T11** — 11TF аналитический контракт и 1H execution.
-- **T12** — Stable Apple/NVIDIA readiness.
-- **T13** — Amazon→следующие по одной.
-- **T14** — V1/V2, Early Entry, ATR, Smart Exit, 2 shadow books.
+
+| ID | Задача / требование | Создана / первое документальное свидетельство | Завершена / дата приёмки | Основание дат |
+|---|---|---|---|---|
+| T01 | Authoritative INPUT_REVISION_CHANGED / ложный отзыв разрешений. | Не позднее 11.11.2026; точная дата постановки не установлена | Дата полного завершения не установлена; приёмка всего условия не подтверждена. | [MASTER, 11.11](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L175-L222) |
+| T02 | PAPER_DATA_BLOCKED ручного BUY. | Не позднее 11.11.2026; точная дата постановки не установлена | Дата полного завершения не установлена; приёмка всего условия не подтверждена. | [MASTER, 11.11](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L175-L222) |
+| T03 | Возраст фактических данных ≤15 минут (Work2 #16). | 28.10.2026 (создана Issue #16) | Дата полного завершения не установлена; приёмка всего условия не подтверждена. Узкий контроль порога PAPER подтверждён 13.11.2026 (этап AH); полный контракт статистики всех акций этим не закрыт. | [Issue #16](https://github.com/swindler2010/StockMonitor/issues/16); [MASTER, 11.11](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L175-L222); [этап AH, 13.11](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L25008-L25022) |
+| T04 | AI-managed PAPER независимое решение. | Не позднее 11.11.2026; точная дата постановки не установлена | Дата полного завершения не установлена; приёмка всего условия не подтверждена. | [MASTER, 11.11](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L175-L222) |
+| T05 | BUY/SELL кнопки и позиции GUI «Демо». | Не позднее 11.11.2026; точная дата постановки не установлена | Дата полного завершения не установлена; приёмка всего условия не подтверждена. | [MASTER, 11.11](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L175-L222) |
+| T06 | BUY→SL/TP→SELL + journal/persistence. | Не позднее 11.11.2026; точная дата постановки не установлена | Дата полного завершения не установлена; приёмка всего условия не подтверждена. | [MASTER, 11.11](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L175-L222) |
+| T07 | Живая синхронизация 5m/1H. | Не позднее 11.11.2026; точная дата постановки не установлена | Дата полного завершения не установлена; приёмка всего условия не подтверждена. | [MASTER, 11.11](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L175-L222) |
+| T08 | Latency/stability MCP Bridge. | Не позднее 11.11.2026; точная дата постановки не установлена | Дата полного завершения не установлена; приёмка всего условия не подтверждена. | [MASTER, 11.11](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L175-L222) |
+| T09 | CP queue STALE/EXPIRED/fairness. | Не позднее 11.11.2026; точная дата постановки не установлена | Дата полного завершения не установлена; приёмка всего условия не подтверждена. | [MASTER, 11.11](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L175-L222) |
+| T10 | Изоляция Engine от archive recovery. | Не позднее 10.11.2026; точная дата постановки не установлена | Дата полного завершения не установлена; приёмка всего условия не подтверждена. Исторические этапы: [10.11 — первый этап изоляции опубликован и внедрён; общий статус PARTIAL.](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6780592455) | [свидетельство 1](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6780592455) |
+| T11 | 11TF аналитический контракт и 1H execution. | Не позднее 11.11.2026; точная дата постановки не установлена | Дата полного завершения не установлена; приёмка всего условия не подтверждена. | [MASTER, 11.11](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L175-L222) |
+| T12 | Stable Apple/NVIDIA readiness. | Не позднее 04.11.2026; точная дата постановки не установлена | Дата полного завершения не установлена; приёмка всего условия не подтверждена. Исторические этапы: [04.11 — конкретный срочный feed дефект устранён; CORE READY не равен постоянному trade_ready.](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6632852260) | [свидетельство 1](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6632852260) |
+| T13 | Amazon→следующие по одной. | Не позднее 04.11.2026; точная дата постановки не установлена | Дата полного завершения не установлена; приёмка всего условия не подтверждена. Подключение Amazon принято 13.11.2026 в объёме AI/AM; следующие инструменты — продолжающаяся работа. | [свидетельство 1](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6631784170); [AI, 13.11](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L25023-L25061); [AM, 13.11](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L25155-L25173) |
+| T14 | V1/V2, Early Entry, ATR, Smart Exit, 2 shadow books. | Не позднее 10.11.2026; точная дата постановки не установлена | Дата полного завершения не установлена; приёмка всего условия не подтверждена. Исторические этапы: [10.11 — shadow механизм внедрён; эффективности/готовности V2 не доказано.](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6778888957) | [свидетельство 1](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6778888957) |
 
 ### CP01–CP28: все зафиксированные поздние подзадачи
 
-- **CP01** — Автоматически получать свежие GETTEX/EUR свечи с сохранением provenance.
-- **CP02** — Восстанавливать только доказанные GAP/SOURCE_GAP/INVALID/UNCONFIRMED.
-- **CP03** — Не подделывать OHLCV и не смешивать площадки.
-- **CP04** — Точная TradingView-сверка и сохранение исторических owner scopes.
-- **CP05** — Устойчивые scoped fingerprints и отказ от ложных ревизий.
-- **CP06** — Пересчёт EMA10/30 и честное отображение оранжевых DQ-предупреждений.
-- **CP07** — Приоритет Apple/NVIDIA → Amazon → остальные последовательно.
-- **CP08** — Независимый свежий feed и справедливая очередь архива.
-- **CP09** — Репрезентативное сравнение TV / official GETTEX / GETTEX-LSEG по акции и TF.
-- **CP10** — Bavest/dxFeed только после пересмотра позднего решения об отсрочке, проверки лицензии/цены/provenance.
-- **CP11** — Проверка всех 57×11 TF, Max и глубины истории без обрезки.
-- **CP12** — Ежемесячная перепроверка принятых исторических пропусков.
-- **CP13** — Persistence DQ/proofs/очереди после restart.
-- **CP14** — Автоматический verified native GETTEX recovery без ручного Work.
-- **CP15** — Реальные UI/Windows/Bridge regression checks.
-- **CP16** — Статистика поставщиков: объём, полнота, глубина, пропуски, ошибки, скорость и устойчивость.
-- **CP17** — Эксперимент Onvista vs TradingView 2–3 дня; старые отложенные решения имеют приоритет.
-- **CP18** — Не перепроверять без новых входов уже подтверждённые интервалы.
-- **CP19** — Самообслуживание каждой акции («моторчики») под единым CandlePilot scheduler.
-- **CP20** — Через Bridge предоставить ассистенту управляемый доступ к выбору TF/периодов/свечей.
-- **CP21** — Точная сессия, DST, торговые паузы, возраст и DQ.
-- **CP22** — Автоматическое понижение недостоверного источника в режим ограниченного доверия.
-- **CP23** — Отдельный журнал recovered/accepted/rejected/unconfirmed.
-- **CP24** — Если свечи СМ корректны, не заменять их ради сравнения.
-- **CP25** — Для любого TF соблюдать истинные биржу, валюту и источник.
-- **CP26** — Убирать только ложные оранжевые полосы, не скрывая настоящие предупреждения.
-- **CP27** — Отдельный CORE READY/WAIT Apple/NVIDIA не равен общему trade_ready.
-- **CP28** — Независимость рутины CandlePilot от лимита Work.
+| ID | Задача / требование | Создана / первое документальное свидетельство | Завершена / дата приёмки | Основание дат |
+|---|---|---|---|---|
+| CP01 | Автоматически получать свежие GETTEX/EUR свечи с сохранением provenance. | Не позднее 28.10.2026; точная дата постановки не установлена | Дата полного завершения не установлена; приёмка всего условия не подтверждена. Исторические этапы: [28.10 — Work сообщил завершение отдельного этапа для CP 15m→1D; market completeness осталась PARTIAL.](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6472180712) | [свидетельство 1](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6472180712) |
+| CP02 | Восстанавливать только доказанные GAP/SOURCE_GAP/INVALID/UNCONFIRMED. | Не позднее 26.10.2026; точная дата постановки не установлена | Дата полного завершения не установлена; приёмка всего условия не подтверждена. Исторические этапы: [27.10 — Work сообщил завершение отдельного этапа для 57 восстановленных proxy gaps; это не весь native GETTEX/весь архив.](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6435309438) | [свидетельство 1](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6429266300) |
+| CP03 | Не подделывать OHLCV и не смешивать площадки. | Не позднее 17.10.2026; точная дата постановки не установлена | Постоянное требование; единовременная дата завершения не назначается. | [свидетельство 1](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6230118222) |
+| CP04 | Точная TradingView-сверка и сохранение исторических owner scopes. | Не позднее 02.11.2026; точная дата постановки не установлена | Дата полного завершения не установлена; приёмка всего условия не подтверждена. | [свидетельство 1](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6578956930) |
+| CP05 | Устойчивые scoped fingerprints и отказ от ложных ревизий. | Не позднее 02.11.2026; точная дата постановки не установлена | Дата полного завершения не установлена; приёмка всего условия не подтверждена. Исторические этапы: [10.11 — исправление fingerprint v4/native bindingv2 применено и проверено; общий результат PARTIAL.](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6766444763) | [свидетельство 1](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6580618967) |
+| CP06 | Пересчёт EMA10/30 и честное отображение оранжевых DQ-предупреждений. | Не позднее 04.11.2026; точная дата постановки не установлена | Дата полного завершения не установлена; приёмка всего условия не подтверждена. Исторические этапы: [04.11 — Work сообщил DONE для подтверждённых дефектов отображения/индикаторов Apple/NVIDIA, с адресными tests/Windows; не полный DQ/trading PASS.](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6629247206) | [свидетельство 1](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6628623032) |
+| CP07 | Приоритет Apple/NVIDIA → Amazon → остальные последовательно. | Не позднее 04.11.2026; точная дата постановки не установлена | Дата полного завершения не установлена; приёмка всего условия не подтверждена. Исторические этапы: [04.11 — Work сообщил DONE общего приоритета Apple/NVIDIA и будущих подготовленных акций; последовательный полный допуск Amazon тогда не завершён.](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6628192924) | [свидетельство 1](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6631784170) |
+| CP08 | Независимый свежий feed и справедливая очередь архива. | Не позднее 04.11.2026; точная дата постановки не установлена | Дата полного завершения не установлена; приёмка всего условия не подтверждена. Исторические этапы: [04.11 — Work сообщил завершение отдельного этапа конкретного удержания срочного feed историческим расчётом; не долговременная готовность всех акций.](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6632852260) | [свидетельство 1](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6632677231) |
+| CP09 | Репрезентативное сравнение TV / official GETTEX / GETTEX-LSEG по акции и TF. | Не позднее 10.11.2026; точная дата постановки не установлена | Дата полного завершения не установлена; приёмка всего условия не подтверждена. Исторические этапы: [10.11 — ограниченный 42-свечной пилот измерен; общий статус PARTIAL и нерепрезентативный объём.](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6767675983) | [свидетельство 1](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6767675983) |
+| CP10 | Bavest/dxFeed только после пересмотра позднего решения об отсрочке, проверки лицензии/цены/provenance. | Не позднее 02.11.2026; точная дата постановки не установлена | Отложено/условное задание; завершение не подтверждено. | [свидетельство 1](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6572115226) |
+| CP11 | Проверка всех 57×11 TF, Max и глубины истории без обрезки. | Не позднее 11.11.2026 (полный состав условия; ранние свидетельства указаны в источнике); точный день неизвестен | Дата полного завершения не установлена; приёмка всего условия не подтверждена. | [свидетельство 1](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6574317954); [полный состав, 11.11](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L190-L222) |
+| CP12 | Ежемесячная перепроверка принятых исторических пропусков. | Не позднее 10.11.2026; точная дата постановки не установлена | Постоянный/повторяющийся процесс; полной разовой приёмки с датой не найдено. Аудит 13.11.2026 оставил этот пункт частичным. Исторические этапы: [10.11 — календарный месяц проверен tests/Windows bounded turn; внешний периодический процесс не подтверждён.](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6766444763) | [свидетельство 1](https://github.com/swindler2010/StockMonitor/issues/13#issuecomment-6766019035); [S2](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L25281-L25328) |
+| CP13 | Persistence DQ/proofs/очереди после restart. | Не позднее 02.11.2026; точная дата постановки не установлена | Постоянный/повторяющийся процесс; полной разовой приёмки с датой не найдено. | [свидетельство 1](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6578956930) |
+| CP14 | Автоматический verified native GETTEX recovery без ручного Work. | Не позднее 02.11.2026; точная дата постановки не установлена | Дата полного завершения не установлена; приёмка всего условия не подтверждена. | [свидетельство 1](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6578956930) |
+| CP15 | Реальные UI/Windows/Bridge regression checks. | Не позднее 02.11.2026; точная дата постановки не установлена | Постоянное требование; единовременная дата завершения не назначается. | [свидетельство 1](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6578956930) |
+| CP16 | Статистика поставщиков: объём, полнота, глубина, пропуски, ошибки, скорость и устойчивость. | Не позднее 11.11.2026 (полный состав условия; ранние свидетельства указаны в источнике); точный день неизвестен | Дата полного завершения не установлена; приёмка всего условия не подтверждена. Исторические этапы: [10.11 — часть read-only статистики реализована; speed/depth/universal coverage не закрыты.](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6766444763) | [свидетельство 1](https://github.com/swindler2010/StockMonitor/issues/13#issuecomment-6766019035); [полный состав, 11.11](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L190-L222) |
+| CP17 | Эксперимент Onvista vs TradingView 2–3 дня; старые отложенные решения имеют приоритет. | Не позднее 11.11.2026; точная дата постановки не установлена | Отложено/условное задание; завершение не подтверждено. | [MASTER, 11.11](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L175-L222) |
+| CP18 | Не перепроверять без новых входов уже подтверждённые интервалы. | Не позднее 02.11.2026; точная дата постановки не установлена | Постоянное требование; единовременная дата завершения не назначается. | [свидетельство 1](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6578956930) |
+| CP19 | Самообслуживание каждой акции («моторчики») под единым CandlePilot scheduler. | Не позднее 11.11.2026 (полный состав условия; ранние свидетельства указаны в источнике); точный день неизвестен | Постоянный/повторяющийся процесс; полной разовой приёмки с датой не найдено. | [свидетельство 1](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6429266300); [полный состав, 11.11](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L190-L222) |
+| CP20 | Через Bridge предоставить ассистенту управляемый доступ к выбору TF/периодов/свечей. | Не позднее 11.11.2026; точная дата постановки не установлена | Дата полного завершения не установлена; приёмка всего условия не подтверждена. | [MASTER, 11.11](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L175-L222) |
+| CP21 | Точная сессия, DST, торговые паузы, возраст и DQ. | Не позднее 02.11.2026; точная дата постановки не установлена | Постоянное требование; единовременная дата завершения не назначается. | [свидетельство 1](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6578956930) |
+| CP22 | Автоматическое понижение недостоверного источника в режим ограниченного доверия. | Не позднее 11.11.2026; точная дата постановки не установлена | Дата полного завершения не установлена; приёмка всего условия не подтверждена. Аудит 13.11.2026 оставил этот пункт частичным. | [MASTER, 11.11](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L175-L222); [S2](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L25281-L25328) |
+| CP23 | Отдельный журнал recovered/accepted/rejected/unconfirmed. | Не позднее 11.11.2026 (полный состав условия; ранние свидетельства указаны в источнике); точный день неизвестен | Постоянный/повторяющийся процесс; полной разовой приёмки с датой не найдено. | [свидетельство 1](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6578956930); [полный состав, 11.11](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L190-L222) |
+| CP24 | Если свечи СМ корректны, не заменять их ради сравнения. | Не позднее 11.11.2026; точная дата постановки не установлена | Постоянное требование; единовременная дата завершения не назначается. | [MASTER, 11.11](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L175-L222) |
+| CP25 | Для любого TF соблюдать истинные биржу, валюту и источник. | Не позднее 18.10.2026; точная дата постановки не установлена | Постоянное требование; единовременная дата завершения не назначается. | [свидетельство 1](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6253728645) |
+| CP26 | Убирать только ложные оранжевые полосы, не скрывая настоящие предупреждения. | Не позднее 04.11.2026; точная дата постановки не установлена | Дата полного завершения не установлена; приёмка всего условия не подтверждена. Исторические этапы: [04.11 — Work сообщил DONE partial-chart пути; последующий6629247206 закрыл найденный normal-fallback дефект в тот же день.](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6628623032) | [свидетельство 1](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6628623032) |
+| CP27 | Отдельный CORE READY/WAIT Apple/NVIDIA не равен общему trade_ready. | Не позднее 11.11.2026; точная дата постановки не установлена | Постоянное требование; единовременная дата завершения не назначается. | [MASTER, 11.11](https://github.com/swindler2010/StockMonitor/blob/31947b10b977d74bcda219ac1c086212e810668c/docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md#L175-L222) |
+| CP28 | Независимость рутины CandlePilot от лимита Work. | Не позднее 02.11.2026; точная дата постановки не установлена | Постоянное требование; единовременная дата завершения не назначается. | [свидетельство 1](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6578956930) |
 
 ## IV. Последняя установленная ситуация — НЕ окончательный PASS
 - MCP TEST Bridge 11.11: 57 акций + 6 других инструментов, CandlePilot ACTIVE, archive_series=661, сохранённые DQ series=701.
@@ -24919,6 +24960,9 @@ GitHub timeline содержит повторные события коммен�
 
 ## 13.11.2026 — независимая проверка G06/G10
 
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 13.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** Проверка выполнена 13.11.2026; завершение G06/G10 не подтверждено. Дата отчёта не заменяет исходную дату родительских задач G06/G10; T06/T09/T13/T14; основание — сохранённый отчёт ниже.
+
+
 - G06 / T06: на изолированном основном PAPER-исполнителе проверено частичное закрытие 2→1→0 для MANUAL и CHATGPT при V1 WAIT, защита на остатке и сохранность журнала после повторного открытия. Вместе с набором V2 прошли 27 тестов. Рабочий счёт: 0 новых операций и позиций в снимке 12:34 CET, Apple/NVIDIA 1H/4H CORE READY/WAIT, цена допущена. Естественный автоматический BUY→выход остаётся OPEN.
 - G06 / T14: отдельные книги V1, V2 и V2 без Smart Exit, общий GETTEX/EUR архив 13.11 08:30–12:30 CET, согласованное чтение SQLite, 31 закрытая 15m свеча, 10 часовых сигналов на книгу, все WAIT, 0 сделок. Преимущество V2 не установлено. Использованы нынешние архивные ревизии и допуски, задержка публикации — сценарная.
 - G10 / T09: Bridge и SQLite совпали: 2999 восстановлений и 5581 уникальная изменённая свеча; 74839 подтверждённых 5m интервалов без сделок по Bridge. Все 58 общих оценок STALE, 58 запросов ожидают. Естественный EXPIRED NVIDIA в 12:20 CET сохранил запрос с EXPIRED_AT_PUBLICATION. CandlePilot продолжал загрузку, общая актуальность остаётся PARTIAL.
@@ -24927,6 +24971,9 @@ GitHub timeline содержит повторные события коммен�
 
 
 ## 13.11.2026 — Work1 AF / G06: Apple 1H DATA BLOCKED при соседнем 4H READY
+
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 13.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** 13.11.2026 — завершены диагностика и штатная переоценка в объёме AF; G06 не закрыт. Дата отчёта не заменяет исходную дату родительских задач Work1 AF; G06; основание — сохранённый отчёт ниже.
+
 
 **Объём:** только поручение владельца о записи около 13:16 CET. Диагностика и одна свежая штатная переоценка выполнены; весь G06 и непрерывная готовность всех инструментов этим не закрываются. Рабочий код не изменён. TEST: исходный код AE `c296a55e4262b5b5b30ec6e728a7d0b79fb4e0aa`, обычный запуск 13.11 в 12:58:43.941 CET; документальная вершина PR18 `c2f91d7be61ec83dc08abe2c67846f3d85901e63`, локальное дерево идентично.
 
@@ -24953,6 +25000,9 @@ GitHub timeline содержит повторные события коммен�
 **Оставшееся ограничение:** READY подтверждён на указанные времена в действующем режиме принятого исторического риска; это не обещание непрерывного READY и не строгий DQ READY. При следующем изменении ревизий временная блокировка до перепроверки допустима и остаётся видимой. Естественный BUY/выход не наблюдался в этом узком этапе. Локальные исходные снимки и replay сохранены в СМ-Архив (`Apple 1H AF …`); приватные базы и сведения счёта не опубликованы.
 
 ## 13.11.2026 — Work1 AG / G10: ложный STALE при росте архива вне закрытого окна
+
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 13.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** 13.11.2026 — адресный дефект исправлен и проверен по отчёту AG; общая готовность всех акций остаётся PARTIAL. Дата отчёта не заменяет исходную дату родительских задач Work1 AG; G10; основание — сохранённый отчёт ниже.
+
 
 **Объём:** одно показательное семейство причин массового падения готовности; Apple, существующие сохранённые оценки и очередь. Не аудит 58 акций. Общий G10 остаётся PARTIAL: исторические ограничения, реальные изменения входов и сроки продолжают блокировать неподтверждённые результаты.
 
@@ -25007,6 +25057,9 @@ GitHub timeline содержит повторные события коммен�
 
 ### G06 — Work1 AH, 13.11.2026: подтверждён действующий предел задержки цены PAPER до 15 минут
 
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 13.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** 13.11.2026 — DONE узкой проверки AH; автоматическая торговля G06 не закрыта. Дата отчёта не заменяет исходную дату родительских задач Work1 AH; G06/T03; основание — сохранённый отчёт ниже.
+
+
 **Запрос владельца:** отсутствие более новой свечи при задержке поставщика не должно снимать пригодность цены, пока её возраст не превышает 15 минут. Уточнение относится к свежести цены; свежая 5m допустима, пригодная 15m не требует обязательного наличия 5m. Стратегии V1 остаются 1H/4H.
 
 **Результат узкой проверки — DONE; общая автоматическая торговля G06 этим не объявлена завершённой.** Изменение порога не потребовалось: существующий `paper_account.POLICY.max_bar_age_seconds=900`, `paper_hourly.fresh_quote` и окончательный `paper_account.quote` уже допускают возраст от 0 до 900 секунд включительно после закрытия подтверждённой свечи. Новая задержка или повторное чтение не начинают этот срок заново. Время на оси графика обычно обозначает открытие свечи: для 15m 14:00–14:15 отсчёт идёт от 14:15; ровно 14:30 цена ещё проходит проверку свежести, после этого — нет.
@@ -25021,6 +25074,9 @@ GitHub timeline содержит повторные события коммен�
 
 
 ### G06 / T13 — Work1 AI, 13.11.2026: Amazon подключён третьей акцией к штатному CandlePilot и PAPER V1
+
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 13.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** 13.11.2026 — подключение Amazon к автоматической PAPER-работе проверено; ручной выбор дополнительно исправлен в AM в тот же день. Дата отчёта не заменяет исходную дату родительских задач Work1 AI; G06/T13; основание — сохранённый отчёт ниже.
+
 
 **Задание владельца:** подключить Amazon так же, как Apple и NVIDIA. **Подключение выполнено и проверено после штатного перезапуска.** Это завершение подключения третьей акции; весь исторический архив Amazon не объявлен строгим DQ READY, а естественный BUY/SELL ещё не наблюдался.
 
@@ -25061,6 +25117,9 @@ GitHub timeline содержит повторные события коммен�
 
 ### G06 / T13 — 13.11.2026: единый критерий подключения Amazon и следующих акций
 
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 13.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** Постоянное требование; конечная дата завершения не установлена. Дата отчёта не заменяет исходную дату родительских задач G06/T13 full connection criterion; основание — сохранённый отчёт ниже.
+
+
 Владелец уточнил постоянное требование: **Amazon и каждая последующая акция должны подключаться к полноценной PAPER-работе по тем же действующим правилам, что Apple и NVIDIA.** Добавления названия в список недостаточно.
 
 Единый критерий подготовки: подтверждённый GETTEX/EUR-листинг; сохранение длинной истории; штатные загрузка и восстановление через CP; корректная агрегация, индикаторы, прогрев и CORE по фактическим зависимостям стратегии; отдельные актуальные результаты 1H и 4H с фильтрами 4H/1D; пригодная закрытая 5m/15m цена с действующим пределом свежести 900 секунд после закрытия. Принятые исторические ограничения учитываются только по существующей применимой политике и точным доказательствам. Разрешения на конкретные спорные участки Apple/NVIDIA не копируются на чужие инструменты.
@@ -25075,6 +25134,9 @@ GitHub timeline содержит повторные события коммен�
 
 
 ## Work1 AK — 13.11.2026: оформление TEST, масштаб и логотипы
+
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 13.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** 13.11.2026 — DONE задания AK, приёмка Windows 15:52–15:55 CET. Дата отчёта не заменяет исходную дату родительских задач Work1 AK; G01/G02/G08; N08/D08; основание — сохранённый отчёт ниже.
+
 
 **Статус этого отдельного задания владельца: DONE.** Предыдущие незавершённые задачи данных/торговли не закрываются этим изменением интерфейса.
 
@@ -25104,6 +25166,9 @@ GitHub timeline содержит повторные события коммен�
 
 
 ## Work1 AL — 13.11.2026: Apple, NVIDIA и Amazon, повторная проверка штатной PAPER-работы
+
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 13.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** 13.11.2026 — адресный дефект AL исправлен и проверен; естественный цикл входа/выхода остаётся PARTIAL. Дата отчёта не заменяет исходную дату родительских задач Work1 AL; G06/T13/G10; основание — сохранённый отчёт ниже.
+
 
 **G06/T13: адресный дефект исправлен и применён; полный естественный цикл входа/выхода остаётся PARTIAL.** Проверены только три действующие PAPER-акции и их 1H/4H. Старые аудиты, очередь/EXPIRED/BUY–SELL-тесты не повторялись. Отсутствие BUY не выдаётся за техническую неисправность.
 
@@ -25154,6 +25219,9 @@ Windows: до перезапуска в «Демо» наблюдались ше
 
 ## Work1 AM — 13.11.2026: Amazon отсутствовала в выборе ручной PAPER-сделки
 
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 13.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** 13.11.2026 — DONE дефекта AM; реальная Windows-проверка после запуска 16:38:46 CET. Дата отчёта не заменяет исходную дату родительских задач Work1 AM; G06/T13; основание — сохранённый отчёт ниже.
+
+
 **DONE для этого дефекта интерфейса и маршрутизации.** Предыдущее утверждение о полном подключении Amazon было неполным: V1 уже автоматически рассчитывал Amazon на 1H/4H, но её не было в выпадающем списке ручных BUY/SELL. В Windows воспроизведено: в сводке видна AMAZON.COM INC READY / WAIT, а в списке — только Apple и NVIDIA.
 
 **Причина:** paper_view.attach строил список из статического paper_orders.PAIR. Та же пара использовалась в check_intent и выборе маршрута owner-order в features.bridge_dispatch. Простое добавление третьего названия оставило бы проблему для следующей акции.
@@ -25172,6 +25240,9 @@ Windows: до перезапуска в «Демо» наблюдались ше
 
 
 ## Work1 AN — 13.11.2026: Meta, четыре готовых наблюдения TV и штатная переоценка
+
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 13.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** Передача четырёх наблюдений выполнена 13.11.2026; полная подготовка Meta на момент отчёта не завершена. Дата отчёта не заменяет исходную дату родительских задач Work1 AN; G10 Meta; основание — сохранённый отчёт ниже.
+
 
 Статус подготовки Meta к автоматической PAPER-торговле: **PARTIAL — DATA BLOCKED сохранён**. Узкий этап передачи четырёх наблюдений и проверки следующего штатного расчёта выполнен. Инструмент: US30303M1027, TradingView GETTEX:FB2A, текущий ряд СМ gettex_chart / FB2A.GTX / GETTEX / EUR / Europe/Berlin. Все времена ниже — CET, 2026 год.
 
@@ -25219,6 +25290,9 @@ Windows: до перезапуска в «Демо» наблюдались ше
 
 
 ## Work1 AO — 13.11.2026: Meta, ещё шесть наблюдений TradingView и штатная переоценка
+
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 13.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** Этап шести наблюдений выполнен 13.11.2026; полная подготовка Meta на момент отчёта не завершена. Дата отчёта не заменяет исходную дату родительских задач Work1 AO; G10 Meta; основание — сохранённый отчёт ниже.
+
 
 **Статус подготовки Meta: PARTIAL — допуск к автоматической PAPER-торговле не получен.** Это продолжение AN; ранее обработанные три наблюдения и четыре интервала AN повторно не проверялись. Изменений исходного кода в AO нет: TEST local `eb01f0c49ad9d7c538503ddb9181434ed3d9e7a2`, PR #18 `6e0ec4ec0c217eeac1f7e591f845cd536cc8f678`, одинаковое дерево `b549e22bfdf1f7a2fdebfd7765e6106812b29334`.
 
@@ -25280,6 +25354,9 @@ Work передал шесть ограниченных наблюдений ABS
 
 ## Проверка 28 пунктов «нужна проверка» — Work №2, 13.11.2026
 
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 13.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** 13.11.2026 — аудит выполнен; 6 ID подтверждены в указанном объёме, 22 ID целиком не закрыты. Дата отчёта не заменяет исходную дату родительских задач 28 aliases audit; основание — сохранённый отчёт ниже.
+
+
 Проверка 28 пунктов прежнего списка — 13 ноября 2026
 Это свидетельство аудита, не новый реестр задач. Канонический реестр — GitHub MASTER_TASK_REGISTRY_RU_2026-11-11.md.
 Мониторинг stock-monitor-16 не включался. Исходники, рабочая SQLite, торговые настройки не изменялись. Открывались новости, список акций, карточка NVIDIA и отчётность. Вспомогательные окна закрыты. Перезапусков аудитор не выполнял; в конце проверки основной дескриптор окна сменился извне, поэтому полный UI-прогон не заявляется.
@@ -25329,6 +25406,9 @@ CP22. Понижение доверия источнику. Есть DQ-блок
 
 ## Work1 — G06 / №49: первый текстовый этап «Советы по развитию», 13.11.2026
 
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 13.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** 13.11.2026 — текстовый этап готов; полная задача №49 остаётся PARTIAL. Дата отчёта не заменяет исходную дату родительских задач G06/49; основание — сохранённый отчёт ниже.
+
+
 **Результат: первый этап внедрён и проверен в Windows TEST. Полная задача №49 остаётся PARTIAL.** Владелец отдельно разрешил начать №49 и уточнил: простые слова, два независимых направления — развитие программы и развитие торговли, вся рекомендационная часть пронумерована.
 
 ### Что добавлено
@@ -25376,6 +25456,9 @@ CP22. Понижение доверия источнику. Есть DQ-блок
 
 ## Work1 — G02 / №47: управление индикаторами через MCP, 13.11.2026
 
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 13.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** На момент этого отчёта №47 PARTIAL; окончательная приёмка №47 — 13.11.2026, 23:15 CET, в следующей записи. Дата отчёта не заменяет исходную дату родительских задач G02/47; основание — сохранённый отчёт ниже.
+
+
 **Реализация в Windows TEST и локальном MCP проверена. Полная облачная приёмка №47 — PARTIAL:** подключённый каталог этого чата пока не содержит две новые команды. Их наличие в ответе локального сервера не подменяет доступность прямого облачного вызова.
 
 ### Что добавлено
@@ -25417,6 +25500,9 @@ Backup: адресный `СМ-Архив/Indicators47 before.zip` провер�
 
 ## Work1 — №47 / G02: проверка прямого подключения ChatGPT, 13.11.2026, 22:43 CET
 
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 13.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** На 13.11.2026, 22:43 CET приёмка BLOCKED; окончательная №47 DONE — 13.11.2026, 23:15 CET. Дата отчёта не заменяет исходную дату родительских задач G02/47; основание — сохранённый отчёт ниже.
+
+
 Продолжение предыдущего этапа без повторения 12 тестов и Windows-приёмки. **№47 остаётся PARTIAL; заключительная проверка изменения из подключённого чата — BLOCKED до обновления каталога подключения.**
 
 Новое доказательство: подключённый `stock_monitor_health` в 22:43 CET успешно прочитал работающий TEST и объявил в `capabilities` обе новые команды `stock_monitor_get_indicators` и `stock_monitor_set_indicators`. Всего сервер объявляет 18 возможностей, тогда как доступный этому чату каталог содержит 15 инструментов; две команды индикаторов в нём отсутствуют (также отсутствует отдельный `list_instruments`). Это различие каталога, а не отказ записи настроек в СМ. Текущий код — ранее опубликованный f376a6a9 в PR #18; новый исходный код, тестовые сделки и изменения настроек в этом продолжении не выполнялись.
@@ -25428,6 +25514,9 @@ Backup: адресный `СМ-Архив/Indicators47 before.zip` провер�
 
 ### №47 / G02 — после сообщения владельца об обновлении подключения, 13.11.2026 22:50 CET
 
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 13.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** На 13.11.2026, 22:50 CET приёмка не завершена; окончательная №47 DONE — 13.11.2026, 23:15 CET. Дата отчёта не заменяет исходную дату родительских задач G02/47; основание — сохранённый отчёт ниже.
+
+
 Владелец сообщил «готово» после Refresh. Новое независимое чтение подключённого `stock_monitor_health` прошло: тот же работающий TEST объявляет `stock_monitor_get_indicators` / `stock_monitor_set_indicators`. Однако фактически выданный **этому чату** каталог по-прежнему содержит 15 инструментов, без обеих команд. В этом продолжении параметры не менялись; прямое изменение через чат не выполнено, №47 не закрыт. Это не повторная проверка уже пройденных локальных тестов.
 
 Уточнение предыдущей инструкции владельцу: [официальный порядок Refresh metadata](https://developers.openai.com/plugins/deploy/connect-chatgpt) включает **новый чат после обновления подключения**. Этот шаг ранее не был указан. Повторный Refresh и повтор локальной реализации сейчас не требуются; следующий шаг — новый чат с подключённым Stock Monitor. Не предполагать, что одно сообщение «готово» доказывает наличие новых команд.
@@ -25436,6 +25525,9 @@ Backup: адресный `СМ-Архив/Indicators47 before.zip` провер�
 
 
 ## Work1 — №47 / G02: исправлены BRIDGE_TIMEOUT и устаревший MCP-адаптер, 13.11.2026
+
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 13.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** 13.11.2026 — исправление соединения проверено; итоговая приёмка всей №47 оформлена отдельно в 23:15 CET. Дата отчёта не заменяет исходную дату родительских задач G02/47; G04 bounded health; основание — сохранённый отчёт ниже.
+
 
 **Исправление соединения проверено в действующем TEST и подключённом MCP. №47 пока PARTIAL:** прямой `get_indicators/set_indicators` ещё не выдан в каталог инструментов текущего чата. Прежний вывод, что причина только в облачном каталоге и достаточно Refresh/нового чата, был неполным.
 
@@ -25461,6 +25553,9 @@ Backup `СМ-Архив/Indicators47 connection before.zip` — четыре и�
 
 ## Work1 — №47 / G02: управление индикаторами непосредственно из ChatGPT — DONE, 13.11.2026, 23:15 CET
 
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 13.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** 13.11.2026, 23:15 CET — DONE задачи №47: прямое управление из чата, сохранение, Windows, перезапуск и возврат исходных настроек. Дата отчёта не заменяет исходную дату родительских задач G02/47; основание — сохранённый отчёт ниже.
+
+
 **Текущий статус именно №47 — DONE.** Закрыты оставшиеся облачная и Windows-проверки. Прежние PARTIAL/BLOCKED в истории этого файла отражают состояние до обновления подключения; первоначальный реестр №1–62 с исходными статусами 12.10 намеренно не переписан. Общий G02, остальные MCP-задачи и торговая готовность этим результатом не закрываются.
 
 В этом чате фактически появились `stock_monitor_get_indicators` и `stock_monitor_set_indicators`. Все приведённые чтения и записи выполнены **нативными подключёнными инструментами ChatGPT**, не вызовом локального Python вместо облачного инструмента.
@@ -25485,6 +25580,9 @@ Backup `СМ-Архив/Indicators47 connection before.zip` — четыре и�
 
 
 ## Work1 — Meta: завершена визуальная сверка оставшихся диапазонов, 14.11.2026, 00:34 CET — PARTIAL
+
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 14.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** 14.11.2026, 00:34 CET — визуальная сверка выполнена; полный допуск Meta в этом отчёте остаётся PARTIAL. Дата отчёта не заменяет исходную дату родительских задач G10 Meta; основание — сохранённый отчёт ниже.
+
 
 Продолжение действующей подготовки **Meta Platforms / US30303M1027 / GETTEX:FB2A / EUR**. Broadcom пока не начинали. Старые проверки AN/AO и уже закрытую №47 не повторяли.
 
@@ -25531,6 +25629,9 @@ CandlePilot **сам** применяет допустимую политику,
 
 
 ## 14.11.2026 — общая обработка совпадающих пропусков TradingView: восстановление старых сверок
+
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 14.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** 14.11.2026 — механизм восстановления прежних сверок внедрён и проверен в указанном объёме; полное устранение повторных блокировок этим отчётом не доказано. Дата отчёта не заменяет исходную дату родительских задач G10 TV proof restoration; основание — сохранённый отчёт ниже.
+
 
 **Запрос владельца:** применять принятое правило ко всем акциям, если тот же пропуск подтверждён на TradingView. Этап не меняет OHLCV, торговую стратегию, счёт или правила исполнения.
 
@@ -25594,6 +25695,9 @@ Windows TEST штатно сохранён, закрыт и запущен; ра
 
 ### Work1 — правило владельца и исправление временного распределения Meta, 14.11.2026 09:29 CET
 
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 14.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** 14.11.2026, 09:29 CET — DONE подтверждённого участка и общего механизма исправления; исполнение PAPER не заявляется. Дата отчёта не заменяет исходную дату родительских задач G10 Meta official timebase; owner policy; основание — сохранённый отчёт ниже.
+
+
 **DONE для подтверждённого участка и общего механизма исправления. Полное исполнение PAPER не заявляется.** Новое прямое разрешение владельца 14 ноября: аналогичные подтверждённые исправления нынешних и будущих акций выполнять без повторного вопроса. Разрешение сохранено в существующей базе как `cp_official_timebase_policy`, в AGENTS и каталоге опыта CP. Оно не заменяет доказательства источника, DQ, CORE, свежесть и риск.
 
 **Причина и данные.** Meta US30303M1027, GETTEX:FB2A/EUR. 21.10.2026, Europe/Berlin (CEST): LSEG записал в14:00 совокупный OHLCV двух реальных интервалов. Независимые сохранённые официальные GETTEX MUNC/MUND, сделки и5m/15m подтвердили ранее просмотренное TV-распределение. Повторной сверки TV и импорта его цен не было.
@@ -25619,11 +25723,17 @@ MCP независимо подтвердил8 revision events. Свежая ord
 
 
 ### 14.11.2026 — полное подключение каждой подготовленной акции
+
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 14.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** Постоянное требование от 14.11.2026; конечная дата завершения не установлена. Дата отчёта не заменяет исходную дату родительских задач G06/T13 full prepared-stock integration; основание — сохранённый отчёт ниже.
+
 Уточнение владельца: готовность новой акции означает не только исправленные свечи, но доступность в выборе графика/индикаторов, BUY/SELL в «Демо», существующем маршруте ChatGPT PAPER, автоматической V1, оценке/защите позиции и журнале, с приоритетным обновлением CandlePilot. Отдельное повторное поручение на включение готовой акции не требуется.
 Адресное чтение действующего кода: paper_preparation.admit() добавляет подтверждённую identity/name в общий config; paper_orders.owner_route/order_choices и paper_view используют тот же допущенный набор. Существующий механизм повторно не переписывался. Зафиксировано постоянное правило приёмки в AGENTS.md. Это документирование требования и проверка связей кода, не новая Windows/MCP-приёмка и не объявление Meta или остальных акций полностью TRADE READY. Новых тестов, сделок, изменений счёта/стратегии/разрешений и массовых загрузок нет. Свежесть/DQ/риск сохраняются. Откат этого этапа — удалить только добавленный абзац правила; рабочие данные не менялись.
 
 
 ## 14.11.2026 — Meta: подключение PAPER вне торговой сессии и проверка восстановленных входов
+
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 14.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** 14.11.2026 — автоматическое подключение Meta подтверждено в TEST; это не завершение всех проверок истории и рыночного исполнения. Дата отчёта не заменяет исходную дату родительских задач G06/T13; G10 Meta closed-session preparation; основание — сохранённый отчёт ниже.
+
 
 Статус этапа: реализовано в TEST; автоматическое подключение подтверждено. Это не объявление строгой DQ-готовности всей истории или исполнения сделки в закрытую сессию.
 
@@ -25651,6 +25761,9 @@ MCP независимо подтвердил8 revision events. Свежая ord
 Дополнительная проверка сохранения: повторный штатный Save/Close/Restart выполнен; новый TEST instance `aa8f81462e4062391edf8f7c84ebbcc6`, Bridge running. Receipt и подключение Meta сохранены; независимый MCP прочитал её identity из автоматического списка после перезапуска. Проверка исполнения на открытом рынке остаётся будущим естественным событием; этот этап не создавал сделок.
 
 ## 14.11.2026 — Broadcom: начало последовательной подготовки и исправление заключительной загрузки
+
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 14.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** 14.11.2026 — ошибка заключительной загрузки исправлена; подготовка Broadcom остаётся PARTIAL. Дата отчёта не заменяет исходную дату родительских задач G10 Broadcom; catch-up scheduler; основание — сохранённый отчёт ниже.
+
 
 **Статус Broadcom: PARTIAL.** Общая ошибка планировщика исправлена и проверена в TEST. Полный аналитический/торговый допуск Broadcom ещё не получен; не добавлять её к четырём ранее подключённым акциям.
 
@@ -25708,6 +25821,9 @@ TradingView Desktop открыт; выбран GETTEX:1YD / 15m / UTC+1. [Кар
 
 ## 14.11.2026 — Work1: помощь CandlePilot по Palantir и Broadcom, подтверждение пустых интервалов
 
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 14.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** 14.11.2026 — механизм подтверждения пустых интервалов внедрён и проверен; полный допуск Palantir/Broadcom остаётся PARTIAL. Дата отчёта не заменяет исходную дату родительских задач G10 Palantir/Broadcom matched absence; основание — сохранённый отчёт ниже.
+
+
 **Статус: механизм внедрён и проверен; полный допуск обеих акций остаётся PARTIAL.** Новый результат относится только к US69608A1088 / GETTEX:PTX и US11135F1012 / GETTEX:1YD, EUR. Завершённые проверки Apple/NVIDIA/Meta и прежний catch-up Broadcom не повторялись.
 
 ### Исправленная общая причина
@@ -25760,6 +25876,9 @@ MCP в **11:40:43 CET** подтвердил обычную переоценку
 
 ## 14.11.2026 — G10: ежечасный мониторинг самостоятельной работы CandlePilot
 
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 14.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** 14.11.2026 — DONE настройки почасового мониторинга; само повторяющееся наблюдение продолжается. Дата отчёта не заменяет исходную дату родительских задач G10 Palantir/Broadcom hourly monitoring; основание — сохранённый отчёт ниже.
+
+
 По прямому поручению владельца включено отдельное почасовое наблюдение Palantir и Broadcom в текущем чате. Расписание **palantir-broadcom**, ACTIVE, каждый час; создание и повторное чтение конфигурации подтверждены. Прежние расписания, включая еженедельную сверку GETTEX, не изменялись.
 
 Начальный согласованный read-only снимок SQLite: **14.11.2026 11:52:31 CET**. Нативный GETTEX/EUR 15m: **Palantir — 222 неподтверждённых интервала / 203 диапазона**, DQ проверен 11:51:43 CET; **Broadcom — 135 / 122**, DQ проверен 11:51:09. Эти показатели не обозначают все ошибки всех TF и не суммируются с производными TF. MCP подтвердил работающий TEST/Bridge; health не использовался как доказательство готовности к торговле.
@@ -25773,6 +25892,9 @@ MCP в **11:40:43 CET** подтвердил обычную переоценку
 
 ### G10 — 14.11.2026, первый почасовой контроль СР: 11:52:31–12:51:13 CET
 
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 14.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** 14.11.2026, 12:51:13 CET — завершено это наблюдение; подготовка обеих акций не закрыта. Дата отчёта не заменяет исходную дату родительских задач G10 Palantir/Broadcom hourly monitoring; основание — сохранённый отчёт ниже.
+
+
 Согласованное read-only чтение двух акций за **58 минут 42 секунды**, без ручного исправления, загрузки или запуска расчётов. Новые подтверждения проверены существующим `retime_current` на текущих входах: **2 PASS**. Palantir — **02.11 13:15**, квитанция 14.11 11:57:17 CET; Broadcom — **30.10 21:15**, квитанция 12:10:11. Время исторических интервалов Europe/Berlin. Оба результата VERIFIED_NATIVE_EMPTY / NO_TRADES, added=0, changed=0: подтверждено отсутствие сделок в интервале, свечи не созданы.
 
 Сохранённый native GETTEX/EUR DQ 15m: **Palantir 222 → 221** (202 диапазона, проверка 12:28:51), **Broadcom 135 → 132** (119 диапазонов, проверка 12:47:10). Два из трёх уменьшений Broadcom относятся к более ранним подтверждениям **21.10 15:15 и 23.10 18:45**, уже существовавшим до исходного снимка; повторно как новые исправления они не посчитаны. Три прежние квитанции Palantir завершили классификацию очереди — также не новый прирост подтверждений. Новых диапазонов DQ 15m нет; новые задания очереди относятся к уже существующим пробелам. Подтверждённые восстановления реальных свечей, новые загрузки и новые события принятия риска за период — **0**.
@@ -25783,6 +25905,9 @@ MCP подтвердил TEST/Bridge. Последняя доступная оп
 
 
 ### G10 — 14.11.2026 13:39 CET: помощь СР через TradingView, точный перенос Broadcom
+
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 14.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** 14.11.2026 — коррекция применена в 13:33:22 CET и подтверждена следующим проходом 13:38:59 CET; полная подготовка обеих акций не закрыта. Дата отчёта не заменяет исходную дату родительских задач G10 Broadcom exact native relocation; основание — сохранённый отчёт ниже.
+
 
 Новые проверки: 11 диапазонов, 12 отсутствовавших 15m отметок Palantir/Broadcom; прежние сверки не повторялись. TradingView Desktop: GETTEX:PTX / GETTEX:1YD, EUR, 15m, UTC+1; точные соседние OHLCV сопоставлены с сохранённым нативным рядом. Скриншоты и исходные привязки остаются в локальном архиве. Импорта TradingView OHLCV нет.
 
@@ -25803,6 +25928,9 @@ MCP подтвердил TEST/Bridge. Последняя доступная оп
 
 ### G10 — 14.11.2026: подтверждённый пустой конец сессии Palantir
 
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 14.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** 14.11.2026 — узкий этап пустого хвоста завершён, обычный CP подтверждён в 13:48:19 CET; общая подготовка остаётся PARTIAL. Дата отчёта не заменяет исходную дату родительских задач G10 Palantir end-session empty slot; основание — сохранённый отчёт ниже.
+
+
 После предыдущего этапа обычная очередь Broadcom повторно проверила перенос 02.11 10:30–11:00: 13:38:59.416 CET RESOLVED_NATIVE / NATIVE_ROWS_CONFIRMED, native DQ READY. Дополнительных свечей на этом проходе не создавалось.
 
 Новый подтверждённый дефект: Palantir 13.11 22:45–23:00 действительно пуст в полных официальных GETTEX-файлах, а соседняя опубликованная ценовая запись 22:40 с нулевым объёмом ошибочно приравнивалась к неполной публикации. Native 5m/15m совпадают с официальными данными. Существующий механизм corroboration теперь различает price-only запись и неполную публикацию, а также допускает строго последний пустой 15m до подтверждённого закрытия сессии без вымышленного следующего соседа. Только режим VERIFIED_NATIVE_EMPTY, без замены OHLCV; проверка исправлений цен остаётся строгой. Отозванная политика, изменённые исходные данные, отсутствие одного файла MUNC/MUND или реальный конфликт полноты по-прежнему отклоняются.
@@ -25815,6 +25943,9 @@ PR #18: code 1744ed0e46ee335ab06787f443b2ae6961ac014b; preparation cb8fe72f0ae20
 
 
 ### G10 — 14.11.2026 14:24 CET: точечные исправления Palantir/Broadcom после TV
+
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 14.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** 14.11.2026, 14:24 CET — адресные исправления применены в описанном объёме; часть повторных проверок ещё ожидалась, общий допуск не получен. Дата отчёта не заменяет исходную дату родительских задач G10 Palantir/Broadcom targeted fixes; основание — сохранённый отчёт ниже.
+
 
 1. Исправлена общая ошибка агрегации: принятые точные TV-пропуски внутри закрытого родителя больше не отключаются из-за другого неизвестного участка истории. Неизвестные родительские свечи по-прежнему исключаются, полный аналитический допуск автоматически не выдаётся. Новый тест воспроизвёл ошибку и прошёл после правки; вместе с двумя затронутыми проверками 3 PASS за 2.468 s. На сохранённых реальных данных Palantir 4H последний родитель перешёл с 12.11 11:30 на 13.11 19:30, ложный stale_count=6 исчез; пригодных закрытых 4H было 176, стало 184 до следующих восстановлений. Обычная Windows-оценка 14:09:18.647 CET и независимый Bridge TEST e449ab4ce8a9ce4b1643d565367f084b подтвердили отсутствие прежнего stale-хвоста; UNCONFIRMED других участков сохранён. PR #18 468d277568781f4637be2b9ae9413a407326960f, тест30db731315c6b96ded875c76b4148227d37fd663.
 
@@ -25829,6 +25960,9 @@ PR #18: code 1744ed0e46ee335ab06787f443b2ae6961ac014b; preparation cb8fe72f0ae20
 
 ### G10 — 14.11.2026 14:47 CET: СР сам применил ещё три подтверждённые коррекции Palantir
 
+> **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 14.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** 14.11.2026, 14:47 CET — перечисленные коррекции получили APPLIED/RESOLVED; общий допуск Palantir/Broadcom не завершён. Дата отчёта не заменяет исходную дату родительских задач G10 Palantir exact tape repair; основание — сохранённый отчёт ниже.
+
+
 После штатного Save/Close/Restart действующий CP обработал сохранённые наблюдения TV и полные официальные GETTEX-публикации. Palantir 02.11 11:15–11:45: APPLIED14:45:19 CET, changed4, relocated1; RESOLVED_NATIVE14:45:58. Palantir30.10 09:00–09:30: APPLIED14:45:19, added1 реальная5m, changed4, relocated1; RESOLVED_NATIVE14:46:24. В обоих случаях доказано единственное разбиение полной ленты, точно воспроизводящее каждый первоначальный5m OHLCV с задержкой меток≤15мин. Полные OHLCV окна5m/15m сохранены, native15m построены из тех же native5m; не просто совпала сумма объёма. Новая общая ветвь использует прежний writer и финальные проверки. Неоднозначное разбиение, изменение отдельной цены, неполная публикация и изменение политики отклоняются. Ограничения9родных5m/5000событий/20000попыток исключают неограниченный поиск.
 
 Palantir30.10 07:30: отдельная доказанная ценовая ошибка — положительная первая сделка172.42 на5акций в07:35:25.271384 уже входила в объём178, но не в Open/Low дочерней5m. Все последующие сделки точно воспроизводят старые цены. Полная официальная лента и TV подтверждают новый минимум15m172.42 вместо172.68. CP APPLIED14:44:07, changed2/added0/relocated0, RESOLVED_NATIVE14:45:58. Это явно отмеченная коррекция цены, не сохранение прежнего диапазона и не историческое разрешение. Open/Close/Volume проверяемой15m, все объёмы и следующая15m неизменны. Существующий writer хранит точные оригиналы, происхождение и отменяет результат при изменённых входах. Дополнительно устранён отказ разбора смешанных целых секунд/микросекунд в этой проверке.
@@ -25840,3 +25974,96 @@ Palantir30.10 07:30: отдельная доказанная ценовая ош
 MCP подтвердил новый TEST ad6ced4c350e251e72e2b69102e23998. Пока очередь публикует новые доказательства, текущая подготовка Palantir получила InputRevisionChanged по изменившемуся cp_manual_risk и назначила штатный повтор: это значимое обновление входов, старый расчёт не объявлялся READY. Полного допуска обеих акций пока нет; остаются неподтверждённые старые участки.
 
 При чтении Windows обнаружено независимое сохранённое переключение владельцем/параллельной работой V1/1D→V4/1H; данный этап не менял стратегию. Свежие хеши непосредственно перед и после перезапуска совпали для paper_accounts/paper_fills/paper_fill_archive, paper_auto_1h и cp_official_timebase_policy. Новых сделок не создавали. Адресный откат в СМ-Архив: revision_watcher before exact trade partition.py / before positive opening extreme.py; исходные OHLCV — в журнале ревизий, runtime — Palantir exact tape repair runtime.json. Полную БД старой копией не заменять.
+
+
+## XVII. G10 — срочная постановка 17–18.11.2026: повторная DQ-блокировка принятых интервалов
+
+**Каноническая группа:** G10; связанные условия CP04/CP05/CP13/CP18/CP26, G03/DQ и G06/T01. Это продолжение существующего общего механизма, не новый параллельный backlog.
+
+**Создана как отдельная постановка о повторном дефекте:** **17.11.2026, 20:23:38 CET** — метаданные [исходной записи #19](https://github.com/swindler2010/StockMonitor/issues/19). **Уточнена владельцем:** **18.11.2026** — срочное устранение первопричины и обязательное применение ко всем нынешним и будущим акциям/инструментам, поддерживаемым источникам и TF. **Внесена в канонический MASTER:** **18.11.2026**. **Статус:** OPEN / СРОЧНО. **Завершена:** —, реализация и независимая E2E-приёмка не подтверждены.
+
+Последняя инструкция владельца от 18.11 имеет приоритет над старой формулировкой «после V5/Bridge» в исходной записи ниже именно для этого повторного дефекта. Apple, NVIDIA, Amazon и Meta — первоначальная проверка общего решения; окончательный механизм обязан автоматически работать и для добавляемых в будущем акций. Массовую одновременную подготовку всего списка не запускать.
+
+Обязательный результат — сохранить и корректно применять доказанные TV/GETTEX-подтверждения по точным instrument/source/venue/currency/TF/interval/revision, исключить их повторный учёт как ошибок при неизменных доказательствах, проследить DQ → агрегацию → индикаторы → readiness → PAPER → UI/MCP и устранить общую первопричину. При существенном изменении исходных данных нужна адресная перепроверка; реальные новые дефекты должны блокироваться. Приёмка включает повторные расчёты, смену TF, backfill, restart, Windows/MCP и новый добавленный инструмент. Исходную V5, её риск, единый PAPER-счёт, реальные ордера и Store 0.15 не менять.
+
+<details>
+<summary>Полный исходный текст постановки #19 с уточнениями 17–18.11.2026 — сохранён для полноты требований</summary>
+
+## Дополнение владельца 18.11.2026 — ОБЯЗАТЕЛЬНО ДЛЯ ВСЕХ АКЦИЙ, ВКЛЮЧАЯ БУДУЩИЕ
+
+Общий дефект должен исправляться системно, а не четырьмя индивидуальными исключениями. **Охват: все существующие акции и другие инструменты в Stock Monitor/CandlePilot, все поддерживаемые таймфреймы и источники, а также каждый инструмент, который будет добавлен в будущем.** Apple, NVIDIA, Amazon и Meta — лишь первоначальный регрессионный набор.
+
+- Единый постоянный механизм учёта проверенных TV/GETTEX/иных разрешённых источников с ключами ISIN + source + venue + currency + timeframe + exact interval + evidence/revision. Все компоненты используют один и тот же контракт.
+- При добавлении нового инструмента этот механизм применяется автоматически, без отдельной доработки или ручного включения. При изменении исходных данных — адресная повторная проверка, а не безусловное снятие всех допусков.
+- Тестировать не только четыре акции, но и выборку остальных существующих инструментов разных типов, источников и TF, затем сценарий добавления совершенно новой акции; предъявить проверяемую матрицу результатов. Никакой одновременной массовой загрузки 57/58 акций.
+- Принять задачу только при доказанной устойчивости после refresh, перезапуска Windows, backfill, ревизии, смены TF и следующих торговых дней. Проверенные исключения не возвращаются как старые ошибки; настоящие новые ошибки продолжают блокировать.
+
+Это обязательное условие приёмки Issue #19, не факультативное улучшение и не последующее отдельное issue.
+
+---
+## СРОЧНО — 18.11.2026: повторная DQ-блокировка уже проверенных исторических интервалов
+
+**Приоритет владельца: начать немедленно.** Это переопределяет прежнюю очередность «после V5/Bridge» для данного дефекта. Не дублировать задачу, не удалять SQLite/историю/подтверждения и не повторять сверки TV там, где сохранились действительные доказательства.
+
+### Свежие свидетельства (Bridge 18.11 ~14:42 Europe/Berlin)
+- NVIDIA: INVALID; 12 неподтверждённых 15m, диапазоны 25.09–27.10 (включая 26.10 07:30–09:30). DQ.checked_at = 28.10.
+- Apple: UNCONFIRMED; 98 1H интервалов, диапазоны 30.07–17.11. DQ.checked_at = 18.11; имеются сохранённые VERIFIED_NATIVE_EMPTY подтверждения GETTEX.
+- Amazon: INVALID; 24 неподтверждённых 15m, 07.08–26.10. DQ.checked_at = 28.10.
+- Meta: INVALID; 112 неподтверждённых 15m, 05.08–27.10. DQ.checked_at = 28.10.
+Важно: 346 = сумма разных периодов/TF, а не число доказанных новых ошибок. Возможны старые кэшированные DQ состояния.
+
+**Независимый источник Work:** https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6875909954 — 14.11 для Meta за 14.10–13.11: 47 из 48 пустых 15m интервалов покрыты действующими сверками TradingView, один 21.10 13:45 подтверждён GETTEX; после исправления 359/368 часовых срезов допущены, девять остались заблокированы по отдельно указанным причинам. Нынешние 112 Meta охватывают более длинный период; требуется точное сопоставление интервалов, не автоматическое отождествление.
+
+### Обязательное задание Work
+1. Снять read-only evidence snapshot текущей Windows TEST БД: persisted approvals и TV receipts, official GETTEX/VERIFIED_NATIVE_EMPTY, ревизии OHLCV, fingerprint, источники, входные TF, DQ snapshots и статус cache; сравнить с той же базой/instance и доказательствами прошлых исправлений Work.
+2. Для каждого проблемного интервала 4 акций составить таблицу: ISIN, source/venue/currency, TF, Berlin timestamp, DQ code, evidence ID и approved_at, valid/revoked/changed, причина текущей блокировки. Подсчитать отдельно: ранее подтверждённые, действительно новые, отозванные/изменённые, кэшированная устаревшая диагностика.
+3. Трассировать persisted evidence → DQ classifier → 15m→1H/4H aggregation → CORE indicators → analysis_ready/trade_ready/PAPER guards → UI/MCP. Проверить ложный historical as_of, stale DQ cache, revision key mismatch, миграцию и потерю/игнорирование exception registry.
+4. Устранить ОБЩУЮ первопричину без локального обхода четырёх тикеров. Сохранить approved exceptions при refresh, обновлении свежих свечей, смене TF, ресэмплинге, archive backfill и restart. При существенном изменении самих OHLCV/identity — адресно переоценивать, сохраняя настоящие блокировки.
+5. Регрессия: before/after по каждой акции и каждому подтверждённому интервалу; 10 повторных пересчётов, restart, backfill, 1H/4H, Windows/MCP; проверить на следующей добавленной акции и затем распространить общий механизм на текущие и будущие инструменты без одновременной загрузки 57/58.
+6. Опубликовать RCA, доказательства, список изменённых файлов/коммитов, реальные PASS/FAIL и оставшиеся блокеры. НЕ ставить DONE без независимой E2E проверки. Не менять исходную V5, риск, единый PAPER счёт, реальные ордера или Store 0.15.
+
+**Критерий:** действующее утверждённое подтверждение TV/GETTEX не возвращается в ошибки лишь из-за пересчёта старого архива; это не является разрешением создавать синтетические свечи или скрывать новые реальные дефекты.
+
+---
+## Цель и границы
+**Статус: OPEN / BACKLOG — 17.11.2026.** После завершения исходной V5 и стабилизации Bridge проверить и устранить *ложные* блокировки качества свечей (DQ) и торгового допуска CandlePilot, не объявляя произвольно все данные корректными. Не изменять агрессивность, входы/выходы, ATR, SL/TP и риск V5. Только v0.16 TEST; Store v0.15 не затрагивать.
+
+## Работа
+1. Установить реальный источник данных V5 для каждого инструмента и TF: GETTEX или иной провайдер, ISIN, venue, currency, timestamps, часовой пояс, сессия, задержка, агрегация OHLCV. Не считать название площадки доказательством прямого потока данных GETTEX.
+2. Сначала NVIDIA, Apple, Amazon, Meta; далее весь зарегистрированный watchlist и используемые TF. Сверить репрезентативные исторические и новые **закрытые** свечи с TradingView по сопоставимым источникам/сессиям/валюте/таймзоне. Проверить OHLC, объём, дубли, пропуски, Close>High/Low, порядок, gaps, индикаторы и причину конкретного DQ отказа.
+3. Отдельно измерить false positive DQ: объяснимые различия поставщиков и старые пропуски, не влияющие на расчёт текущего сигнала, не должны автоматически блокировать торговлю. Недостающие критические бары/индикаторы, некорректная идентичность, неопределённая свежесть или материальные ошибки остаются блокерами. Не фабриковать/смешивать свечи.
+4. Реализовать объяснимые состояния READY / WARNING / BLOCKED: WARNING может разрешать исполнение *только если доказано*, что расхождение не влияет на сигнал и остальные независимые guards проходят; выдавать reason codes, source, TF, возраст, bar range, impact. Отдельный допуск по возрасту ≤15 мин и UNKNOWN — **существующее Issue #16**, не дублировать и не обходить.
+5. Проверить перезапуск после выключенного ПК: восстановление всей реально доступной истории, пересчёт индикаторов, проверка пропусков, отсутствие задним числом исполненных PAPER-сделок; перед разрешением новых сделок выполнить сверку состояния PAPER и закрытых баров.
+6. Экспериментальная ветка V5 DQ без переключения основной V5: A/B replay + shadow forward, комиссии, спред, slippage, без look-ahead. Сравнить количество BLOCKED/WARNING/READY, ложные допуски и блокировки, корректность сигналов, P&L, max drawdown и пропущенные качественные входы. Считать улучшение подтверждённым только на независимых данных.
+7. Координировать с Issue #5 (EUR history / DQ), #3 (analytics invalidation), #16 (freshness), #11 (PAPER), текущей проблемой BRIDGE_TIMEOUT. Сначала работоспособность диагностики; не устранять тайм-аут простым увеличением лимита. Соблюдать постоянную политику #14 (backup, docs, tests, rollback, no destructive changes).
+
+## Приёмка
+- Публикация матрицы NVIDIA/Apple/Amazon/Meta → остальные инструменты/TF, с точными примерами отклонений и root causes.
+- Объяснимое решение DQ, сохранение всех существенных защит и отказ при неподтверждённой торговой готовности.
+- Регрессионные тесты, E2E на Windows/MCP, restart/backfill и многодневное shadow-сравнение; отчёт до/после с ошибками/ограничениями.
+- Не ставить DONE, пока нет подтверждённой приёмки. Никаких реальных ордеров, изменения работающей V5 или параметров риска без отдельного решения владельца.
+
+## Обязательное уточнение владельца — 17.11.2026: ВСЕ нынешние и будущие акции, постоянное признание проверенных исключений
+**Это системное правило для CandlePilot / всего Stock Monitor, не разовый фикс NVIDIA и не только 4 торговых акций.** Применить к каждой существующей позиции watchlist, каждому поддерживаемому источнику/TF и автоматически ко всем вновь добавленным инструментам в будущем. Начальные 4 акции — лишь пилот для проверки корректности реализации, НЕ ограничение охвата.
+
+**Сообщённый воспроизводимый класс дефекта:** ранее пользователь уже проверял спорные пустые интервалы и различия с TradingView, Yahoo и другими источниками; часть объяснялась отсутствием торгов/особенностями источника и была владельцем явно принята как допустимая. Несмотря на это, CandlePilot в следующих расчётах снова классифицирует тот же исторический интервал как ошибку, отзывает analysis/trade readiness, прекращает анализ; на графике возникают разделительные полосы. Это жалоба пользователя, подлежащая техническому подтверждению по конкретным событиям и журналам, а не уже доказанная первопричина.
+
+**Обязательная архитектура исправления:**
+1. Ввести **устойчивый реестр подтверждённых исключений качества данных** (verified DQ exceptions), с точными ключами: инструмент/ISIN, источник, venue, currency, TF, интервал и тип отклонения, fingerprint/revision данных, доказательство сравнения, кем/когда утверждено, применимость и срок/условие перепроверки. Существующие пользовательские одобрения восстановить из журналов там, где есть доказательства; не придумывать одобрения.
+2. Различать `NO_TRADES` (доказанное отсутствие сделок), `MARKET_CLOSED`, `SOURCE_LIMITED`, `UNCONFIRMED`, `GAP`, `INVALID_OHLC`, `STALE`; не требовать синтетической свечи для периода без торгов. Сверять интервалы с корректной торговой сессией и источником, а не автоматически считать всякое отсутствие бара ошибкой. Сам по себе TradingView/Yahoo не является гарантией истины: одобрять только конкретное объяснённое расхождение.
+3. После подтверждения и сохранения исключения **не возвращать этот же случай в блокирующую ошибку** при refresh, 1H/4H ресэмплинге, новом расчёте, смене TF/акции, перезапуске, загрузке архива или обновлении CandlePilot. Все уровни (сбор свечей, DQ, анализ индикаторов, readiness, PAPER executor, UI графика) обязаны использовать один авторитетный реестр исключений. Причины отказа и прохода должны логироваться.
+4. При существенном изменении самих исходных данных или если дефект затрагивает актуальные закрытые бары/индикаторы/цену сделки — переоценить исключение, не переносить старое одобрение автоматически. Не отключать защиту от настоящих проблем и не объявлять все свечи корректными.
+5. Исследовать **разделительные полосы на графике**: являются ли они маркерами реально отсутствующих баров, границ сессий, ошибочного DQ или дефектом визуализации. Для подтверждённых NO_TRADES/закрытых сессий показывать корректную временную ось/объяснимый маркер, не рисовать фиктивные свечи и не превращать визуальную метку в торговую блокировку.
+6. Добавить матричные регрессионные тесты (все текущие акции и TF + новая добавленная акция): однажды одобренный исторический NO_TRADES не блокирует после 10 пересчётов, смены TF и restart; неподтверждённый реальный сбой продолжает блокировать; изменение исходных данных вызывает адресную перепроверку. Сравнение до/после — доля ложных BLOCKED, причины, стабильность READY и корректность сигналов. Не подменять выполнение только отсутствием красного статуса.
+
+**Порядок:** завершить V5 и исправить Bridge, затем реализовать универсальный устойчивый DQ контракт с обратной совместимостью. Начальная проверка 4 акций, окончательная E2E приёмка — ВСЕ текущие и будущие инструменты через общий механизм. Без изменения стратегии/риска, реальных сделок и без обхода guards. **Статус: OPEN / BACKLOG; реализация не подтверждена.**
+
+</details>
+
+**Дальнейшие результаты Work, RCA, коммиты, реальные PASS/FAIL и дата приёмки записываются здесь, в G10 этого MASTER.** Ссылка #19 сохраняет происхождение постановки; архивные #1–#16 не становятся активным списком задач.
+
+## XVIII. Проверка полноты датирования — 18.11.2026
+
+Обработаны 141/141 номерных ID, 10/10 групп, 6/6 исторических этапов и 9/9 ссылок FIX; у каждой строки есть поле создания/документального свидетельства и поле завершения/приёмки либо явная отметка о её отсутствии. Дополнительно подписаны 31 датированный отчёт/этап 13–14.11 и срочная постановка G10 17–18.11. Повторные отчёты одной задачи не увеличивают число независимых задач.
+
+Полный исходный архив V–XVI, включая 16 описаний Issues, 713 комментариев, метаданные, PDF-текст и отчёты, сохранён без изменений. В поздних записях добавлены только служебные отметки дат; исходные тексты результатов сохранены. Этот учёт дат не является новой проверкой работающего приложения и не объявляет общий DONE продукта.
