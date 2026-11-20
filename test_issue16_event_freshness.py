@@ -79,6 +79,18 @@ class EventFreshnessTests(unittest.TestCase):
    self.main.commit();r=self.read();self.assertEqual(r['stock_count'],count);self.assertEqual(r['status_counts'],{'UNKNOWN':count});self.assertEqual(r['confirmed_within_minutes'],{'15':0,'20':0,'25':0})
 
 class ProducerIntegrationTests(unittest.TestCase):
+ def test_new_producer_bootstraps_one_recent_saved_pair_without_candle_rewrite(self):
+  import test_cp_gettex_universe as fixture
+  f=fixture.CachedHistory();f.setUp();self.addCleanup(f.doCleanups)
+  with patch.object(obs,'official_trades'):
+   f.run_turn()
+  before=f.rows();writes=f.s.db.execute('SELECT count(*) FROM writes').fetchone()[0]
+  with patch.object(obs,'official_trades') as emitted:
+   fixture.gh.accumulate_cached_pair(f.s,f.parse,f.now,recent_only=True)
+   self.assertEqual(emitted.call_count,1)
+   fixture.gh.accumulate_cached_pair(f.s,f.parse,f.now,recent_only=True)
+   self.assertEqual(emitted.call_count,1)
+  self.assertEqual(f.rows(),before);self.assertEqual(f.s.db.execute('SELECT count(*) FROM writes').fetchone()[0],writes)
  def test_only_committed_valid_source_rows_emit_event_clock(self):
   import test_cp_gettex_universe as fixture
   f=fixture.CachedHistory();f.setUp();self.addCleanup(f.doCleanups)
