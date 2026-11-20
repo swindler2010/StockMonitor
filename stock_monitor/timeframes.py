@@ -244,8 +244,13 @@ def daily_provenance(daily, out, target, now=None, base='1D'):
     meta=daily.attrs.copy()
     inherited=meta.get('data_quality',{})
     try:
-        raw=quality.audit(daily,base,expected={k:meta.get(k) for k in quality.IDENTITY},now=now,
-            check_stale=not bool(meta.get('closed_parent_input') and base in MINUTES))
+        scope=meta.get('closed_parent_input',{})
+        bounded=(scope.get('input_base')==base and scope.get('target')==target
+                 and (base in MINUTES or (base=='1D' and target in ('1W','1M'))))
+        # Check freshness on the parent below. New child sessions in an
+        # unfinished period cannot make the most recent completed parent stale.
+        raw=quality.audit(daily,base,expected={k:meta.get(k) for k in quality.IDENTITY},
+            now=now,check_stale=not bounded)
         first=out.index[0]-pd.Timedelta(days=6) if target=='1W' else out.index[0]
         last=out.index[-1] if target in ('1D','1W') else out.index[-1]+pd.offsets.MonthBegin(1)-pd.Timedelta(days=1)
         if meta.get('venue')=='GETTEX' and base=='1D' and int(quality.GETTEX_DAILY_START[:4])<=daily.index.min().year<=daily.index.max().year<=2026:
@@ -301,3 +306,4 @@ def daily_provenance(daily, out, target, now=None, base='1D'):
                 out.attrs['daily_provenance']['leading_partial']=str(out.index[0])
     except (ValueError,KeyError,TypeError,IndexError) as error:
         out.attrs['data_quality']={'state':'INVALID','issues':['DAILY_PROVENANCE: '+str(error)]}
+
