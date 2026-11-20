@@ -8,6 +8,15 @@ from desktop014 import Desktop014
 from test_cp_reviewed_risk import Memory
 
 class PollBudgetTests(unittest.TestCase):
+ def test_startup_does_not_eagerly_decode_archives_or_lose_feed_buffer(self):
+  from unittest.mock import Mock
+  for count in (53,200):
+   ready=object();app=NS(watchlist=[{'name':str(i)} for i in range(count)],
+    data={'0':ready,'removed':object()},data_meta={'0':{'source':'GETTEX'},'removed':{}},store=Mock())
+   Desktop014._load_cached(app)
+   self.assertEqual(app.data,{'0':ready});self.assertEqual(app.data_meta,{'0':{'source':'GETTEX'}})
+   app.store.assert_not_called();self.assertEqual(app.store.mock_calls,[])
+
  def setUp(self):
   self.store=Memory();self.addCleanup(self.store.read_cache.close)
   self.info={'isin':'TEST'};self.key='data_quality:TEST:SAVED:1H'
