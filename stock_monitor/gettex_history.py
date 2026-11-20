@@ -565,7 +565,7 @@ def maintain_evidence(info,store,http,parse,now=None):
     return {'classification':classified,'acquisition':acquired,'cached_history':accumulated}
 
 
-def accumulate_cached_batch(store,parse,now=None,max_pairs=16,max_seconds=5):
+def accumulate_cached_batch(store,parse,now=None,max_pairs=16,max_seconds=5,recent_only=False):
     """Drain saved pairs fairly on the existing history lane, without HTTP.
 
     Each pair retains its original atomic checkpoint and all validation. The
@@ -576,7 +576,8 @@ def accumulate_cached_batch(store,parse,now=None,max_pairs=16,max_seconds=5):
     seconds=max(.01,min(5.,float(max_seconds)));results=[];stop='PAIR_BUDGET'
     for _ in range(limit):
         if results and time.monotonic()-started>=seconds:stop='TIME_BUDGET';break
-        result=accumulate_cached_pair(store,parse,now)
+        result=(accumulate_cached_pair(store,parse,now,recent_only=True) if recent_only
+                else accumulate_cached_pair(store,parse,now))
         if result.get('state') in ('IDLE','NOT_ENABLED','INPUT_CHANGED'):
             stop=result['state'];break
         results.append(result)
@@ -589,6 +590,8 @@ def accumulate_cached_batch(store,parse,now=None,max_pairs=16,max_seconds=5):
                  pairs=[r.get('pair') for r in results],
                  seconds=round(time.monotonic()-started,4),pair_limit=limit,
                  seconds_budget=seconds,checked_at=pd.Timestamp(now or pd.Timestamp.now(tz='UTC')).isoformat())
+    summary['updated_isins']=sorted({isin for r in results for isin in r.get('updated_isins',[])})
+    summary['recent_only']=bool(recent_only)
     if results:
         progress=store.setting('gettex_cached_history',{})
         progress['last_batch']=summary
@@ -613,7 +616,7 @@ def _empty_closed_pair(files,anchor,signature):
     except (ValueError,KeyError,OSError,EOFError,UnicodeError):return None
 
 
-def accumulate_cached_pair(store,parse,now=None):
+def accumulate_cached_pair(store,parse,now=None,recent_only=False):
     """One closed official file pair on the existing history lane, no HTTP.
 
     Shared by the registered stocks: new instruments revisit unchanged files
@@ -635,9 +638,10 @@ def accumulate_cached_pair(store,parse,now=None):
         match=re.fullmatch(r'posttrade\.(\d{8}\.\d{2}\.\d{2})\.(mund|munc)\.csv\.gz',path.name)
         if match:pairs.setdefault(match[1],{})[match[2]]=path
     progress=store.setting('gettex_cached_history',{});done=progress.get('pairs',{})
-    for label,files in sorted(pairs.items()):
+    for label,files in sorted(pairs.items(),reverse=recent_only):
         anchor=pd.to_datetime(label,format='%Y%m%d.%H.%M',utc=True)
         if set(files)!=set(('munc','mund')) or anchor>clock:continue
+        if recent_only and anchor<clock-pd.Timedelta(days=1):continue
         signature={mic:[p.stat().st_size,p.stat().st_mtime_ns] for mic,p in files.items()}
         previous=done.get(label,{})
         recheck_empty=(previous.get('state')=='BLOCKED' and previous.get('reason')=='EMPTY_FILE_UNCONFIRMED'
@@ -680,7 +684,7 @@ def accumulate_cached_pair(store,parse,now=None):
                     pending.extend((isin,'gettex',base,str(t),*(float(row[f]) for f in quality.FIELDS)) for t,row in bars.iterrows())
                 if isin in errors:continue
                 candles.extend(pending);trades.extend((isin,str(t),float(row.price),float(row.volume)) for t,row in frame.iterrows())
-            added=conflicts=0
+            added=conflicts=0;updated_isins=set()
             with store.connect() as db:
                 db.execute('BEGIN IMMEDIATE')
                 current=db.execute('SELECT value FROM settings WHERE key=?',(OWNER_HISTORY_POLICY,)).fetchone()
@@ -705,7 +709,7 @@ def accumulate_cached_pair(store,parse,now=None):
                     if row[0] in rejected:continue
                     old=db.execute('SELECT open,high,low,close,volume FROM candles WHERE isin=? AND source=? AND base_tf=? AND ts=?',row[:4]).fetchone()
                     if old is None:
-                        db.execute('INSERT INTO candles VALUES (?,?,?,?,?,?,?,?,?)',row);added+=1
+                        db.execute('INSERT INTO candles VALUES (?,?,?,?,?,?,?,?,?)',row);added+=1;updated_isins.add(row[0])
                 receipt=dict(signature=signature,sha256=hashes,universe=universe,checked_at=clock.isoformat(),
                     added=added,existing_value_conflicts=conflicts,errors=errors,endpoint_rows_deferred=boundary_rows,
                     state='REVIEW_REQUIRED' if errors or conflicts else 'ACCUMULATED',
@@ -716,7 +720,7 @@ def accumulate_cached_pair(store,parse,now=None):
                     current_universe_pairs=sum(v.get('universe')==universe for v in done.values()),
                     candles_added_total=progress.get('candles_added_total',0)+added)
                 db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',('gettex_cached_history',json.dumps(progress)))
-            return dict(state=receipt['state'],pair=label,added=added,conflicts=conflicts,errors=errors)
+            return dict(state=receipt['state'],pair=label,added=added,conflicts=conflicts,errors=errors,updated_isins=sorted(updated_isins))
         except (OSError,EOFError,UnicodeError,ValueError) as error:
             closed_hashes=_empty_closed_pair(files,anchor,signature) if str(error)=='EMPTY_FILE_UNCONFIRMED' else None
             done[label]=dict(signature=signature,sha256=previous.get('sha256') or hashes,universe=universe,
