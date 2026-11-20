@@ -43,12 +43,16 @@ def availability(frame, info, valid, closed_count):
     if 'source' not in frame or set(frame['source'].astype(str)) != {frame.attrs.get('source')}:
         verified = False
     report = frame.attrs.get('data_quality', {})
+    warning=report.get('state')!='READY'
+    warning_count=max(1,len(report.get('issues',[]))+len(report.get('warnings',[]))) if warning else 0
     return dict(policy=VERSION, source_contract=verified, data_present=not frame.empty,
                 indicator_computable=bool(verified and valid and closed_count >= 35),
                 analysis_available=False, execution_permission=False,
                 source=frame.attrs.get('source'), venue=frame.attrs.get('venue'),
                 quality_review_status=report.get('state', 'UNKNOWN'),
-                dq_warnings=report if report.get('state') != 'READY' else {})
+                dq_warning_count=warning_count,
+                dq_warnings=dict(state=report.get('state','UNKNOWN'),missing_count=report.get('missing_count'),
+                    range_count=len(report.get('ranges',[])),report_ref='data_quality') if warning else {})
 
 
 def calculation_allowed(context):
@@ -66,3 +70,24 @@ def engine_available(engine, required):
         and contexts.get(tf,{}).get('calculation_availability',{}).get('source_contract') is True
         and contexts.get(tf,{}).get('calculation_availability',{}).get('analysis_available') is True
         and contexts.get(tf,{}).get('facts') for tf in required))
+
+
+def decision_evidence(result):
+    """Bounded decision-time evidence; original fills never rewritten."""
+    import hashlib,json
+    engine=result.get('execution_context',{}).get('trading_engine',{})
+    proof=result.get('hourly',{}).get('proof',{})
+    contexts={}
+    for tf,row in engine.get('timeframe_context',{}).items():
+        report=row.get('data_quality',{})
+        contexts[tf]=dict(facts=row.get('facts'),availability=row.get('calculation_availability',{}),
+            quality_state=report.get('state'),missing_count=report.get('missing_count'),
+            quality_digest=hashlib.sha256(json.dumps({k:v for k,v in report.items() if k not in ('checked_at','updated_at')},sort_keys=True,default=str).encode()).hexdigest())
+        # The quality tree can be large; full state remains in CP's archive.
+        contexts[tf]['availability']={k:v for k,v in contexts[tf]['availability'].items() if k!='dq_warnings'}
+    quote=result.get('execution_quote',{})
+    return dict(policy=VERSION,isin=result.get('isin'),identity=result.get('identity'),
+        timeframe=result.get('timeframe'),signal_at=engine.get('timestamp'),signal=engine.get('signal'),
+        inputs=[{k:s.get(k) for k in ('spec','count','digest')} for s in proof.get('series',[])],
+        contexts=contexts,execution_quote={k:quote.get(k) for k in ('isin','identity','timeframe','bars')},quote_blocker=result.get('quote_blocker'))
+
