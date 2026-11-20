@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 39779)
+Total output lines: 2173
+
 {
   "schema": 1,
   "created_at": "2026-11-02T09:09:05.350015+00:00",
@@ -27,6 +30,78 @@
       ],
       "limits": "TV используется для диагностики. Нет импорта TV OHLCV, синтетических свечей, безусловного допуска или изменения торговых правил.",
       "status": "Один новый сценарий PASS 1.029s; два затронутых прежних сценария PASS 3.431s. Применено обычной очередью TEST после штатного перезапуска."
+    },
+    {
+      "id": "official_empty_receipt_and_paper_eligibility",
+      "title": "PAPER учитывает точный подтверждённый пустой интервал до полного аудита",
+      "status": "Причина Apple 06.11 21:15 подтверждена повторным расчётом без изменения свечей.",
+      "sources": [
+        "cp_controls.manual_gate",
+        "revision_watcher.retime_current"
+      ],
+      "states": [
+        "PAPER_MANUAL_NEW_OR_UNACCEPTED_PROBLEM",
+        "PAPER_AUTO_DQ_BLOCKED"
+      ],
+      "steps": [
+        "При старом отчёте DQ брать только действующую запись VERIFIED_NATIVE_EMPTY для одного и того же 15m интервала.",
+        "Требовать её в ревизиях расчёта и снова сверять политику, листинг, официальные сделки и оба ряда перед допуском.",
+        "Нет записи, другой диапазон, изменённые входы или INVALID остаются блокирующими."
+      ],
+      "evidence": [
+        "test_cp_official_timebase.py",
+        "test_paper_hourly.py"
+      ],
+      "limits": "Запись DQ и OHLCV сохраняются для аудита. Новое разрешение риска и исполнение этим исправлением не создаются."
+    },
+    {
+      "id": "verified_archive_retiming_evidence_clock",
+      "title": "Архивный прогон учитывает подтверждение уже исправленного интервала",
+      "status": "Прямой повтор расчёта Meta 22 октября: DATA BLOCKED → READY. Два адресных теста пройдены.",
+      "sources": [
+        "history_service.attach_parent_provenance",
+        "paper_strategy_replay.ReadOnly",
+        "data_quality.no_trades_proof"
+      ],
+      "states": [
+        "UNCONFIRMED",
+        "DATA BLOCKED"
+      ],
+      "steps": [
+        "При сравнении стратегий на текущих исправленных свечах учитывать только действующее официальное подтверждение пустого интервала из той же записи CandlePilot.",
+        "В режиме архивного прогона время подтверждения привязано к чтению сохранённого архива. Свеча, её родитель и границы сессии по-прежнему закрываются по времени симуляции.",
+        "Обычный расчёт и воспроизведение фактической доступности данных сохраняют прежнюю проверку времени публикации доказательства."
+      ],
+      "evidence": [
+        "test_cp_official_timebase.py"
+      ],
+      "limits": "Только область подтверждённого биржевого исправления с проверкой происхождения. Новые свечи, новые допуски или разрешение исполнения из этого правила не следуют."
+    },
+    {
+      "id": "closed_week_month_input_and_demo_review_scope",
+      "title": "Закрытые недельные и месячные входы в расчёте PAPER",
+      "sources": [
+        "trading_context.closed_parent_input",
+        "timeframes.daily_provenance",
+        "gettex_chart.verified_demo_warmup",
+        "cp_controls.manual_gate"
+      ],
+      "states": [
+        "INVALID",
+        "STALE",
+        "PAPER_MANUAL_DEPENDENCY_SCOPE"
+      ],
+      "steps": [
+        "Для 1W и 1M по подтверждённому календарю установить конец последнего закрытого периода. Перед DQ и прогревом ограничить дневные свечи этим концом.",
+        "При проверке агрегата использовать фактическое время расчёта. Неполнота последнего закрытого периода, недостоверные значения и неизвестный календарь остаются блокирующими.",
+        "Для 30m и 1D применять только действующие подтверждения конкретных пропусков и только к разрешённому инструменту с доказательствами всех зависимостей.",
+        "Котировка исполнения остаётся отдельной закрытой 15m свечой с проверкой свежести и открытой сессии."
+      ],
+      "evidence": [
+        "test_closed_parent_input.py"
+      ],
+      "limits": "Расчёт на сохранённых ревизиях не восстанавливает момент фактической публикации данных. Исправление не создаёт свечей, допусков или сделок.",
+      "status": "65 адресных тестов пройдено. Прямой контроль всех пяти торговых ТФ на сохранённой базе TEST."
     },
     {
       "id": "closed_session_paper_admission_and_recovered_proof_roles",
@@ -597,598 +672,7 @@
       "status": "ПРОВЕРЕНО",
       "steps": [
         "Проверить verified calendar, Europe/Berlin, DST, праздники и границы сессии.",
-        "Не переносить расписание GETTEX на Frankfurt/Xetra.",
-        "MARKET_CLOSED не является пропуском; неизвестный календарь не угадывать.",
-        "GETTEX 1D: подтверждённые торговые дни с19.01.2015. Использовать именно GETTEX-исключения праздников, а не общий календарь Munich. Старые часы intraday из этого не следуют.",
-        "02Nov: официальный бюллетень GETTEX26Oct,p108 подтверждает остановку акций Baader07:30–09:55Berlin. CP сохраняет уведомление в существующем interval_evidence; строгие внутренние интервалы того же native gettex ряда — MARKET_CLOSED, не NO_TRADES. Пограничные публикации и gettex_chart требуют отдельного подтверждения времени. Положительные/нулевые противоречащие записи не списывать. Никаких синтетических свечей или торговых исключений."
-      ],
-      "evidence": [
-        "stock_monitor/timeframes.py",
-        "MCP_016_CHECKPOINT_RU.md",
-        "history64-evidence/all-history02/calendars/verified-facts.json",
-        "test_gettex_daily_calendar02.py",
-        "history64-evidence/cp-tv-others02/official-notice.json",
-        "history64-evidence/cp-tv-others02/real-check.json",
-        "test_exchange_interruption.py"
-      ],
-      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
-    },
-    {
-      "id": "no_trades",
-      "title": "Подтверждённое отсутствие торговли",
-      "sources": [
-        "gettex"
-      ],
-      "states": [
-        "GAP",
-        "SOURCE_GAP",
-        "UNCONFIRMED",
-        "INVALID",
-        "SOURCE_UNAVAILABLE"
-      ],
-      "status": "ПРОВЕРЕНО",
-      "steps": [
-        "Проверить полноту и пригодность официальных файлов для конкретного интервала.",
-        "Сохранить доказательства NO_TRADES с identity, датой и ссылками.",
-        "Не создавать OHLCV для полностью пустого интервала.",
-        "Заключительная сверка: после штатного bounded recovery CP сохраняет точное задание в cp_reconciliation; человек проверяет TradingView Desktop. Визуальное отсутствие само по себе не является доказательством NO_TRADES. Для 1D необходима полнота доказательства всей реальной сессии того же источника."
-      ],
-      "evidence": [
-        "history64-evidence/apple-recovery02/partial-real-result.json",
-        "stock_monitor/gettex_history.py"
-      ],
-      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
-    },
-    {
-      "id": "partial_evidence",
-      "title": "Использовать неповреждённые части доказательств",
-      "sources": [
-        "gettex"
-      ],
-      "states": [
-        "GAP",
-        "SOURCE_GAP",
-        "UNCONFIRMED",
-        "INVALID",
-        "SOURCE_UNAVAILABLE"
-      ],
-      "status": "ПРОВЕРЕНО",
-      "steps": [
-        "Один плохой MUNC/MUND файл не отменяет независимые полностью проверенные пары.",
-        "Непокрытые интервалы оставить UNCONFIRMED.",
-        "При изменении исходников отозвать только затронутые доказательства."
-      ],
-      "evidence": [
-        "history64-evidence/apple-recovery02/RESULT_RU.txt",
-        "test_gettex_partial_evidence.py"
-      ],
-      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
-    },
-    {
-      "id": "zero_quantity",
-      "title": "Нулевой объём не доказывает исполнение",
-      "sources": [
-        "gettex"
-      ],
-      "states": [
-        "GAP",
-        "SOURCE_GAP",
-        "UNCONFIRMED",
-        "INVALID",
-        "SOURCE_UNAVAILABLE"
-      ],
-      "status": "ПРОВЕРЕНО",
-      "steps": [
-        "Отдельно хранить zero_quantity_intervals.",
-        "Не считать их положительной сделкой и не объявлять NO_TRADES без доказательств.",
-        "Семантику поставщика уточнять; GETTEX запрос уже отправлен02Nov.",
-        "02Nov limited Desktop diagnosis: Apple28Oct13:30 TradingView flat310.85EUR volume0; own official file confirms zero quantity, not a positive-volume execution. No missing positive-volume candle found in the five examined intervals. Do not create READY from this observation."
-      ],
-      "evidence": [
-        "history64-evidence/apple-recovery02/zero-quantity-real.json",
-        "history64-evidence/apple-recovery02/gettex-request-sent.json",
-        "history64-evidence/tradingview02/RESULT_RU.txt"
-      ],
-      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
-    },
-    {
-      "id": "rejected_file",
-      "title": "Повторить загрузку отклонённого исходного файла",
-      "sources": [
-        "gettex"
-      ],
-      "states": [
-        "GAP",
-        "SOURCE_GAP",
-        "UNCONFIRMED",
-        "INVALID",
-        "SOURCE_UNAVAILABLE"
-      ],
-      "status": "ПРОВЕРЕНО",
-      "steps": [
-        "Существующий отклонённый файл допускается в bounded acquisition.",
-        "Проверить gzip/формат замены, сохранить оригинал, соблюдать CAS и cooldown.",
-        "404 старого файла — ограничение запроса, не доказательство отсутствия сделок."
-      ],
-      "evidence": [
-        "test_gettex_partial_evidence.py",
-        "history64-evidence/apple-recovery02/post-policy3-deployment.json"
-      ],
-      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
-    },
-    {
-      "id": "routing_not_identity",
-      "title": "Отличить служебный контекст очереди от identity",
-      "sources": [],
-      "states": [
-        "INVALID",
-        "SOURCE_UNAVAILABLE",
-        "UNCONFIRMED"
-      ],
-      "status": "ПРОВЕРЕНО",
-      "steps": [
-        "Не сравнивать известные _cp_focus/_cp_position и другие routing flags как пользовательскую identity.",
-        "Реальные поля инструмента и ревизии проверять строго.",
-        "Исправление уже в коде; повторное редактирование не требуется."
-      ],
-      "evidence": [
-        "stock_monitor/gettex_history.py",
-        "test_gettex_partial_evidence.py"
-      ],
-      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
-    },
-    {
-      "id": "partial_archive",
-      "title": "Сохранять пригодные участки INVALID-архива",
-      "sources": [],
-      "states": [
-        "INVALID"
-      ],
-      "status": "ПРОВЕРЕНО",
-      "steps": [
-        "Использовать существующее partial diagnostic display.",
-        "Оставить точные причины отклонения, разрывы и INVALID/PARTIAL.",
-        "Не допускать неподтверждённые неполные недельные/месячные агрегаты."
-      ],
-      "evidence": [
-        "history64-evidence/cp-improve28/RESULT_RU.txt",
-        "stock_monitor/test_cp_improve28.py"
-      ],
-      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
-    },
-    {
-      "id": "archive_limit",
-      "title": "Не запрашивать данные за пределами доступной истории",
-      "sources": [
-        "proxy"
-      ],
-      "states": [
-        "GAP",
-        "UNCONFIRMED",
-        "SOURCE_UNAVAILABLE",
-        "SOURCE_LIMITED"
-      ],
-      "status": "ПРОВЕРЕНО",
-      "steps": [
-        "Применить существующий retention/watermark.",
-        "Проверить сохранённые локальные данные до отказа.",
-        "Не переносить сегодняшние ограничения как доказательство повреждения старых свечей."
-      ],
-      "evidence": [
-        "stock_monitor/history_backfill.py",
-        "test_p1_parent_recovery.py"
-      ],
-      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
-    },
-    {
-      "id": "revision_conflict",
-      "title": "Не перезаписывать противоречивые действующие OHLCV",
-      "sources": [],
-      "states": [
-        "INVALID",
-        "GAP",
-        "SOURCE_GAP"
-      ],
-      "status": "ПРОВЕРЕНО",
-      "steps": [
-        "Сравнить исходник, реальный parent и child.",
-        "При расхождении сохранённого корректного parent использовать Revision Watcher, а не тихую замену.",
-        "Сохранить оригинал и происхождение; ревизионная гонка откатывает транзакцию."
-      ],
-      "evidence": [
-        "test_p1_parent_recovery.py",
-        "stock_monitor/revision_watcher.py"
-      ],
-      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
-    },
-    {
-      "id": "different_timestamp_basis",
-      "title": "Различить биржевое исполнение и native provider buckets",
-      "sources": [
-        "gettex",
-        "gettex_chart"
-      ],
-      "states": [
-        "GAP",
-        "SOURCE_GAP",
-        "UNCONFIRMED",
-        "INVALID",
-        "SOURCE_UNAVAILABLE"
-      ],
-      "status": "ОГРАНИЧЕНИЕ / НУЖНЫ ДОКАЗАТЕЛЬСТВА",
-      "steps": [
-        "Сопоставить опубликованное время исполнения с временной семантикой провайдера.",
-        "Не считать единичный сдвиг доказанной timezone-ошибкой.",
-        "Нулевая запись ограничивает только пересекающийся полуоткрытый интервал, а не весь архив. Проверить полное NO_TRADES для нужного участка, сохраняя source/timebase guard.",
-        "Не переносить NO_TRADES и свечи между providers без доказательства совместимости.",
-        "02Nov TradingView Desktop: targeted Apple28Oct13:30 observation differs from saved LSEG next bucket; official zero-quantity13:44:32.440233 vs LSEG13:47:57. Native time mismatch is not a proven Stock Monitor timezone defect. Do not shift timestamps or transfer absence proofs between providers."
-      ],
-      "evidence": [
-        "history64-evidence/apple-recovery02/bucket-comparison.json",
-        "test_reconciliation_interval_scope.py",
-        "history64-evidence/apple-recovery02/exchange-witness-check.json",
-        "history64-evidence/apple-resolution02/RESULT_RU.txt",
-        "history64-evidence/tradingview02/RESULT_RU.txt"
-      ],
-      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
-    },
-    {
-      "id": "scope_dependencies",
-      "title": "Отделить старый архив от фактических расчётных зависимостей",
-      "sources": [],
-      "states": [
-        "GAP",
-        "SOURCE_GAP",
-        "UNCONFIRMED",
-        "INVALID",
-        "SOURCE_UNAVAILABLE",
-        "STALE"
-      ],
-      "status": "ПРОВЕРЕНО",
-      "steps": [
-        "Использовать действующий analysis_scope и подтверждённый CORE context.",
-        "Независимый старый дефект вне окна не становится ошибкой окна.",
-        "Не уменьшать прогрев и не копировать разрешения между источниками.",
-        "После углубления daily архива сначала применять существующую область расчёта к выбору источника. Локальные старые повреждения вне фактических зависимостей сохранять в архивном DQ. Monthly warmup проверяет отдельные native месяцы и только непересекающийся фактически используемый daily суффикс; новые внутренние ошибки/identity/revisions блокируют расчёт."
-      ],
-      "evidence": [
-        "history64-evidence/continue30/RESULT_RU.txt",
-        "history64-evidence/cp-nine01/RESULT_RU.txt",
-        "test_admission_dependency_scope.py",
-        "history64-evidence/admission02/RESULT_RU.txt"
-      ],
-      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
-    },
-    {
-      "id": "recursive_warmup",
-      "title": "Проверить прогрев рекурсивных индикаторов",
-      "sources": [],
-      "states": [
-        "UNCONFIRMED",
-        "INVALID"
-      ],
-      "status": "ПРОВЕРЕНО",
-      "steps": [
-        "Использовать существующий benchmark полного и отдельного ограниченного контекстов.",
-        "Устойчивость индикаторов/сигнала должна быть доказана; недостаточная история остаётся BLOCKED.",
-        "Согласованную старую историю можно использовать как отдельную warmup dependency."
-      ],
-      "evidence": [
-        "history64-evidence/apple-periods30/RESULT_RU.txt",
-        "history64-evidence/cp-autonomy02/RESULT_RU.txt"
-      ],
-      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
-    },
-    {
-      "id": "freshness",
-      "title": "Не заменять актуальную цену исторической",
-      "sources": [],
-      "states": [
-        "STALE",
-        "SOURCE_UNAVAILABLE"
-      ],
-      "status": "ПРОВЕРЕНО",
-      "steps": [
-        "Дождаться закрытия интервала и допустимого времени публикации.",
-        "Проверить естественный GETTEX feed и фактическое время приёма/публикации аналитики.",
-        "Запретить исполнение при старой или недостоверной цене независимо от исторических исключений.",
-        "PAPER: последняя подтверждённая закрытая 5m/15m-свеча пригодна по свежести до 900 секунд включительно ПОСЛЕ закрытия. Отсутствие более новой 5m-свечи само по себе не блокирует пригодную 15m. Использовать прежний fresh_quote и финальный paper_account.quote, не прибавлять новый льготный срок при повторном чтении или задержке поставщика.",
-        "Свежесть цены отделять от сигнала и полного допуска. WAIT не становится BUY; пригодная цена не отменяет UNCONFIRMED/INVALID расчётных зависимостей, identity, ревизии, риск или закрытие сессии. Проверенный предел 900 секунд уже действовал; исторический DQ и торговые флаги этим правилом не переписывать."
-      ],
-      "evidence": [
-        "stock_monitor/candle_schedule.py",
-        "history64-evidence/apple-recovery02/natural-cycle.jsonl",
-        "test_paper_quote_delay.py: AH 13Nov2026 PASS; RAM fresh_quote with only 15m at ages 0/899/900s, rejection at900.001s; shared V1 executor BUY at900s rolled back in isolated account, stale/DQ/identity/WAIT refusals preserved. Production logic unchanged.",
-        "13Nov2026 MCP generated14:34:29CET: Apple quoteclose14:20 passed price guard, while CORE was blocked by separate UNCONFIRMED; NVIDIA quoteclose14:30 CORE READY/WAIT. This is a timed observation, not permanent readiness."
-      ],
-      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
-    },
-    {
-      "id": "onvista_export",
-      "title": "Получить штатный полный экспорт Onvista",
-      "sources": [
-        "gettex",
-        "gettex_chart"
-      ],
-      "states": [
-        "GAP",
-        "SOURCE_GAP",
-        "UNCONFIRMED",
-        "INVALID",
-        "SOURCE_UNAVAILABLE"
-      ],
-      "status": "НЕ РЕШЕНО: CSV НЕ ПОЛУЧЕН",
-      "steps": [
-        "Подтвердить GETTEX/EUR/ISIN и нужный день.",
-        "Обычный авторизованный CSV; видимые10строк не доказывают полноту.",
-        "Если download не появился — зафиксировать сбой, не выдавать импорт за выполненный.",
-        "По проверке02Nov исторический CSV доступен бесплатному аккаунту. Plus/Pro не заявляют расширение GETTEX-архива; оплата не считается исправлением сбоя CSV."
-      ],
-      "evidence": [
-        "history64-evidence/onvista-timesales30/RESULT_RU.txt",
-        "history64-evidence/apple-recovery02/web-sources.json",
-        "history64-evidence/onvista-paid02/RESULT_RU.txt",
-        "history64-evidence/apple-resolution02/RESULT_RU.txt"
-      ],
-      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю. Для автоматического получения Onvista требуется отдельное письменное согласие поставщика по AGB§3.3; подписка сама по себе его не подтверждает."
-    },
-    {
-      "id": "external_archive",
-      "title": "Эскалация поставщику при нехватке доказательств",
-      "sources": [
-        "gettex",
-        "gettex_chart"
-      ],
-      "states": [
-        "GAP",
-        "SOURCE_GAP",
-        "UNCONFIRMED",
-        "INVALID",
-        "SOURCE_UNAVAILABLE"
-      ],
-      "status": "ОЖИДАЕТ ОТВЕТА GETTEX",
-      "steps": [
-        "Сначала использовать сохранённые источники и результаты предыдущих запросов.",
-        "Подготовить точный ISIN/venue/EUR/даты/вопрос о времени и полноте.",
-        "Письмо/учётная запись/оплата только с соответствующим разрешением; не дублировать ожидающий запрос.",
-        "02Nov по разрешению владельца отправлены запросы образца dxFeed и технической проверки Onvista. Сначала проверить сохранённые threads/receipt, не дублировать письма и не покупать доступ без подтверждённого покрытия.",
-        "TradingView Desktop authenticated GETTEX chart and native CSV dialog verified02Nov. Terms3 restrict non-display algorithmic/risk/trading use; download capability is not permission for CP ingestion. Use for bounded visual diagnosis; no automated ingestion or purchase. See source note and evidence."
-      ],
-      "evidence": [
-        "history64-evidence/apple-recovery02/GETTEX_ARCHIVE_REQUEST_DE.txt",
-        "history64-evidence/apple-recovery02/gettex-request-sent.json",
-        "history64-evidence/apple-resolution02/RESULT_RU.txt",
-        "history64-evidence/tradingview02/RESULT_RU.txt"
-      ],
-      "limits": "Повторно проверить текущие identity, OHLCV, DQ, provenance и ревизии; это не разрешение на торговлю."
-    },
-    {
-      "id": "max_available_depth",
-      "title": "Накопление максимальной доступной истории",
-      "sources": [],
-      "states": [
-        "GAP",
-        "INVALID",
-        "UNCONFIRMED",
-        "SOURCE_LIMITED",
-        "STALE"
-      ],
-      "status": "ДЕЙСТВУЮЩИЙ ПРОВЕРЕННЫЙ МЕХАНИЗМ",
-      "steps": [
-        "Использовать existing backfill/inception/watermark; не заменять более глубокий архив коротким.",
-        "SOURCE_LIMITED не означает INVALID. Не выполнять полную повторную загрузку неизменного архива.",
-        "GETTEX daily: брать начальную границу из того же подтверждённого календаря, что использует DQ; не оставлять отдельный устаревший год в загрузчике.",
-        "После расширения календаря дозагружать только префикс до первой сохранённой свечи. Не уменьшать last-watermark; пустой ответ — UNCONFIRMED с bounded retry, не NO_TRADES."
-      ],
-      "evidence": [
-        "MCP_016_CHECKPOINT_RU.md",
-        "history64-evidence/TASK_6_4_CHECKPOINT_RU.md",
-        "test_cp_archive_prefix02.py",
-        "history64-evidence/all-history02/RESULT_RU.txt"
-      ],
-      "limits": "Не переписывать работающий механизм. Все текущие DQ/identity/revisions/CORE проверки сохраняются."
-    },
-    {
-      "id": "cache_normalization",
-      "title": "Нормализация старого кэша при чтении",
-      "sources": [],
-      "states": [
-        "GAP",
-        "INVALID",
-        "UNCONFIRMED",
-        "SOURCE_LIMITED",
-        "STALE"
-      ],
-      "status": "ДЕЙСТВУЮЩИЙ ПРОВЕРЕННЫЙ МЕХАНИЗМ",
-      "steps": [
-        "Применять существующий нормализатор к копии данных в памяти.",
-        "Служебная запись исключается только по подтверждённым правилам; исходная SQLite сохраняется."
-      ],
-      "evidence": [
-        "MCP_016_CHECKPOINT_RU.md",
-        "history64-evidence/TASK_6_4_CHECKPOINT_RU.md"
-      ],
-      "limits": "Не переписывать работающий механизм. Все текущие DQ/identity/revisions/CORE проверки сохраняются."
-    },
-    {
-      "id": "incremental_dependencies",
-      "title": "Пересчёт изменённых дней и зависимостей",
-      "sources": [],
-      "states": [
-        "GAP",
-        "INVALID",
-        "UNCONFIRMED",
-        "SOURCE_LIMITED",
-        "STALE"
-      ],
-      "status": "ДЕЙСТВУЮЩИЙ ПРОВЕРЕННЫЙ МЕХАНИЗМ",
-      "steps": [
-        "Использовать input_revisions, существующий дневной cache и актуальную provenance.",
-        "Не пересчитывать весь архив и не принимать старый результат при изменении значимых входов."
-      ],
-      "evidence": [
-        "MCP_016_CHECKPOINT_RU.md",
-        "history64-evidence/TASK_6_4_CHECKPOINT_RU.md"
-      ],
-      "limits": "Не переписывать работающий механизм. Все текущие DQ/identity/revisions/CORE проверки сохраняются."
-    },
-    {
-      "id": "gap_aggregation",
-      "title": "GAP младших рядов не является повреждением OHLCV",
-      "sources": [],
-      "states": [
-        "GAP",
-        "INVALID",
-        "UNCONFIRMED",
-        "SOURCE_LIMITED",
-        "STALE"
-      ],
-      "status": "ДЕЙСТВУЮЩИЙ ПРОВЕРЕННЫЙ МЕХАНИЗМ",
-      "steps": [
-        "Строить старшие TF существующей сессионной агрегацией.",
-        "Подтверждённый NO_TRADES учитывается отдельно; непроверенный разрыв не становится COMPLETE.",
-        "Не подменять численную проверку 886производных рядов повторным полным аудитом."
-      ],
-      "evidence": [
-        "MCP_016_CHECKPOINT_RU.md",
-        "history64-evidence/TASK_6_4_CHECKPOINT_RU.md"
-      ],
-      "limits": "Не переписывать работающий механизм. Все текущие DQ/identity/revisions/CORE проверки сохраняются."
-    },
-    {
-      "id": "tv_accepted_absence_aggregation",
-      "title": "Принятое совпадающее отсутствие в TV: агрегация и график",
-      "sources": [
-        "gettex",
-        "gettex_chart"
-      ],
-      "states": [
-        "GAP",
-        "UNCONFIRMED",
-        "SOURCE_GAP"
-      ],
-      "status": "ПРОВЕРЕНО: 14 адресных тестов; Windows/MCP 03.11.2026",
-      "steps": [
-        "Использовать уже сохранённую точную сверку ABSENT и действующую политику владельца для того же ISIN, TF, источника, GETTEX/EUR и ревизий. PRESENT и ZERO_VOLUME не являются ABSENT.",
-        "Не выполнять повторную визуальную проверку неизменившегося доказательства. Передавать действующее разрешение в существующую агрегацию и разметку графика.",
-        "Считать покрытие принятым по TV отдельно от доказанного биржей NO_TRADES. Строить OHLCV только из реальных младших свечей; целиком пустой период не заполнять.",
-        "Не рисовать полосу ошибки для принятого интервала. Непринятый соседний пропуск, INVALID и изменившаяся ревизия сохраняют блокировку и предупреждение.",
-        "Анализ и демоторговля требуют отдельного полного действующего разрешения расчётных зависимостей, прогрева, CORE и свежей цены. Принятие отсутствия не является восстановленной свечой.",
-        "13Nov2026 Work1 AL: an issued GETTEX-chart 15m TV/scoped-review receipt may survive ONLY a higher market revision after rechecking its exact native missing range and neighbours against the saved binding. Policy, DQ, listing, observation, interval evidence and unknown revision changes remain strict. No receipt/token/expiry renewal in this read; new or changed problems still require the ordinary CP writer and final CORE/execution guards. Never infer NO_TRADES from this owner-risk check."
-      ],
-      "evidence": [
-        "test_tv_accepted_display.py",
-        "СМ-Архив/TV принятые интервалы результат.json",
-        "13Nov2026 AD: Apple GETTEX/EUR15m12Nov22:45 и13Nov09:45 отсутствуют в Desktop TV; соседние OHLCV совпали с native gettex_chart. Существующий CP обработал точные наблюдения11:14:48/11:30:42CET и применил действующую owner TV policy.0 новых OHLCV; SOURCE_TIMEBASE_UNCONFIRMED остаётся отдельным ограничением, не NO_TRADES. PAPER1H/4H READY/WAIT после штатной переоценки; visual TV выполнен Work. docs/TRADING_ENGINE_PROGRESS_RU.md, раздел AD.",
-        "13Nov2026 AI Amazon US0231351067 GETTEX/EUR15m: Desktop GETTEX:AMZ confirmed ABSENT05Nov22:00 and10Nov22:00 CET. Adjacent pre-gap rows matched native; post-gap O/H or L/C/V differed and are explicitly recorded, not imported or certified equal. Existing register_prior_review queued exact revision-bound observations; ordinary CP processed14:54:11CET, renewed18/18 existing-policy intervals, paper_preparation admitted Amazon automatically14:54:18. First1H14:55:00/4H14:55:04 CORE READY/WAIT, no quote blocker.0 restored OHLCV;2 conditional historical absence acceptances, factual DQ/source-timebase limitation retained. No direct config/grant write, no production test orders, no new runtime code. Canonical MASTER G06/T13 Work1AI records restart and final result. Visual TV remains ASSISTED_ONLY; CP validates observations, renews grants, aggregates, reassesses and admits through existing mechanisms.",
-        "test_cp_scoped_tail.ScopedTail: unrelated tail preserved; restored interval, changed neighbour, every non-market/unknown scope rejected; no grant mutation. Work1 AL runtime evidence is in canonical MASTER."
-      ]
-    },
-    {
-      "id": "owner_reviewed_time_distribution",
-      "title": "Принятое владельцем расхождение распределения сделок по времени",
-      "sources": [
-        "gettex_chart"
-      ],
-      "states": [
-        "GAP",
-        "UNCONFIRMED",
-        "SOURCE_GAP"
-      ],
-      "status": "ПРОВЕРЕНО АДРЕСНЫМИ ТЕСТАМИ",
-      "steps": [
-        "Сначала использовать сохранённое сравнение точных ISIN, GETTEX/EUR, TF и интервалов. PRESENT или ZERO_VOLUME в TV не объявлять NO_TRADES.",
-        "При отдельном согласии владельца authorize_reviewed_gaps сохраняет точные интервалы и отпечаток проверенных соседних OHLCV. Рассчитывать только настоящие закрытые свечи; не заполнять пропуски и не смешивать поставщиков.",
-        "Штатный feed вызывает reviewed_risk_turn: новые хвостовые свечи требуют повторной проверки и обновления ревизий. Изменение проверенного участка отзывает разрешение; восстановленный интервал больше не нуждается в исключении.",
-        "Учитывать только фактические зависимости CORE, включая прогрев. Проверять устойчивость результата и свежесть цены. Похожий новый интервал требует собственного доказательства и разрешения."
-      ],
-      "evidence": [
-        "test_cp_reviewed_risk.py",
-        "local-private-evidence/Apple влияние пяти интервалов.json"
-      ],
-      "limits": "Только явно принятый исторический риск демосчёта. Это не исправление OHLCV, не фактический DQ READY, не торговый сигнал и не обход исполнительных проверок."
-    },
-    {
-      "id": "closed_parent_dependency_window",
-      "title": "Незакрытый родитель не блокирует независимый закрытый CORE",
-      "sources": [
-        "gettex_chart",
-        "gettex"
-      ],
-      "states": [
-        "STALE",
-        "UNCONFIRMED",
-        "GAP"
-      ],
-      "status": "ПРОВЕРЕНО",
-      "steps": [
-        "В закрытом торговом контексте вычислить последнюю закрытую границу целевого TF по календарю площадки.",
-        "Проверить все необходимые младшие интервалы до этой границы; отсутствующий последний child включить в диапазон проблемы.",
-        "Проверять доказательства по текущему времени; применять только действующие разрешения точных интервалов.",
-        "Собирать родителя существующей агрегацией; финальные DQ и цена исполнения проверяются по текущему времени."
-      ],
-      "evidence": [
-        "stock_monitor/trading_context.py:closed_parent_input",
-        "stock_monitor/cp_controls.py:accepted_gap_input",
-        "test_closed_parent_input.py"
-      ],
-      "limits": "Новый неизвестный пропуск внутри обязательного окна, повреждённый OHLCV, identity и устаревшая цена не разрешаются. Никаких созданных свечей или автоматического NO_TRADES."
-    },
-    {
-      "id": "hourly_consistent_read",
-      "title": "Согласованное чтение CORE при работающем загрузчике",
-      "sources": [],
-      "states": [
-        "INPUT_CHANGED"
-      ],
-      "status": "ПРОВЕРЕНО",
-      "steps": [
-        "Один согласованный readonly WAL snapshot для расчёта; без копии SQLite и без блокировки писателя.",
-        "Перед публикацией перепроверить точные закрытые OHLCV, значимые DQ/identity/разрешения и benchmark.",
-        "Сравнить последние строки обеих дорожек цены исполнения отдельно; изменение котировки требует нового расчёта."
-      ],
-      "evidence": [
-        "stock_monitor/paper_hourly.py:calculate_snapshot",
-        "test_hourly_consistent_read.py"
-      ],
-      "limits": "Это устранение несогласованного чтения, не отключение проверки ревизий. Действительное изменение входов по-прежнему отклоняет результат."
-    },
-    {
-      "id": "partial_volume_profile_display",
-      "title": "Боковой объём доступен на проверенных участках частичного архива",
-      "sources": [],
-      "states": [
-        "GAP",
-        "UNCONFIRMED",
-        "INVALID",
-        "SOURCE_GAP"
-      ],
-      "status": "ПРОВЕРЕНО",
-      "steps": [
-        "Использовать только проверенные реальные сегменты графика.",
-        "Исключить некорректные и неполные строки; явно отметить частичную историю.",
-        "Сохранить независимые DQ и торговые блокировки."
-      ],
-      "evidence": [
-        "docs/TRADING_ENGINE_PROGRESS_RU.md",
-        "test_partial_volume_profile.py"
-      ],
-      "limits": "Профиль распределения по OHLCV является оценкой, не точным биржевым объёмом на каждом ценовом уровне."
-    },
-    {
-      "id": "sequential_candidate_fair_share",
-      "title": "Последовательная подготовка не голодает при постоянных обновлениях рабочих акций",
-      "sources": [
-        "gettex_chart"
-      ],
-      "states": [
-        "STALE",
-        "PENDING"
-      ],
-      "status": "ПРОВЕРЕНО",
-      "steps": [
-        "Сначала два имеющихся слота обновления рабочих акций и открытых позиций.",
-        "Третий слот свежих данных — единственному кандидату последовательной подготовки, если он существует и подошёл срок запроса.",
+        "Не переносить расписание GETTEX на Frankfurt/Xetra.",…9779 tokens truncated…одготовки, если он существует и подошёл срок запроса.",
         "Четвёртый слот и следующий исторический ход сохраняют обслуживание остальных инструментов.",
         "Проверять фактически выданный общий HTTP-бюджет: задачи другого источника не сбрасывают его очерёдность.",
         "После двух оперативных запросов чередовать кандидата и обычную архивную работу через существующую квитанцию резервирования."
@@ -1630,7 +1114,10 @@
         "Keep price-only observations at zero volume; never create a missing candle or infer NO_TRADES from absence.",
         "Audit the entire archive in the existing CP queue and errors view; preserve receipts/corrections; recompute real affected revisions.",
         "Keep independent quote/session/identity/revision/balance/risk guards; availability is never an execution grant.",
-        "Write bounded decision-time source/input digests, indicators and warnings to the existing journal; do not rewrite previous fills."
+          "Write bounded decision-time source/input digests, indicators and warnings to the existing journal; do not rewrite previous fills.",
+          "Use one coherent WAL view for analytical reads, retaining final live candle/listing/policy revisions; DQ opinions for explicitly bound factual inputs are audit-only dependencies.",
+          "Keep the deeper whole provider archive for higher TF even when a shorter provider has a newer last bar; never splice its tail.",
+          "Reserve a sequential preparation slot after two operational turns when due, so an expanding admitted universe cannot starve its next candidate."
       ],
       "evidence": [
         "test_gettex_first.py",
@@ -2095,3 +1582,4 @@
     }
   ]
 }
+
