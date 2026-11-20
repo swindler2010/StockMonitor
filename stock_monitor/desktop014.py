@@ -103,18 +103,32 @@ class Desktop014:
 
     def current_quality_signature(self):
         from data_quality import key as quality_key
-        info=self.instrument_cfg();identity=self.store.setting('history_identity:'+info['isin'],{})
-        base=base_for(self.timeframe.get(),self.source_mode(info))
-        report=self.store.setting(quality_key(info,identity.get('symbol','') if self.source_mode(info)=='proxy' else info['isin'],base),{})
-        # Checking the same report again must not restart chart/engine work.
-        # These two timestamps are transport telemetry, already excluded by
-        # input_revisions; all quality states, issues and ranges stay significant.
+        info=self.instrument_cfg();isin=info['isin'];mode=self.source_mode(info)
+        base=base_for(self.timeframe.get(),mode)
+        cache=getattr(self.store,'read_cache',None)
+        if cache is not None:
+            # Poll small semantic revision counters, never decode/stringify an
+            # entire historical DQ report on Tk once a second. SQLite's existing
+            # triggers ignore check timestamps but retain substantive changes.
+            identity_scope='setting:history_identity:'+isin
+            identity_token=cache.token_for([identity_scope])
+            identity_key=(isin,identity_token[identity_scope])
+            saved=getattr(self,'_quality_identity_cache',None)
+            if not saved or saved[0]!=identity_key:
+                saved=(identity_key,self.store.setting('history_identity:'+isin,{}))
+                self._quality_identity_cache=saved
+            symbol=saved[1].get('symbol','') if mode=='proxy' else isin
+            scopes={identity_scope,'instrument:'+isin,'setting:'+quality_key(info,symbol,base)}
+            accepted=getattr(self,'_cp_chart_inputs',{})
+            if accepted.get('isin')==isin and accepted.get('timeframe')==self.timeframe.get():
+                scopes.update(accepted['scopes'])
+            return (isin,base,int(time.time()//60),tuple(sorted(cache.token_for(scopes).items())))
+        # Compatibility for lightweight non-Store callers; production uses the
+        # revision path above. Preserve the established semantic fallback.
+        identity=self.store.setting('history_identity:'+isin,{})
+        report=self.store.setting(quality_key(info,identity.get('symbol','') if mode=='proxy' else isin,base),{})
         report={k:v for k,v in report.items() if k not in ('checked_at','raw_retry_after')}
-        accepted=getattr(self,'_cp_chart_inputs',{})
-        dependencies={}
-        if accepted.get('isin')==info['isin'] and accepted.get('timeframe')==self.timeframe.get():
-            dependencies=self.store.read_cache.token_for(accepted['scopes'])
-        return (info['isin'],base,str(report),int(time.time()//60),tuple(sorted(dependencies.items())))
+        return (isin,base,str(report),int(time.time()//60),())
 
     def quality_tick(self):
         if self.closing:return
