@@ -72,6 +72,7 @@ def serve():
             if not self.path.is_file():raise FileNotFoundError(path)
             self.directory=self.path.parent;self.read_cache=ReadCache(path)
     class ReadOnlyStore(ExistingStore):
+        _serial_readonly=True
         @contextmanager
         def connect(self):
             db=sqlite3.connect(self.path.resolve().as_uri()+'?mode=ro',uri=True)
