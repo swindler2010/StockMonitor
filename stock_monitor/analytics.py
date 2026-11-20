@@ -102,9 +102,11 @@ def _analyse_values(frame, info=None, now=None):
     x=_indicator_values(frame)
     # Display may include forming candles; confirmed indicators may not.
     tf=frame.attrs.get('timeframe')
+    from gettex_first import bound
+    factual_input=bound(frame)
     now=pd.Timestamp.now(tz='UTC') if now is None else now
     if tf:
-        closed=x.loc[(bar_ends(frame)<=now)&(x.bar_complete if 'bar_complete' in x else True)]
+        closed=x.loc[(bar_ends(frame)<=now)&(x.bar_complete if 'bar_complete' in x and not factual_input else True)]
     else:
         # Missing timeframe metadata cannot prove that the latest bar is closed.
         closed=x.iloc[:-1]
@@ -247,6 +249,11 @@ def _safe_features(frame, info, now, prove_scope=False, demo_initialization=Fals
         enriched,result=_analyse_features(frame, info, now)
         if frame.attrs.get('warmup_context'):result['warmup_context']=frame.attrs['warmup_context']
         if prove_scope and frame.attrs.get('analysis_scope'):
+            from gettex_first import calculation_allowed
+            if calculation_allowed(result):
+                result['scope_initialization']={'checked':False,'basis':'Actual available GETTEX bars; initialization sensitivity is audit-only under issue20',
+                    'closed_bars':result['closed_bar_count'],'policy':'gettex_first_v1'}
+                return enriched,result
             if not result.get('sufficient_history') or not result.get('ohlcv_valid'):
                 result['scope_initialization']={'stable':False,'checked':False,'basis':'Input quality/warmup gate failed before recursive comparison'}
                 return enriched,result
