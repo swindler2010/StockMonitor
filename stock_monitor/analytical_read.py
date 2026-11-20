@@ -7,6 +7,32 @@ from analytics import indicators,bar_ends
 
 def read_time():return pd.Timestamp.now(tz='UTC')
 
+def calculate_consistent(store,values):
+    """One WAL read view, then final live input validation; no database copy."""
+    from contextlib import contextmanager
+    from performance_cache import ReadCache
+    captured=copy.copy(store);captured.read_cache=ReadCache(store.path)
+    @contextmanager
+    def connect():yield captured.read_cache.db
+    captured.connect=connect
+    try:
+        db=captured.read_cache.db;db.execute('PRAGMA query_only=ON');db.execute('BEGIN')
+        with captured.read_cache.track_inputs() as token:
+            expected=values.get('instrument_revisions',{})
+            captured.read_cache.assert_current(expected);captured.read_cache._record(expected)
+            result=calculate(captured,values)
+        token=dict(token)
+    finally:captured.read_cache.close()
+    from gettex_first import engine_available
+    engine=(result.get('analysis_context') or {}).get('trading_engine',{})
+    if engine_available(engine,list(engine.get('timeframe_context',{}))):
+        # DQ is observed at calculation time, not an input permission. Actual
+        # candles, listing receipts, settings and policies stay revision-bound.
+        token={k:v for k,v in token.items() if not k.startswith('setting:data_quality:')}
+    store.read_cache.assert_current(token)
+    result['_input_revisions']=token
+    return result
+
 def capture(app,args):
     values=inputs(app)
     info=next((i for i in values['watchlist'] if i['isin']==args['isin']),None)
