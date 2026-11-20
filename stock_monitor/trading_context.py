@@ -91,5 +91,9 @@ def calculate(store,values,identity,contract,position,now):
     context.closed_specs={};context.set_analysis_scope(now)
     engine=context.trading_analysis(info,analysis_only=True)
     proof=_candidate_proof(store,list(context.closed_specs.values()),store.read_cache.dependencies())
-    manual=manual_context(store,info['isin'],identity,contract['signal_tf'],proof)
+    from gettex_first import VERSION
+    factual=all(engine.get('timeframe_context',{}).get(tf,{}).get('calculation_availability',{}).get('policy')==VERSION
+        and engine.get('timeframe_context',{}).get(tf,{}).get('calculation_availability',{}).get('analysis_available')
+        for tf in contract['required_tf'])
+    manual=None if factual else manual_context(store,info['isin'],identity,contract['signal_tf'],proof)
     return dict(engine=engine,proof=proof,manual=manual,contract=contract)
