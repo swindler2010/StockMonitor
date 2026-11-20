@@ -64,6 +64,9 @@ class WorkerTests(unittest.TestCase):
    self.assertEqual(batch.call_args.kwargs,dict(max_pairs=1,max_seconds=1,recent_only=True))
    self.assertEqual([c.args[1] for c in queue.call_args_list],[APPLE,SAP])
    batch.reset_mock();queue.reset_mock()
+   FeedContext.calculate(host,dict(isin=APPLE,_gettex_poll_only=True))
+   batch.assert_called_once();self.assertEqual([c.args[1] for c in queue.call_args_list],[APPLE,SAP])
+   batch.reset_mock();queue.reset_mock()
    for _ in range(53):FeedContext.calculate(host,dict(isin=APPLE,_gettex_poll_only=True,_cp_focus={'source':'gettex_chart'}))
    batch.assert_not_called();queue.assert_not_called()
 
