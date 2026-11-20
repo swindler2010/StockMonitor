@@ -174,11 +174,28 @@ class BenchmarkMixin:
         self._cp_chart_inputs={'isin':values['watchlist'][0]['isin'],'timeframe':values['timeframe'],
             'scopes':[s for s in token if s.startswith('market:'+values['watchlist'][0]['isin']+':')]}
         self._prepared_chart=prepared
-        try:self._render_prepared_chart()
+        try:self._render_current_display(prepared)
         finally:self._prepared_chart=None
         self._chart_timing('display',prepared)
         if prepared.get('_core_pending'):
             self._chart_jobs.request(lambda:(values,self.compute_chart.calculate('chart',{**values,'_chart_phase':'engine'})))
+
+    def _render_current_display(self,prepared):
+        # Called only after selection, live revisions and receipt files passed
+        # _apply_chart. Retain existing artists for unchanged pixel inputs;
+        # CORE is cleared/recomputed/bound independently as before.
+        revision=prepared.get('_visual_revision')
+        mode=getattr(self,'chart_mode',None)
+        key=(revision,mode.get() if mode is not None else None)
+        if revision and getattr(self,'_display_revision',None)==key:
+            self.status.set(self._display_status)
+            emit=getattr(self.root,'_performance_emit',None)
+            if emit:emit('chart_reused',timeframe=self.timeframe.get())
+            return
+        self._display_revision=None
+        self._render_prepared_chart()
+        if revision:
+            self._display_revision=key;self._display_status=self.status.get()
 
     def _chart_timing(self,stage,prepared):
         import time
