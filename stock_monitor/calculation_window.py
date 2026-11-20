@@ -827,7 +827,9 @@ def build(context, info, entry, state, now, require_smart=True):
     if require_smart:
         try:
             with context.store.connect() as db:
-                db.execute('BEGIN')
+                # An analytical read may already own a coherent query-only WAL
+                # transaction. Reuse it; BEGIN again would abort the bar page.
+                if not db.in_transaction:db.execute('BEGIN')
                 smart=execution_eligibility(db,info,entry,windows[entry]['identity'],now)
         except ValueError as error: blockers.append(str(error))
     return dict(status='BLOCKED' if blockers else 'READY', isin=info['isin'], windows=windows, blockers=blockers, smart_eligibility=smart,
