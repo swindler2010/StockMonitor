@@ -140,10 +140,12 @@ class Desktop014:
         self.root.after(1000,self.quality_tick)
 
     def _load_cached(self):
-        # Legacy mixed archive is retained on disk, but never used implicitly.
-        for info in self.watchlist:
-            f=self.store.load_official(info['isin'])
-            self.data[info['name']]=f;self.data_meta[info['name']]={'base_tf':'15m','source':'GETTEX','gettex':True}
+        # Chart/CORE read SQLite through their existing workers. This legacy
+        # notification buffer is filled by apply_feed only after validation;
+        # eagerly decoding every stock's archive here blocks Tk at startup.
+        names={info['name'] for info in self.watchlist}
+        self.data={name:frame for name,frame in self.data.items() if name in names}
+        self.data_meta={name:meta for name,meta in self.data_meta.items() if name in names}
 
     def build_ui(self):
         from text_menu import install_text_menus
