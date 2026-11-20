@@ -6,6 +6,25 @@ from gettex_first import calculation_allowed,bind,bound
 from trading_engine import evaluate
 
 class GettexFirstTests(unittest.TestCase):
+ def test_execution_diagnostic_reuses_existing_read_transaction(self):
+  from contextlib import contextmanager
+  from types import SimpleNamespace as NS
+  from unittest.mock import patch
+  import test_paper_hourly as fixture
+  from calculation_window import build
+  case=fixture.HourlyTests();case.setUp();self.addCleanup(case.tearDown)
+  db=case.db
+  @contextmanager
+  def connect():yield db
+  frame=self.frame();identity={k:frame.attrs[k] for k in ('source','symbol','venue','currency','timezone')}
+  context=NS(store=NS(connect=connect,setting=lambda *a:{}),frame_for=lambda *a:frame,
+    frame_for_entry=lambda *a:frame,trading_analysis=lambda *a:{'status':'READY'},source_mode=lambda *a:'gettex')
+  if not db.in_transaction:db.execute('BEGIN')
+  with patch('cp_controls.manual_context',return_value=None),patch('calculation_window.inspect',return_value={'identity':identity,'blockers':[],'reference_close':10}),patch('calculation_window.execution_eligibility',side_effect=ValueError('UNCONFIRMED')) as eligibility:
+   result=build(context,{'isin':'US0378331005'},'15m',{},fixtures.pd.Timestamp('2026-02-01T00:00Z'))
+  self.assertTrue(db.in_transaction);eligibility.assert_called_once()
+  self.assertEqual(result['status'],'BLOCKED');self.assertIn('UNCONFIRMED',result['blockers'])
+
  def test_stale_chart_is_rejected_and_current_view_requeued_once(self):
   from benchmark_ui import BenchmarkMixin
   from types import SimpleNamespace as NS,MethodType
