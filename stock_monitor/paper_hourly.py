@@ -712,6 +712,7 @@ class Runtime:
     """One bounded trading job; owned read client, existing Dispatcher and ledger."""
     def __init__(self, app):
         self.app = app;self.busy = False;self.cursor = 0;self.preparation_after = 0
+        self.operational_turns = 0
 
     def start(self):
         self.app.root.after(15000, self.tick)
@@ -723,7 +724,13 @@ class Runtime:
         cfg = app.store.setting(CONFIG, {})
         ids = list(cfg.get('identities', {})) if cfg.get('enabled') else []
         submitted = False
-        if ids and not self.busy and not app.user_dirty:
+        preparation_due=bool(ids and cfg.get('automatic_admission',{}).get('enabled')
+            and time.time() >= self.preparation_after)
+        # With five or more admitted stocks the round-robin can always find a
+        # due trading calculation. Reserve one existing lane slot after two
+        # operational turns so sequential preparation cannot starve forever.
+        yield_preparation=preparation_due and self.operational_turns>=2
+        if ids and not self.busy and not app.user_dirty and not yield_preparation:
             isin = ids[self.cursor % len(ids)];self.cursor += 1
             info = next((i for i in app.watchlist if i['isin'] == isin), None)
             previous = app.store.setting(STATUS+isin, {})
@@ -752,6 +759,7 @@ class Runtime:
 
                 if app.job(work, done, failed, lane='trading', key='paper_auto_hourly', isin=isin) is False:
                     self.busy = False
+                else:self.operational_turns += 1
         # Idle trading slots only. The existing owned client and dispatcher do
         # one sequential candidate; no new threads, downloads or order path.
         if (ids and not submitted and not self.busy and not app.user_dirty
@@ -764,4 +772,6 @@ class Runtime:
             def prepared(_):self.busy = False
             if app.job(prepare,prepared,prepared,lane='trading',key='paper_preparation') is False:
                 self.busy = False
+            else:self.operational_turns = 0
         app.root.after(15000, self.tick)
+
