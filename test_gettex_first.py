@@ -57,6 +57,7 @@ class GettexFirstTests(unittest.TestCase):
    return {'analysis_context':{'trading_engine':engine},'warning_as_of':first}
   with patch('analytical_read.calculate',side_effect=calculate):
    self.assertEqual(calculate_consistent(store,{})['warning_as_of'],'0')
+   self.assertEqual(calculate_consistent(store,{},calculate)['warning_as_of'],'1')
    mode[0]='actual'
    with self.assertRaises(InputRevisionChanged):calculate_consistent(store,{})
  def test_full_reference_executor_accepts_available_bars_without_faking_dq(self):
