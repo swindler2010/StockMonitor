@@ -10,7 +10,8 @@ class GettexFirstTests(unittest.TestCase):
   from mcp_pages import ReadPages
   ticks=[0.];pages=ReadPages(ttl=10,clock=lambda:ticks[0]);calls=[]
   self.assertEqual(pages.begin_deferred('candlepilot_health'),('START',None))
-  self.assertEqual(pages.begin_deferred('candlepilot_health'),('PENDING',None))
+  for queued in (53,200):
+   for _ in range(queued):self.assertEqual(pages.begin_deferred('candlepilot_health'),('PENDING',None))
   def load():calls.append(1);return {'analysis_ready':3},{'published_at':100}
   pages.finish_deferred('candlepilot_health',load)
   state,revision=pages.begin_deferred('candlepilot_health');self.assertEqual(state,'READY')
