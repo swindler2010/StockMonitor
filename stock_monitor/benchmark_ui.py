@@ -123,6 +123,20 @@ class BenchmarkMixin:
         bind_engine(self,None)
         self.relative_status.configure(text=tr('Расчёт недоступен: {error}',error=str(error)))
         self.status.set(tr('Ошибка подготовки графика: {error}',error=str(error)))
+        if 'InputRevisionChanged:' in str(error):
+            from chart_worker import capture
+            self._retry_current_chart(capture(self))
+
+    def _retry_current_chart(self,values):
+        """Reject stale output, then request the current view on the same lane."""
+        from chart_worker import capture
+        def view(v):return (v['watchlist'][0]['isin'],v['timeframe'],v['period'])
+        if self.closing or view(capture(self))!=view(values) or getattr(self,'_chart_retry_pending',False):return
+        self._chart_retry_pending=True
+        def retry():
+            self._chart_retry_pending=False
+            if not self.closing and view(capture(self))==view(values):self.refresh_chart()
+        self.root.after(500,retry)
 
     def _apply_chart(self,payload):
         from chart_worker import capture
@@ -130,16 +144,20 @@ class BenchmarkMixin:
         if self.closing:return
         try:current=capture(self)
         except StopIteration:return
-        if values!=current:return
+        if values!=current:
+            self._retry_current_chart(values);return
         token=prepared.get('_input_revisions')
-        if token is None or not self.store.read_cache.current(token):return
+        if token is None or not self.store.read_cache.current(token):
+            self._retry_current_chart(values);return
         from partial_chart import current as files_current
         if prepared.get('_chart_engine'):
             accepted=getattr(self,'_accepted_trading_chart',None)
             if not accepted or accepted[0]!=values:return
             display=accepted[1]
-            if not self.store.read_cache.current(display.get('_input_revisions',{})):return
-            if not files_current(display['frame'].attrs.get('partial_chart',{}).get('files',[])):return
+            if not self.store.read_cache.current(display.get('_input_revisions',{})):
+                self._retry_current_chart(values);return
+            if not files_current(display['frame'].attrs.get('partial_chart',{}).get('files',[])):
+                self._retry_current_chart(values);return
             merged={**display,**{k:prepared[k] for k in ('trading_engine','context')},
                 '_core_pending':False,'_input_revisions':{**display['_input_revisions'],**token}}
             self._accepted_trading_chart=(values,merged)
@@ -148,7 +166,8 @@ class BenchmarkMixin:
             self._apply_benchmark_context(merged['context'])
             self._chart_timing('core',prepared)
             return
-        if not files_current(prepared['frame'].attrs.get('partial_chart',{}).get('files',[])):return
+        if not files_current(prepared['frame'].attrs.get('partial_chart',{}).get('files',[])):
+            self._retry_current_chart(values);return
         self._accepted_trading_chart=(values,prepared)
         self._cp_focus={'isin':values['watchlist'][0]['isin'],'timeframe':values['timeframe'],
                         'source':prepared['frame'].attrs.get('source')}
@@ -219,3 +238,4 @@ class BenchmarkMixin:
         result=super().snapshot();result['market_context']=self.market_context()
         result['benchmark_catalog']=list(bm.CATALOG.values())
         return result
+
