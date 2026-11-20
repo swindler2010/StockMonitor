@@ -39,11 +39,11 @@ def calculate(store,values):
     context.analysis_at=now
     execution_context=None
     analysis_context=None
-    from paper_account import instrument_allowed
-    if instrument_allowed(info) and args['timeframe'] in ('5m','15m'):
+    from gettex_first import bound
+    from paper_account import EXECUTION_TF, instrument_allowed
+    if instrument_allowed(info) and args['timeframe']==EXECUTION_TF:
         from calculation_window import build
         execution_context=build(context,info,args['timeframe'],state,now)
-    from gettex_first import bound
     if bound(frame):
         engine=context.trading_analysis(info,analysis_only=True)
         analysis_context={'analysis_ready':engine.get('status')=='READY','execution_permission':False,
@@ -65,6 +65,7 @@ def calculate(store,values):
     # The existing engine still assesses DQ/admission on every read; this is
     # only the OHLCV/indicator-page identity, never a trade-readiness lease.
     ends=bar_ends(frame) if not frame.empty else pd.DatetimeIndex([],tz='UTC')
+    from gettex_first import bound
     closed=(ends<=now) & (frame['bar_complete'].fillna(False).astype(bool).to_numpy() if 'bar_complete' in frame and not bound(frame) else True)
     temporal=hashlib.sha256(closed.tobytes()).hexdigest()
     query={k:v for k,v in args.items() if k not in ('offset','limit','expected_revision','_deadline')}
@@ -125,3 +126,4 @@ def calculate(store,values):
         'delivery_latency':{'status':'PARTIAL_MEASURED' if measured else 'UNCONFIRMED','storage_observed_bars':measured,
             'provider_latency':'UNCONFIRMED','reason':'Storage observations are available only for tracked new/changed base bars; HTTP receipt and provider publication remain unknown'},
         'execution':'read only; no download, source switch or trade'}
+
