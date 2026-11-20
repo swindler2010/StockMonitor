@@ -201,4 +201,41 @@ class EvidenceRequest(unittest.TestCase):
    if store is not None:store.read_cache.close()
    for suffix in ('','-wal','-shm'):Path(str(path)+suffix).unlink(missing_ok=True)
 
+class PolicyPublication(unittest.TestCase):
+ def test_factual_assessment_binds_required_owner_policy_before_publication(self):
+  import tempfile,pandas as pd
+  from unittest.mock import patch
+  import calculation_window as cw
+  from cp_controls import DEMO_ALL_POLICY
+  from test_cp_tv_legacy_reference import FlatStore
+  root=Path('C:/Users/panus/Documents/Codex/СМ-Архив')
+  if not root.is_dir():root=Path(tempfile.gettempdir())
+  with tempfile.NamedTemporaryFile(dir=root,suffix='.sqlite3',delete=False) as f:path=Path(f.name)
+  store=None
+  try:
+   store=FlatStore(path);info={'isin':'US0378331005','name':'Fixture','kind':'stock'};store.save_instrument(info)
+   store.set_setting(DEMO_ALL_POLICY,{'approved':True,'version':1})
+   store.set_setting('cp_manual_risk:'+info['isin'],{'accepted':{'old':{'actor':'fixture'}}})
+   def factual(context,info,now):
+    # Fully factual path does not enter the old owner-risk fallback at all.
+    context.closed_specs={}
+    return {'isin':info['isin'],'checked_at':now.isoformat(),'expires_at':(now+pd.Timedelta(minutes=5)).isoformat(),
+     'calculation_policy':'gettex_first_v1','reference_binding_version':1,'candidates':[],
+     'analysis_scope':{'policy':cw.SCOPE_POLICY,'timezone':'Europe/Berlin','start':(now.tz_convert('Europe/Berlin').normalize()-pd.DateOffset(years=5)).date().isoformat()}}
+   with patch.object(cw,'assess_all',side_effect=factual),patch.object(cw,'attach_execution'):
+    result=cw.calculate_eligibility(store,info)
+   self.assertNotIn('error',result)
+   saved=cw.publish_eligibility(store,info,result)
+   self.assertEqual(saved['publication_state'],'CURRENT')
+   self.assertIn('setting:'+DEMO_ALL_POLICY,result['_input_revisions'])
+   self.assertIn('setting:cp_manual_risk:'+info['isin'],result['_input_revisions'])
+   # A real policy change still rejects the old result; no extension/override.
+   deadline=result['expires_at'];store.set_setting(DEMO_ALL_POLICY,{'approved':True,'version':2})
+   with self.assertRaisesRegex(ValueError,'ELIGIBILITY_INPUT_CHANGED: STALE'):cw.publish_eligibility(store,info,result)
+   self.assertEqual(result['expires_at'],deadline)
+  finally:
+   if store is not None:store.read_cache.close()
+   for suffix in ('','-wal','-shm'):Path(str(path)+suffix).unlink(missing_ok=True)
+
 if __name__=='__main__':unittest.main()
+

@@ -634,6 +634,12 @@ def calculate_eligibility(store, info):
         captured_db=store.read_cache.db
         captured_db.execute('PRAGMA query_only=ON');captured_db.execute('BEGIN')
         with store.read_cache.track_inputs(isolated=True) as token:
+            # Publication always checks this policy, including a fully factual
+            # GETTEX-first path which never visits the legacy risk fallback.
+            # Capture it in the SAME snapshot; never bypass the final guard.
+            from cp_controls import DEMO_ALL_POLICY
+            store.read_cache.depend('setting:'+DEMO_ALL_POLICY)
+            store.read_cache.depend('setting:cp_manual_risk:'+isin)
             store.read_cache.depend('instrument:'+isin)
             with store.connect() as db:
                 row=db.execute('SELECT payload FROM instruments WHERE isin=?',(isin,)).fetchone()
