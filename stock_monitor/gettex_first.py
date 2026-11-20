@@ -1,6 +1,14 @@
 """Separate calculation availability from CP opinions; never an execution grant."""
 VERSION = 'gettex_first_v1'
 
+def audit_only_scopes(specs):
+    """Only DQ opinions for explicitly bound factual calculation inputs."""
+    return {'setting:data_quality:'+s['isin']+':'+s['identity']['symbol']+':'+s['base_tf']
+        for s in specs if s and s.get('calculation_policy')==VERSION
+        and s.get('identity',{}).get('source') in ('gettex','gettex_chart')
+        and s.get('identity',{}).get('venue')=='GETTEX'
+        and s.get('identity',{}).get('currency')=='EUR'}
+
 
 def bind(frame, info):
     """Attach an in-memory contract; no stored quality/provenance is changed."""
