@@ -195,6 +195,23 @@ def bounded_features(info, frame, tf, now):
             raise ValueError('NO_CLOSED_BARS')
         closed=exclude_verified_leading_partial(closed,tf,now)
         if closed.empty:raise ValueError('NO_CLOSED_BARS')
+        from gettex_first import bound,calculation_allowed,VERSION as GETTEX_FIRST
+        if bound(closed):
+            enriched,features=_safe_features(closed,info,now)
+            usable=calculation_allowed(features)
+            report=data_quality.audit(closed,tf,expected=identity,now=now)
+            result.update(context=GETTEX_FIRST,count=len(closed),first=str(closed.index[0]),last=str(closed.index[-1]),
+                chart_ready=bool(features.get('ohlcv_valid')),analysis_ready=usable,
+                calculation_availability=features.get('calculation_availability'),window_quality=report,
+                reference_quality=report,features=features,valid_until=context_deadline(identity,tf,now).isoformat(),
+                last_close_at=bar_ends(closed)[-1].isoformat(),
+                reliability='Actual GETTEX OHLCV; CP quality warnings retained separately; no execution grant')
+            result['full_reference']=dict(context='actual_gettex_reference_v1',analysis_ready=usable,
+                count=len(closed),first=str(closed.index[0]),last=str(closed.index[-1]),
+                last_close_at=result['last_close_at'],quality=report,features=features,
+                analysis_scope=meta.get('analysis_scope'),scope_initialization={'checked':False,'policy':GETTEX_FIRST})
+            if not usable:result['blockers'].append('INSUFFICIENT_COMPUTABLE_DATA: '+features.get('reason',''))
+            return result
         leading=closed.attrs.get('excluded_leading_partial')
         scoped_archive=closed.attrs.get('data_quality') if leading else None
         if leading:result['excluded_leading_partial']=leading
