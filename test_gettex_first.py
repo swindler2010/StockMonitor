@@ -6,6 +6,32 @@ from gettex_first import calculation_allowed,bind,bound
 from trading_engine import evaluate
 
 class GettexFirstTests(unittest.TestCase):
+ def test_busy_trading_universe_cannot_starve_sequential_preparation(self):
+  from paper_hourly import Runtime,CONFIG
+  from types import SimpleNamespace as NS
+  from unittest.mock import Mock,patch
+  cfg={'enabled':True,'identities':{str(n):{} for n in range(5)},'automatic_admission':{'enabled':True}}
+  store=NS(setting=lambda key,default:cfg if key==CONFIG else {},read_cache=NS(token_for=lambda _:{}))
+  jobs=[]
+  def submit(work,done,*args,**kwargs):jobs.append(kwargs['key']);done({});return True
+  app=NS(store=store,closing=False,user_dirty=False,watchlist=[{'isin':str(n),'name':str(n)} for n in range(5)],
+   ai_config={},root=NS(after=Mock()),job=submit)
+  runtime=Runtime(app)
+  with patch('paper_hourly.time.time',return_value=200):
+   for _ in range(4):runtime.tick()
+  self.assertEqual(jobs,['paper_auto_hourly','paper_auto_hourly','paper_preparation','paper_auto_hourly'])
+  self.assertFalse(runtime.busy)
+ def test_candidate_does_not_replace_long_history_with_newer_short_provider(self):
+  import gettex_chart
+  from unittest.mock import patch
+  pd=fixtures.pd;info={'isin':'US0378331005'}
+  long=self.frame();long.index=pd.bdate_range('2026-05-01',periods=len(long))+pd.Timedelta(hours=7,minutes=30);long.attrs.update(timeframe='15m')
+  long['source']='gettex_chart';long.attrs.update(source='gettex_chart',symbol='AAPL.GTX',
+   listing_proof=dict(source='gettex_chart',symbol='AAPL.GTX',venue='GETTEX',currency='EUR',timezone='Europe/Berlin',isin=info['isin'],status='CONFIRMED'))
+  short=self.frame().tail(10).copy();short.index=pd.date_range('2026-11-20 07:30',periods=10,freq='15min');short.attrs.update(timeframe='15m')
+  with patch('gettex_chart.load',return_value=long):
+   out,base=gettex_chart.candidate(None,info,'4H',short,'15m',pd.Timestamp('2026-11-20T12:00Z'))
+  self.assertEqual(len(out),len(long));self.assertEqual(out.attrs['source'],'gettex_chart')
  def test_legacy_validation_window_retains_warning_and_own_quote_guards(self):
   from calculation_window import inspect
   pd=fixtures.pd
