@@ -48,6 +48,68 @@ class GettexFirstTests(unittest.TestCase):
   view,base=gettex_chart.retain_deeper(info,'1H',long,'5m',short,'5m',pd.Timestamp('2026-11-14T12:00Z'))
   self.assertEqual(base,'5m');self.assertEqual(len(view),len(long))
   self.assertEqual(view.attrs['data_quality']['state'],'INVALID')
+ def test_v5_and_v4_use_available_closed_values_without_filling_missing_children(self):
+  from paper_v5 import hourly_features,clean_quotes
+  from paper_v4 import intraday
+  pd=fixtures.pd
+  sessions=pd.DataFrame({'open':[pd.Timestamp('2026-11-13T06:30Z')],
+      'close':[pd.Timestamp('2026-11-13T10:30Z')]},index=pd.DatetimeIndex(['2026-11-13']))
+  rows=[('2026-11-13 07:30:00',100.,101.,99.,100.,0.),('2026-11-13 08:00:00',101.,102.,100.,102.,10.)]
+  raw=clean_quotes(rows,'Europe/Berlin',available_bars=True)
+  self.assertEqual(len(raw),2)
+  v5=hourly_features(sessions,raw,pd.Timestamp('2026-11-13T08:30Z'),available_bars=True)
+  v4=intraday(sessions,raw,'1H',pd.Timestamp('2026-11-13T08:30Z'),available_bars=True)
+  for frame in (v5,v4):
+   self.assertTrue(frame.complete.iloc[0]);self.assertFalse(frame.coverage_complete.iloc[0])
+   self.assertEqual(frame.volume.iloc[0],10.)
+   self.assertFalse(frame.complete.iloc[1]);self.assertTrue(pd.isna(frame.close.iloc[1]))
+  legacy=hourly_features(sessions,raw,pd.Timestamp('2026-11-13T08:30Z'))
+  self.assertFalse(legacy.complete.iloc[0])
+ def test_decision_evidence_is_stable_for_audit_timestamps_but_tracks_real_prices(self):
+  from gettex_first import decision_evidence
+  result={'isin':'US0378331005','timeframe':'1H','execution_context':{'trading_engine':{
+   'timeframe_context':{'1H':{'facts':{'ema10':10},'data_quality':{'state':'UNCONFIRMED','checked_at':'old'}}}}},
+   'execution_quote':{'bars':[{'close':10}],'data_quality':{'checked_at':'old'}}}
+  before=decision_evidence(result)
+  changed=copy.deepcopy(result);changed['execution_context']['trading_engine']['timeframe_context']['1H']['data_quality']['checked_at']='new'
+  changed['execution_quote']['data_quality']['checked_at']='new'
+  self.assertEqual(before,decision_evidence(changed))
+  changed['execution_quote']['bars'][0]['close']=11
+  self.assertNotEqual(before,decision_evidence(changed))
+ def test_sequential_admission_does_not_wait_for_another_stocks_quote(self):
+  import test_paper_preparation as fixture
+  import paper_preparation as prep
+  import paper_hourly as hourly
+  c=fixture.PreparationTests();c.setUp();self.addCleanup(c.tearDown);f=c.f
+  f.db.execute('delete from settings where key=?',(prep.STATE,))
+  f.write(hourly.STATUS+c.anchor,dict(core='DATA BLOCKED',quote_blocker='PAPER_STALE_QUOTE',at=f.now))
+  self.assertEqual(prep.choose(f.db,f.now+601)['isin'],f.isin)
+  # Available closed analysis may be connected even while execution is stale.
+  r=f.result;r['quote_blocker']='PAPER_STALE_QUOTE'
+  for tf in r['hourly']['required_tf']:
+   r['execution_context']['trading_engine']['timeframe_context'][tf]={
+    'data_quality':{'state':'UNCONFIRMED'},'facts':{'atr':1},
+    'calculation_availability':{'policy':'gettex_first_v1','source_contract':True,'analysis_available':True}}
+  # choose() updated the preparation state; retain the existing exact token.
+  from performance_cache import capture_closed_inputs
+  token={k:(f.db.execute('select revision from input_revisions where scope=?',(k,)).fetchone() or [0])[0]
+    for k in r['_input_revisions']}
+  r['_input_revisions']=token
+  r['hourly']['proof']=capture_closed_inputs(f.db,[s['spec'] for s in r['hourly']['proof']['series']],token)
+  out=prep.admit(f.db,f.info,r,f.now)
+  self.assertEqual(out['state'],'ADMITTED');self.assertFalse(out['execution_permission'])
+  self.assertEqual(out['admission']['basis'],'GETTEX_AVAILABLE_ANALYSIS')
+ def test_new_instrument_contract_is_generic_and_keeps_provider_identity(self):
+  from gettex_first import source_contract
+  info={'isin':'US9999999999'};f=self.frame();f['source']='gettex_chart'
+  f.attrs.update(source='gettex_chart',symbol='FIXTURE.GTX')
+  self.assertFalse(source_contract(info,f.attrs))
+  f.attrs['listing_proof']={k:f.attrs[k] for k in ('source','symbol','venue','currency','timezone')}
+  f.attrs['listing_proof'].update(isin=info['isin'],status='CONFIRMED')
+  f=bind(f,info);self.assertTrue(bound(f))
+  _,r=_safe_features(f,info,'2026-02-01T00:00Z')
+  self.assertTrue(calculation_allowed(r))
+  self.assertEqual(r['calculation_availability']['source'],'gettex_chart')
  def test_general_assessment_and_display_preserve_advisory_quality(self):
   from calculation_window import bounded_features
   from partial_chart import select_display
@@ -126,3 +188,4 @@ class GettexFirstTests(unittest.TestCase):
    hourly.validate_analysis(case.db,case.info,bad,case.now,case.cfg)
 
 if __name__=='__main__':unittest.main()
+
