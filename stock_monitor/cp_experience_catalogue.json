@@ -1607,6 +1607,42 @@
       ],
       "automatic_action": "Existing revision_watcher and reconciliation lane",
       "manual_action": "Confirmed current visual discrepancy remains required."
+    },
+    {
+      "id": "gettex_first_nonblocking_audit",
+      "title": "GETTEX-first: фактические расчёты независимо от предупреждений СР",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "GAP",
+        "UNCONFIRMED",
+        "INVALID",
+        "STALE",
+        "SOURCE_GAP",
+        "RECOVERING"
+      ],
+      "status": "IMPLEMENTED in TEST for verified source contracts; issue20 acceptance ongoing",
+      "steps": [
+        "Validate exact registered listing/provider/ISIN/GETTEX/EUR/timezone and actual numeric OHLCV independently of CP classifications.",
+        "Use existing actual bars for aggregation/indicators/CORE; preserve factual incomplete-coverage flags and original DQ warnings.",
+        "Keep price-only observations at zero volume; never create a missing candle or infer NO_TRADES from absence.",
+        "Audit the entire archive in the existing CP queue and errors view; preserve receipts/corrections; recompute real affected revisions.",
+        "Keep independent quote/session/identity/revision/balance/risk guards; availability is never an execution grant.",
+        "Write bounded decision-time source/input digests, indicators and warnings to the existing journal; do not rewrite previous fills."
+      ],
+      "evidence": [
+        "test_gettex_first.py",
+        "test_paper_preparation.py"
+      ],
+      "limits": [
+        "Malformed actual data, missing bars and mathematically insufficient indicator inputs remain unavailable.",
+        "No universal source certification or artificial READY quality; no real broker activation.",
+        "Preserve complete separate provider archives; do not select a shorter archive merely because the longer has a CP suspicion."
+      ],
+      "automatic_action": "Existing source selection, aggregation, analytics/CORE, sequential PAPER preparation and CP audit",
+      "manual_action": "Unconfirmed anomalies remain visible for later evidence-backed review."
     }
   ],
   "sources": [
