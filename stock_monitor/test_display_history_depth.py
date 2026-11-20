@@ -18,6 +18,13 @@ class Memory:
  def load_series(self,*args):return pd.DataFrame()
  def set_setting(self,*args):raise AssertionError('Display must not write')
 class DisplayDepth(unittest.TestCase):
+ def setUp(self):
+  # This suite isolates legacy display depth. CP receipt validation has its
+  # own real-Store tests; the in-memory display double grants no TV exception.
+  for target,options in [('partial_chart._display_reviews',{'return_value':[]}),
+    ('cp_controls.accepted_gap_input',{'side_effect':lambda s,i,f,*args:f}),
+    ('cp_controls.accepted_gap_output',{'side_effect':lambda f,*args:f})]:
+   mock=patch(target,**options);mock.start();self.addCleanup(mock.stop)
  def choose(self,normal,raw,tf='1D',info=INFO):
   with patch('gettex_chart._load_native',side_effect=lambda s,i,b:raw.get(b,pd.DataFrame())),patch('onvista_archive.available_daily',return_value=[]):
    return p.select_display(info,tf,normal,Memory(),NOW)
@@ -86,18 +93,25 @@ class DisplayDepth(unittest.TestCase):
   raw=daily('2026-01-02','2026-10-30');out=self.choose(raw.iloc[-5:].copy(),{'1D':raw})
   self.assertEqual(len(visible_frame(out,'Max')),len(raw))
  def test_mcp_partial_indicator_values_are_not_filled_across_holes(self):
-  raw=daily('2026-01-02','2026-10-30');out=self.partial(raw,raw.index[80]);enriched=p.bind({},out)['analysis'][0]
-  self.assertTrue(enriched[['ema10','ema30','rsi','atr','macd','macd_signal','volume_mean20']].isna().all().all())
+  raw=daily('2026-01-02','2026-10-30');out=self.choose(pd.DataFrame(),{'1D':self.partial(raw,raw.index[80])});enriched=p.bind({},out)['analysis'][0]
+  self.assertTrue(enriched.ema30.iloc[:29].isna().all())
+  self.assertTrue(enriched.ema30.iloc[80:109].isna().all())
+  self.assertTrue(pd.notna(enriched.ema30.iloc[-1]));self.assertNotIn(raw.index[80],enriched.index)
 
  def test_no_unconfirmed_or_dollar_fallback_when_no_candidates(self):
   raw=daily('2026-10-01','2026-10-30');raw.attrs['currency']='USD'
   self.assertTrue(self.choose(raw,{}).empty)
 
- def test_persisted_global_invalid_is_not_hidden_by_localized_damage(self):
+ def test_global_invalid_is_not_cleared_by_live_inspection(self):
   full=daily('2026-10-01','2026-10-30');raw=self.partial(full,full.index[4])
   global_bad={'state':'INVALID','repairable':False,'identity':META,'issues':['Identity evidence conflict']}
   with patch.object(Memory,'setting',return_value=global_bad):
-   self.assertTrue(self.choose(pd.DataFrame(),{'1D':raw}).empty)
+   out=self.choose(pd.DataFrame(),{'1D':raw})
+   # Existing live inspection may retain one actual last observation through
+   # delay. It neither clears INVALID nor authorizes a trade/CORE result.
+   self.assertLessEqual(len(out),1);self.assertEqual(out.attrs['data_quality']['state'],'INVALID')
+   self.assertFalse(out.attrs.get('live_candle',{}).get('execution_allowed',False))
+   self.assertEqual(p.bind({},out)['trading_engine']['status'],'DATA BLOCKED')
 
  def test_source_outage_retains_verified_saved_rows_and_trade_block(self):
   full=daily('2026-01-02','2026-10-30');raw=self.partial(full,full.index[4]);normal=full.iloc[-5:].copy()
@@ -150,7 +164,7 @@ class DisplayDepth(unittest.TestCase):
     out=p.select_display(info,'1D',pd.DataFrame(),s,NOW)
     self.assertEqual(len(out),len(raw))
     again=p.select_display(info,'1D',pd.DataFrame(),s,NOW)
-    self.assertEqual(len(again),len(raw));self.assertEqual(len(calls),n+1)
+    self.assertEqual(len(again),len(raw));self.assertEqual(len(calls),2*(n+1))  # projection + existing live-tail read; cached repeat adds none
     if n in (52,199):self.assertLessEqual(len(s.read_cache.items),64)
 
  def test_relevant_revision_invalidates_display_without_settings_or_writes(self):
@@ -177,8 +191,9 @@ class DisplayDepth(unittest.TestCase):
     changed[0]=True;s.read_cache.db.execute('INSERT INTO input_revisions VALUES(?,1)',(scope,));s.read_cache.db.commit()
    return out
   with patch('gettex_chart._load_native',side_effect=native),patch('onvista_archive.available_daily',return_value=[]),patch.object(p,'load',return_value=None),patch.object(p.quality,'expected_index',side_effect=grid):
-   with s.read_cache.track_inputs() as token:p.select_display(INFO,'1D',pd.DataFrame(),s,NOW)
-   with self.assertRaises(InputRevisionChanged):s.read_cache.assert_current(token)
+   with self.assertRaises(InputRevisionChanged):
+    with s.read_cache.track_inputs() as token:p.select_display(INFO,'1D',pd.DataFrame(),s,NOW)
+    s.read_cache.assert_current(token)
    self.assertFalse(s.read_cache.items)
 
  def test_chart_and_mcp_share_partial_projection_without_core_or_writes(self):
@@ -205,3 +220,4 @@ class DisplayDepth(unittest.TestCase):
    self.assertEqual(analytical_read.calculate(s,values)['stored_frame_count'],0)
 
 if __name__=='__main__':unittest.main()
+
