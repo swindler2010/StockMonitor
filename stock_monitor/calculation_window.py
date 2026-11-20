@@ -741,6 +741,8 @@ def eligibility_due(store, infos, now):
     return [i for _,_,_,_,i in sorted(pending,key=lambda r:r[:4])[:1]]
 
 def inspect(info, frame, tf, now):
+    from gettex_first import bound
+    factual=bound(frame)
     identity = {k: frame.attrs.get(k) for k in IDENTITY}
     archive = frame.attrs.get('data_quality', {})
     result = dict(identity=identity, archive_quality=archive, timeframe=tf, blockers=[])
@@ -748,10 +750,10 @@ def inspect(info, frame, tf, now):
     from eur_listings import confirmed_listing
     confirmed = confirmed_listing(info,frame.attrs)
     if not confirmed or identity['currency'] != 'EUR': blockers.append('IDENTITY_UNCONFIRMED')
-    if archive.get('state') != 'READY': blockers.append('ARCHIVE_' + str(archive.get('state', 'UNKNOWN')))
+    if archive.get('state') != 'READY' and not factual: blockers.append('ARCHIVE_' + str(archive.get('state', 'UNKNOWN')))
     try:
         ends = bar_ends(frame)
-        closed = frame.loc[(ends <= now) & frame.get('bar_complete', pd.Series(True, index=frame.index)).fillna(False)].copy()
+        closed = frame.loc[(ends <= now) & (True if factual else frame.get('bar_complete', pd.Series(True, index=frame.index)).fillna(False))].copy()
         window = closed.iloc[-200:].copy()
         if len(window) < 35: blockers.append('INSUFFICIENT_CLOSED_BARS')
         if window.empty: raise ValueError('NO_CLOSED_BARS')
@@ -760,7 +762,7 @@ def inspect(info, frame, tf, now):
         report = data_quality.audit(window, tf, expected=identity, now=now)
         result.update(window_quality=report, count=len(window), first=str(window.index[0]), last=str(window.index[-1]),
                       last_close_at=bar_ends(window)[-1].isoformat(), reference_close=float(window.iloc[-1]['close']))
-        if report['state'] != 'READY': blockers.append('WINDOW_' + report['state'])
+        if report['state'] != 'READY' and not factual: blockers.append('WINDOW_' + report['state'])
         enriched = indicators(window)
         names = ('ema10','ema30','rsi','macd','macd_signal','atr','volume_mean20')
         values = {k: float(enriched.iloc[-1][k]) for k in names}
