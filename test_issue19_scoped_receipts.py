@@ -55,7 +55,9 @@ class EvidenceReadTransport(unittest.TestCase):
    def __truediv__(self,key):return self.files.setdefault(key,Leaf())
   events=queue.Queue();directory=Directory()
   bridge=Bridge(directory,events,lambda *a:self.fail('read dispatched a command'))
-  self.addCleanup(bridge.close)
+  def close():
+   bridge.close();bridge.server.shutdown();bridge.server.server_close()
+  self.addCleanup(close)
   def projection(path,isin,page):return {'isin':isin,'page':page,'evidence':[{'status':'VALID'}],'trade_permission':False}
   def request(args):
    data=json.dumps({'action':'snapshot','arguments':args}).encode()
@@ -75,14 +77,19 @@ class EvidenceReadTransport(unittest.TestCase):
 
 class FullReceiptPipeline(unittest.TestCase):
  def test_real_source_revalidation_refresh_restart_and_changed_native_row(self):
+  for isin in ('US0378331005','US67066G1040','US0231351067','US30303M1027','DE0007164600','GB0000000001'):
+   with self.subTest(isin=isin):self._exercise(isin)
+
+ def _exercise(self,isin):
   import tempfile,json,pandas as pd
   import data_quality as dq,cp_reconciliation as rv
   from test_cp_tv_legacy_reference import FlatStore
   root=Path('C:/Users/panus/Documents/Codex/СМ-Архив')
+  if not root.is_dir():root=Path(tempfile.gettempdir())
   with tempfile.NamedTemporaryFile(dir=root,suffix='.sqlite3',delete=False) as f:path=Path(f.name)
   store=None
   try:
-   store=FlatStore(path);isin='US0378331005';info=dict(isin=isin,name='Fixture',kind='stock',history_venue_lock='GETTEX');store.save_instrument(info)
+   store=FlatStore(path);info=dict(isin=isin,name='Fixture',kind='stock',history_venue_lock='GETTEX');store.save_instrument(info)
    meta=dict(source='gettex_chart',venue='GETTEX',currency='EUR',symbol='AAPL.GTX',timezone='Europe/Berlin');official={**meta,'source':'gettex','symbol':isin}
    now=pd.Timestamp('2026-11-20T12:00Z');first='2026-10-21 19:45:00';lo='2026-10-21 19:30:00';end='2026-10-21 20:15:00'
    proof=dict(isin=isin,identity=official,basis='complete_published_trade_files',checked_at='2026-11-19T12:00Z',no_trades=[],trade_intervals=[],zero_quantity_intervals=[],reference={'GETTEX:20261021':{}})
@@ -119,6 +126,15 @@ class FullReceiptPipeline(unittest.TestCase):
    self.assertEqual(dq.audit(after,'15m',meta,now,check_stale=False)['state'],'READY')
    self.assertNotIn(pd.Timestamp(first),after.index)
    pd.testing.assert_frame_equal(pd.DataFrame(before,copy=False),pd.DataFrame(after,copy=False))
+   # Same parent aggregation before/after evidence-only maintenance.
+   from timeframes import aggregate
+   for target in ('30m','1H','2H','3H','4H'):
+    left=aggregate(before,'15m',target,now);right=aggregate(after,'15m',target,now)
+    pd.testing.assert_frame_equal(pd.DataFrame(left,copy=False),pd.DataFrame(right,copy=False))
+   # Backfill outside the exact receipt is not a local input mutation.
+   with store.connect() as db:
+    db.execute('INSERT INTO series VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',(isin,*[meta[k] for k in rw.IDENTITY[:4]],'15m','2026-10-22 09:00:00',102,102,102,102,1))
+    self.assertTrue(rw.retime_current(db,receipt,now))
    store.read_cache.close();store=FlatStore(path)
    with store.connect() as db:
     self.assertTrue(rw.retime_current(db,receipt,now));db.execute("UPDATE series SET volume=volume+1 WHERE base_tf='15m'")
@@ -136,6 +152,7 @@ class EvidenceRequest(unittest.TestCase):
   from cp_assessment import request,PREFIX
   from test_cp_tv_legacy_reference import FlatStore
   root=Path('C:/Users/panus/Documents/Codex/СМ-Архив')
+  if not root.is_dir():root=Path(tempfile.gettempdir())
   with tempfile.NamedTemporaryFile(dir=root,suffix='.sqlite3',delete=False) as f:path=Path(f.name)
   store=None
   try:

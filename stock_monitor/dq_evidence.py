@@ -1,7 +1,7 @@
-"""Read-only projection of existing CP evidence. No duplicate approval registry.
+"""Existing CP evidence projection and guarded request to its existing assessor.
 
-One requested instrument/page, one WAL view. Never creates grants, corrections,
-jobs, candles, permissions or remote source calls. Unknown evidence stays explicit.
+collect: one requested instrument/page, one read-only WAL view; no writes/network.
+dispatch: only queues the existing assessment, never new grants or OHLCV.
 """
 import json,sqlite3,re
 from contextlib import closing
@@ -68,7 +68,14 @@ def collect(path,isin,page=0):
     for key,payload in db.execute("SELECT key,value FROM settings WHERE key LIKE ? AND json_extract(value,'$.identity.venue')='GETTEX' AND json_extract(value,'$.identity.currency')='EUR' ORDER BY key",('data_quality:'+isin+':%',)) for q in [json.loads(payload)]]
   pending=read(db,'cp_assessment_request:'+isin,{})
   assessment=read(db,'cp_eligibility:'+isin,{})
-  latest={k:assessment[k] for k in ('checked_at','expires_at','publication_state','error','last_failed_attempt') if k in assessment}
+  latest={k:assessment[k] for k in ('checked_at','expires_at','error','last_failed_attempt') if k in assessment}
+  latest['publication_state_when_saved']=assessment.get('publication_state')
+  latest['current_validity']='NOT_REVALIDATED'
+  if assessment.get('expires_at'):
+   try:
+    if pd.Timestamp(assessment['expires_at'])<=now:latest['current_validity']='TIME_EXPIRED'
+   except (ValueError,TypeError):latest['current_validity']='INVALID_EXPIRY'
+
  return {'assessment_request':pending,'latest_saved_assessment':latest,'isin':isin,'name':info.get('name'),'checked_at':now.isoformat(),'page':page,'page_size':size,
   'total_evidence':total,'next_page':page+1 if (page+1)*size<total else None,'evidence':rows,'reports':reports,
   'trade_permission':False,'writes':False,'semantics':'Existing receipts are checked in one read-only view. Observation/owner risk is not exchange NO_TRADES. Factual DQ is preserved; no execution permission or new approval.',

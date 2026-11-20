@@ -1659,6 +1659,33 @@
       ],
       "automatic_action": "Existing source selection, aggregation, analytics/CORE, sequential PAPER preparation and CP audit",
       "manual_action": "Unconfirmed anomalies remain visible for later evidence-backed review."
+    },
+    {
+      "id": "official_receipt_scope_stability_issue19",
+      "title": "Подтверждение точного GETTEX-окна не зависит от постороннего биржевого извещения",
+      "sources": [
+        "revision_watcher.retime_current",
+        "revision_watcher.receipt_source_current",
+        "cp_assessment.request",
+        "dq_evidence.collect"
+      ],
+      "states": [
+        "RECHECK_REQUIRED",
+        "SOURCE_TIMEBASE_UNCONFIRMED",
+        "VERIFIED_NATIVE_EMPTY"
+      ],
+      "steps": [
+        "Повторно проверить полные официальные входы, identity, политику и точные native OHLCV; сверить целостность сохранённого source_digest.",
+        "Нормализовать только покрытие внутри исходного закрытого окна; сведения о закрытии другой сессии не меняют факт этого окна. Локальные сделки, файлы, OHLCV и неизвестные авторитетные поля остаются строгими.",
+        "Показать старую TV-сверку как SUPERSEDED_BY_OFFICIAL только при действующей официальной квитанции того же job/ISIN. Это не новое подтверждение NO_TRADES.",
+        "Для повторной оценки использовать cp_assessment_request и существующую справедливую ротацию 2:1; не создавать отдельные разрешения и не менять историю."
+      ],
+      "evidence": [
+        "test_issue19_scoped_receipts.py",
+        "docs/DQ_EVIDENCE_ISSUE19_RU.md"
+      ],
+      "limits": "GETTEX-first: DQ аудит отдельно от доступности анализа всех зарегистрированных акций. Свежесть цены исполнения, identity и риск сохраняются. Реальный DQ не подменяется READY. Живой каталог не является разрешением произвольно импортировать OHLCV.",
+      "status": "Репродукция старого отказа и новый PASS; проверена сохранность 58 официальных квитанций четырёх пилотных акций. Многодневная приёмка Issue19 ещё не завершена."
     }
   ],
   "sources": [
