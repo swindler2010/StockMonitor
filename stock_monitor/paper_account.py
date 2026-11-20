@@ -91,14 +91,17 @@ def quote(info,result,now,accepted_historical_risk=False,stored_listing=None):
     confirmed=confirmed_listing(info,meta)
     if identity.get('source')=='gettex_chart' and not stored_listing:confirmed=False
     if not confirmed or identity.get('venue') not in ('GER','FRA','GETTEX'):raise ValueError('PAPER_IDENTITY_BLOCKED')
+    from gettex_first import source_contract
+    factual_gettex=source_contract(info,meta)
     quality=result.get('data_quality',{})
-    if quality.get('state')!='READY' and not accepted_historical_risk:
+    if quality.get('state')!='READY' and not accepted_historical_risk and not factual_gettex:
         detail='; '.join(str(issue) for issue in quality.get('issues', []))
         state=quality.get('state') or 'UNKNOWN'
         raise ValueError(f"PAPER_DATA_BLOCKED ({result['timeframe']}, {state})" + (f": {detail}" if detail else ""))
-    if any(quality.get('identity',{}).get(k)!=identity.get(k) for k in ('source','symbol','venue','currency','timezone')):raise ValueError('PAPER_DQ_IDENTITY_BLOCKED')
-    checked=datetime.fromisoformat(quality.get('checked_at',''))
-    if checked.tzinfo is None or not 0<=now-checked.timestamp()<=900:raise ValueError('PAPER_STALE_DQ')
+    if not factual_gettex:
+        if any(quality.get('identity',{}).get(k)!=identity.get(k) for k in ('source','symbol','venue','currency','timezone')):raise ValueError('PAPER_DQ_IDENTITY_BLOCKED')
+        checked=datetime.fromisoformat(quality.get('checked_at',''))
+        if checked.tzinfo is None or not 0<=now-checked.timestamp()<=900:raise ValueError('PAPER_STALE_DQ')
     bars=[b for b in result.get('bars',[]) if b.get('closed')]
     if not bars:raise ValueError('PAPER_NO_CLOSED_BAR')
     b=bars[-1];stamp=datetime.fromisoformat(b['close_at'])
@@ -107,7 +110,7 @@ def quote(info,result,now,accepted_historical_risk=False,stored_listing=None):
     if any(isinstance(v,bool) or not isinstance(v,(int,float)) or not math.isfinite(v) for v in vals):raise ValueError('PAPER_BAD_OHLCV')
     o,h,l,c,v=vals
     if min(o,h,l,c)<=0 or v<=0 or h<max(o,l,c) or l>min(o,h,c):raise ValueError('PAPER_BAD_OHLCV')
-    if accepted_historical_risk:
+    if accepted_historical_risk or (factual_gettex and quality.get('state')!='READY'):
         # The quote itself is NOT a waivable historical problem. Recheck its
         # actual session alignment, closed boundary and OHLCV independently.
         import pandas as pd
@@ -288,3 +291,4 @@ def mark_positions(db,state,now=None):
     state['unrealized']=str(money(total)) if complete else None
     state['equity']=str(money(Decimal(state['cash'])+sum(Decimal(p.get('market_value','0')) for p in state['positions']))) if complete else None
     return state
+
