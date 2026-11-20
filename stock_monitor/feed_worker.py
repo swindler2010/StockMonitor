@@ -40,6 +40,19 @@ class FeedContext(StockMonitor):
                 planned=automatic_repair_turn(self.store,info)
             except Exception as error:planned={'state':'ERROR','reason':str(error)}
         result=self._calculate(info)
+        if info.get('_gettex_poll_only') and info.get('_cp_focus',{}).get('source')=='gettex':
+            # The official files already fetched for one stock cover the whole
+            # registered EUR universe. Drain one recent saved pair before the
+            # old archive backlog, with the existing atomic validation/writer.
+            from gettex_history import accumulate_cached_batch
+            try:
+                shared=accumulate_cached_batch(self.store,self._parse_gettex_csv,max_pairs=1,max_seconds=1,recent_only=True)
+                result['cp_shared_fresh']=shared
+                from cp_assessment import request
+                for isin in shared.get('updated_isins',[]):request(self.store,isin)
+            except Exception as error:
+                result['cp_shared_fresh']={'state':'ERROR','reason':type(error).__name__}
+                result.setdefault('errors',[]).append('CP shared fresh: '+type(error).__name__)
         if planned is not None:
             result['cp_automatic_repair']=planned
             if planned.get('state')=='ERROR':result.setdefault('errors',[]).append('CP automatic repair: '+planned['reason'])
