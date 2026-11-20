@@ -340,6 +340,11 @@ def verified_demo_warmup(store,info,current,now):
     def calculate():
         raw=load(store,info,'1D',now)
         if raw.empty or {k:raw.attrs.get(k) for k in quality.IDENTITY}!=meta:return current
+        # Use the same closed-period boundary as the analysis being warmed.
+        # A future daily row in a saved replay archive is not an input.
+        from trading_context import closed_parent_input
+        raw,input_clock=closed_parent_input(raw,'1D',tf,now)
+        if raw.empty:return current
         # Try complete calendar-year boundaries, oldest first. The full current
         # overlap and every older daily row must pass the existing quality gate.
         starts=[raw.index[0]]+[pd.Timestamp(year=y,month=1,day=1) for y in range(raw.index[0].year+1,current.index[0].year+1)]
@@ -347,7 +352,7 @@ def verified_demo_warmup(store,info,current,now):
             if start>=current.index[0]:break
             daily=raw.loc[raw.index>=start].copy();scope_archive_faults(daily,start)
             if daily.attrs.get('archive_invalid'):continue
-            report=quality.audit(daily,'1D',expected=meta,now=now,check_stale=False)
+            report=quality.audit(daily,'1D',expected=meta,now=input_clock,check_stale=False)
             if report['state']!='READY':continue
             daily.attrs['data_quality']=report
             derived=resample(daily,'1D',tf,now)
@@ -1039,3 +1044,4 @@ def _fetch_turn(info, store, now=None, client=None, preferred_tf=None):
         store.set_setting(state_key(isin,base),result)
         scheduler.finish(store,isin,planning_meta,base,plan,error,now)
         return dict(state='ERROR',reason=result['last_error'],base=base)
+
