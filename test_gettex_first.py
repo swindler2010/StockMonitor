@@ -6,6 +6,21 @@ from gettex_first import calculation_allowed,bind,bound
 from trading_engine import evaluate
 
 class GettexFirstTests(unittest.TestCase):
+ def test_chat_volume_export_matches_observed_desktop_paths(self):
+  import numpy as np
+  from types import SimpleNamespace as NS
+  from unittest.mock import patch
+  from mcp_chart_export import export
+  from desktop014 import DEFAULT_IND
+  from chart_modes import draw_volume
+  f=self.frame();f.iloc[0,f.columns.get_loc('volume')]=0
+  f.iloc[1,f.columns.get_loc('volume')]=np.nan
+  settings={**DEFAULT_IND,'Объём':True,'Средний объём':True}
+  series,_=export(f,settings,'1H')
+  np.testing.assert_allclose(np.asarray(series['Volume'],dtype=float),f.volume.to_numpy(),equal_nan=True)
+  np.testing.assert_allclose(np.asarray(series['Volume mean'],dtype=float),f.volume.rolling(settings['volume']).mean().to_numpy(),equal_nan=True)
+  self.assertEqual(len(series['Volume']),len(f))
+
  def test_execution_diagnostic_reuses_existing_read_transaction(self):
   from contextlib import contextmanager
   from types import SimpleNamespace as NS
