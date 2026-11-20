@@ -17,6 +17,9 @@ def calculate_consistent(store,values,calculator=None):
     captured.connect=connect
     try:
         db=captured.read_cache.db;db.execute('PRAGMA query_only=ON');db.execute('BEGIN')
+        # Only this immutable WAL view may reuse an expensive lineage check.
+        # Never carried to the writer or the next analytical request.
+        captured._lineage_read_view=(db,read_time(),{})
         with captured.read_cache.track_inputs() as token:
             expected=values.get('instrument_revisions',{})
             captured.read_cache.assert_current(expected);captured.read_cache._record(expected)
