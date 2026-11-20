@@ -145,4 +145,113 @@ class LineageReadBudgetTests(unittest.TestCase):
    if store:store.read_cache.close()
    for suffix in ('','-wal','-shm'):Path(str(path)+suffix).unlink(missing_ok=True)
 
+class PersistentViewTests(unittest.TestCase):
+ def test_53_200_reads_reuse_only_current_inputs_and_reject_writer_race(self):
+  import tempfile,sqlite3
+  from test_cp_tv_legacy_reference import FlatStore
+  from analytical_read import calculate_consistent
+  from performance_cache import InputRevisionChanged
+  archive=Path(__file__).parent.parent.parent/'СМ-Архив'
+  with tempfile.NamedTemporaryFile(dir=archive,suffix='.sqlite3',delete=False) as f:path=Path(f.name)
+  s=None
+  try:
+   s=FlatStore(path);s._serial_readonly=True
+   with s.connect() as db:db.execute('PRAGMA journal_mode=WAL')
+   s.save_instrument({'isin':'TEST','name':'Test'});s.set_setting('policy',1)
+   with s.connect() as db:db.execute("INSERT INTO candles VALUES ('TEST','gettex','15m','2026-11-20 08:00',100,101,99,100,1)")
+   loads=[]
+   def calc(captured,values):
+    def load():
+     loads.append(1);captured.read_cache.depend('market:TEST:15m')
+     return dict(policy=captured.setting('policy'),rows=captured.read_cache.db.execute('SELECT close FROM candles').fetchall())
+    result=captured.read_cache.get('verified',load,scoped=True)
+    if values.get('race'):s.set_setting('policy',3)
+    return result
+   original=s.read_cache
+   for count in (53,200):
+    for _ in range(count):self.assertEqual(calculate_consistent(s,{},calc)['policy'],1)
+   self.assertEqual(len(loads),1);self.assertIs(s.read_cache,original);self.assertFalse(original.db.in_transaction)
+   s.set_setting('unrelated',2);calculate_consistent(s,{},calc);self.assertEqual(len(loads),1)
+   with s.connect() as db:db.execute("INSERT INTO candles VALUES ('TEST','gettex','15m','2026-11-20 08:15',100,101,99,100,1)")
+   self.assertEqual(len(calculate_consistent(s,{},calc)['rows']),2);self.assertEqual(len(loads),2)
+   with s.connect() as db:db.execute("UPDATE candles SET close=100.5 WHERE ts='2026-11-20 08:00'")
+   self.assertEqual(calculate_consistent(s,{},calc)['rows'][0][0],100.5);self.assertEqual(len(loads),3)
+   with self.assertRaises(InputRevisionChanged):calculate_consistent(s,{'race':True},calc)
+   self.assertFalse(original.db.in_transaction);self.assertEqual(calculate_consistent(s,{},calc)['policy'],3)
+   with self.assertRaises(sqlite3.OperationalError):
+    calculate_consistent(s,{},lambda c,v:dict(write=c.read_cache.db.execute("DELETE FROM candles")))
+   self.assertFalse(original.db.in_transaction);self.assertEqual(len(calculate_consistent(s,{},calc)['rows']),2)
+  finally:
+   if s:s.read_cache.close()
+   for suffix in ('','-wal','-shm'):Path(str(path)+suffix).unlink(missing_ok=True)
+
+class DisplayReuseTests(unittest.TestCase):
+ def test_pixel_changes_invalidate_but_telemetry_keeps_existing_artists(self):
+  import pandas as pd
+  from matplotlib.figure import Figure
+  from chart_worker import visual_revision
+  from benchmark_ui import BenchmarkMixin
+  f=pd.DataFrame(dict(open=[100.,101.],high=[102.,103.],low=[99.,100.],close=[101.,102.],volume=[1.,2.]),index=pd.date_range('2026-11-20',periods=2,freq='h'))
+  f.attrs={'source':'gettex','data_quality':{'state':'UNCONFIRMED','checked_at':'before'}}
+  result={'data_quality':dict(f.attrs['data_quality']),'support':99.}
+  prepared={'frame':f,'analysis':(f,result),'zones':[]};settings={};store=NS(setting=lambda k,d=None:settings.get(k,d));values={'timeframe':'1H'}
+  before=visual_revision(prepared,values,store);fig=Figure();axis=fig.subplots();status=['shown'];rendered=[]
+  def render():rendered.append(1);axis.plot([0,1],[101,102]);status[0]='shown'
+  app=NS(chart_mode=NS(get=lambda:'Candles'),status=NS(set=lambda v:status.__setitem__(0,v),get=lambda:status[0]),root=NS(),timeframe=NS(get=lambda:'1H'),_render_prepared_chart=render)
+  prepared['_visual_revision']=before;BenchmarkMixin._render_current_display(app,prepared);artist=axis.lines[0]
+  f.attrs['data_quality']['checked_at']='later';result['data_quality']['checked_at']='later'
+  self.assertEqual(before,visual_revision(prepared,values,store))
+  for count in (53,200):
+   for _ in range(count):
+    status[0]='loading';BenchmarkMixin._render_current_display(app,prepared)
+  self.assertEqual(len(rendered),1);self.assertIs(axis.lines[0],artist);self.assertEqual(status[0],'shown')
+  f.iloc[0,f.columns.get_loc('close')]=100.5;changed=visual_revision(prepared,values,store);self.assertNotEqual(before,changed)
+  prepared['_visual_revision']=changed;BenchmarkMixin._render_current_display(app,prepared);self.assertEqual(len(rendered),2)
+  settings['global_indicators']={'SMA':True};self.assertNotEqual(changed,visual_revision(prepared,values,store))
+  f.attrs['data_quality']['state']='INVALID';self.assertNotEqual(changed,visual_revision(prepared,values,store))
+ def test_stale_revision_cannot_reach_visual_reuse(self):
+  from benchmark_ui import BenchmarkMixin
+  from unittest.mock import Mock
+  values={'watchlist':[{'isin':'TEST'}],'timeframe':'1H','period':'Max'}
+  app=NS(closing=False,store=NS(read_cache=NS(current=lambda _:False)),_retry_current_chart=Mock(),_render_current_display=Mock())
+  with patch('chart_worker.capture',return_value=values):BenchmarkMixin._apply_chart(app,(values,{'_input_revisions':{'market:TEST:15m':1},'_visual_revision':'same'}))
+  app._render_current_display.assert_not_called();app._retry_current_chart.assert_called_once()
+ def test_numeric_indicator_render_preserves_all_plotted_values_without_attrs_copy(self):
+  import pandas as pd,numpy as np
+  from matplotlib.figure import Figure
+  from desktop014 import DEFAULT_IND
+  f=pd.DataFrame(dict(open=np.arange(70.)+100,high=np.arange(70.)+102,low=np.arange(70.)+99,close=np.arange(70.)+101,volume=np.arange(70.)),index=pd.date_range('2026-11-20',periods=70,freq='h'))
+  class Evidence:
+   def __deepcopy__(self,memo):raise AssertionError('Plot copied historical evidence')
+  def host():
+   fig=Figure();axes=fig.subplots(6);return NS(ax_price=axes[0],panels=list(zip(('Объём','Относительный объём','RSI','MACD','ATR'),axes[1:])),timeframe=NS(get=lambda:'1H'))
+  plain=host();Desktop014.draw_indicators(plain,f,f,DEFAULT_IND)
+  f.attrs['evidence']=Evidence();rich=host();Desktop014.draw_indicators(rich,f,f,DEFAULT_IND)
+  for a,b in zip([plain.ax_price]+[a for _,a in plain.panels],[rich.ax_price]+[a for _,a in rich.panels]):
+   self.assertEqual(len(a.lines),len(b.lines))
+   for x,y in zip(a.lines,b.lines):np.testing.assert_allclose(x.get_ydata(),y.get_ydata(),equal_nan=True)
+
+class ArchiveYieldTests(unittest.TestCase):
+ def test_slow_files_yield_with_cursor_cooldown_and_restart_resume(self):
+  import test_cp_gettex_universe as fixture
+  from test_gettex_live_evidence import MemoryPath
+  import gettex_history as gh,gzip,pandas as pd
+  f=fixture.CachedHistory();f.setUp();self.addCleanup(f.doCleanups);s=f.s
+  meta=dict(source='gettex',venue='GETTEX',currency='EUR',symbol=fixture.APPLE,timezone='Europe/Berlin')
+  s.set_setting('data_quality:'+fixture.APPLE+':'+fixture.APPLE+':15m',dict(state='UNCONFIRMED',identity=meta,ranges=[['2026-11-02 09:00','2026-11-02 09:00']]))
+  tick=[0.];calls=[]
+  def http(url):
+   calls.append(url);tick[0]+=20
+   return b'<a href="https://erdk.bayerische-boerse.de/data/posttrade.20261102.08.00.munc.csv.gz">file</a>' if url==gh.PAGE else gzip.compress(b'fixture')
+  with patch.object(MemoryPath,'mkdir',create=True),patch.object(gh.time,'monotonic',side_effect=lambda:tick[0]):
+   result=gh.acquire_missing_evidence({'isin':fixture.APPLE},s,http,f.now)
+   self.assertTrue(result['yielded']);self.assertEqual(result['downloaded'],1);self.assertEqual(len(calls),2)
+   cursor=result['file_cursor'];calls.clear()
+   self.assertEqual(gh.acquire_missing_evidence({'isin':fixture.APPLE},s,http,f.now+pd.Timedelta(minutes=1))['state'],'COOLDOWN');self.assertFalse(calls)
+   # Existing durable store/file checkpoint survives a new facade.
+   reopened=NS(connect=s.connect,setting=s.setting,set_setting=s.set_setting,directory=s.directory)
+   next_result=gh.acquire_missing_evidence({'isin':fixture.APPLE},reopened,http,f.now+pd.Timedelta(minutes=16))
+   self.assertEqual(next_result['downloaded'],1);self.assertNotEqual(next_result['file_cursor'],cursor)
+   self.assertFalse(f.rows());self.assertNotEqual(s.setting('data_quality:'+fixture.APPLE+':'+fixture.APPLE+':15m')['state'],'READY')
+
 if __name__=='__main__':unittest.main()
