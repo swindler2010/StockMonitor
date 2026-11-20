@@ -339,6 +339,9 @@ def show(app):
         elif mode.get() == 'Опыт CP':
             from cp_experience import display_rows
             rows = display_rows(data.get('experience', {'cases': [], 'recent': []}))
+        elif mode.get() == 'Подозрительные':
+            rows=[{**j,**(j.get('identity') or {}),'name':str(j.get('first'))+' — '+str(j.get('last'))}
+                  for j in data.get('reconciliation',{}).get('suspicious',[])]
         elif mode.get() == 'Сверка TradingView':
             from cp_controls import digest
             rows=[{**j,**j['identity'],'state':(REVIEW_LABELS['REVIEW_WEEKLY'] if j.get('source_disposition') and j['status']=='REVIEW_WEEKLY'
@@ -352,7 +355,7 @@ def show(app):
         if not experience_mode:
             tree.column('state', width=330 if mode.get() != 'DQ' else 110)
         for button in control_buttons:
-            button.configure(state='disabled' if experience_mode or mode.get()=='Сверка TradingView' else 'normal')
+            button.configure(state='disabled' if experience_mode or mode.get() in ('Сверка TradingView','Подозрительные') else 'normal')
         for row in rows:
             if query and query not in ' '.join((str(row.get(k, '')) for k in (*columns, 'name'))).casefold():
                 continue
@@ -372,6 +375,11 @@ def show(app):
         row = shown[selected[0]]
         bridge = getattr(app, 'bridge', None)
         snapshot = getattr(bridge, 'state', {})
+        if mode.get() == 'Подозрительные':
+            details.delete('1.0','end')
+            details.insert('1.0','Подтверждённая серьёзная аномалия GETTEX. Это диагностическая запись, не изменение DQ или допуска.\n'
+                +str(row.get('reason',''))+'\n'+json.dumps(row,ensure_ascii=False,indent=2))
+            return
         if mode.get() == 'Сверка TradingView':
             from cp_reconciliation import capability
             details.delete('1.0','end')
@@ -499,7 +507,7 @@ def show(app):
         batch_panel.pack_forget()
         filter_rows()
         refresh()
-    choice = CanonicalCombobox(bar, textvariable=mode, values=('Допуск CP', 'DQ', 'Проблемы свечей', 'Опыт CP','Сверка TradingView'), state='readonly', width=18)
+    choice = CanonicalCombobox(bar, textvariable=mode, values=('Допуск CP', 'DQ', 'Подозрительные', 'Проблемы свечей', 'Опыт CP','Сверка TradingView'), state='readonly', width=18)
     choice.pack(side='left')
     choice.bind('<<ComboboxSelected>>', change_mode)
     ttk.Button(bar, text=tr('Контрольная точка'), command=checkpoint).pack(side='left')
