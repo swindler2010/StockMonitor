@@ -453,8 +453,18 @@ def attach_parent_provenance(store,frame,isin,base):
                 receipt=store.setting(key,{})
                 store.read_cache.depend('setting:'+RETIME_POLICY)
                 store.read_cache.depend('setting:interval_evidence:'+isin)
+                store.read_cache.depend('instrument:'+isin)
+                from gettex_chart import state_key
+                store.read_cache.depend('setting:'+state_key(isin,'15m'))
                 for tf in ('5m','15m'):store.read_cache.depend('market:'+isin+':'+tf)
-                with store.connect() as db:valid=bool(receipt) and retime_current(db,receipt)
+                with store.connect() as db:
+                    view=getattr(store,'_lineage_read_view',None)
+                    if view and view[0] is db and db.in_transaction:
+                        memo_key=(key,_digest(receipt))
+                        if memo_key not in view[2]:
+                            view[2][memo_key]=bool(receipt) and retime_current(db,receipt,view[1])
+                        valid=view[2][memo_key]
+                    else:valid=bool(receipt) and retime_current(db,receipt)
                 retimed[key]=(receipt,valid)
                 if valid:
                     origins.append(dict(receipt_key=key,first=receipt['first'],end=receipt['end'],source='gettex',original_provider=frame.attrs['source'],
