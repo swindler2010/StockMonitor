@@ -1636,11 +1636,13 @@
         "Reserve a sequential preparation slot after two operational turns when due, so an expanding admitted universe cannot starve its next candidate.",
         "Reuse an existing coherent read transaction for optional execution diagnostics; insufficient parent history must return explicit blockers without aborting the candle page.",
         "Capture observed batched volume paths in the existing MCP indicator exporter, preserving zeros, missing values and the unchanged volume average; never fabricate bars for continuity.",
-        "Deliver heavy full-history CP diagnostics through the existing bounded read-page lease: reply INDETERMINATE first, coalesce repeated requests, then expose the detached as-of result. Keep 120-second expiry and explicit UNAVAILABLE on failure, never inferred zero counts."
+        "Deliver heavy full-history CP diagnostics through the existing bounded read-page lease: reply INDETERMINATE first, coalesce repeated requests, then expose the detached as-of result. Keep 120-second expiry and explicit UNAVAILABLE on failure, never inferred zero counts.",
+        "Under explicit GETTEX-first policy, reserve fresh acquisition slots for actual prices and durable reassessment requests. Defer automatic/TV/reviewed historical grant maintenance to ordinary history turns; preserve consumer-time revision/identity/quote/risk validation and legacy-policy behaviour."
       ],
       "evidence": [
         "test_gettex_first.py",
-        "test_paper_preparation.py"
+        "test_paper_preparation.py",
+        "test_cp_automatic_repair.py"
       ],
       "limits": [
         "Malformed actual data, missing bars and mathematically insufficient indicator inputs remain unavailable.",
