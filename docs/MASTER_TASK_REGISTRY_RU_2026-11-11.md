@@ -26103,6 +26103,23 @@ MCP подтвердил новый TEST ad6ced4c350e251e72e2b69102e23998. По�
 
 **Дальнейшие результаты Work, RCA, коммиты, реальные PASS/FAIL и дата приёмки записываются здесь, в G10 этого MASTER.**
 
+### G10 / Issue19 — продолжение20.11.2026: устранён воспроизводимый STALE при публикации GETTEX-first
+
+Новый код [3dd60db](https://github.com/swindler2010/StockMonitor/commit/3dd60db2df824ea39466cbea3a573e3f957507d8), документация/каталог опыта [7421c84](https://github.com/swindler2010/StockMonitor/commit/7421c846db304482911fb0eccdc4f995e2bc4fa9), установлен после штатного Save/Close/Restart, instance362aa956872bcd4a655866f8b71c5766. Работа толькоTEST/PAPER, без изменения исходнойV5/риска/счёта/свечей.
+
+**Причина:** fully-factual путь GETTEX-first не обязан вызывать старый owner-risk fallback, где регистрировались policy/grant зависимости. Но перед публикацией они обязательно проверяются. Новая оценка могла получить немедленный STALE на неизменных данных. Новый тест на старом коде воспроизвёл ELIGIBILITY_INPUT_CHANGED: STALE. Теперь cp_demo_initialization_policy и cp_manual_risk данногоISIN фиксируются в той же WAL-транзакции перед расчётом; окончательная проверка не удалена. Реальное изменение политики отвергается, сроки/исходные исполнительные ревизии не продлеваются.
+
+**Фактический результат:** обычная очередь NVIDIA опубликовала оценку checked_at20.11 20:03:35.531847 CET какCURRENT, expires20:05 CET; исходный запрос завершён и удалён из очереди.9/9TF15m–1M получилиanalysis_ready=true при фактических DQ-предупреждениях, без историческихDQ blockers.5m/10m остаются отдельнымMTF_IDENTITY_MISMATCH,1H/4H от них не блокируются.
+
+После следующих5m/15m загрузок поменялись только market:NVIDIA:5m/15m; общая оценка сталаSTALE и штатно запросилась заново. Проверка независимых1H/4H proofs далаCURRENT:1HWAIT/4HSELL, безDQ blockers. signal_ready/trade_ready=false, benchmark недоступен; bearish структура/неподтверждённый вход сохранены, BUY ради теста не создан. Внешний подключённыйMCP прочитал именно новый checked_at/expires_at и повторный запрос; current_validity=TIME_EXPIRED отдельно от publication_state_when_saved=CURRENT. Это не ложный полный торговый допуск.
+
+**Проверки:** опубликованный3dd60db —9 адресныхPASS/21.398с. Существующая фикстура PreserveAssessment.test_preserved_candidate_still_expires_and_rejects_changed_identity отдельно даёт KeyError:candidates и в предыдущем опубликованном245c471, и сейчас: не регрессия новой правки, неPASS, не исправлялась обходом. Реальные ключиglobal_indicators/paper_epoch сравнивались с согласованным backup и совпали; прежние проверки отсутствующихlegacy ключей сами по себе не доказательство сохранности, это уточнено.
+
+**Остаётся:** новая публикацияApple ещё ожидается обычной очередью; пока не выдаётся за обновлённый результат. Многодневная приёмка/полная реальная матрица11TF и оставшиеся требованияAPI #19 не завершены. Один повторный запрос страницы доказательств получилMCP timeout, последующиеhealth и чтение метаданных успешны. Новаяwrite-команда установлена в сервере/адаптере, но каталог подключённого плагина ещё старый; чтение работает через существующийpath без обновления. Общий статусIssue19 — **PARTIAL, неDONE**.
+
+Правило владельца: всем нынешним и будущим акциям доступ к анализу/демоторговле по фактической историиGETTEX, СР ведёт аудит отдельно; DQ-статус сам по себе не закрывает работу СМ. Независимые проверки цены исполнения/свежести/identity/средств/риска сохраняются. [Единый отчёт](https://github.com/swindler2010/StockMonitor/blob/work1/gettex-first-issue20/docs/DQ_EVIDENCE_ISSUE19_RU.md).
+
+
 ### G10 / Issue19 — 20.11.2026, Work1: этап PARTIAL, действующее правило GETTEX-first сохранено
 
 Код установлен в Windows0.16 TEST, опубликован только в рабочую ветку `work1/gettex-first-issue20` / draft[PR21](https://github.com/swindler2010/StockMonitor/pull/21), без слияния в main: [da19dd2](https://github.com/swindler2010/StockMonitor/commit/da19dd21a10b33a336975da8bc58275244529214), [63ed261](https://github.com/swindler2010/StockMonitor/commit/63ed261cf16ebfdf18fbcdb1100974b8bd56ee4d), [245c471](https://github.com/swindler2010/StockMonitor/commit/245c47101d5cfc147f58a57e03ae87a5c2e49d65). [Подробный отчёт](https://github.com/swindler2010/StockMonitor/blob/work1/gettex-first-issue20/docs/DQ_EVIDENCE_ISSUE19_RU.md).
