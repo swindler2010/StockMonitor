@@ -63,7 +63,7 @@ class Bridge:
                                 return value,{'published_at':bridge.published_at}
                             if section=='snapshot':
                                 with bridge.lock:return bridge.state,{'published_at':bridge.published_at}
-                            value=persisted(bridge.directory/'stock_monitor.sqlite3') if section=='persisted' else bridge.identity()['candlepilot_health'] if section=='candlepilot_health' else bridge.identity()
+                            value=persisted(bridge.directory/'stock_monitor.sqlite3') if section=='persisted' else bridge.identity()['candlepilot_health'] if section=='candlepilot_health' else bridge.identity(include_candlepilot=False)
                             return value,{'published_at':bridge.published_at}
                         value,revision,metadata,remaining=bridge.read_pages.read(section,args.get('expected_revision'),load)
                         published=metadata['published_at']
@@ -196,7 +196,7 @@ class Bridge:
                         'analytics_status':'PENDING','reason':'Background analytics for this selection are not published yet'}
             self.published_at=time.time()
 
-    def identity(self,include_diagnostics=True):
+    def identity(self,include_diagnostics=True,include_candlepilot=True):
         from mcp_server import TOOLS
         path=str((self.directory/'stock_monitor.sqlite3').resolve())
         if not include_diagnostics:
@@ -219,11 +219,14 @@ class Bridge:
         from paper_account import status
         try:paper=status(path)
         except Exception:paper={'status':'UNAVAILABLE','virtual':True}
-        from candlepilot_health import collect
-        try:
-            cp_health=collect(path,self.state)
-            cp_health['activity']=getattr(self,'cp_activity',{'state':'UNKNOWN'})
-        except Exception as error:cp_health={'status':'UNAVAILABLE','reason':type(error).__name__}
+        cp_health={'status':'NOT_READ','tool':'stock_monitor_snapshot','section':'candlepilot_health',
+            'reason':'PAPER runtime does not run the separate full-history CandlePilot diagnostic'}
+        if include_candlepilot:
+            from candlepilot_health import collect
+            try:
+                cp_health=collect(path,self.state)
+                cp_health['activity']=getattr(self,'cp_activity',{'state':'UNKNOWN'})
+            except Exception as error:cp_health={'status':'UNAVAILABLE','reason':type(error).__name__}
         return {'candlepilot_health':cp_health,'paper_account':paper,'version':'0.16-dev','mcp_api_revision':2,'scope':'test','instance_id':self.instance_id,
                 'environment_id':hashlib.sha256(path.encode()).hexdigest()[:16],
                 'database_path':path,'endpoint':f'http://127.0.0.1:{self.server.server_port}/bridge',
@@ -244,5 +247,6 @@ class Bridge:
             if json.loads(self.descriptor.read_text())['token']==self.token:self.descriptor.unlink()
         except (OSError,ValueError,KeyError):pass
         threading.Thread(target=self.server.shutdown,daemon=True).start()
+
 
 
