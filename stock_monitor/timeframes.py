@@ -149,6 +149,8 @@ def accepted_display_slots(meta,missing,target,now):
 
 
 def aggregate(frame,base,target,now=None):
+    from gettex_first import bound
+    nonblocking=bound(frame)
     now=pd.Timestamp(now or pd.Timestamp.now(tz='UTC'))
     meta=frame.attrs.copy();zone=meta.get('timezone')
     raw_report=quality.audit(frame,base,now=now,
@@ -158,7 +160,7 @@ def aggregate(frame,base,target,now=None):
     # Availability/recovery is a separate gate, not a replacement for candle validation.
     if inherited.get('state')=='INVALID' and raw_report['state']!='INVALID':raw_report=inherited
     source_gap=inherited.get('state')=='SOURCE_GAP' and raw_report['state'] in ('READY','STALE','GAP')
-    if raw_report['state']=='INVALID':
+    if raw_report['state']=='INVALID' and not nonblocking:
         out=frame.iloc[:0].copy();out.attrs['data_quality']=raw_report;return out
     # Pandas copies attrs on every slice/column access. Large DQ reports made
     # session aggregation repeatedly deep-copy the same metadata thousands of
@@ -184,8 +186,8 @@ def aggregate(frame,base,target,now=None):
             tv_used.extend(map(str,tv))
             day_records,day_excluded,day_gaps=_session_buckets(tuple(meta.get(k) for k in quality.IDENTITY),
                 base,target,opening,closing,tuple(stamps),tuple(map(tuple,numeric[left:right])),tuple(empty),
-                source_gap or raw_report['state'] in ('GAP','UNCONFIRMED'),
-                frame.index[0] if stamps[0]==frame.index[0] else opening,
+                (source_gap or raw_report['state'] in ('GAP','UNCONFIRMED')) and not nonblocking,
+                frame.index[0] if stamps[0]==frame.index[0] and not nonblocking else opening,
                 bool(meta.get('display_live_tail')) and stamps[-1]==frame.index[-1])
             excluded.extend(day_excluded);gap_excluded.extend(day_gaps)
             for start,end,o,h,l,c,v,complete in day_records:
