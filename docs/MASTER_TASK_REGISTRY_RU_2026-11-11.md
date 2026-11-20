@@ -26148,3 +26148,6 @@ Windows Apple: все 11 TF отображены с индикаторами; д
 Снимок generated_at09:23:15UTC:65записей инструментов,59акций; сохранённых оценок58, CURRENT0, STALE57, EXPIRED1, UNKNOWN1; chart_ready2, analysis_ready2, signal_ready0, trade_ready0, chart_ready_at_last_assessment49. Эти счётчики относятся к сохранённым оценкам CP, а не к независимым оперативным PAPER-контекстам. Их не заменяли шестью CORE READY и не выдавали нулевую доставку за результат. DQ-серии: READY90, UNCONFIRMED470, GAP55, INVALID49, SOURCE_GAP39, SOURCE_UNAVAILABLE5. Полный аудит всех акций повторно не запускался — прочитаны сохранённые результаты.
 
 [Подробный отчёт](https://github.com/swindler2010/StockMonitor/blob/work1/gettex-first-issue20/docs/GETTEX_FIRST_ISSUE20_RU.md) · [PR21](https://github.com/swindler2010/StockMonitor/pull/21)
+
+
+20.11, 10:26:26CET: зафиксирован второй естественный автоматический PAPER BUY, теперь Meta, инициатор V5 / V5_OPEN_RANGE_BREAK, цена из15m, plan stop/target и gettex_first_v1 в квитанции. Work приказ не создавал. Итого после backup два новых автоматических входа Apple/Meta, все исходные исполнения неизменны, архив/политика счёта и настройки сохранены. Новых SELL этих входов ещё не подтверждено. Параметры денег/размера/цен остаются только локально.
