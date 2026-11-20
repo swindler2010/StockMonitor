@@ -56,6 +56,10 @@ class Bridge:
                         section=args.get('section','snapshot')
                         def load():
                             from mcp_projection import persisted
+                            if section=='quality_evidence':
+                                from dq_evidence import collect
+                                value=collect(bridge.directory/'stock_monitor.sqlite3',args.get('evidence_isin'),args.get('evidence_page',0))
+                                return value,{'published_at':published}
                             if section=='freshness':
                                 from freshness_view import collect
                                 value=collect(bridge.directory)
@@ -68,7 +72,8 @@ class Bridge:
                                 value=collect(bridge.directory/'stock_monitor.sqlite3',state)
                                 value['activity']=getattr(bridge,'cp_activity',{'state':'UNKNOWN'})
                                 return value,{'published_at':published}
-                            value=persisted(bridge.directory/'stock_monitor.sqlite3') if section=='persisted' else bridge.identity(include_candlepilot=False)
+                            value=persisted(bridge.directory/'stock_monitor.sqlite3') if section=='persisted' else bridge.identity(include_candlepilot=False)
+
                             return value,{'published_at':bridge.published_at}
                         expected=args.get('expected_revision')
                         if section=='candlepilot_health' and not expected:
@@ -84,7 +89,8 @@ class Bridge:
                                     # No extra queue, per-stock thread, or Tk calculation.
                                     bridge.read_pages.finish_deferred(section,load)
                                 return
-                        value,revision,metadata,remaining=bridge.read_pages.read(section,expected,load)
+                        lease_section=(section+':'+str(args.get('evidence_isin'))+':'+str(args.get('evidence_page',0)) if section=='quality_evidence' else section)
+                        value,revision,metadata,remaining=bridge.read_pages.read(lease_section,expected,load)
                         published=metadata.get('published_at')
                         result=page(value,args,revision)
                         result.update(instance_id=bridge.instance_id,version='0.16-dev',scope='test',snapshot_published_at=published,
@@ -121,7 +127,7 @@ class Bridge:
                         from mcp_server import validate_arguments
                         validate_arguments(action,args)
                         result=receipt(bridge.command_status(args),{k:args[k] for k in ('path','offset','limit','expected_revision') if k in args})
-                    elif action in ('refresh','select','set_levels','add_instrument','remove_instrument','update_position','record_decision','review_decision','read_analytics','paper_trade','get_indicators','set_indicators'):
+                    elif action in ('refresh','select','set_levels','add_instrument','remove_instrument','update_position','record_decision','review_decision','read_analytics','paper_trade','get_indicators','set_indicators','reconcile_dq_evidence'):
                         from mcp_server import validate_arguments
                         validate_arguments(action,args)
                         result=bridge.commands.submit(action,args,obj.get('command',{}))

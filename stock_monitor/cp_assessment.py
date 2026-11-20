@@ -10,11 +10,12 @@ PREFIX='cp_assessment_request:'
 CURSOR='cp_assessment_rotation'
 
 
-def request(store,isin):
+def request(store,isin,valid=None):
     with store.connect() as db:
         db.execute('BEGIN IMMEDIATE')
         row=db.execute('SELECT value FROM settings WHERE key=?',(PREFIX+isin,)).fetchone()
         value=json.loads(row[0]) if row else dict(isin=isin,requested_at=time.time())
+        if valid is not None and not valid():raise ValueError('EVIDENCE_REQUEST_EXPIRED')
         if row is None:db.execute('INSERT INTO settings VALUES (?,?)',(PREFIX+isin,json.dumps(value)))
     return dict(deferred=True,isin=isin,requested_at=value['requested_at'])
 

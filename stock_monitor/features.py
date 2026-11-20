@@ -288,6 +288,9 @@ class Features:
         return True
 
     def bridge_dispatch(self,action,args):
+        if action=='reconcile_dq_evidence':
+            from dq_evidence import dispatch
+            return dispatch(self,args)
         if action=='paper_trade':
             from paper_orders import owner_route, submit
             if owner_route(self.store.setting('paper_auto_1h',{}),args.get('isin')):

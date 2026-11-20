@@ -19,6 +19,10 @@ def route(action,args):
     elif kind=='@catalog':prefix='/@catalog';extra={};action='list_instruments'
     elif kind=='@persisted':prefix='/@persisted';extra={'section':'persisted'};action='snapshot'
     elif kind=='@freshness':prefix='/@freshness';extra={'section':'freshness'};action='snapshot'
+    elif kind=='@dq-evidence':
+        import re
+        if len(parts)<4 or not re.fullmatch('[A-Z0-9]{12}',parts[2]) or not re.fullmatch('[0-9]{1,6}',parts[3]):raise ValueError('INVALID_EVIDENCE_ROUTE')
+        prefix='/'.join(parts[:4]);extra={'section':'quality_evidence','evidence_isin':parts[2],'evidence_page':int(parts[3])};action='snapshot'
     else:raise ValueError('INVALID_READ_ROUTE')
     args={k:v for k,v in args.items() if k in ('offset','limit','expected_revision')}
     args.update(extra,path=path[len(prefix):])
@@ -41,5 +45,6 @@ def decorate(result,prefix,instance):
 
 def routes():
     return {'tool':'stock_monitor_snapshot','section':'snapshot','catalog':'/@catalog',
-        'persisted':'/@persisted','freshness':'/@freshness','receipt':'/@receipt/{instance_id}/{command_id}',
+        'persisted':'/@persisted','freshness':'/@freshness','dq_evidence':'/@dq-evidence/{isin}/{page}',
+        'receipt':'/@receipt/{instance_id}/{command_id}',
         'semantics':'Read-only aliases with the same paging, allowlists, instance and stale guards.'}

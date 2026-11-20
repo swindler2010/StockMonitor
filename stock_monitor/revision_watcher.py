@@ -316,6 +316,50 @@ def retime_plan(db,job,inputs,now):
   origin='official GETTEX trade publications; TV observation is diagnostic only')
 
 
+def receipt_source_current(source,receipt):
+ """Exact existing receipt, scoped to its immutable historical window.
+
+ Revalidate the entire source in _official_window first. Only equivalent
+ interval geometry and an exchange notice OUTSIDE that window can differ.
+ Prices, trades, required file hashes, identity and unknown facts stay exact.
+ """
+ import copy
+ from cp_controls import digest
+ try:
+  saved=receipt['source'];expected=receipt['source_digest']
+  # A modified receipt must not lend a forged authority to unchanged data.
+  if digest(saved)!=expected:return False
+  if digest(source)==expected:return True
+  a,b=pd.Timestamp(receipt['first']),pd.Timestamp(receipt['end'])
+  if a.tzinfo is not None or b.tzinfo is not None or pd.isna(a) or pd.isna(b) or a>=b:return False
+  def scoped(value):
+   result=copy.deepcopy(value);proof=result['proof']
+   for field in ('no_trades','trade_intervals','zero_quantity_intervals','incomplete_publication_intervals'):
+    if field not in proof:continue
+    clipped=[]
+    for x,y in proof[field]:
+     x,y=pd.Timestamp(x),pd.Timestamp(y)
+     if x.tzinfo is not None or y.tzinfo is not None or pd.isna(x) or pd.isna(y) or x>=y:raise ValueError('INVALID_EVIDENCE_RANGE')
+     if x<b and y>a:clipped.append((max(x,a),min(y,b)))
+    merged=[]
+    for x,y in sorted(clipped):
+     if merged and x<=merged[-1][1]:merged[-1]=(merged[-1][0],max(y,merged[-1][1]))
+     else:merged.append((x,y))
+    proof[field]=[(str(x),str(y)) for x,y in merged]
+   if 'exchange_closures' in proof:
+    relevant=[]
+    for entry in proof['exchange_closures']:
+     x,y=pd.Timestamp(entry['start']),pd.Timestamp(entry['end'])
+     if pd.isna(x) or pd.isna(y) or x.tzinfo is not None or y.tzinfo is not None or x>=y:raise ValueError('INVALID_CLOSURE')
+     if x<b and y>a:relevant.append(entry)
+    if relevant:proof['exchange_closures']=relevant
+    else:
+     proof.pop('exchange_closures');proof.pop('closure_checked_at',None)
+   return result
+  return digest(scoped(source))==digest(scoped(saved))
+ except (ValueError,KeyError,TypeError):return False
+
+
 def retime_current(db,receipt,now=None):
  from cp_controls import read,digest
  from eur_listings import stored_identity
@@ -326,7 +370,7 @@ def retime_current(db,receipt,now=None):
   if not row or not stored_identity(db,json.loads(row[0]),receipt['identity'],'15m'):return False
   source=_official_window(db,receipt['isin'],receipt['first'],receipt['end'],pd.Timestamp(now or pd.Timestamp.now(tz='UTC')),
    allow_zero_rows=receipt.get('mode') in ('VERIFIED_NATIVE_EMPTY','VERIFIED_PRICE_OBSERVATION_TIMEBASE') and receipt.get('zero_observations_corroborated') is True)
-  if digest(source)!=receipt['source_digest']:return False
+  if not receipt_source_current(source,receipt):return False
   return all(digest(_native(db,receipt['isin'],receipt['identity'],base,receipt['first'],receipt['end']))==digest(rows)
              for base,rows in source['rows'].items())
  except (ValueError,KeyError,TypeError):return False
