@@ -6,6 +6,20 @@ from gettex_first import calculation_allowed,bind,bound
 from trading_engine import evaluate
 
 class GettexFirstTests(unittest.TestCase):
+ def test_stale_chart_is_rejected_and_current_view_requeued_once(self):
+  from benchmark_ui import BenchmarkMixin
+  from types import SimpleNamespace as NS,MethodType
+  from unittest.mock import Mock,patch
+  values={'watchlist':[{'isin':'TEST'}],'timeframe':'2H','period':'Max'};view=[values];pending=[]
+  app=NS(closing=False,store=NS(read_cache=NS(current=lambda token:False)),root=NS(after=lambda delay,work:pending.append(work)),refresh_chart=Mock())
+  app._retry_current_chart=MethodType(BenchmarkMixin._retry_current_chart,app)
+  with patch('chart_worker.capture',side_effect=lambda _:view[0]):
+   BenchmarkMixin._apply_chart(app,(values,{'_input_revisions':{'market:TEST:15m':1}}))
+   self.assertEqual(len(pending),1);app.refresh_chart.assert_not_called()
+   app._retry_current_chart(values);self.assertEqual(len(pending),1)
+   pending.pop()();app.refresh_chart.assert_called_once()
+   app.refresh_chart.reset_mock();app._retry_current_chart(values)
+   view[0]={**values,'timeframe':'4H'};pending.pop()();app.refresh_chart.assert_not_called()
  def test_paper_runtime_does_not_wait_for_full_history_audit(self):
   from bridge import Bridge
   from pathlib import Path
