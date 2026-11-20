@@ -63,10 +63,29 @@ class Bridge:
                                 return value,{'published_at':bridge.published_at}
                             if section=='snapshot':
                                 with bridge.lock:return bridge.state,{'published_at':bridge.published_at}
-                            value=persisted(bridge.directory/'stock_monitor.sqlite3') if section=='persisted' else bridge.identity()['candlepilot_health'] if section=='candlepilot_health' else bridge.identity(include_candlepilot=False)
+                            if section=='candlepilot_health':
+                                from candlepilot_health import collect
+                                value=collect(bridge.directory/'stock_monitor.sqlite3',state)
+                                value['activity']=getattr(bridge,'cp_activity',{'state':'UNKNOWN'})
+                                return value,{'published_at':published}
+                            value=persisted(bridge.directory/'stock_monitor.sqlite3') if section=='persisted' else bridge.identity(include_candlepilot=False)
                             return value,{'published_at':bridge.published_at}
-                        value,revision,metadata,remaining=bridge.read_pages.read(section,args.get('expected_revision'),load)
-                        published=metadata['published_at']
+                        expected=args.get('expected_revision')
+                        if section=='candlepilot_health' and not expected:
+                            deferred,expected=bridge.read_pages.begin_deferred(section)
+                            if deferred!='READY':
+                                self.respond(200,{'status':'INDETERMINATE','section':section,
+                                    'data_status':'NOT_AVAILABLE_YET','readiness':'NOT_EVALUATED',
+                                    'instance_id':bridge.instance_id,'retry_after_seconds':2,
+                                    'hint':'Repeat this read without expected_revision; one full diagnostic is already running. No zero counts inferred.'})
+                                self.wfile.flush()
+                                if deferred=='START':
+                                    # Complete on this existing HTTP thread, after replying.
+                                    # No extra queue, per-stock thread, or Tk calculation.
+                                    bridge.read_pages.finish_deferred(section,load)
+                                return
+                        value,revision,metadata,remaining=bridge.read_pages.read(section,expected,load)
+                        published=metadata.get('published_at')
                         result=page(value,args,revision)
                         result.update(instance_id=bridge.instance_id,version='0.16-dev',scope='test',snapshot_published_at=published,
                             page_lease_remaining_seconds=remaining,page_semantics='Pinned read-only publication; does not extend analytics/signal/trade readiness',
