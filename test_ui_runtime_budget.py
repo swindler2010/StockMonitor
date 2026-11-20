@@ -79,4 +79,44 @@ class FreshnessBudgetTests(unittest.TestCase):
    for _ in range(200):r.request('FEED_COMPLETED:TEST')
    self.assertEqual(len(jobs),1);self.assertEqual(len(timers),1);self.assertFalse(published)
 
+class LineageReadBudgetTests(unittest.TestCase):
+ def test_one_wal_view_reuses_proof_next_read_rechecks_and_race_rejects(self):
+  import tempfile,pandas as pd
+  from test_cp_tv_legacy_reference import FlatStore
+  from analytical_read import calculate_consistent
+  from history_service import attach_parent_provenance,parent_provenance_key
+  from performance_cache import InputRevisionChanged
+  import revision_watcher as rw
+  archive=Path(__file__).parent.parent.parent/'СМ-Архив'
+  with tempfile.NamedTemporaryFile(dir=archive,suffix='.sqlite3',delete=False) as file:path=Path(file.name)
+  store=None
+  try:
+   store=FlatStore(path);isin='TEST';key='receipt:TEST';stamp='2026-11-13 10:00:00'
+   meta=dict(source='gettex_chart',symbol='TEST.GTX',venue='GETTEX',currency='EUR',timezone='Europe/Berlin')
+   receipt=dict(first=stamp,end='2026-11-13 10:15:00',source={'proof':{'identity':meta}})
+   store.set_setting(key,receipt);store.set_setting(rw.RETIME_POLICY,{'approved':True})
+   store.set_setting('interval_evidence:'+isin,dict(identity=meta,checked_at='2026-11-14T09:00Z'))
+   store.set_setting(parent_provenance_key(isin,meta,'15m'),{stamp:{'official_timebase':key}})
+   frame=pd.DataFrame([[100,101,99,100,1]],index=pd.to_datetime([stamp]),columns=['open','high','low','close','volume']);frame.attrs=meta
+   def calculate(captured,values):
+    frames=[attach_parent_provenance(captured,frame.copy(),isin,'15m') for _ in range(values['count'])]
+    if values.get('race'):store.set_setting(rw.RETIME_POLICY,{'approved':False})
+    return {'invalid':frames[-1].attrs['invalid_parent_provenance']}
+   with patch('revision_watcher.retime_current',return_value=True) as check:
+    for count in (53,200):
+     before=check.call_count
+     result=calculate_consistent(store,{'count':count},calculate)
+     self.assertEqual(check.call_count,before+1);self.assertEqual(result['invalid'],[])
+     self.assertIn('setting:'+rw.RETIME_POLICY,result['_input_revisions'])
+     self.assertIn('setting:gettex_chart:TEST:15m',result['_input_revisions'])
+    with self.assertRaises(InputRevisionChanged):calculate_consistent(store,{'count':2,'race':True},calculate)
+   with patch('revision_watcher.retime_current',return_value=False) as check:
+    self.assertEqual(calculate_consistent(store,{'count':2},calculate)['invalid'],[stamp]);self.assertEqual(check.call_count,1)
+    # Ordinary writer/read calls never reuse the transaction-only receipt.
+    for _ in range(2):attach_parent_provenance(store,frame.copy(),isin,'15m')
+    self.assertEqual(check.call_count,3)
+  finally:
+   if store:store.read_cache.close()
+   for suffix in ('','-wal','-shm'):Path(str(path)+suffix).unlink(missing_ok=True)
+
 if __name__=='__main__':unittest.main()
