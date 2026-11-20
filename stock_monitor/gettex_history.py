@@ -416,7 +416,7 @@ def _review_coverage(store,summary):
 
 
 
-def acquire_missing_evidence(info,store,http,now=None,budget=8):
+def acquire_missing_evidence(info,store,http,now=None,budget=8,max_seconds=5):
     """Bounded official-file acquisition in the existing serialized feed worker.
 
     Files are shared by all ISINs. Acquisition never certifies absence or changes
@@ -424,6 +424,7 @@ def acquire_missing_evidence(info,store,http,now=None,budget=8):
     Persistent per-day leases/cooldowns also survive an interrupted application.
     """
     import json,hashlib
+    started=time.monotonic();seconds=max(.01,min(5.,float(max_seconds)))
     from timeframes import schedule
     clock=pd.Timestamp(now or pd.Timestamp.now(tz='UTC'))
     cooldown=max(filter(None,[store.setting('candlepilot_source_cooldown',None),store.setting('cp_source_retry:gettex',None)]),default=None)
@@ -486,7 +487,14 @@ def acquire_missing_evidence(info,store,http,now=None,budget=8):
             templates=[urlparse(location) for location in locations.values()]
             if not templates:raise ValueError('NO_PUBLISHED_OFFICIAL_FILE_TEMPLATE')
             u=templates[0]
+            attempts=0
             for name in missing[:max(1,min(8,budget))]:
+                # Never abort HTTP or a write. Yield between completed files,
+                # preserving the cursor and existing global retry/429 policy.
+                # Allow one file even after a slow manifest to avoid starvation.
+                if attempts and time.monotonic()-started>=seconds:
+                    result['yielded']=True;result['stop_reason']='TIME_BUDGET';break
+                attempts+=1
                 url=locations.get(name) or u._replace(path=u.path.rsplit('/',1)[0]+'/'+name,query='',fragment='').geturl()
                 target=cache/name
                 original=target.read_bytes() if target.exists() else None
