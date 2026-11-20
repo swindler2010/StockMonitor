@@ -675,7 +675,7 @@ def accumulate_cached_pair(store,parse,now=None,recent_only=False):
                 if signature!={mic:[p.stat().st_size,p.stat().st_mtime_ns] for mic,p in files.items()}:return {'state':'INPUT_CHANGED'}
             if previous.get('sha256') and previous['sha256']!=hashes:
                 raise ValueError('CHANGED_SOURCE_FILE_REQUIRES_EXISTING_RECOVERY')
-            candles=[];trades=[];lo=(anchor-pd.Timedelta(minutes=15)).tz_convert('Europe/Berlin').tz_localize(None);hi=anchor.tz_convert('Europe/Berlin').tz_localize(None)
+            candles=[];trades=[];observed_trades={};lo=(anchor-pd.Timedelta(minutes=15)).tz_convert('Europe/Berlin').tz_localize(None);hi=anchor.tz_convert('Europe/Berlin').tz_localize(None)
             for isin,lines in rows.items():
                 if isin in errors:continue
                 frame=parse(('\n'.join(lines)+'\n').encode(),isin,file_time=anchor)
@@ -693,6 +693,7 @@ def accumulate_cached_pair(store,parse,now=None,recent_only=False):
                     pending.extend((isin,'gettex',base,str(t),*(float(row[f]) for f in quality.FIELDS)) for t,row in bars.iterrows())
                 if isin in errors:continue
                 candles.extend(pending);trades.extend((isin,str(t),float(row.price),float(row.volume)) for t,row in frame.iterrows())
+                observed_trades[isin]=frame
             added=conflicts=0;updated_isins=set()
             with store.connect() as db:
                 db.execute('BEGIN IMMEDIATE')
@@ -729,6 +730,10 @@ def accumulate_cached_pair(store,parse,now=None,recent_only=False):
                     current_universe_pairs=sum(v.get('universe')==universe for v in done.values()),
                     candles_added_total=progress.get('candles_added_total',0)+added)
                 db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',('gettex_cached_history',json.dumps(progress)))
+            from delivery_observations import official_trades
+            for isin,frame in observed_trades.items():
+                if isin not in rejected:
+                    official_trades(store.directory,isin,frame,hashes,anchor,clock.isoformat())
             return dict(state=receipt['state'],pair=label,added=added,conflicts=conflicts,errors=errors,updated_isins=sorted(updated_isins))
         except (OSError,EOFError,UnicodeError,ValueError) as error:
             closed_hashes=_empty_closed_pair(files,anchor,signature) if str(error)=='EMPTY_FILE_UNCONFIRMED' else None
