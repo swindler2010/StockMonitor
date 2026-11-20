@@ -6,6 +6,37 @@ from gettex_first import calculation_allowed,bind,bound
 from trading_engine import evaluate
 
 class GettexFirstTests(unittest.TestCase):
+ def test_legacy_validation_window_retains_warning_and_own_quote_guards(self):
+  from calculation_window import inspect
+  pd=fixtures.pd
+  f=self.frame();f.index=pd.date_range('2026-11-04 07:30',periods=len(f),freq='15min')
+  f.attrs.update(timeframe='15m',data_quality={'state':'INVALID'});f['bar_complete']=False
+  f=bind(f,{'isin':'US0378331005'})
+  # Use the morning's actual available portion, retaining sufficient older rows.
+  f.index=pd.bdate_range('2026-01-01',periods=len(f)-1).append(pd.DatetimeIndex(['2026-11-04 10:15']))
+  now=pd.Timestamp('2026-11-04T09:35Z')
+  r=inspect({'isin':'US0378331005'},f,'15m',now)
+  self.assertEqual(r['status'],'READY',r['blockers']);self.assertEqual(r['archive_quality']['state'],'INVALID')
+  self.assertIn('STALE_EXECUTION_BAR',inspect({'isin':'US0378331005'},f,'15m',now+pd.Timedelta(minutes=30))['blockers'])
+  f.iloc[0,f.columns.get_loc('high')]=0
+  self.assertNotEqual(inspect({'isin':'US0378331005'},f,'15m',now)['status'],'READY')
+ def test_quote_warning_is_advisory_but_actual_price_and_age_are_checked(self):
+  import test_paper_hourly as fixture
+  import paper_account as paper
+  from eur_listings import stored_identity
+  case=fixture.HourlyTests();case.setUp();self.addCleanup(case.tearDown)
+  q=case.result_for('BUY')['execution_quote']
+  proof=stored_identity(case.db,case.info,q['identity'],'15m')
+  for state in ('INVALID','UNCONFIRMED','STALE','SOURCE_GAP'):
+   q['data_quality']={'state':state,'checked_at':'2020-01-01T00:00:00Z'}
+   self.assertEqual(paper.quote(case.info,q,case.now,stored_listing=proof)[1]['close'],100)
+  bad=copy.deepcopy(q);bad['bars'][0]['close_at']='2026-11-04T08:30:00Z'
+  with self.assertRaisesRegex(ValueError,'STALE_QUOTE'):paper.quote(case.info,bad,case.now,stored_listing=proof)
+  bad=copy.deepcopy(q);bad['bars'][0]['high']=0
+  with self.assertRaisesRegex(ValueError,'BAD_OHLCV'):paper.quote(case.info,bad,case.now,stored_listing=proof)
+  bad=copy.deepcopy(q);bad['bars'][0]['open_at']='2026-11-04T10:16:00+01:00'
+  with self.assertRaisesRegex(ValueError,'QUOTE_DQ_BLOCKED'):paper.quote(case.info,bad,case.now,stored_listing=proof)
+  with self.assertRaisesRegex(ValueError,'IDENTITY_BLOCKED'):paper.quote(case.info,q,case.now)
  def test_aggregation_keeps_actual_bars_without_claiming_complete_coverage(self):
   pd=fixtures.pd
   f=self.frame().iloc[:7].copy()
