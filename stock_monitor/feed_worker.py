@@ -47,16 +47,22 @@ class FeedContext(StockMonitor):
         if local.get('error'):result.setdefault('errors',[]).append('CP local history: '+local['error'])
         fresh=bool(info.get('_gettex_poll_only'))
         from cp_controls import automatic_turn
-        result['cp_auto_risk']=automatic_turn(self.store,info)
+        policy=self.store.setting('cp_gettex_source_policy',{})
+        # A fresh-price reservation is acquisition-only under the explicit
+        # GETTEX-first policy. Historical grant maintenance belongs to normal
+        # history turns; every consumer still validates live grant inputs.
+        defer_risk=(fresh and policy.get('approved') is True and policy.get('version')==1
+            and policy.get('scope')=='registered_stocks' and policy.get('exclusive_venue')=='GETTEX')
+        result['cp_auto_risk']={'state':'DEFERRED_HISTORY'} if defer_risk else automatic_turn(self.store,info)
         # One bounded diagnostic stage on the existing serial writer. It never
         # controls Desktop, requests prices or changes factual DQ.
         from cp_reconciliation import turn
         try:
             if not fresh:result['cp_reconciliation']=turn(self.store,info)
             from cp_controls import tv_risk_turn
-            result['cp_tv_risk']=tv_risk_turn(self.store,info)
+            result['cp_tv_risk']={'state':'DEFERRED_HISTORY'} if defer_risk else tv_risk_turn(self.store,info)
             from cp_controls import reviewed_risk_turn
-            result['cp_reviewed_risk']=reviewed_risk_turn(self.store,info)
+            result['cp_reviewed_risk']={'state':'DEFERRED_HISTORY'} if defer_risk else reviewed_risk_turn(self.store,info)
             requested=result['cp_reviewed_risk'].get('analysis_requested_at') or result['cp_tv_risk'].get('analysis_requested_at') or result.get('cp_reconciliation',{}).get('analysis_requested_at')
             if fresh and not requested:
                 # Resume an already durable request after restart, including an
