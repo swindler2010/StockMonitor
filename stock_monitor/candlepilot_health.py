@@ -56,7 +56,7 @@ def review_comparison_text(row):
     return text
 
 def readiness_text(summary):
-    return tr('Smart Eligibility: проверено {p0}/{p1} акций; оценки актуальны: {p2}. Контекст графика: актуален {p3}, прошёл последнюю оценку {p4}.\nАнализ: {p5}; сигнал: {p6}; демоторговля: {p7}. Это допуски расчётных контекстов, не количество акций со свечами в архиве.\n',
+    return tr('Сохранённые оценки СР: проверено {p0}/{p1} акций; актуальны: {p2}. Контекст графика: актуален {p3}, прошёл последнюю оценку {p4}.\nАнализ: {p5}; сигнал: {p6}; демоторговля: {p7}. Эти счётчики относятся к сохранённым оценкам. Предупреждения СР не останавливают расчёт по фактическим GETTEX-барам; исполнение сделки проверяется отдельно.\n',
         p0=summary['assessed'],p1=summary['stocks'],p2=summary['current'],p3=summary['chart_ready'],
         p4=summary['chart_ready_at_last_assessment'],p5=summary['analysis_ready'],p6=summary['signal_ready'],p7=summary['trade_ready'])
 
@@ -274,7 +274,10 @@ def collect(path,snapshot=None,problem_isin=None,problem_page=0):
     result['problem_summary']=problem_summary
     result['owner_controls']=owner_controls
     result['owner_controls_version']=1
-    result['manual_risk_note']='Accepted missing bars can enter a separate owner-risk CORE context. DQ stays factual; invalid data, warmup and stale quotes remain blocked.'
+    result['manual_risk_note']='Legacy receipts remain preserved. Verified factual GETTEX bars use issue20 availability independently of CP warnings; malformed actual inputs, mathematical insufficiency and separate execution guards remain enforced.'
+    result['calculation_policy']={'version':'gettex_first_v1','dq_opinions':'AUDIT_ONLY_FOR_VERIFIED_FACTUAL_GETTEX',
+        'saved_eligibility_counters':'Not an inventory of immediately computable actual bars; each calculation is validated separately',
+        'execution':'Independent source/identity/quote/session/revision/risk checks, never granted by warning counts'}
     result['eligibility_summary']=dict(stocks=len(eligibility),assessed=sum(bool(v.get('checked_at')) for v in eligibility.values()),
         current=sum(v['state']=='CURRENT' for v in eligibility.values()),
         assessment_states=dict(Counter(v['state'] for v in eligibility.values())),
@@ -686,3 +689,4 @@ def show(app):
     search.trace_add('write', filter_rows)
     tree.bind('<<TreeviewSelect>>', selected)
     poll()
+
