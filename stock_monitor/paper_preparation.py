@@ -192,7 +192,11 @@ def admit(db,info,result,now):
         if (current[0] if current else 0)!=revision:raise ValueError('PAPER_STALE_INPUTS')
     validate_analysis(db,info,result,now,cfg)
     admission=dict(basis='CURRENT_QUOTE')
-    if result.get('quote_blocker')=='PAPER_STALE_QUOTE':
+    from gettex_first import engine_available
+    if engine_available(result.get('execution_context',{}).get('trading_engine',{}),result['hourly']['required_tf']):
+        admission=dict(basis='GETTEX_AVAILABLE_ANALYSIS',execution_blocker=result.get('quote_blocker'),
+            note='Admission is independent of CP warnings and executable quote; execution guards run for every order')
+    elif result.get('quote_blocker')=='PAPER_STALE_QUOTE':
         admission=closed_session_archive(db,info,identity,result,now)
     else:
         if result.get('quote_blocker'):raise ValueError(result['quote_blocker'])
