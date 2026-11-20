@@ -1641,14 +1641,16 @@
         "Bound runtime overhead: poll semantic input revisions instead of decoding full historical DQ on Tk; read post-feed analysis from one WAL view; coalesce automatic freshness diagnostics with a 60-second cooldown and publish explicit as-of results; reuse lineage checks only inside the same immutable WAL transaction. Recheck on the next read and retain final live revision validation. Do not warm all legacy archives on Tk startup.",
         "Validate exact numeric/index/source fields through metadata-free pandas views; retain original source contract and evidence, reject malformed OHLCV/identity as before. Large evidence trees must not be deep-copied for each numeric column.",
         "After an ordinary official fresh acquisition, ingest one recent already saved complete MUNC/MUND pair for the registered EUR universe before old archive backlog. Reuse atomic source/identity/conflict checks; enqueue existing assessment requests only for changed stocks. Keep old-history turns and separate provider archives. Save only evidence-backed severe anomalies in the existing progress: invalid native rows or confirmed trades without a native bar. Ordinary gaps/zero volume/delays and matching TV absences are not severe; a cross-exchange gap is context, never GETTEX proof.",
-        "Retain the bounded ReadCache only in an owned serial readonly compute child across WAL views, rolling back the view before final live revision checks. Reuse unchanged chart artists only after source/file/selection/revision validation; recompute CORE separately. Use metadata-free numeric plotting views. Yield historical HTTP acquisition between files after a soft time budget, preserve durable cursor/cooldown, and never cancel an active writer or infer data readiness from cache reuse."
+        "Retain the bounded ReadCache only in an owned serial readonly compute child across WAL views, rolling back the view before final live revision checks. Reuse unchanged chart artists only after source/file/selection/revision validation; recompute CORE separately. Use metadata-free numeric plotting views. Yield historical HTTP acquisition between files after a soft time budget, preserve durable cursor/cooldown, and never cancel an active writer or infer data readiness from cache reuse.",
+        "Issue16: obtain market event time only from the existing committed validated official MUNC/MUND positive-quantity trade path. Bind exact UTC-anchored time and file SHA256; persist monotonic confirmed_latest in the existing diagnostic journal. Cached replay, backfill, zero quantity, EMPTY and errors never renew that event clock. Bootstrap at most one recent saved pair per registered universe, preserve candles. Keep provider/venue clocks separate, inclusive age limits and UNKNOWN/MARKET_CLOSED; diagnostic age never grants PAPER execution. Legacy receipts cannot be retroactively promoted to confirmed events."
       ],
       "evidence": [
         "test_gettex_first.py",
         "test_paper_preparation.py",
         "test_cp_automatic_repair.py",
         "test_ui_runtime_budget.py",
-        "test_cp_fresh_priority.py"
+        "test_cp_fresh_priority.py",
+        "test_issue16_event_freshness.py"
       ],
       "limits": [
         "Malformed actual data, missing bars and mathematically insufficient indicator inputs remain unavailable.",
