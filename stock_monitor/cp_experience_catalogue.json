@@ -1635,7 +1635,8 @@
         "Keep the deeper whole provider archive for higher TF even when a shorter provider has a newer last bar; never splice its tail.",
         "Reserve a sequential preparation slot after two operational turns when due, so an expanding admitted universe cannot starve its next candidate.",
         "Reuse an existing coherent read transaction for optional execution diagnostics; insufficient parent history must return explicit blockers without aborting the candle page.",
-        "Capture observed batched volume paths in the existing MCP indicator exporter, preserving zeros, missing values and the unchanged volume average; never fabricate bars for continuity."
+        "Capture observed batched volume paths in the existing MCP indicator exporter, preserving zeros, missing values and the unchanged volume average; never fabricate bars for continuity.",
+        "Deliver heavy full-history CP diagnostics through the existing bounded read-page lease: reply INDETERMINATE first, coalesce repeated requests, then expose the detached as-of result. Keep 120-second expiry and explicit UNAVAILABLE on failure, never inferred zero counts."
       ],
       "evidence": [
         "test_gettex_first.py",
