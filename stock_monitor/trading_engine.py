@@ -71,6 +71,8 @@ def evaluate(contexts, selected_tf, position=None, benchmark=None, required=None
         score += side*weight
     for tf in required:
         c=contexts.get(tf,{})
+        if calculation_allowed(c) and c.get('data_quality',{}).get('state')!='READY':
+            warnings.append(tf+': предупреждение CandlePilot '+c.get('data_quality',{}).get('state','UNKNOWN')+'; расчёт по фактическим GETTEX-барам')
         if not c.get('sufficient_history') or not (calculation_allowed(c) or analysis_quality_allowed(c.get('data_quality',{}),c.get('accepted_risk'))) or not c.get('ohlcv_valid') or not c.get('facts'):
             blockers.append(f'{tf}: DATA BLOCKED / '+c.get('data_quality',{}).get('state','UNVERIFIED')+'; '+c.get('reason','Нет проверенной истории'))
     selected=contexts.get(selected_tf,{})
