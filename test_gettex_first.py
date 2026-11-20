@@ -6,6 +6,18 @@ from gettex_first import calculation_allowed,bind,bound
 from trading_engine import evaluate
 
 class GettexFirstTests(unittest.TestCase):
+ def test_paper_runtime_does_not_wait_for_full_history_audit(self):
+  from bridge import Bridge
+  from pathlib import Path
+  from types import SimpleNamespace as NS
+  from unittest.mock import patch
+  import threading
+  b=object.__new__(Bridge);b.directory=Path('.');b.state={};b.lock=threading.Lock()
+  b.server=NS(server_port=0);b.instance_id='fixture';b.published_at=None;b.diagnostic_pipeline={}
+  with patch('paper_account.status',return_value={'status':'ACTIVE'}) as paper,patch('candlepilot_health.collect',side_effect=AssertionError('unrequested audit')):
+   r=b.identity(include_candlepilot=False)
+   self.assertEqual(r['paper_account']['status'],'ACTIVE');self.assertEqual(r['candlepilot_health']['status'],'NOT_READ')
+   paper.assert_called_once()
  def test_advisory_revision_does_not_revoke_factual_closed_inputs(self):
   import test_paper_hourly as fixture
   from performance_cache import capture_closed_inputs,validate_closed_inputs,InputRevisionChanged
