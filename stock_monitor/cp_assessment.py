@@ -10,13 +10,15 @@ PREFIX='cp_assessment_request:'
 CURSOR='cp_assessment_rotation'
 
 
-def request(store,isin,valid=None):
+def request(store,isin,valid=None,explicit=False):
     with store.connect() as db:
         db.execute('BEGIN IMMEDIATE')
         row=db.execute('SELECT value FROM settings WHERE key=?',(PREFIX+isin,)).fetchone()
         value=json.loads(row[0]) if row else dict(isin=isin,requested_at=time.time())
         if valid is not None and not valid():raise ValueError('EVIDENCE_REQUEST_EXPIRED')
-        if row is None:db.execute('INSERT INTO settings VALUES (?,?)',(PREFIX+isin,json.dumps(value)))
+        changed=explicit and not value.get('explicit_recheck_at')
+        if changed:value['explicit_recheck_at']=time.time()
+        if row is None or changed:db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',(PREFIX+isin,json.dumps(value)))
     return dict(deferred=True,isin=isin,requested_at=value['requested_at'])
 
 
@@ -30,7 +32,11 @@ def choose(db,now=None):
     priority=set(cfg.get('identities',{})) if cfg.get('enabled') and cfg.get('approved') else set()
     streak=read(db,CURSOR,0)
     # Two priority turns, then oldest ordinary request. No all-stock fan-out.
-    preferred=[r for r in pending if (r['isin'] in priority)==(streak<2)]
+    # Explicit evidence reconciliation shares the existing 2:1 fair rotation.
+    # It must not wait behind days of unrelated background archive work.
+    preferred=[r for r in pending if (bool(r.get('explicit_recheck_at')) or r['isin'] in priority)==(streak<2)]
+    explicit=[r for r in preferred if r.get('explicit_recheck_at')]
+    if explicit:return min(explicit,key=lambda r:r['explicit_recheck_at'])
     # Compare actual waiting age. A missing last_attempt_at is not time zero:
     # recurrent new requests must not permanently outrank an older due retry.
     return min(preferred or pending,key=lambda r:(r.get('last_attempt_at',r['requested_at']),r['requested_at'],r['isin']))
@@ -53,7 +59,7 @@ def finish(store,item,result=None,error=None):
         key=PREFIX+isin;old=read(db,key,{})
         if old.get('requested_at')!=item['requested_at']:return
         cfg=read(db,CONFIG,{})
-        streak=read(db,CURSOR,0)+1 if isin in cfg.get('identities',{}) else 0
+        streak=read(db,CURSOR,0)+1 if item.get('explicit_recheck_at') or isin in cfg.get('identities',{}) else 0
         db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',(CURSOR,json.dumps(streak)))
         if error:
             old.update(last_attempt_at=now,retry_at=now+60,error=str(error))

@@ -159,6 +159,18 @@ class EvidenceRequest(unittest.TestCase):
    work,done,failed=jobs.pop();done(work());thread.join(3)
    answer=box['result'];self.assertEqual(answer['status'],'COMPLETED');self.assertEqual(answer['result']['status'],'QUEUED')
    saved=store.setting(PREFIX+isin)
+   self.assertIn('explicit_recheck_at',saved)
+   # Same queue, bounded 2:1 rotation; explicit owner work does not starve
+   # an ordinary instrument even with 200 older background requests.
+   from cp_assessment import choose,CURSOR
+   with store.connect() as db:
+    import json
+    for i in range(200):
+     other='ZZ'+str(i).zfill(10)
+     db.execute('INSERT INTO settings VALUES (?,?)',(PREFIX+other,json.dumps({'isin':other,'requested_at':1})))
+    self.assertEqual(choose(db)['isin'],isin)
+    db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',(CURSOR,'2'))
+    self.assertNotEqual(choose(db)['isin'],isin)
    self.assertEqual(request(store,isin)['requested_at'],saved['requested_at'])
    self.assertFalse(answer['result']['grants_changed']);self.assertFalse(answer['result']['candles_changed'])
    with self.assertRaisesRegex(ValueError,'EVIDENCE_REQUEST_EXPIRED'):request(store,isin,lambda:False)

@@ -86,7 +86,7 @@ def dispatch(app,args):
   if not valid():raise ValueError('EVIDENCE_REQUEST_EXPIRED')
   with app.store.connect() as db:
    if not db.execute('SELECT 1 FROM instruments WHERE isin=?',(isin,)).fetchone():raise ValueError('INSTRUMENT_REMOVED')
-  result=request(app.store,isin,valid)
+  result=request(app.store,isin,valid,explicit=True)
   return {**result,'status':'QUEUED','mechanism':'cp_assessment_request',
    'evidence_route':'/@dq-evidence/'+isin+'/0','grants_changed':False,'candles_changed':False,
    'trade_permission':False,'reason':'Existing receipts revalidated by ordinary all-TF assessment; pending is not READY'}
