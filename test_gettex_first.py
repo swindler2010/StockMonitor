@@ -6,6 +6,80 @@ from gettex_first import calculation_allowed,bind,bound
 from trading_engine import evaluate
 
 class GettexFirstTests(unittest.TestCase):
+ def test_advisory_revision_does_not_revoke_factual_closed_inputs(self):
+  import test_paper_hourly as fixture
+  from performance_cache import capture_closed_inputs,validate_closed_inputs,InputRevisionChanged
+  case=fixture.HourlyTests();case.setUp();self.addCleanup(case.tearDown)
+  key='data_quality:'+case.isin+':AAPL.GTX:1H';case.write(key,{'state':'UNCONFIRMED'})
+  token=dict(case.db.execute('SELECT scope,revision FROM input_revisions'))
+  specs=[copy.deepcopy(s['spec']) for s in case.result['hourly']['proof']['series']]
+  for s in specs:s['calculation_policy']='gettex_first_v1'
+  old=capture_closed_inputs(case.db,[{k:v for k,v in s.items() if k!='calculation_policy'} for s in specs],token)
+  proof=capture_closed_inputs(case.db,specs,token)
+  case.write(key,{'state':'INVALID'})
+  validate_closed_inputs(case.db,proof)
+  with self.assertRaises(InputRevisionChanged):validate_closed_inputs(case.db,old)
+  case.db.execute("UPDATE series SET high=high+1 WHERE base_tf='1H'")
+  with self.assertRaisesRegex(InputRevisionChanged,'Closed candle changed'):validate_closed_inputs(case.db,proof)
+ def test_analytical_read_uses_one_view_and_keeps_actual_revision_guard(self):
+  import sqlite3,tempfile,os
+  from pathlib import Path
+  from contextlib import contextmanager
+  from unittest.mock import patch
+  from performance_cache import ReadCache,InputRevisionChanged
+  from analytical_read import calculate_consistent
+  archive=Path(__file__).resolve().parents[2]/'СМ-Архив'
+  fd,path=tempfile.mkstemp(prefix='Issue20 read ',suffix='.sqlite3',dir=archive if archive.is_dir() else None);os.close(fd)
+  self.addCleanup(lambda:os.unlink(path))
+  db=sqlite3.connect(path);self.addCleanup(db.close);db.execute('PRAGMA journal_mode=WAL')
+  db.execute('CREATE TABLE settings(key TEXT PRIMARY KEY,value TEXT)')
+  db.execute('CREATE TABLE input_revisions(scope TEXT PRIMARY KEY,revision INTEGER)')
+  for key in ('data_quality:X:15m','actual'):
+   db.execute('INSERT INTO settings VALUES (?,?)',(key,'0'))
+   db.execute('INSERT INTO input_revisions VALUES (?,0)',('setting:'+key,))
+  db.commit()
+  class Reader:
+   @contextmanager
+   def connect(self):
+    c=sqlite3.connect(self.path)
+    try:yield c
+    finally:c.close()
+   def setting(self,key):
+    self.read_cache.depend('setting:'+key)
+    with self.connect() as c:return c.execute('SELECT value FROM settings WHERE key=?',(key,)).fetchone()[0]
+  store=Reader();store.path=Path(path);store.read_cache=ReadCache(path);self.addCleanup(store.read_cache.close)
+  mode=['data_quality:X:15m']
+  def calculate(captured,values):
+   first=captured.setting(mode[0]);db.execute('UPDATE settings SET value=value+1 WHERE key=?',(mode[0],))
+   db.execute('UPDATE input_revisions SET revision=revision+1 WHERE scope=?',('setting:'+mode[0],));db.commit()
+   self.assertEqual(captured.setting(mode[0]),first)
+   engine=dict(status='READY',timeframe_context={'1H':dict(facts={'price':1},calculation_availability=dict(policy='gettex_first_v1',source_contract=True,analysis_available=True))})
+   return {'analysis_context':{'trading_engine':engine},'warning_as_of':first}
+  with patch('analytical_read.calculate',side_effect=calculate):
+   self.assertEqual(calculate_consistent(store,{})['warning_as_of'],'0')
+   mode[0]='actual'
+   with self.assertRaises(InputRevisionChanged):calculate_consistent(store,{})
+ def test_full_reference_executor_accepts_available_bars_without_faking_dq(self):
+  from calculation_window import _full_execution_proof
+  from unittest.mock import patch
+  pd=fixtures.pd;now=pd.Timestamp('2026-11-04T09:35Z')
+  identity={k:self.frame().attrs[k] for k in ('source','symbol','venue','currency','timezone')}
+  required=['15m','4H','1D'];isin='US0378331005'
+  market={'context':'full_closed_reference_v1','quality':'READY','state':'NEUTRAL','benchmark_id':'INDEX',
+   'valid_until':(now+pd.Timedelta(minutes=1)).isoformat(),'_closed_input':{'isin':'INDEX'}}
+  rows={tf:dict(context='gettex_first_v1',identity=identity,valid_until=market['valid_until'],
+   calculation_availability=dict(policy='gettex_first_v1',source_contract=True,analysis_available=True),
+   full_reference=dict(context='actual_gettex_reference_v1',analysis_ready=True,count=40,
+    last_close_at=(now-pd.Timedelta(minutes=5)).isoformat(),quality={'state':'INVALID'})) for tf in required}
+  candidate=dict(full_execution_version=1,result={'status':'READY'},required_tf=required,signal_benchmark=market,
+   closed_inputs={'series':[dict(count=40,spec=dict(isin=isin,timeframe=tf,identity=identity)) for tf in required]+[dict(count=40,spec=market['_closed_input'])]})
+  record=dict(isin=isin,timeframes=rows,full_reference_benchmark=market)
+  with patch('calculation_window.candidate_state',return_value='CURRENT'):
+   self.assertEqual(_full_execution_proof(None,record,candidate,identity,now)[0]['15m']['full_reference']['quality']['state'],'INVALID')
+   rows['4H']['calculation_availability']['source_contract']=False
+   with self.assertRaisesRegex(ValueError,'REFERENCE_BLOCKED:4H'):_full_execution_proof(None,record,candidate,identity,now)
+  with patch('calculation_window.candidate_state',return_value='STALE'):
+   with self.assertRaisesRegex(ValueError,'NOT_CURRENT'):_full_execution_proof(None,record,candidate,identity,now)
  def test_busy_trading_universe_cannot_starve_sequential_preparation(self):
   from paper_hourly import Runtime,CONFIG
   from types import SimpleNamespace as NS
