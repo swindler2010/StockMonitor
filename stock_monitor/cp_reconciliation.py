@@ -603,9 +603,7 @@ def turn(store, info, now=None):
         progress.update(last_turn=clock.isoformat(),last_created=created,last_checked=checked,
             checked_total=progress.get('checked_total',0)+checked,mode='ASSISTED_ONLY')
         current_jobs=[read(db,k,{}) for k,_ in page]
-        if progress.get('suspicious_version')!=2:
-            progress['suspicious']={};progress['suspicious_version']=2
-        update_suspicious(progress,[j for j in current_jobs if j.get('checked_at')==clock.isoformat()])
+        update_suspicious(progress,current_jobs,clock.isoformat())
         previous=progress.get('review_batch')
         retained=[read(db,PREFIX+isin+':'+i['id'],{}) for i in (previous or {}).get('items',[])]
         stable=bool(retained) and pd.Timestamp(previous['valid_until'])>clock and all(
@@ -800,7 +798,11 @@ def suspicious_finding(job):
     return None
 
 
-def update_suspicious(progress,jobs):
+def update_suspicious(progress,jobs,checked_at=None):
+    if checked_at is not None:
+        if progress.get('suspicious_version')!=2:
+            progress['suspicious']={};progress['suspicious_version']=2
+        jobs=[j for j in jobs if j.get('checked_at')==checked_at]
     saved=dict(progress.get('suspicious',{}))
     for job in jobs:
         reason=suspicious_finding(job);identifier=job.get('id')
@@ -830,8 +832,9 @@ def collect(db, isin=None, page=0):
     return dict(version=VERSION,capability=capability(),progress=progress,review_batches=batches,counts=dict(counts),
                 total=total,rows=rows,page=page,pages=max(1,(total+99)//100),
                 source_comparisons=_comparison_summary(comparisons),
-                suspicious=[row for i,p in progress.items() if not isin or i==isin for row in p.get('suspicious',{}).values()][:100],
-                suspicious_count=sum(len(p.get('suspicious',{})) for i,p in progress.items() if not isin or i==isin),
+                suspicious=[row for i,p in progress.items() if (not isin or i==isin) and p.get('suspicious_version')==2 for row in p.get('suspicious',{}).values()][:100],
+                suspicious_count=sum(len(p.get('suspicious',{})) for i,p in progress.items() if (not isin or i==isin) and p.get('suspicious_version')==2),
+                suspicious_reviewed_stocks=sum(p.get('suspicious_version')==2 for i,p in progress.items() if not isin or i==isin),
                 suspicious_scope='Saved severe findings from ordinary CP turns; not a new audit or DQ override',
                 source_admission=read(db,SOURCE_POLICY,{}),
                 scope='Diagnostic jobs, not repaired candles or trading permissions',recovered_candles=0)
