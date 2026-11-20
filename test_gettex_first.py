@@ -6,6 +6,25 @@ from gettex_first import calculation_allowed,bind,bound
 from trading_engine import evaluate
 
 class GettexFirstTests(unittest.TestCase):
+ def test_slow_diagnostic_coalesces_without_zero_or_extended_lease(self):
+  from mcp_pages import ReadPages
+  ticks=[0.];pages=ReadPages(ttl=10,clock=lambda:ticks[0]);calls=[]
+  self.assertEqual(pages.begin_deferred('candlepilot_health'),('START',None))
+  self.assertEqual(pages.begin_deferred('candlepilot_health'),('PENDING',None))
+  def load():calls.append(1);return {'analysis_ready':3},{'published_at':100}
+  pages.finish_deferred('candlepilot_health',load)
+  state,revision=pages.begin_deferred('candlepilot_health');self.assertEqual(state,'READY')
+  data,_,meta,remaining=pages.read('candlepilot_health',revision,lambda:self.fail('repeat computation'))
+  self.assertEqual(data['analysis_ready'],3);self.assertEqual(meta['published_at'],100);self.assertEqual(len(calls),1)
+  ticks[0]=10
+  with self.assertRaisesRegex(ValueError,'PAGE_SESSION_EXPIRED'):pages.read('candlepilot_health',revision,load)
+  self.assertEqual(pages.begin_deferred('candlepilot_health'),('START',None))
+  def failed():raise ValueError('private source error')
+  pages.finish_deferred('candlepilot_health',failed)
+  _,revision=pages.begin_deferred('candlepilot_health');data,_,_,_=pages.read('candlepilot_health',revision,load)
+  self.assertEqual(data['status'],'UNAVAILABLE');self.assertNotIn('analysis_ready',data)
+  self.assertNotIn('private source error',str(data))
+
  def test_chat_volume_export_matches_observed_desktop_paths(self):
   import numpy as np
   from types import SimpleNamespace as NS
