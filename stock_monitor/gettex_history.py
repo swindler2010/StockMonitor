@@ -595,6 +595,7 @@ def accumulate_cached_batch(store,parse,now=None,max_pairs=16,max_seconds=5,rece
     if results:
         progress=store.setting('gettex_cached_history',{})
         progress['last_batch']=summary
+        if recent_only:progress['last_recent_batch']=summary
         store.set_setting('gettex_cached_history',progress)
     return summary
 
