@@ -88,6 +88,23 @@ class FreshnessBudgetTests(unittest.TestCase):
    for _ in range(200):r.request('FEED_COMPLETED:TEST')
    self.assertEqual(len(jobs),1);self.assertEqual(len(timers),1);self.assertFalse(published)
 
+class NumericContractBudgetTests(unittest.TestCase):
+ def test_large_evidence_not_copied_and_numeric_identity_guards_unchanged(self):
+  import pandas as pd,numpy as np
+  from gettex_first import bind,bound
+  class Evidence:
+   def __deepcopy__(self,memo):raise AssertionError('archive metadata copied for numeric validation')
+  f=pd.DataFrame(dict(open=[100.]*40,high=[101.]*40,low=[99.]*40,close=[100.]*40,volume=[0.]*40,source=['gettex']*40),index=pd.date_range('2026-11-13 08:00',periods=40,freq='15min'))
+  f.attrs=dict(source='gettex',symbol='TEST',venue='GETTEX',currency='EUR',timezone='Europe/Berlin')
+  f=bind(f,{'isin':'TEST'});evidence=Evidence();f.attrs['original_evidence']=evidence
+  for count in (53,200):
+   for _ in range(count):self.assertTrue(bound(f))
+  self.assertIs(f.attrs['original_evidence'],evidence);self.assertEqual(float(pd.DataFrame(f,copy=False).volume.sum()),0)
+  for column,bad,original in [('volume',-1.,0.),('high',99.,101.),('low',101.,99.),('close',np.nan,100.),('open',0.,100.),('source','other','gettex')]:
+   f.iat[0,f.columns.get_loc(column)]=bad;self.assertFalse(bound(f));f.iat[0,f.columns.get_loc(column)]=original
+  f.attrs['currency']='USD';self.assertFalse(bound(f));f.attrs['currency']='EUR';self.assertTrue(bound(f))
+  f.attrs['gettex_first_contract']['isin']='OTHER';self.assertFalse(bound(f))
+
 class LineageReadBudgetTests(unittest.TestCase):
  def test_one_wal_view_reuses_proof_next_read_rechecks_and_race_rejects(self):
   import tempfile,pandas as pd
