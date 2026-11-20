@@ -97,6 +97,9 @@ def serve():
                 result=calculate_eligibility(store,values['info'])
                 if result is None:raise ValueError('ELIGIBILITY_INSTRUMENT_NOT_FOUND')
                 store.read_cache.assert_current(result.get('_input_revisions',{}))
+            elif kind=='read_analytics':
+                from analytical_read import calculate_consistent
+                result=calculate_consistent(store,values)
             elif kind=='snapshot':
                 from snapshot_worker import calculate,validate_snapshot
                 from performance_cache import frozen_store
@@ -143,3 +146,4 @@ def serve():
     if store is not None:store.read_cache.close()
 
 if __name__=='__main__':serve()
+
