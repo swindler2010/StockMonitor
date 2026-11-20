@@ -914,6 +914,9 @@ class Desktop014:
         if full.attrs.get('partial_indicators'):
             from chart_indicators import draw_partial
             return draw_partial(self,full,visible,s,MUTED,BLUE)
+        # Metadata/segment policy was checked above. Numeric plotting must not
+        # deep-copy the whole historical evidence tree on every column read.
+        full=pd.DataFrame(full,copy=False);visible=pd.DataFrame(visible,copy=False)
         close=full.close;series={}
         if s['EMA']:
             for p in (s['ema_fast'],s['ema_slow']):series['EMA '+str(p)]=close.ewm(span=p,min_periods=p,adjust=False).mean()
