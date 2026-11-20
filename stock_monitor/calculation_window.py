@@ -69,7 +69,17 @@ def scope_session_rejects(frame,base,now):
         for stamp in rejected:
             utc=stamp.tz_localize(frame.attrs['timezone']).tz_convert('UTC')
             if any(row.open<=utc<row.close for _,row in sessions.iterrows()):return
-        current=data_quality.audit(frame,base,expected=frame.attrs,now=now)
+        # A replay can load the entire saved archive before it cuts the
+        # calculation to its as-of time. Future rows are outside this audit.
+        clock=pd.Timestamp(now).tz_convert(frame.attrs['timezone']).tz_localize(None)
+        index=frame.index
+        if index.tz is not None:index=index.tz_convert(frame.attrs['timezone']).tz_localize(None)
+        available=frame.loc[index.isna() | (index<=clock)].copy()
+        if available.empty:return
+        span=available.attrs.get('intraday_span')
+        if span and len(span)==2:
+            available.attrs['intraday_span']=[span[0],str(min(pd.Timestamp(span[1]),clock))]
+        current=data_quality.audit(available,base,expected=frame.attrs,now=now)
         if current['state'] in ('INVALID','SOURCE_UNAVAILABLE'):return
     except (ValueError,TypeError,KeyError):return
     frame.attrs.setdefault('archive_quality_before_scope',report)
@@ -524,6 +534,7 @@ def _assess_all(context, info, now, benchmark=None):
             start=(pd.Timestamp(now).tz_convert('Europe/Berlin').normalize()-pd.DateOffset(years=5)).date().isoformat(),
             no_usable_input=True)
     return dict(context='bounded_200_exact_reference_v1', isin=info['isin'], checked_at=now.isoformat(),
+                calculation_policy='gettex_first_v1',
                 expires_at=expires.isoformat(), expiry_basis='Earliest next closed-bar boundary of usable TF/benchmark; revisions checked on every read', timeframes=rows, candidates=candidates,
                 benchmark=benchmark, full_reference_benchmark=full_benchmark, execution_version=1,
                 calendar_revision=data_quality.XFRA_SESSION_REVISION,
@@ -605,7 +616,7 @@ def calculate_eligibility(store, info):
         db.execute('BEGIN')
         prior=db.execute('SELECT value FROM settings WHERE key=?',(key,)).fetchone()
         prior=json.loads(prior[0]) if prior else None
-        if prior and prior.get('paper_universe_version')==UNIVERSE_VERSION and prior.get('input_binding_version')==2 and prior.get('closed_input_semantics')==2 and _owner_initialization_current(prior) and eligibility_state(db,prior,pd.Timestamp.now(tz='UTC'))=='CURRENT': reused=prior
+        if prior and prior.get('calculation_policy')=='gettex_first_v1' and prior.get('paper_universe_version')==UNIVERSE_VERSION and prior.get('input_binding_version')==2 and prior.get('closed_input_semantics')==2 and _owner_initialization_current(prior) and eligibility_state(db,prior,pd.Timestamp.now(tz='UTC'))=='CURRENT': reused=prior
     if reused is not None:return reused
     now=pd.Timestamp.now(tz='UTC')
     # The same WAL read view must serve both Store and dependency tracking.
@@ -719,7 +730,7 @@ def eligibility_due(store, infos, now):
             row=db.execute('SELECT value FROM settings WHERE key=?',('cp_eligibility:'+info['isin'],)).fetchone()
             prior=json.loads(row[0]) if row else None
             status=eligibility_state(db,prior,now)
-            upgrade=bool(prior and (prior.get('paper_universe_version')!=UNIVERSE_VERSION or prior.get('closed_input_semantics')!=2 or not _owner_initialization_current(prior)))
+            upgrade=bool(prior and (prior.get('calculation_policy')!='gettex_first_v1' or prior.get('paper_universe_version')!=UNIVERSE_VERSION or prior.get('closed_input_semantics')!=2 or not _owner_initialization_current(prior)))
             if status=='CURRENT' and prior.get('input_binding_version')==2 and not upgrade: continue
             if status=='ERROR' and pd.Timestamp(now)<pd.Timestamp(prior['expires_at']): continue
             # One-time rebind of existing usable proofs after the metadata
@@ -822,7 +833,7 @@ def build(context, info, entry, state, now, require_smart=True):
 
 def attach_execution(context, info, assessment, now):
     """Existing execution gates are an additional intersection, never a bypass."""
-    from paper_account import instrument_allowed
+    from paper_account import EXECUTION_TF, instrument_allowed
     from snapshot_worker import Value
     from cp_controls import DEMO_ALL_INITIALIZATION
     if not instrument_allowed(info): return
@@ -835,8 +846,9 @@ def attach_execution(context, info, assessment, now):
         if candidate.get('analytical_only'):
             candidate['trade_ready']=False
             candidate['trade_blockers']=['IMPACT_ANALYTICAL_ONLY_NO_EXECUTION_CHANGE'];continue
-        if tf not in ('5m','15m'):
-            candidate['trade_blockers']=['PAPER_EUR_INTRADAY_REQUIRED'];continue
+        if tf!=EXECUTION_TF:
+            candidate['trade_ready']=False
+            candidate['trade_blockers']=['PAPER_EXECUTION_REQUIRES_15M'];continue
         if not candidate.get('signal_ready'):
             candidate['trade_blockers']=['CORE_SIGNAL_NOT_READY'];continue
         previous=context.timeframe
@@ -940,10 +952,10 @@ def execution_eligibility(db, info, tf, identity, now, side=None):
     """Called inside the execution transaction; persisted flags alone confer no rights."""
     import json
     from trading_engine import VERSION, profile
-    from paper_account import registered_instrument
+    from paper_account import EXECUTION_TF, registered_instrument
     registered_instrument(db,info['isin'])
-    if tf not in ('5m','15m'):
-        raise ValueError('SMART_PAPER_POLICY_BLOCKED')
+    if tf!=EXECUTION_TF:
+        raise ValueError('PAPER_EXECUTION_REQUIRES_15M')
     row=db.execute('SELECT value FROM settings WHERE key=?',('cp_eligibility:'+info['isin'],)).fetchone()
     record=json.loads(row[0]) if row else {}
     if record.get('context')!='bounded_200_exact_reference_v1' or record.get('isin')!=info['isin']:
@@ -981,3 +993,4 @@ def execution_eligibility(db, info, tf, identity, now, side=None):
         raise ValueError('SMART_SIGNAL_MISMATCH')
     return dict(context=mode,strategy=candidate['strategy'],timeframe=tf,
                 checked_at=record['checked_at'],expires_at=candidate.get('execution_expires_at',record['expires_at']),signal=signal)
+
