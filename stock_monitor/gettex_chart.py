@@ -569,6 +569,8 @@ def candidate(store, info, tf, current, current_base, now=None,analysis_at=None)
             old_ends=endpoints(old);old_end=old_ends[old_ends<=now].max()
             new_end = endpoints(frame).max()
             if new_end < old_end or (len(frame) <= len(current) and new_end <= old_end):
+                if tf not in ('5m','15m'):
+                    return retain_deeper(info,tf,current,current_base,frame,base,now)
                 return current, current_base
         except (ValueError, KeyError):
             return current, current_base
@@ -581,7 +583,8 @@ def candidate(store, info, tf, current, current_base, now=None,analysis_at=None)
             if not previous.empty:
                 a=endpoints(proposed);b=endpoints(previous)
                 a=a[a<=now];b=b[b<=now]
-                if len(b) and (not len(a) or a.max()<b.max()):return current,current_base
+                if len(b) and (not len(a) or a.max()<b.max()):
+                    return retain_deeper(info,tf,current,current_base,frame,base,now)
     frame.attrs.update(data_quality=report, source_selection={
         'policy':'proxy_extended_eur_v1', 'requested_mode':'proxy', 'selected':'GETTEX_CHART_EUR',
         'session':'07:30–23:00 Europe/Berlin',
