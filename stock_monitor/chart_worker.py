@@ -24,9 +24,34 @@ def prepare(store,values):
         import json
         # Period is a viewport, not an input to this full-depth visual frame.
         key=('chart_display',json.dumps({k:v for k,v in values.items() if k!='period'},sort_keys=True,default=str),display_epoch())
-        return store.read_cache.get(key,lambda:_prepare(store,values),scoped=True,
+        prepared=store.read_cache.get(key,lambda:_prepare(store,values),scoped=True,
             inputs=values.get('instrument_revisions',{}))
+        prepared['_visual_revision']=visual_revision(prepared,values,store)
+        return prepared
     return _prepare(store,values)
+
+
+def visual_revision(prepared,values,store):
+    """Pixel-input identity only. Never an analytics or execution lease."""
+    import hashlib,pandas as pd
+    from performance_cache import _digest,DQ_PROGRESS_FIELDS
+    def metadata(value):
+        out=dict(value)
+        if isinstance(out.get('data_quality'),dict):
+            out['data_quality']={k:v for k,v in out['data_quality'].items() if k not in DQ_PROGRESS_FIELDS}
+        return out
+    frames=[prepared['frame']]
+    if prepared.get('analysis'):frames.append(prepared['analysis'][0])
+    signature=hashlib.sha256()
+    attrs=[]
+    for frame in frames:
+        numeric=pd.DataFrame(frame,copy=False)
+        signature.update(pd.util.hash_pandas_object(numeric,index=True).values.tobytes())
+        attrs.append((list(numeric.columns),list(map(str,numeric.dtypes)),metadata(frame.attrs)))
+    result=metadata(prepared['analysis'][1]) if prepared.get('analysis') else None
+    signature.update(_digest([values,attrs,result,prepared.get('zones'),
+        store.setting('global_indicators',{}),store.setting('theme',None),store.setting('ui_language','ru')]).encode())
+    return signature.hexdigest()
 
 def _prepare(store,values):
     phase=values.get('_chart_phase')
