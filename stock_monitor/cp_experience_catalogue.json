@@ -1637,12 +1637,14 @@
         "Reuse an existing coherent read transaction for optional execution diagnostics; insufficient parent history must return explicit blockers without aborting the candle page.",
         "Capture observed batched volume paths in the existing MCP indicator exporter, preserving zeros, missing values and the unchanged volume average; never fabricate bars for continuity.",
         "Deliver heavy full-history CP diagnostics through the existing bounded read-page lease: reply INDETERMINATE first, coalesce repeated requests, then expose the detached as-of result. Keep 120-second expiry and explicit UNAVAILABLE on failure, never inferred zero counts.",
-        "Under explicit GETTEX-first policy, reserve fresh acquisition slots for actual prices and durable reassessment requests. Defer automatic/TV/reviewed historical grant maintenance to ordinary history turns; preserve consumer-time revision/identity/quote/risk validation and legacy-policy behaviour."
+        "Under explicit GETTEX-first policy, reserve fresh acquisition slots for actual prices and durable reassessment requests. Defer automatic/TV/reviewed historical grant maintenance to ordinary history turns; preserve consumer-time revision/identity/quote/risk validation and legacy-policy behaviour.",
+        "Bound runtime overhead: poll semantic input revisions instead of decoding full historical DQ on Tk; read post-feed analysis from one WAL view; coalesce automatic freshness diagnostics with a 60-second cooldown and publish explicit as-of results; reuse lineage checks only inside the same immutable WAL transaction. Recheck on the next read and retain final live revision validation. Do not warm all legacy archives on Tk startup."
       ],
       "evidence": [
         "test_gettex_first.py",
         "test_paper_preparation.py",
-        "test_cp_automatic_repair.py"
+        "test_cp_automatic_repair.py",
+        "test_ui_runtime_budget.py"
       ],
       "limits": [
         "Malformed actual data, missing bars and mathematically insufficient indicator inputs remain unavailable.",
