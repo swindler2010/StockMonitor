@@ -7,7 +7,7 @@ from analytics import indicators,bar_ends
 
 def read_time():return pd.Timestamp.now(tz='UTC')
 
-def calculate_consistent(store,values):
+def calculate_consistent(store,values,calculator=None):
     """One WAL read view, then final live input validation; no database copy."""
     from contextlib import contextmanager
     from performance_cache import ReadCache
@@ -20,12 +20,15 @@ def calculate_consistent(store,values):
         with captured.read_cache.track_inputs() as token:
             expected=values.get('instrument_revisions',{})
             captured.read_cache.assert_current(expected);captured.read_cache._record(expected)
-            result=calculate(captured,values)
+            result=(calculator or calculate)(captured,values)
         token=dict(token)
     finally:captured.read_cache.close()
-    from gettex_first import engine_available
-    engine=(result.get('analysis_context') or {}).get('trading_engine',{})
-    if engine_available(engine,list(engine.get('timeframe_context',{}))):
+    from gettex_first import engine_available,calculation_allowed
+    engine=result.get('trading_engine') or (result.get('analysis_context') or {}).get('trading_engine',{})
+    analysis=result.get('analysis')
+    factual=engine_available(engine,list(engine.get('timeframe_context',{})))
+    if analysis and len(analysis)==2:factual=factual or calculation_allowed(analysis[1])
+    if factual:
         # DQ is observed at calculation time, not an input permission. Actual
         # candles, listing receipts, settings and policies stay revision-bound.
         token={k:v for k,v in token.items() if not k.startswith('setting:data_quality:')}
