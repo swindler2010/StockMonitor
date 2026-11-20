@@ -653,6 +653,10 @@ def calculate_eligibility(store, info):
             specs=list(ctx.closed_specs.values())
             for candidate in result.get('candidates',[]):
                 specs.extend(item['spec'] for item in (candidate.get('closed_inputs') or {}).get('series',[]))
+            from gettex_first import audit_only_scopes
+            advisory=audit_only_scopes(specs)
+            token={k:v for k,v in token.items() if k not in advisory}
+            result['_input_revisions']=dict(token)
             proof=capture_closed_inputs(captured_db,specs,token)
         # Release the reader before validation; no database backup or writer
         # lock during analysis. Uncovered inputs stay strictly revision-bound.
@@ -905,9 +909,18 @@ def _full_execution_proof(db, record, candidate, identity, now):
     for tf in required:
         row=rows.get(tf,{})
         ref=row.get('full_reference',{})
+        from gettex_first import VERSION as GETTEX_FIRST
+        availability=row.get('calculation_availability',{})
+        available_reference=(row.get('context')==GETTEX_FIRST
+            and availability.get('policy')==GETTEX_FIRST
+            and availability.get('source_contract') is True
+            and availability.get('analysis_available') is True
+            and ref.get('context')=='actual_gettex_reference_v1')
+        legacy_reference=(ref.get('context')=='full_closed_reference_v1'
+            and ref.get('quality',{}).get('state')=='READY'
+            and ref.get('scope_initialization',{}).get('stable'))
         if (row.get('identity')!=identity or not ref.get('analysis_ready') or
-                ref.get('context')!='full_closed_reference_v1' or ref.get('quality',{}).get('state')!='READY' or
-                not ref.get('scope_initialization',{}).get('stable') or ref.get('count',0)<35):
+                not (available_reference or legacy_reference) or ref.get('count',0)<35):
             raise ValueError('SMART_FULL_REFERENCE_BLOCKED:'+tf)
         if not (pd.Timestamp(ref['last_close_at'])<=now<pd.Timestamp(row['valid_until'])):
             raise ValueError('SMART_FULL_REFERENCE_EXPIRED:'+tf)
