@@ -491,15 +491,18 @@ def retain_deeper(info, tf, previous, previous_base, proposed, proposed_base, no
         confirmed_listing(info,proposed.attrs) and previous.attrs.get('venue')!='GETTEX'):
         return proposed,proposed_base
     if previous.empty or not confirmed_listing(info,previous.attrs):return proposed,proposed_base
-    if previous.attrs.get('data_quality',{}).get('state') in ('INVALID','SOURCE_UNAVAILABLE','RECOVERING'):
+    from gettex_first import bind,bound
+    previous=bind(previous,info);proposed=bind(proposed,info)
+    factual=bound(previous)
+    if previous.attrs.get('data_quality',{}).get('state') in ('INVALID','SOURCE_UNAVAILABLE','RECOVERING') and not factual:
         return proposed,proposed_base
-    if quality.audit(previous,previous_base,now=now)['state']=='INVALID':return proposed,proposed_base
+    if quality.audit(previous,previous_base,now=now)['state']=='INVALID' and not factual:return proposed,proposed_base
     def usable(raw,base):
         if raw.empty:return raw
         out=resample(raw,base,tf,now)
         if out.empty:return out
         valid=endpoints(out)<=now
-        if 'bar_complete' in out:valid &= out.bar_complete.fillna(False).to_numpy()
+        if 'bar_complete' in out and not bound(out):valid &= out.bar_complete.fillna(False).to_numpy()
         return out.loc[valid]
     try:
         old=usable(previous,previous_base);new=usable(proposed,proposed_base)
@@ -551,7 +554,9 @@ def candidate(store, info, tf, current, current_base, now=None,analysis_at=None)
         from calculation_window import scope_raw
         frame=scope_raw(frame,base,analysis_at)
     report = frame.attrs.get('archive_invalid') or quality.audit(frame, base, now=now)
-    if report['state'] in ('INVALID', 'SOURCE_UNAVAILABLE'):
+    from gettex_first import bind,bound
+    frame=bind(frame,info);current=bind(current,info)
+    if report['state'] in ('INVALID', 'SOURCE_UNAVAILABLE') and not bound(frame):
         return current, current_base
     if not current.empty and current.attrs.get('venue')=='GETTEX' and quality.audit(current,current_base,now=now)['state']!='INVALID':
         old = current.copy(deep=False); old.attrs = dict(current.attrs, timeframe=current_base)
@@ -606,16 +611,18 @@ def daily_candidate(store,info,tf,current,current_base,official,official_base,no
             report=saved
         if raw.attrs.get('daily_origin') and raw.attrs.get('data_quality',{}).get('state') in ('INVALID','SOURCE_GAP','UNCONFIRMED'):
             report=raw.attrs['data_quality']
-        if report['state'] in ('INVALID','RECOVERING','SOURCE_UNAVAILABLE'):continue
+        from gettex_first import bind,bound
+        raw=bind(raw,info);factual=bound(raw)
+        if report['state'] in ('INVALID','RECOVERING','SOURCE_UNAVAILABLE') and not factual:continue
         try:
             raw=raw.copy();raw.attrs['data_quality']=report
             view=resample(raw,base,tf,now=now)
             closed=view.loc[endpoints(view)<=now]
-            if 'bar_complete' in closed:closed=closed.loc[closed.bar_complete.fillna(False)]
+            if 'bar_complete' in closed and not factual:closed=closed.loc[closed.bar_complete.fillna(False)]
         except (ValueError,KeyError,TypeError):continue
         if view.empty:continue
         # A blocked derived bucket stays blocked; no READY is manufactured.
-        score=(bool(len(closed)),report['state'] in ('READY','STALE'),len(closed),len(view))
+        score=(bool(len(closed)),factual or report['state'] in ('READY','STALE'),len(closed),len(view))
         choices.append((score,raw,base))
     if not choices:return current,current_base
     _,raw,base=max(choices,key=lambda x:x[0])
