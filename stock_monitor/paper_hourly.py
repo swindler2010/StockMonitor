@@ -314,6 +314,9 @@ def validate_analysis(db, info, result, now, cfg):
             raise ValueError('PAPER_MANUAL_CONTEXT_CHANGED')
     elif contract.get('status') != 'HOURLY_DEMO_READY' or any(
             engine.get('timeframe_context', {}).get(tf, {}).get('data_quality', {}).get('state') != 'READY'
+            and not (engine.get('timeframe_context', {}).get(tf, {}).get('calculation_availability',{}).get('policy')=='gettex_first_v1'
+                and engine.get('timeframe_context', {}).get(tf, {}).get('calculation_availability',{}).get('source_contract') is True
+                and engine.get('timeframe_context', {}).get(tf, {}).get('calculation_availability',{}).get('analysis_available') is True)
             for tf in required):
         raise ValueError('PAPER_AUTO_DQ_BLOCKED')
     if not benchmark_ready(engine.get('benchmark_context', {})):
