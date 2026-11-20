@@ -404,11 +404,15 @@ class Desktop014:
             raw.attrs['data_quality'].update(state=persisted_quality['state'],issues=persisted_quality.get('issues',[]),ranges=persisted_quality.get('ranges',[]))
         markers=raw.attrs['data_quality'].get('non_candle_markers',[])
         if markers:raw=raw.loc[~raw.index.isin(pd.to_datetime(markers))]
-        if scoped:
+        from gettex_first import source_contract
+        factual_contract=source_contract(info,raw.attrs)
+        if scoped and not factual_contract:
             from cp_controls import accepted_gap_input
             raw=accepted_gap_input(self.store,info,raw,base,input_clock)
+        from gettex_first import bind
+        raw=bind(raw,info)
         meta=raw.attrs.copy();out=resample(raw,base,tf,now=clock)
-        if scoped:
+        if scoped and not factual_contract:
             from cp_controls import accepted_gap_output
             out=accepted_gap_output(out,tf,clock)
         out.attrs['history_source']=meta.get('source','unknown')
@@ -874,6 +878,8 @@ class Desktop014:
         if quality.get('state') not in ('RECOVERING','SOURCE_UNAVAILABLE','INVALID','SOURCE_GAP') or frame.attrs.get('data_quality',{}).get('state')=='INVALID':
             quality=frame.attrs.get('data_quality',quality)
         quality_text=quality.get('state','INVALID')
+        if frame.attrs.get('dq_nonblocking'):
+            quality_text='Анализ по GETTEX; предупреждение СР: '+quality_text
         quality_detail='; '.join(quality.get('issues',[])+quality.get('warnings',[]))
         if partial:
             quality_text=str(frame.attrs.get('data_quality',{}).get('state','UNKNOWN'))+' / PARTIAL'
