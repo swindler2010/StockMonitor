@@ -50,6 +50,7 @@ def facts(closed, support, resistance, stop):
         ema_cross=('UP' if b.ema10<=b.ema30 and a.ema10>a.ema30 else 'DOWN' if b.ema10>=b.ema30 and a.ema10<a.ema30 else 'NONE'),
         rsi=float(a.rsi), previous_rsi=float(b.rsi), macd=float(a.macd), macd_signal=float(a.macd_signal),
         histogram=hist, histogram_delta=hist-old_hist, atr=atr,
+        volume=float(a.volume),volume_mean20=avg,
         relative_volume=rv, volume_reliable=bool(reliable_volume), support=support, resistance=resistance,
         breakout=bool(breakout), breakdown=bool(breakdown), retest=bool(retest), bearish_retest=bool(bearish_retest),
         reclaim=bool(reclaim), near_resistance=bool(0<=resistance-a.close<=RULES['near_level_atr']*scale),
@@ -139,3 +140,4 @@ def evaluate(contexts, selected_tf, position=None, benchmark=None, required=None
         benchmark_context=benchmark,timestamp=selected.get('signal_at'),rules_version=VERSION,
         status='DATA BLOCKED' if blockers else 'READY',
         reason='; '.join(blockers or ([r['text'] for r in (bear if signal=='SELL' else bull)][:3]+entry_blockers[:2]+warnings[:1])) or 'Нет достаточных направленных подтверждений')
+
