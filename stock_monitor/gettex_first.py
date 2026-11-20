@@ -22,15 +22,20 @@ def bind(frame, info):
 
 def bound(frame):
     import numpy as np
+    import pandas as pd
     receipt = frame.attrs.get('gettex_first_contract', {})
+    # Pandas propagates/deep-copies attrs on column operations. Inspect the
+    # exact same rows through a metadata-free view, retaining the original
+    # receipt/identity below. Never mutate rows or remove stored evidence.
+    values=pd.DataFrame(frame,copy=False)
     try:
-        prices=frame[['open','high','low','close']]
-        numeric=frame[['open','high','low','close','volume']]
-        valid=(not frame.empty and frame.index.is_unique and frame.index.is_monotonic_increasing
-            and not frame.index.hasnans and np.isfinite(numeric.to_numpy(dtype=float)).all()
-            and prices.gt(0).all().all() and frame.volume.ge(0).all()
-            and frame.high.ge(prices.max(axis=1)).all() and frame.low.le(prices.min(axis=1)).all())
-        valid=valid and 'source' in frame and set(frame['source'].astype(str))=={frame.attrs.get('source')}
+        prices=values[['open','high','low','close']]
+        numeric=values[['open','high','low','close','volume']]
+        valid=(not values.empty and values.index.is_unique and values.index.is_monotonic_increasing
+            and not values.index.hasnans and np.isfinite(numeric.to_numpy(dtype=float)).all()
+            and prices.gt(0).all().all() and values.volume.ge(0).all()
+            and values.high.ge(prices.max(axis=1)).all() and values.low.le(prices.min(axis=1)).all())
+        valid=valid and 'source' in values and set(values['source'].astype(str))=={frame.attrs.get('source')}
     except (KeyError,ValueError,TypeError,AttributeError):return False
     return bool(valid and receipt.get('version') == VERSION and
                 source_contract({'isin':receipt.get('isin')},frame.attrs) and
