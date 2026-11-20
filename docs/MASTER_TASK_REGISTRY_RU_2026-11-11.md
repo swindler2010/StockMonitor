@@ -26137,3 +26137,7 @@ Windows Apple: ��� 11 TF ���������� � �����
 
 
 [Подробный текущий отчёт](https://github.com/swindler2010/StockMonitor/blob/work1/gettex-first-issue20/docs/GETTEX_FIRST_ISSUE20_RU.md) · [PR #21](https://github.com/swindler2010/StockMonitor/pull/21)
+
+
+20.11, ����������� ���������� ��10:18CET: CP ��� Refresh ������� NVIDIA15m ��10:00CET, ��������� PAPER ������ CORE READY / WAIT / V5_NO_VOLUME_EXPANSION, quote_blocker=None. Apple ������� CORE READY / HOLD �� ������������ �����; � ��������� ����������� ���� PAPER_STALE_QUOTE, �� DQ-����������. ������ ������������� ������ ���� ���. ������������ ���������� ��������� ��������� ��� ���������� ������: ����������� GETTEX29/29 ���������� �������, GETTEX Chart225/239 (94.14%); OHLCV equality UNKNOWN. ��� ��������� ���������� scopes �� �������� ������� ����� ������. ����������� � ������� ������� ������ ��������� � ������� �����. ���������� ����������� �� �������� DONE.
+
