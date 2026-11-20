@@ -271,7 +271,7 @@ class HourlyTests(unittest.TestCase):
             self.assertEqual(hourly.fresh_quote(store,self.info,self.identity,clock)['bars'][-1]['close'],100)
             with self.assertRaisesRegex(ValueError,'STALE_QUOTE'):hourly.fresh_quote(store,self.info,self.identity,clock+pd.Timedelta(hours=1))
             self.db.execute("UPDATE series SET high=0 WHERE base_tf='15m'")
-            with self.assertRaisesRegex(ValueError,'DATA_BLOCKED'):hourly.fresh_quote(store,self.info,self.identity,clock)
+            with self.assertRaisesRegex(ValueError,'BAD_OHLCV'):hourly.fresh_quote(store,self.info,self.identity,clock)
 
 
 if __name__=='__main__':unittest.main(verbosity=2)
