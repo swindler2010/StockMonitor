@@ -655,7 +655,10 @@ def accumulate_cached_pair(store,parse,now=None,recent_only=False):
         previous=done.get(label,{})
         recheck_empty=(previous.get('state')=='BLOCKED' and previous.get('reason')=='EMPTY_FILE_UNCONFIRMED'
                        and previous.get('empty_calendar_policy',0)<1)
-        if previous.get('signature')==signature and previous.get('universe')==universe and not recheck_empty:continue
+        # Initialize the new diagnostic producer from ONE newest saved pair,
+        # never sweep/reload the old archive or reset its event time to now.
+        clock_bootstrap=(recent_only and progress.get('market_clock_bootstrapped_universe')!=universe)
+        if previous.get('signature')==signature and previous.get('universe')==universe and not recheck_empty and not clock_bootstrap:continue
         hashes={};rows={};errors={};boundary_rows=0
         try:
             with LOCK:
@@ -729,6 +732,7 @@ def accumulate_cached_pair(store,parse,now=None,recent_only=False):
                     registered_stocks=len(infos),available_pairs=sum(len(v)==2 for v in pairs.values()),
                     current_universe_pairs=sum(v.get('universe')==universe for v in done.values()),
                     candles_added_total=progress.get('candles_added_total',0)+added)
+                if recent_only:progress['market_clock_bootstrapped_universe']=universe
                 db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',('gettex_cached_history',json.dumps(progress)))
             from delivery_observations import official_trades
             for isin,frame in observed_trades.items():
