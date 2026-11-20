@@ -11,7 +11,10 @@ def calculate_consistent(store,values,calculator=None):
     """One WAL read view, then final live input validation; no database copy."""
     from contextlib import contextmanager
     from performance_cache import ReadCache
-    captured=copy.copy(store);captured.read_cache=ReadCache(store.path)
+    # Only the owned serial readonly child can retain its bounded cache across
+    # WAL views. Main-thread/shared Store callers keep an isolated connection.
+    reuse=bool(getattr(store,'_serial_readonly',False) and not store.read_cache.db.in_transaction)
+    captured=copy.copy(store);captured.read_cache=store.read_cache if reuse else ReadCache(store.path)
     @contextmanager
     def connect():yield captured.read_cache.db
     captured.connect=connect
@@ -25,7 +28,9 @@ def calculate_consistent(store,values,calculator=None):
             captured.read_cache.assert_current(expected);captured.read_cache._record(expected)
             result=(calculator or calculate)(captured,values)
         token=dict(token)
-    finally:captured.read_cache.close()
+    finally:
+        if reuse:captured.read_cache.db.rollback()
+        else:captured.read_cache.close()
     from gettex_first import engine_available,calculation_allowed
     engine=result.get('trading_engine') or (result.get('analysis_context') or {}).get('trading_engine',{})
     analysis=result.get('analysis')
