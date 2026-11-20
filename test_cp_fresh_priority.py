@@ -47,6 +47,10 @@ class SuspiciousTests(unittest.TestCase):
   self.assertEqual(set(progress['suspicious']),{'1'})
   # A conflicting official-trades proof remains suspicious even when TV lacks a bar.
   self.assertEqual(rv.suspicious_finding(dict(jobs[1],observation=tv['observation'])),'CONFIRMED_TRADES_WITHOUT_NATIVE_BAR')
+  old=dict(jobs[1],checked_at='old');current=dict(jobs[1],id='current',checked_at='now')
+  progress={'suspicious':{'old':old},'suspicious_version':1}
+  rv.update_suspicious(progress,[old,current],'now')
+  self.assertEqual(set(progress['suspicious']),{'current'});self.assertEqual(progress['suspicious_version'],2)
 
 class WorkerTests(unittest.TestCase):
  def test_official_recent_pair_requests_existing_queue_only_for_changed_stocks(self):
