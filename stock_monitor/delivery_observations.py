@@ -71,6 +71,7 @@ def append(directory, row):
         db.execute('CREATE TABLE IF NOT EXISTS receipts(id INTEGER PRIMARY KEY, identity_key TEXT, checked_at TEXT, payload TEXT)')
         db.execute('CREATE TABLE IF NOT EXISTS tails(identity_key TEXT, digest TEXT, first_seen_at TEXT, PRIMARY KEY(identity_key,digest))')
         db.execute('CREATE TABLE IF NOT EXISTS latest(identity_key TEXT PRIMARY KEY, digest TEXT, first_seen_at TEXT)')
+        db.execute('CREATE TABLE IF NOT EXISTS confirmed_latest(identity_key TEXT PRIMARY KEY, market_at TEXT NOT NULL, payload TEXT NOT NULL)')
         # All state changes and receipt must commit together, including restart.
         db.execute('BEGIN IMMEDIATE')
         prior=db.execute('SELECT digest,first_seen_at FROM latest WHERE identity_key=?',(key,)).fetchone()
@@ -85,7 +86,58 @@ def append(directory, row):
             db.execute('INSERT OR REPLACE INTO latest VALUES (?,?,?)',(key,digest,first))
         db.execute('INSERT INTO receipts(identity_key,checked_at,payload) VALUES (?,?,?)',
                    (key,row['checked_at'],json.dumps(row,ensure_ascii=False,allow_nan=False)))
+        if confirmed_event(row):
+            previous=db.execute('SELECT market_at FROM confirmed_latest WHERE identity_key=?',(key,)).fetchone()
+            # A cached reply, historical correction/backfill or restart never
+            # renews the exchange-event clock. Only a later executed trade does.
+            if previous is None or row['confirmed_market_update_at']>previous[0]:
+                db.execute('INSERT OR REPLACE INTO confirmed_latest VALUES (?,?,?)',
+                    (key,row['confirmed_market_update_at'],json.dumps(row,ensure_ascii=False,allow_nan=False)))
     return row
+
+
+def confirmed_event(row):
+    """Strict supported producer contract, not a provider/bar/receipt clock."""
+    proof=row.get('market_time_evidence',{})
+    if not isinstance(proof,dict):return False
+    hashes=proof.get('sha256',{}) if isinstance(proof,dict) else {}
+    return (row.get('source')=='gettex' and row.get('venue')=='GETTEX'
+        and row.get('currency')=='EUR' and row.get('symbol')==row.get('isin')
+        and row.get('base_tf')=='trades' and row.get('outcome')=='RECEIVED'
+        and proof.get('contract')=='validated_munc_mund_pair_v1'
+        and set(hashes)=={'munc','mund'}
+        and all(isinstance(h,str) and len(h)==64 and all(c in '0123456789abcdef' for c in h) for h in hashes.values())
+        and bool(row.get('tail_sha256'))
+        and valid_time(row.get('confirmed_market_update_at'),row.get('checked_at')) is not None)
+
+
+def official_trades(directory,isin,frame,hashes,anchor,checked_at):
+    """After the existing atomic validated pair writer committed, diagnostics only.
+
+    Positive-quantity source trades carry exact UTC-anchored event timestamps.
+    This certifies that event time, never current market/HTTP publication time.
+    Zero-quantity observations and absent rows cannot supply this clock.
+    """
+    try:
+        import pandas as pd
+        from candle_schedule import gettex_meta
+        positive=frame.loc[frame.volume>0].sort_index()
+        if positive.empty:return {'status':'NO_EXECUTED_TRADE'}
+        at=pd.Timestamp(positive.index[-1])
+        if at.tzinfo is None:at=at.tz_localize('Europe/Berlin',ambiguous='raise',nonexistent='raise')
+        at=at.tz_convert('UTC');end=pd.Timestamp(anchor)
+        if end.tzinfo is None or not end-pd.Timedelta(minutes=15)<=at<end:
+            raise ValueError('OFFICIAL_EVENT_OUTSIDE_PAIR')
+        positive.attrs=gettex_meta(isin)
+        row=event(isin,'trades',positive,checked_at=checked_at,receipt_kind='VALIDATED_OFFICIAL_PAIR')
+        row.update(confirmed_market_update_at=at.isoformat(),
+            market_time_evidence={'contract':'validated_munc_mund_pair_v1','sha256':hashes,'pair_end':end.isoformat()},
+            reason='EXACT_EXECUTED_TRADE_TIME_NOT_RECEIPT_OR_BAR_CLOSE')
+        if not confirmed_event(row):raise ValueError('UNSUPPORTED_MARKET_TIME_EVIDENCE')
+        return append(directory,row)
+    except Exception as error:
+        logging.getLogger(__name__).warning('DELIVERY_DIAGNOSTICS_FAILED %s',type(error).__name__)
+        return {'status':'DIAGNOSTIC_ERROR','error_type':type(error).__name__}
 
 
 def observe(directory, isin, base, frame, **kwargs):
