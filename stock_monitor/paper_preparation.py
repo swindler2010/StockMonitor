@@ -82,13 +82,9 @@ def choose(db,now):
     if old.get('epoch')==cfg['epoch'] and old.get('next_check',0)>now:
         if not active or old.get('retry_inputs')==retry_inputs(db,active,old.get('identity',{})):return None
     if active is None:
-        # Pair stability is a scheduling condition, never a permission proof.
-        for isin in p['prerequisites']:
-            s=read(db,STATUS+isin,{})
-            closed=not boundary(cfg['identities'][isin],'15m',
-                pd.Timestamp(now,unit='s',tz='UTC'),delay_seconds=0)['session_open']
-            if not closed and (s.get('core')!='READY' or s.get('quote_blocker') or not s.get('quote_at')
-                    or not 0<=now-s.get('at',0)<=180):return None
+        # Owner prerequisites are still checked by policy(). Another stock's
+        # quote age or CP assessment is not this candidate's input under #20.
+        # Keep one sequential candidate; execution guards remain per order.
         candidates=[]
         for isin,payload in db.execute('SELECT isin,payload FROM instruments ORDER BY isin'):
             if isin in cfg['identities']:continue
@@ -257,3 +253,4 @@ def turn(app):
                 message='Допуск пока закрыт; CandlePilot продолжает штатное восстановление данных')
             write(db,STATE,old)
         return old
+
