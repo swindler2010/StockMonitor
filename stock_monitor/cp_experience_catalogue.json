@@ -1633,7 +1633,9 @@
         "Write bounded decision-time source/input digests, indicators and warnings to the existing journal; do not rewrite previous fills.",
         "Use one coherent WAL view for analytical reads, retaining final live candle/listing/policy revisions; DQ opinions for explicitly bound factual inputs are audit-only dependencies.",
         "Keep the deeper whole provider archive for higher TF even when a shorter provider has a newer last bar; never splice its tail.",
-        "Reserve a sequential preparation slot after two operational turns when due, so an expanding admitted universe cannot starve its next candidate."
+        "Reserve a sequential preparation slot after two operational turns when due, so an expanding admitted universe cannot starve its next candidate.",
+        "Reuse an existing coherent read transaction for optional execution diagnostics; insufficient parent history must return explicit blockers without aborting the candle page.",
+        "Capture observed batched volume paths in the existing MCP indicator exporter, preserving zeros, missing values and the unchanged volume average; never fabricate bars for continuity."
       ],
       "evidence": [
         "test_gettex_first.py",
