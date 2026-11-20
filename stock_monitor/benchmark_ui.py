@@ -27,13 +27,17 @@ class BenchmarkMixin:
 
     def build_ui(self):
         super().build_ui()
-        row=ttk.Frame(self.chart_outer);row.pack(fill='x',before=self.chart_body,padx=6,pady=2)
-        ttk.Label(row,text=tr('Benchmark:')).pack(side='left')
+        embedded=hasattr(self,'main_benchmark_host')
+        row=self.main_benchmark_host if embedded else ttk.Frame(self.chart_outer)
+        if not embedded:row.pack(fill='x',before=self.chart_body,padx=6,pady=2)
+        ttk.Label(row,text=tr('Benchmark:')).pack(anchor='w') if embedded else ttk.Label(row,text=tr('Benchmark:')).pack(side='left')
         self.benchmark_choice=tk.StringVar()
         self.benchmark_box=ttk.Combobox(row,textvariable=self.benchmark_choice,state='readonly',width=25,
             values=['—']+[x['name'] for x in bm.CATALOG.values() if x['return_basis']!='volatility'])
-        self.benchmark_box.pack(side='left',padx=5);self.benchmark_box.bind('<<ComboboxSelected>>',self.change_benchmark)
-        self.relative_status=ttk.Label(row,text=tr(''),wraplength=1050);self.relative_status.pack(side='left',fill='x',expand=True)
+        self.benchmark_box.pack(side='top' if embedded else 'left',padx=5)
+        self.benchmark_box.bind('<<ComboboxSelected>>',self.change_benchmark)
+        self.relative_status=ttk.Label(row,text=tr(''),wraplength=250 if embedded else 1050)
+        self.relative_status.pack(side='top' if embedded else 'left',fill='x',expand=not embedded)
 
     def change_benchmark(self,_=None):
         info=self.instrument_cfg();draft=copy.deepcopy(self.user_state(info))
@@ -123,6 +127,9 @@ class BenchmarkMixin:
         bind_engine(self,None)
         self.relative_status.configure(text=tr('Расчёт недоступен: {error}',error=str(error)))
         self.status.set(tr('Ошибка подготовки графика: {error}',error=str(error)))
+        if hasattr(self,'main_screen'):
+            self.main_screen.sync_text.set(tr('Синхронизация: ошибка'))
+            self.main_screen.sync_label.configure(style='DeskSyncBad.TLabel')
         if 'InputRevisionChanged:' in str(error):
             from chart_worker import capture
             self._retry_current_chart(capture(self))
@@ -176,6 +183,7 @@ class BenchmarkMixin:
         self._prepared_chart=prepared
         try:self._render_current_display(prepared)
         finally:self._prepared_chart=None
+        if hasattr(self,'main_screen'):self.main_screen.bind_chart(prepared)
         self._chart_timing('display',prepared)
         if prepared.get('_core_pending'):
             self._chart_jobs.request(lambda:(values,self.compute_chart.calculate('chart',{**values,'_chart_phase':'engine'})))

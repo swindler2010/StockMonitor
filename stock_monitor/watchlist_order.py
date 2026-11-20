@@ -108,6 +108,7 @@ class Runtime:
     def ordered(self):return ordered(self.app.watchlist,self.rows)
 
     def apply(self):
+        if hasattr(self.app,'main_screen'):self.app.main_screen.sync_watchlist()
         box=getattr(self.app,'symbol_box',None)
         if box is None:return
         # Do not move dropdown items under an ongoing mouse/keyboard selection.
