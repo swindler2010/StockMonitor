@@ -40,7 +40,7 @@ class FeedContext(StockMonitor):
                 planned=automatic_repair_turn(self.store,info)
             except Exception as error:planned={'state':'ERROR','reason':str(error)}
         result=self._calculate(info)
-        if info.get('_gettex_poll_only') and info.get('_cp_focus',{}).get('source')=='gettex':
+        if info.get('_gettex_poll_only') and info.get('_cp_focus',{}).get('source')!='gettex_chart':
             # The official files already fetched for one stock cover the whole
             # registered EUR universe. Drain one recent saved pair before the
             # old archive backlog, with the existing atomic validation/writer.
