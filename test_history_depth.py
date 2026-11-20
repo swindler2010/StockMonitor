@@ -7,6 +7,7 @@ sys.path.insert(0,str(Path(__file__).parent/'stock_monitor'))
 import history_service as service
 from history_backfill import sync,key
 from storage import Store
+EXPECTED=dict(source='proxy',symbol='ANY',currency='EUR',venue='GER',timezone='Europe/Berlin')
 
 class DepthTests(unittest.TestCase):
     def test_gettex_display_never_borrows_proxy_complete_history(self):
@@ -31,27 +32,27 @@ class DepthTests(unittest.TestCase):
         status,coverage=display_coverage(store,{'isin':'ANY'},None,'1D','1D')
         self.assertNotIn('COMPLETE',status);self.assertEqual(coverage,'');store.setting.assert_not_called()
     def response(self):
-        value=Mock();value.json.return_value={'chart':{'error':None,'result':[{'meta':{'symbol':'ANY','currency':'USD','exchangeName':'NYQ'},'timestamp':[]}]}}
+        value=Mock();value.json.return_value={'chart':{'error':None,'result':[{'meta':{'symbol':'ANY','currency':'EUR','exchangeName':'GER','exchangeTimezoneName':'Europe/Berlin'},'timestamp':[]}]}}
         return value
     def test_daily_default_has_no_twenty_year_cutoff(self):
         with patch.object(service.requests,'get',return_value=self.response()) as call:
-            service.download('ANY')
+            service.download('ANY',expected=EXPECTED)
         self.assertEqual(call.call_args.kwargs['params']['period1'],int(pd.Timestamp('1900-01-01',tz='UTC').timestamp()))
     def test_intraday_defaults_request_full_retention(self):
         for tf,days in [('5m',60),('15m',60),('60m',730)]:
             with self.subTest(tf=tf),patch.object(service.requests,'get',return_value=self.response()) as call:
-                service.download('ANY',tf)
+                service.download('ANY',tf,expected=EXPECTED)
                 params=call.call_args.kwargs['params']
                 self.assertAlmostEqual(params['period2']-params['period1'],days*86400-60,delta=2)
     def test_explicit_repair_range_is_not_expanded(self):
         start=pd.Timestamp('2026-10-01',tz='UTC');end=start+pd.Timedelta(days=1)
         with patch.object(service.requests,'get',return_value=self.response()) as call:
-            service.download('ANY','5m',start,end)
+            service.download('ANY','5m',start,end,expected=EXPECTED)
         p=call.call_args.kwargs['params'];self.assertEqual(p['period1'],int(start.timestamp()));self.assertEqual(p['period2'],int(end.timestamp()))
     def test_rate_limit_has_no_busy_retry(self):
         reply=self.response();reply.raise_for_status.side_effect=requests.HTTPError('429 Too Many Requests')
         with patch.object(service.requests,'get',return_value=reply) as call:
-            with self.assertRaises(requests.HTTPError):service.download('ANY')
+            with self.assertRaises(requests.HTTPError):service.download('ANY',expected=EXPECTED)
         self.assertEqual(call.call_count,1)
     def test_empty_initial_download_is_not_complete_and_cools_down(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -94,3 +95,4 @@ class DepthTests(unittest.TestCase):
                 self.assertEqual(store.load_series('ANY','1D','proxy','ANY').index[0],pd.Timestamp('1962-01-02'))
             finally:store.read_cache.close()
 if __name__=='__main__':unittest.main()
+
