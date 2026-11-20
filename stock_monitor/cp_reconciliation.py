@@ -603,7 +603,9 @@ def turn(store, info, now=None):
         progress.update(last_turn=clock.isoformat(),last_created=created,last_checked=checked,
             checked_total=progress.get('checked_total',0)+checked,mode='ASSISTED_ONLY')
         current_jobs=[read(db,k,{}) for k,_ in page]
-        update_suspicious(progress,current_jobs)
+        if progress.get('suspicious_version')!=2:
+            progress['suspicious']={};progress['suspicious_version']=2
+        update_suspicious(progress,[j for j in current_jobs if j.get('checked_at')==clock.isoformat()])
         previous=progress.get('review_batch')
         retained=[read(db,PREFIX+isin+':'+i['id'],{}) for i in (previous or {}).get('items',[])]
         stable=bool(retained) and pd.Timestamp(previous['valid_until'])>clock and all(
