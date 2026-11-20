@@ -96,6 +96,7 @@ def decision_evidence(result):
     quote=result.get('execution_quote',{})
     return dict(policy=VERSION,isin=result.get('isin'),identity=result.get('identity'),
         timeframe=result.get('timeframe'),signal_at=engine.get('timestamp'),signal=engine.get('signal'),
+        revisions={k:v for k,v in result.get('_input_revisions',{}).items() if k.startswith(('market:','instrument:'))},
         inputs=[{k:s.get(k) for k in ('spec','count','digest')} for s in proof.get('series',[])],
         contexts=contexts,execution_quote={k:quote.get(k) for k in ('isin','identity','timeframe','bars')},quote_blocker=result.get('quote_blocker'))
 
