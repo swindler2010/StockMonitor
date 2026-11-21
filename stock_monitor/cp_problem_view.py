@@ -25,7 +25,16 @@ def repair_capability(problem,job):
     # success. Missing TV/native evidence is precisely why a recovery is needed.
     reason=('СР сам проверит архив и источник; исправление зависит от подтверждённых данных'
             if check else 'Нет штатного адресного исправления для этого источника или ТФ')
-    return dict(check=bool(check),known=bool(check),label='Автоисправление' if check else 'Нужна помощь',reason=reason)
+    result=dict(check=bool(check),known=bool(check),color='Green' if check else 'Red',label='Автоисправление' if check else 'Нужна помощь',reason=reason)
+    receipt=problem.get('repair') or {};state=receipt.get('state')
+    labels={'QUEUED':('Amber','В очереди'),'RUNNING':('Blue','Исправляется'),
+            'WAITING':('Red','Ждёт источник'),'BLOCKED':('Red','Не исправлено'),
+            'SUPERSEDED':('Red','Перепроверить'),'COMPLETED':('Amber','Перепроверка'),
+            'RECHECKED':('Amber','Перепроверка')}
+    if check and state in labels:
+        result['color'],result['label']=labels[state];result['known']=False
+        result['reason']=receipt.get('reason') or result['label']
+    return result
 
 
 
@@ -76,7 +85,37 @@ def present(problem,jobs):
                 title=STATES.get(state,state),severity=severity,tv=tv,influence=influence,next=next_step,
                 source=' / '.join(str((problem.get('identity') or {}).get(k) or '—') for k in ('source','venue','currency')),
                 last=repair.get('finished_at') or repair.get('checked_at') or (job or {}).get('checked_at') or '—',
-                next_retry=repair.get('next_retry') or review.get('next_retry'),job=job)
+                next_retry=repair.get('next_retry') or review.get('next_retry'),job=job,work=repair_progress(repair))
+
+
+def repair_progress(receipt):
+    state=receipt.get('state')
+    label={'QUEUED':'Приоритетная очередь' if receipt.get('owner_priority_at') else 'В очереди',
+           'RUNNING':'Проверка и восстановление','WAITING':'Ожидание источника',
+           'BLOCKED':'Не исправлено','SUPERSEDED':'Исходные данные изменились',
+           'COMPLETED':'Результат записан; обновление списка','RECHECKED':'Оценка обновлена'}.get(state,'Ещё не запускалось')
+    text=tr(label)
+    if receipt.get('next_retry'):
+        from zoneinfo import ZoneInfo
+        try:until=datetime.fromisoformat(receipt['next_retry'].replace('Z','+00:00')).astimezone(ZoneInfo('Europe/Berlin')).strftime('%d.%m %H:%M:%S')
+        except (ValueError,TypeError):until=str(receipt['next_retry'])
+        text+=' · '+tr('Следующая попытка')+': '+until
+    return text
+
+
+def read_requests(path,isin):
+    from cp_controls import read
+    with closing(sqlite3.connect(Path(path).resolve().as_uri()+'?mode=ro',uri=True)) as db:
+        db.execute('PRAGMA query_only=ON')
+        return read(db,'cp_repair_requests:'+isin,{})
+
+
+def receipt_clock(receipt):
+    values=[]
+    for key in ('requested_at','owner_priority_at','started_at','finished_at'):
+        try:values.append(datetime.fromisoformat(receipt.get(key,'').replace('Z','+00:00')).timestamp())
+        except (ValueError,TypeError,AttributeError):pass
+    return max(values,default=0)
 
 
 def read(path,isin,page=0,include_old=False,now=None):
@@ -136,7 +175,7 @@ class Dialog:
     def __init__(self,app):
         from main_screen import native_titlebar
         self.app=app;self.closed=False;self.generation=0;self.page=0;self.packet={};self.shown={};self.busy=False;self.timer=None
-        self.win=w=tk.Toplevel(app.root);app._cp_problem_window=w;self.action_buttons={};self.paint_timer=None;self.action_busy=False
+        self.win=w=tk.Toplevel(app.root);app._cp_problem_window=w;self.action_buttons={};self.paint_timer=None;self.action_busy=False;self.receipts={};self.watch_timer=None;self.watch_busy=False
         w.title(tr('CandlePilot • проблемы выбранной акции'));w.geometry('1280x740');w.minsize(950,600)
         palette=THEMES.get(app.store.setting('theme','Тёмная'),THEMES['Тёмная']);self.p=p=styles(app.root,palette)
         base=ttk.Frame(w,padding=12,style=p+'.TFrame');base.pack(fill='both',expand=True)
@@ -154,7 +193,7 @@ class Dialog:
         self.include_old=tk.BooleanVar(w,False)
         ttk.Checkbutton(base,text=tr('Показывать старые и другие архивы'),variable=self.include_old,command=self.select,style=p+'.TCheckbutton').pack(anchor='w',pady=(0,6))
         host=ttk.Frame(base,style=p+'.TFrame');host.pack(fill='both',expand=True)
-        columns=('tf','action','span','title','severity','tv','influence','source')
+        columns=('tf','action','work','span','title','severity','tv','influence','source')
         style=ttk.Style(w);style.configure(p+'.CP.Treeview',background=palette['bg'],fieldbackground=palette['bg'],foreground=palette['text'],rowheight=32,font=('Segoe UI',10),borderwidth=0,relief='flat')
         style.map(p+'.CP.Treeview',background=[('selected','#075585')],foreground=[('selected','#ffffff')])
         style.layout(p+'.CP.Treeview.Heading',[('Treeheading.padding',{'sticky':'nsew','children':[('Treeheading.text',{'sticky':'we'})]})])
@@ -162,7 +201,7 @@ class Dialog:
         style.configure(p+'.CP.Horizontal.TScrollbar',background=palette['grid'],troughcolor=palette['bg'],bordercolor=palette['bg'],lightcolor=palette['bg'],darkcolor=palette['bg'],arrowcolor=palette['muted'])
         self.action_styles(p,palette)
         self.tree=ttk.Treeview(host,columns=columns,show='headings',style=p+'.CP.Treeview',selectmode='browse')
-        for key,label,width in zip(columns,('ТФ','Действие','Дата / диапазон','Проблема','Серьёзность','Сверка TV','Влияние','Источник / площадка'),(55,135,205,195,95,195,155,180)):
+        for key,label,width in zip(columns,('ТФ','Действие','Работа СР','Дата / диапазон','Проблема','Серьёзность','Сверка TV','Влияние','Источник / площадка'),(55,140,235,205,195,95,195,155,180)):
             self.tree.heading(key,text=tr(label));self.tree.column(key,width=width,minwidth=60)
         vertical=ttk.Scrollbar(host,command=self.tree.yview,style=p+'.Vertical.TScrollbar');vertical.pack(side='right',fill='y')
         self.tree.configure(yscrollcommand=lambda a,b:(vertical.set(a,b),self.schedule_buttons()));self.tree.pack(fill='both',expand=True)
@@ -183,7 +222,7 @@ class Dialog:
         self.refresh()
 
     def select(self):
-        self.page=0;self.generation+=1;self.tree.delete(*self.tree.get_children());self.shown={};self.clear_detail();self.refresh()
+        self.page=0;self.generation+=1;self.receipts={};self.tree.delete(*self.tree.get_children());self.shown={};self.clear_detail();self.refresh()
 
     def action_styles(self,p,palette):
         from PIL import Image,ImageDraw,ImageTk
@@ -191,7 +230,7 @@ class Dialog:
         if cache is None:self.app.root._cp_action_images=cache={}
         if p in cache:return
         cache[p]=[];style=ttk.Style(self.win)
-        for name,fill,edge in [('Green','#104c30','#25e772'),('Red','#4c1b27','#ff5866')]:
+        for name,fill,edge in [('Green','#104c30','#25e772'),('Red','#4c1b27','#ff5866'),('Amber','#574020','#f1bd49'),('Blue','#123f65','#35b9ff')]:
             bitmap=Image.new('RGBA',(96,96));ImageDraw.Draw(bitmap).rounded_rectangle((2,2,93,93),radius=15,fill=fill,outline=edge,width=4)
             image=ImageTk.PhotoImage(bitmap.resize((32,32),Image.Resampling.LANCZOS),master=self.app.root);cache[p].append(image)
             element=p+'.CP'+name;style.element_create(element,'image',image,border=6,sticky='nsew')
@@ -214,7 +253,7 @@ class Dialog:
             button=self.action_buttons.get(key)
             if button is None:
                 button=ttk.Button(self.tree,command=lambda k=key:self.act(k));self.action_buttons[key]=button
-            cap=row['action'];button.configure(text=tr(cap['label']),style=self.p+('.CPGreen.TButton' if cap['known'] else '.CPRed.TButton'),state='disabled' if self.action_busy else 'normal')
+            cap=row['action'];button.configure(text=tr(cap['label']),style=self.p+'.CP'+cap['color']+'.TButton',state='disabled' if self.action_busy else 'normal')
             x,y,width,height=bounds;button.place(x=x+2,y=y+2,width=max(1,width-4),height=max(1,height-4))
             button.lift()
         for key,button in self.action_buttons.items():
@@ -225,7 +264,7 @@ class Dialog:
         row=self.shown[key];self.tree.selection_set(key);self.details()
         if not row['action']['check']:
             self.clear_detail(self.detail.get('1.0','end')+'\n'+tr('Нет штатного адресного исправления для этого источника или ТФ'));return
-        self.action_busy=True;self.schedule_buttons();problem=row['problem'];isin=problem['isin'];generation=self.generation
+        self.action_busy=True;self.schedule_buttons();self.status.set(tr('Постановка приоритетного задания…'));problem=row['problem'];isin=problem['isin'];generation=self.generation
         def done(value):
             self.action_busy=False
             # An explicit queued owner request survives closing this read-only view.
@@ -234,13 +273,59 @@ class Dialog:
                 self.app.start_feed(info)
                 if hasattr(self.app,'dispatcher'):self.app.dispatcher.prioritize_feed('feed:'+isin)
             if self.closed:return
-            self.refresh();self.status.set(tr('Приоритетная задача поставлена в штатную очередь')+' · '+str(value.get('state','')))
+            if generation==self.generation:
+                from cp_controls import repair_id
+                self.apply_receipts({repair_id(problem):value})
+                self.status.set(tr('Приоритетная задача поставлена в штатную очередь')+' · '+repair_progress(value))
+                self.schedule_watch(500)
         def failed(error):
             self.action_busy=False
             if self.closed:return
             self.schedule_buttons()
             if generation==self.generation:self.status.set(tr('Не удалось поставить задачу')+': '+str(error))
         if self.app.job(lambda:priority_request(self.app.store,problem),done,failed,lane='read',key=('cp-owner-repair',isin,problem['id'])) is False:failed(tr('Очередь временно занята'))
+
+    def row_values(self,row):
+        return [tr(row['action']['label']) if k=='action' else tr(str(row[k])) for k in ('tf','action','work','span','title','severity','tv','influence','source')]
+
+    def apply_receipts(self,receipts):
+        from cp_controls import repair_id
+        resolved=False
+        for key,row in list(self.shown.items()):
+            target=repair_id(row['problem']);receipt=receipts.get(target)
+            if receipt is None:continue
+            old=max((self.receipts.get(target) or {},row['problem'].get('repair') or {}),key=receipt_clock)
+            if receipt_clock(receipt)<receipt_clock(old):continue
+            self.receipts[target]=receipt
+            if receipt.get('state') in ('COMPLETED','RECHECKED','SUPERSEDED') and receipt!=old:resolved=True
+            updated=present({**row['problem'],'repair':receipt},[row['job']] if row.get('job') else [])
+            self.shown[key]=updated
+            self.tree.item(key,values=self.row_values(updated))
+        self.schedule_buttons();self.details()
+        return resolved
+
+    def schedule_watch(self,delay=3000):
+        if self.closed:return
+        if self.watch_timer is not None:self.win.after_cancel(self.watch_timer)
+        self.watch_timer=self.win.after(delay,self.watch)
+
+    def watch(self):
+        if self.watch_timer is not None:self.win.after_cancel(self.watch_timer)
+        self.watch_timer=None
+        if self.closed or self.choice.current()<0:return
+        if self.watch_busy:self.schedule_watch();return
+        self.watch_busy=True;generation=self.generation;isin=self.infos[self.choice.current()]['isin']
+        def done(value):
+            self.watch_busy=False
+            if self.closed:return
+            if generation==self.generation and self.apply_receipts(value):self.refresh()
+            self.schedule_watch()
+        def failed(error):
+            self.watch_busy=False
+            if self.closed:return
+            if generation==self.generation:self.status.set(tr('Не удалось обновить ход исправления')+': '+str(error))
+            self.schedule_watch()
+        if self.app.job(lambda:read_requests(self.app.store.path,isin),done,failed,lane='read',key=('cp-repair-watch',id(self.win),generation)) is False:failed(tr('Очередь временно занята'))
 
     def clear_detail(self,text=''):
         self.detail.configure(state='normal');self.detail.delete('1.0','end');self.detail.insert('1.0',text);self.detail.configure(state='disabled')
@@ -272,10 +357,13 @@ class Dialog:
             if self.closed:return
             self.refresh_button.configure(state='normal')
             if generation!=self.generation:self.refresh();return
+            selected=self.tree.selection()
             self.packet=value;self.page=value['page'];self.tree.delete(*self.tree.get_children());self.shown={};self.clear_detail()
             for n,r in enumerate(value['rows']):
                 key=r['problem']['id'];self.shown[key]=r
-                self.tree.insert('','end',iid=key,values=[tr(r['action']['label']) if k=='action' else tr(str(r[k])) for k in ('tf','action','span','title','severity','tv','influence','source')],tags=('high' if r['severity']=='Высокая' else 'medium' if r['severity']=='Средняя' else '',))
+                self.tree.insert('','end',iid=key,values=self.row_values(r),tags=('high' if r['severity']=='Высокая' else 'medium' if r['severity']=='Средняя' else '',))
+            if selected and selected[0] in self.shown:self.tree.selection_set(selected[0])
+            self.apply_receipts(self.receipts);self.schedule_watch()
             self.schedule_buttons()
             self.status.set(tr('Сохранённые проблемы')+f": {value['total']} · {self.page+1}/{value['pages']} · "+tr('Архив отдельно')+f": {value.get('archived_count',0)} · "+str(value['at']))
             if not value['rows']:self.clear_detail(tr('В сохранённых отчётах проблем не найдено. Это не подтверждает полноту истории или готовность торговли.'))
@@ -292,6 +380,7 @@ class Dialog:
         self.closed=True;self.generation+=1
         if self.timer is not None:self.win.after_cancel(self.timer);self.timer=None
         if self.paint_timer is not None:self.win.after_cancel(self.paint_timer);self.paint_timer=None
+        if self.watch_timer is not None:self.win.after_cancel(self.watch_timer);self.watch_timer=None
 
     def close(self):self.cleanup();self.win.destroy()
 

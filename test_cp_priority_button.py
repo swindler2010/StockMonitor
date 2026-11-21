@@ -93,7 +93,7 @@ class PriorityWindowTests(unittest.TestCase):
         with patch('cp_controls.request_repair',return_value={'state':'QUEUED'}) as request:
             jobs[1][1](jobs[1][0]());request.assert_called_once();self.assertTrue(request.call_args.kwargs['priority'])
         app.start_feed.assert_called_once_with(app.watchlist[0]);app.dispatcher.prioritize_feed.assert_called_once_with('feed:A')
-        self.assertEqual(len(jobs),3) # normal read refresh, not a second repair
+        self.assertEqual(len(jobs),2) # receipt applied locally; watcher is timer-driven
         d.close()
 
 if __name__=='__main__':unittest.main()

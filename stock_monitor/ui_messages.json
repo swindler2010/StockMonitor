@@ -4944,5 +4944,69 @@
   "СР сам проверит архив и источник; исправление зависит от подтверждённых данных": {
     "en": "CP checks the archive and source automatically; repair requires confirmed data",
     "de": "CP prüft Archiv und Quelle automatisch; die Reparatur erfordert bestätigte Daten"
+  },
+  "В очереди": {
+    "en": "Queued",
+    "de": "In Warteschlange"
+  },
+  "Исправляется": {
+    "en": "Repairing",
+    "de": "Wird repariert"
+  },
+  "Ждёт источник": {
+    "en": "Awaiting source",
+    "de": "Wartet auf Quelle"
+  },
+  "Не исправлено": {
+    "en": "Not repaired",
+    "de": "Nicht behoben"
+  },
+  "Перепроверить": {
+    "en": "Recheck",
+    "de": "Erneut prüfen"
+  },
+  "Перепроверка": {
+    "en": "Rechecking",
+    "de": "Erneute Prüfung"
+  },
+  "Приоритетная очередь": {
+    "en": "Priority queue",
+    "de": "Prioritätswarteschlange"
+  },
+  "Проверка и восстановление": {
+    "en": "Checking and recovering",
+    "de": "Prüfung und Wiederherstellung"
+  },
+  "Ожидание источника": {
+    "en": "Awaiting source",
+    "de": "Wartet auf Quelle"
+  },
+  "Исходные данные изменились": {
+    "en": "Source inputs changed",
+    "de": "Ausgangsdaten geändert"
+  },
+  "Результат записан; обновление списка": {
+    "en": "Result saved; updating list",
+    "de": "Ergebnis gespeichert; Liste wird aktualisiert"
+  },
+  "Оценка обновлена": {
+    "en": "Assessment updated",
+    "de": "Bewertung aktualisiert"
+  },
+  "Ещё не запускалось": {
+    "en": "Not started yet",
+    "de": "Noch nicht gestartet"
+  },
+  "Работа СР": {
+    "en": "CP progress",
+    "de": "CP-Fortschritt"
+  },
+  "Не удалось обновить ход исправления": {
+    "en": "Could not update repair progress",
+    "de": "Reparaturfortschritt konnte nicht aktualisiert werden"
+  },
+  "Постановка приоритетного задания…": {
+    "en": "Queuing priority task…",
+    "de": "Prioritätsaufgabe wird eingereiht…"
   }
 }
