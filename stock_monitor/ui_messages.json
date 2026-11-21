@@ -4896,5 +4896,13 @@
   "Источник / площадка": {
     "en": "Source / venue",
     "de": "Quelle / Handelsplatz"
+  },
+  "Показывать старые и другие архивы": {
+    "en": "Show old and other archives",
+    "de": "Alte und andere Archive anzeigen"
+  },
+  "Архив отдельно": {
+    "en": "Separate archive",
+    "de": "Separates Archiv"
   }
 }

@@ -64,6 +64,12 @@ def read(path,isin,page=0,include_old=False,now=None):
     with closing(sqlite3.connect(Path(path).resolve().as_uri()+'?mode=ro',uri=True)) as db:
         db.execute('PRAGMA query_only=ON');db.execute('BEGIN')
         problems=view(db,isin)
+        from eur_listings import owner_history_info,venue_allowed
+        exists=db.execute("SELECT 1 FROM sqlite_master WHERE name='instruments'").fetchone()
+        info=db.execute('SELECT payload FROM instruments WHERE isin=?',(isin,)).fetchone() if exists else None
+        info=json.loads(info[0]) if info else {}
+        saved_policy=db.execute("SELECT value FROM settings WHERE key='cp_gettex_source_policy'").fetchone()
+        info=owner_history_info(info,json.loads(saved_policy[0]) if saved_policy else {})
         # Equality on JSON identity avoids LIKE wildcard confusion in owner-added IDs.
         prefix='cp_reconciliation_job:'+isin+':'
         jobs=[json.loads(v) for v, in db.execute('SELECT value FROM settings WHERE key>=? AND key<? ORDER BY key',(prefix,prefix+'\uffff'))]
@@ -88,20 +94,22 @@ def read(path,isin,page=0,include_old=False,now=None):
                 return bool(end<cutoff)
             except (ValueError,TypeError):return False
         old_count=sum(old_archive(p) for p in problems)
-        visible=problems if include_old else [p for p in problems if not old_archive(p)]
+        def other_archive(problem):
+            meta=problem.get('identity') or {}
+            return problem.get('kind')=='archive' and all(meta.get(k) for k in ('source','venue','currency')) and not venue_allowed(info,meta)
+        archived_count=sum(old_archive(p) or other_archive(p) for p in problems)
+        visible=problems if include_old else [p for p in problems if not (old_archive(p) or other_archive(p))]
         rows=[present(p,indexed.get(binding(p.get('isin'),p.get('tf'),p.get('identity') or {},p.get('range')),[])) for p in visible]
-        exists=db.execute("SELECT 1 FROM sqlite_master WHERE name='instruments'").fetchone()
-        info=db.execute('SELECT payload FROM instruments WHERE isin=?',(isin,)).fetchone() if exists else None
-        info=json.loads(info[0]) if info else {}
     order={'Высокая':0,'Средняя':1,'Низкая':2,'Информация':3}
     def scope(row):
         p=row['problem'];meta=p.get('identity') or {}
         if p.get('kind')=='context':return 0
+        if meta.get('venue') and info.get('history_venue_lock'):return 0 if venue_allowed(info,meta) else 2
         if meta.get('venue') and info.get('venue'):return 0 if meta.get('venue')==info.get('venue') and meta.get('currency')==info.get('currency') else 2
         return 1
     rows.sort(key=lambda r:(scope(r),order[r['severity']],r['tf'],r['span']))
     pages=max(1,(len(rows)+99)//100);page=min(max(0,int(page)),pages-1)
-    return dict(isin=isin,at=datetime.now(timezone.utc).isoformat(),total=len(rows),old_archive=old_count,include_old=include_old,page=page,pages=pages,rows=rows[page*100:(page+1)*100])
+    return dict(isin=isin,at=datetime.now(timezone.utc).isoformat(),total=len(rows),old_archive=old_count,archived_count=archived_count,include_old=include_old,page=page,pages=pages,rows=rows[page*100:(page+1)*100])
 
 
 class Dialog:
@@ -124,7 +132,7 @@ class Dialog:
         ttk.Button(top,text=tr('Подробная диагностика…'),style=p+'.Secondary.TButton',command=lambda:__import__('candlepilot_health').show_advanced(app)).pack(side='left')
         self.status=tk.StringVar(w,tr('Чтение сохранённых проблем…'));ttk.Label(base,textvariable=self.status,style=p+'.TLabel').pack(anchor='w',pady=6)
         self.include_old=tk.BooleanVar(w,False)
-        ttk.Checkbutton(base,text=tr('Показывать архив старше 5 лет'),variable=self.include_old,command=self.select,style=p+'.TCheckbutton').pack(anchor='w',pady=(0,6))
+        ttk.Checkbutton(base,text=tr('Показывать старые и другие архивы'),variable=self.include_old,command=self.select,style=p+'.TCheckbutton').pack(anchor='w',pady=(0,6))
         host=ttk.Frame(base,style=p+'.TFrame');host.pack(fill='both',expand=True)
         columns=('tf','span','title','severity','tv','influence','source')
         style=ttk.Style(w);style.configure(p+'.CP.Treeview',background=palette['bg'],fieldbackground=palette['bg'],foreground=palette['text'],rowheight=32,font=('Segoe UI',10),borderwidth=0,relief='flat')
@@ -188,7 +196,7 @@ class Dialog:
             for n,r in enumerate(value['rows']):
                 key=str(n);self.shown[key]=r
                 self.tree.insert('','end',iid=key,values=[tr(str(r[k])) for k in ('tf','span','title','severity','tv','influence','source')],tags=('high' if r['severity']=='Высокая' else 'medium' if r['severity']=='Средняя' else '',))
-            self.status.set(tr('Сохранённые проблемы')+f": {value['total']} · {self.page+1}/{value['pages']} · "+tr('Старый архив')+f": {value.get('old_archive',0)} · "+str(value['at']))
+            self.status.set(tr('Сохранённые проблемы')+f": {value['total']} · {self.page+1}/{value['pages']} · "+tr('Архив отдельно')+f": {value.get('archived_count',0)} · "+str(value['at']))
             if not value['rows']:self.clear_detail(tr('В сохранённых отчётах проблем не найдено. Это не подтверждает полноту истории или готовность торговли.'))
             self.timer=self.win.after(60000,self.refresh)
         def failed(error):
@@ -210,3 +218,4 @@ def show(app):
     old=getattr(app,'_cp_problem_window',None)
     if old is not None and old.winfo_exists():old.lift();return old
     app._cp_problem_dialog=Dialog(app);return app._cp_problem_dialog.win
+

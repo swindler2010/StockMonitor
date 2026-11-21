@@ -40,6 +40,8 @@ class ProblemEvidenceTests(unittest.TestCase):
             db.execute('create table settings(key primary key,value)')
             db.execute('insert into settings values (?,?)',('cp_reconciliation_job:A:1',json.dumps(self.job())))
             db.execute('insert into settings values (?,?)',('cp_reconciliation_job:B:1',json.dumps({**self.job(),'isin':'B'})))
+            policy=dict(version=1,approved=True,scope='registered_stocks',exclusive_venue='GETTEX')
+            db.execute('insert into settings values (?,?)',('cp_gettex_source_policy',json.dumps(policy)))
             db.commit()
         before=path.read_bytes()
         def problems(db,isin):
@@ -50,10 +52,11 @@ class ProblemEvidenceTests(unittest.TestCase):
         self.assertEqual(packet['total'],205);self.assertEqual(packet['page'],2);self.assertEqual(len(packet['rows']),5)
         self.assertTrue(all(r['job']['isin']=='A' for r in packet['rows']));self.assertEqual(path.read_bytes(),before)
         old={**PROBLEM,'range':['2011-01-01','2011-01-01']}
-        with patch('cp_controls.view',return_value=[old,PROBLEM]):
+        other={**PROBLEM,'identity':{**META,'source':'proxy','venue':'GER'}}
+        with patch('cp_controls.view',return_value=[old,PROBLEM,other]):
             fresh=read(path,'A',now='2026-11-21T00:00:00Z')
             full=read(path,'A',include_old=True,now='2026-11-21T00:00:00Z')
-        self.assertEqual((fresh['total'],fresh['old_archive'],full['total']),(1,1,2))
+        self.assertEqual((fresh['total'],fresh['old_archive'],fresh['archived_count'],full['total']),(1,1,2,3))
         self.assertEqual(path.read_bytes(),before)
 
 
@@ -75,3 +78,4 @@ class ProblemWindowTests(unittest.TestCase):
         self.assertTrue(d.closed)
 
 if __name__=='__main__':unittest.main()
+
