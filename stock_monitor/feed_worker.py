@@ -40,6 +40,16 @@ class FeedContext(StockMonitor):
                 planned=automatic_repair_turn(self.store,info)
             except Exception as error:planned={'state':'ERROR','reason':str(error)}
         result=self._calculate(info)
+        # A dependency repair may yield to this regular history turn. Once that
+        # work is finished, service ONE due request here instead of waiting a
+        # whole universe rotation. Fresh-price slots remain acquisition-only.
+        if (planned or {}).get('state') in ('QUEUED','PENDING') and not result.get('cp_priority'):
+            try:
+                from cp_controls import service_request
+                repaired=service_request(info,self.store,self._recover_gettex_range)
+                if repaired is not None:result['cp_priority']=repaired
+            except Exception as error:
+                result.setdefault('errors',[]).append('CP automatic repair completion: '+str(error))
         if info.get('_gettex_poll_only') and info.get('_cp_focus',{}).get('source')!='gettex_chart':
             # The official files already fetched for one stock cover the whole
             # registered EUR universe. Drain one recent saved pair before the

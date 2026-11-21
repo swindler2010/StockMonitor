@@ -40,6 +40,22 @@ class ArchiveAutorun(unittest.TestCase):
   self.assertEqual(f.s.db.execute('SELECT count(*) FROM candles').fetchone()[0],2)
   self.assertNotEqual(f.s.setting(f.qkey)['state'],'READY')
   before=copy.deepcopy(f.jobs());f.plan();self.assertEqual(before,f.jobs())
+ def test_regular_yield_does_not_defer_repair_to_next_universe_rotation(self):
+  f=self.f;rows,reply=f.real_fixture();f.s.set_setting('cp_eligibility:'+f.isin,{})
+  f.s.set_setting('cp_repair_plan:'+f.isin,{'yield_regular':True})
+  fetch=Mock(return_value=reply);host=f.host();host._recover_gettex_range=fetch
+  host._calculate=lambda info:FeedContext._calculate(host,info)
+  with ExitStack() as stack:
+   f.stages(stack)
+   stack.enter_context(patch('cp_controls.stamp',return_value=f.now.isoformat()))
+   regular=stack.enter_context(patch('cp_controls.historical_review_turn',return_value={}))
+   stack.enter_context(patch('requests.get',side_effect=AssertionError('saved replay only')))
+   stack.enter_context(patch('calculation_window.eligibility_turn',return_value={'timeframes':{}}))
+   stack.enter_context(patch('cp_reconciliation.complete_analysis_request'))
+   result=FeedContext.calculate(host,{**f.info,'_review_only':True})
+  regular.assert_called_once();fetch.assert_called_once()
+  self.assertEqual(result['cp_priority']['state'],'COMPLETED')
+  self.assertEqual(f.s.db.execute('SELECT count(*) FROM candle_recoveries').fetchone()[0],1)
  def test_owner_click_precedes_automatic_in_actual_writer_selection(self):
   f=self.f;f.plan();automatic=f.task()
   q={**f.q,'ranges':[['2026-11-08 10:00:00','2026-11-08 10:00:00'],f.span]};f.s.set_setting(f.qkey,q)
