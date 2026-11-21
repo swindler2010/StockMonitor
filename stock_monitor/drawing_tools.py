@@ -4,10 +4,13 @@ import math
 import pandas as pd
 from i18n import tr
 from drawing_actions import chart_identity,commit
+from drawing_complex import PATTERNS
 
 GROUPS={
     'Линии тренда':(('Горизонталь','hline',1),('Вертикаль','vline',1),('Трендовая линия','trend',2),('Луч','ray',2),('Расширенная линия','extended',2),('Параллельный канал','channel',3)),
     'Фибоначчи':(('Коррекция Фибоначчи','fib',2),('Расширение Фибоначчи','fib_extension',3)),
+    'Ганн':(('Веер Ганна','gann_fan',2),('Сетка Ганна','gann_box',2),('Квадрат Ганна','gann_square',2)),
+    'Паттерны и волны':(('ABCD (разметка)','abcd',4),('XABCD (разметка)','xabcd',5),('Импульс Эллиотта','elliott_impulse',6),('Коррекция Эллиотта','elliott_correction',4),('Треугольник Эллиотта','elliott_triangle',6),('Циклы','cycles',2)),
     'Фигуры и аннотации':(('Прямоугольник','zone',2),('Эллипс','ellipse',2),('Круг','circle',2),('Треугольник','triangle',3),('Текст','text',1),('Заметка','note',1)),
     'Позиции и измерения':(('Маркер цены','marker',1),('Стрелка','arrow',2),('Двойная стрелка','double_arrow',2),('Измерение диапазона','measure',2)),
 }
@@ -33,12 +36,19 @@ def build(kind,points,text=None):
         if kind in ('zone','ellipse') and (dx==0 or dy==0):raise ValueError('Фигуре нужны ширина и высота')
         if kind in ('fib','fib_extension') and (dx==0 or dy==0):raise ValueError('Фибоначчи: нужны разные время и цена')
         if kind=='channel' and dx==0:raise ValueError('Каналу нужны две разные отметки времени')
+        if kind.startswith('gann_') and (dx<=0 or dy==0):raise ValueError('Ганн: вторая точка должна быть позже первой и иметь другую цену')
+        if kind=='cycles' and dx<=0:raise ValueError('Циклы: вторая точка должна быть позже первой')
+        if kind in PATTERNS and any(pd.Timestamp(points[n+1]['at'])<=pd.Timestamp(points[n]['at']) for n in range(len(points)-1)):raise ValueError('Точки разметки должны идти по времени слева направо')
         if len(points)==3:
             c=points[2];cx=(pd.Timestamp(c['at'])-pd.Timestamp(a['at'])).total_seconds();cy=c['price']-a['price']
             if kind in ('triangle','channel') and abs(dx*cy-dy*cx)<=1e-12:raise ValueError('Третья точка должна находиться вне первой линии')
     obj=dict(type=kind,**points[0])
-    if len(points)>1:obj['end']=points[1]
-    if len(points)>2:obj['third']=points[2]
+    if len(points)>3:obj['vertices']=points
+    else:
+        if len(points)>1:obj['end']=points[1]
+        if len(points)>2:obj['third']=points[2]
+    if kind.startswith('gann_'):obj['gann_calibration']='anchors_1x1_linear'
+    if kind in PATTERNS:obj['pattern_mode']='manual_labels_only'
     if kind in ('text','note'):obj['text']=text_value(text)
     return obj
 
@@ -53,6 +63,8 @@ def start(app,kind):
     count=REGISTRY[kind]['points']
     hints={'circle':'Укажите центр круга, затем точку радиуса.', 'fib':'Укажите начало и конец движения; 0 — у конца, 1 — у начала.',
            'fib_extension':'Укажите начало движения, конец движения и конец коррекции.', 'channel':'Укажите две точки первой линии и точку параллельной границы.'}
+    if kind.startswith('gann_'):hints[kind]='Ганн: укажите две точки линии 1×1 слева направо. Масштаб задаётся этими точками.'
+    if kind in PATTERNS:hints[kind]='Ручная разметка, не проверка паттерна. Укажите по времени: '+', '.join(PATTERNS[kind])+'.'
     app.status.set(tr(hints.get(kind, 'Укажите точку на графике.' if count==1 else f'Укажите {count} точки на графике.')))
 
 

@@ -66,6 +66,15 @@ class DrawingDialogTests(unittest.TestCase):
         self.assertTrue(self.d.tool_buttons['text'].winfo_ismapped())
         self.assertFalse(self.d.tool_buttons['fib'].winfo_ismapped());self.assertFalse(self.drafts)
 
+    def test_gann_and_wave_groups_are_visible_and_explicitly_manual(self):
+        self.d.tool_group.set('Ганн');self.root.update()
+        self.assertTrue(self.d.tool_buttons['gann_fan'].winfo_ismapped())
+        self.assertIn('1×1',self.d.group_caption.get())
+        self.d.tool_group.set('Паттерны и волны');self.root.update()
+        self.assertTrue(self.d.tool_buttons['elliott_impulse'].winfo_ismapped())
+        self.assertTrue(self.d.tool_buttons['xabcd'].winfo_ismapped())
+        self.assertIn('не сигнал',self.d.group_caption.get());self.assertFalse(self.drafts)
+
     def test_registered_tools_and_singleton_preserve_click_modes(self):
         same=show(self.app);self.assertIs(same,self.d.win)
         self.assertEqual(set(self.d.tool_buttons),{x[1] for x in TOOLS})

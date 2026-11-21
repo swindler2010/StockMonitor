@@ -37,7 +37,8 @@ class Dialog:
         self.tabs['Инструменты'].configure(style=p+'.Primary.TButton')
         self.tools_box=tools=ttk.Frame(base,padding=12,style=p+'.Info.TFrame');tools.pack(fill='x',pady=(0,10))
         group_bar=ttk.Frame(tools,style=p+'.TFrame');group_bar.pack(fill='x',pady=(0,8))
-        ttk.Label(group_bar,text=tr('Инструменты рисования'),style=p+'.Drawing.TLabel',font=('Segoe UI',12,'bold')).pack(side='left')
+        self.group_caption=tk.StringVar(win,tr('Инструменты рисования'))
+        ttk.Label(group_bar,textvariable=self.group_caption,style=p+'.Drawing.TLabel',font=('Segoe UI',12,'bold')).pack(side='left')
         self.tool_group=tk.StringVar(win,next(iter(GROUPS)))
         ttk.Combobox(group_bar,textvariable=self.tool_group,values=list(GROUPS),state='readonly',width=30).pack(side='right')
         row=ttk.Frame(tools,style=p+'.TFrame');row.pack(fill='x');self.tool_buttons={}
@@ -152,6 +153,7 @@ class Dialog:
             self.listed=copy.deepcopy(self.app.user_state(self.app.instrument_cfg()).get('drawings',[]));self.render()
 
     def show_tools(self):
+        self.group_caption.set(tr('Ганн: 1×1 задаётся точками A→B') if self.tool_group.get()=='Ганн' else tr('Ручная разметка — не сигнал') if self.tool_group.get()=='Паттерны и волны' else tr('Инструменты рисования'))
         for button in self.tool_buttons.values():button.grid_remove()
         for _,kind,_ in GROUPS.get(self.tool_group.get(),()):self.tool_buttons[kind].grid()
 

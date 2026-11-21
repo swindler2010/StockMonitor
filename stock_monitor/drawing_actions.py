@@ -60,7 +60,10 @@ def modify(objects,index,operation,value=None):
         for key in ('end','third'):
             if key in result[index]:
                 result[index][key]['price']+=delta
-                if result[index][key]['price']<=0:raise ValueError('INVALID_END_PRICE')
+                if not math.isfinite(result[index][key]['price']) or result[index][key]['price']<=0:raise ValueError('INVALID_END_PRICE')
+        for point in result[index].get('vertices',[]):
+            point['price']+=delta
+            if not math.isfinite(point['price']) or point['price']<=0:raise ValueError('INVALID_END_PRICE')
     elif operation=='at':
         import pandas as pd
         target=pd.Timestamp(value);old=pd.Timestamp(result[index]['at'])
@@ -68,6 +71,7 @@ def modify(objects,index,operation,value=None):
         delta=target-old;result[index]['at']=str(target)
         for key in ('end','third'):
             if key in result[index]:result[index][key]['at']=str(pd.Timestamp(result[index][key]['at'])+delta)
+        for point in result[index].get('vertices',[]):point['at']=str(pd.Timestamp(point['at'])+delta)
     else:raise ValueError('UNKNOWN_OPERATION')
     return result
 

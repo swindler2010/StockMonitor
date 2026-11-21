@@ -96,6 +96,18 @@ def photo(root, name, size=18, color=None):
         elif kind in ('text','note'):
             line([(5,4),(19,4)]);line([(12,4),(12,21)])
             if kind=='note':box((2,2,22,22),width=2,radius=2)
+        elif kind.startswith('gann_'):
+            if kind=='gann_fan':
+                for x,y in ((7,3),(13,3),(21,3),(21,11),(21,17)):line([(3,21),(x,y)],width=3)
+            else:
+                box((3,3,21,21),width=3)
+                for n in (9,15):line([(3,n),(21,n)],width=2);line([(n,3),(n,21)],width=2)
+                if kind=='gann_square':line([(3,21),(21,3)],width=3);line([(3,3),(21,21)],width=3)
+        elif kind in ('abcd','xabcd','elliott_impulse','elliott_correction','elliott_triangle'):
+            line([(2,20),(6,9),(10,16),(14,5),(18,12),(22,2)],width=4)
+            for x,y in ((2,20),(10,16),(18,12)):d.ellipse((x*4-3,y*4-3,x*4+3,y*4+3),fill=color)
+        elif kind=='cycles':
+            for x in (3,9,15,21):line([(x,3),(x,21)],width=3)
         elif kind=='measure':
             line([(3,21),(21,3)])
             for p in (7,11,15):line([(p,24-p),(p-2,22-p)],width=4)

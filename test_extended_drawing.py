@@ -31,7 +31,8 @@ class ExtendedDrawingTests(unittest.TestCase):
     def test_every_registry_tool_really_renders_and_circle_stays_round(self):
         objects=[]
         for kind,definition in REGISTRY.items():
-            obj=build(kind,self.points[:definition['points']],text='$ literal <text>')
+            all_points=self.points+[dict(at=str(self.frame.index[i]),price=price) for i,price in [(20,130),(25,115),(30,135)]]
+            obj=build(kind,all_points[:definition['points']],text='$ literal <text>')
             objects.append({**obj,'source_mode':'gettex','currency':'EUR','venue':'GETTEX','symbol':'ABC'})
         original=self.frame.copy(deep=True)
         self.app.ax_price=Figure(figsize=(10,5)).subplots();self.app.ax_price.set(xlim=(0,40),ylim=(80,160))

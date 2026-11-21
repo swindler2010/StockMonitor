@@ -6,6 +6,7 @@ from matplotlib.patches import Ellipse,Polygon,Circle
 from matplotlib.transforms import Affine2D,IdentityTransform
 from matplotlib.colors import to_rgba
 from drawing_tools import fib_levels,REGISTRY
+from drawing_complex import render as complex_render
 
 
 class DataCircle(Circle):
@@ -23,12 +24,15 @@ class DataCircle(Circle):
 def extra(app,obj,frame,locate,style,kw,register):
     kind=obj['type']
     if kind not in REGISTRY or kind in ('hline','vline','trend','ray','zone','marker'):return False
-    points=[obj]+[obj[k] for k in ('end','third') if k in obj]
+    points=obj['vertices'] if 'vertices' in obj else [obj]+[obj[k] for k in ('end','third') if k in obj]
+    if not isinstance(points,list):return True
     if len(points)!=REGISTRY[kind]['points']:return True
+    if 'vertices' in obj and any(points[0].get(key)!=obj.get(key) for key in ('at','price')):return True
     if any(not frame.index[0]<=pd.Timestamp(p['at'])<=frame.index[-1] for p in points):return True
     xy=[(locate(p['at']),float(p['price'])) for p in points]
     if any(not math.isfinite(x) or not math.isfinite(y) or y<=0 for x,y in xy):return True
     x,y=xy[0];ax=app.ax_price
+    if complex_render(kind,xy,app,frame,style,kw,register):return True
     def line(xs,ys,**overrides):
         artist,=ax.plot(xs,ys,**{**kw,**overrides});register(artist)
     def label(x,y,text,**options):
