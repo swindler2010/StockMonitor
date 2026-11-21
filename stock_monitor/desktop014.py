@@ -1110,29 +1110,8 @@ class Desktop014:
         commit(self,info['isin'],expected,expected+[obj])
 
     def draw_objects(self,objects,frame):
-        mode=frame.attrs.get('source');currency=frame.attrs.get('currency');self.drawing_artists=[]
-        # Pandas may store a DatetimeIndex in microseconds; Timestamp.value is ns.
-        # Normalize display coordinates only; never alter candle timestamps.
-        coordinates=frame.index.as_unit('ns').asi8
-        def locate(at):return float(np.interp(pd.Timestamp(at).value,coordinates,np.arange(len(frame))))
-        for index,obj in enumerate(objects):
-            if obj.get('source_mode',mode)!=mode or obj.get('currency',currency)!=currency:continue
-            try:
-                kind=obj['type'];price=float(obj.get('price',0));at=obj.get('at')
-                if kind=='hline':self.drawing_artists.append((self.ax_price.axhline(price,color=BLUE,ls='--',lw=1.3,picker=6),index));continue
-                if not at or not frame.index[0]<=pd.Timestamp(at)<=frame.index[-1]:continue
-                x=locate(at)
-                if kind=='vline':self.drawing_artists.append((self.ax_price.axvline(x,color=BLUE,ls=':',lw=1.3,picker=6),index));continue
-                if kind=='marker':
-                    artist,=self.ax_price.plot([x],[price],marker='o',color=BLUE,picker=6)
-                    self.ax_price.annotate(f'{price:g}',(x,price),xytext=(5,5),textcoords='offset points',color=BLUE)
-                    self.drawing_artists.append((artist,index));continue
-                end=obj['end'];ex=locate(end['at']);ey=end['price']
-                if kind=='zone':self.drawing_artists.append((self.ax_price.add_patch(Rectangle((min(x,ex),min(price,ey)),abs(ex-x),abs(ey-price),color=BLUE,alpha=.18)),index))
-                else:
-                    if kind=='ray' and ex!=x:ey=price+(ey-price)/(ex-x)*(len(frame)-1-x);ex=len(frame)-1
-                    artist,=self.ax_price.plot([x,ex],[price,ey],color=BLUE,ls='--',lw=1.3,picker=6);self.drawing_artists.append((artist,index))
-            except (KeyError,TypeError,ValueError):continue
+        from drawing_renderer import draw
+        draw(self,objects,frame,BLUE)
 
     def save_user_changes(self):
         self.watchlist=[copy.deepcopy(self.drafts.get(i['isin'],i)) for i in self.watchlist]

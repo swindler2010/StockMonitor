@@ -34,8 +34,21 @@ class History:
 def modify(objects,index,operation,value=None):
     result=copy.deepcopy(objects)
     if type(index)!=int or not 0<=index<len(result):raise ValueError('OBJECT_NOT_FOUND')
+    if result[index].get('locked',False) and operation not in ('locked','visible','copy'):raise ValueError('Объект закреплён. Сначала снимите закрепление.')
     if operation=='copy':result.insert(index+1,copy.deepcopy(result[index]))
     elif operation=='delete':result.pop(index)
+    elif operation=='style':
+        from drawing_styles import validate
+        result[index]['style']=validate(value)
+    elif operation in ('visible','locked'):
+        if type(value) is not bool:raise ValueError('Требуется логическое значение')
+        result[index][operation]=value
+    elif operation=='layer':
+        if not isinstance(value,str) or not 1<=len(value.strip())<=40 or any(ord(c)<32 for c in value):raise ValueError('Имя слоя: от 1 до 40 символов')
+        result[index]['layer']=value.strip()
+    elif operation in ('front','back'):
+        obj=result.pop(index);result.insert(len(result) if operation=='front' else 0,obj)
+        for n,obj in enumerate(result):obj['stack_order']=n
     elif operation=='price':
         if isinstance(value,bool) or not isinstance(value,(int,float)) or not math.isfinite(value) or value<=0:raise ValueError('INVALID_PRICE')
         if result[index].get('type')=='vline':raise ValueError('VERTICAL_LINE_HAS_NO_PRICE')
@@ -67,6 +80,8 @@ def commit(app,isin,expected,changed):
 def begin_drag(app,event):
     if event.ydata is None:return False
     for artist,index in reversed(getattr(app,'drawing_artists',[])):
+        info=app.instrument_cfg();objects=app.user_state(info).get('drawings',[])
+        if not 0<=index<len(objects) or objects[index].get('locked',False) or objects[index].get('visible',True) is False:continue
         if artist.contains(event)[0]:
             info=app.instrument_cfg()
             app._drawing_drag=dict(isin=info['isin'],expected=copy.deepcopy(app.user_state(info).get('drawings',[])),
@@ -137,6 +152,7 @@ def context_menu(app,event,index):
     menu=tk.Menu(app.root,tearoff=False)
     for label,operation in [('Копировать','copy'),('Изменить цену','price'),('Изменить дату','at'),('Удалить','delete'),('Отменить','undo'),('Повторить','redo')]:
         disabled=(operation=='price' and expected[index].get('type')=='vline') or (operation=='at' and expected[index].get('type')=='hline')
+        disabled=disabled or (expected[index].get('locked',False) and operation in ('price','at','delete'))
         menu.add_command(label=tr(label),command=lambda op=operation:apply(op),state='disabled' if disabled else 'normal')
     widget=app.canvas.get_tk_widget()
     try:menu.tk_popup(widget.winfo_rootx()+int(event.x),widget.winfo_rooty()+widget.winfo_height()-int(event.y))
