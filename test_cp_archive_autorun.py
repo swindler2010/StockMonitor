@@ -2,7 +2,9 @@
 import copy,sys,unittest
 from pathlib import Path
 from unittest.mock import Mock,patch
+from contextlib import ExitStack
 sys.path.insert(0,str(Path(__file__).parent/'stock_monitor'))
+from feed_worker import FeedContext
 import cp_controls as cp
 import test_cp_automatic_repair as fixture
 import pandas as pd
@@ -12,10 +14,18 @@ class ArchiveAutorun(unittest.TestCase):
   self.f=fixture.AutomaticRepair();self.f.setUp();self.addCleanup(self.f.doCleanups)
  def test_without_assessment_repairs_saved_real_row_and_persists_receipt(self):
   f=self.f;rows,reply=f.real_fixture();f.s.set_setting('cp_eligibility:'+f.isin,{})
-  result=f.plan();self.assertEqual(result['state'],'QUEUED');self.assertEqual(result['dependency_candidates'],0)
-  fetch=Mock(return_value=reply)
-  with patch('requests.get',side_effect=AssertionError('saved replay only')):
-   receipt=cp.service_request(f.info,f.s,fetch,f.now)
+  fetch=Mock(return_value=reply);host=f.host();host._recover_gettex_range=fetch
+  host._calculate=lambda info:FeedContext._calculate(host,info)
+  with ExitStack() as stack:
+   f.stages(stack)
+   stack.enter_context(patch('cp_controls.stamp',return_value=f.now.isoformat()))
+   stack.enter_context(patch('requests.get',side_effect=AssertionError('saved replay only')))
+   assess=stack.enter_context(patch('calculation_window.eligibility_turn',return_value={'timeframes':{}}))
+   stack.enter_context(patch('cp_reconciliation.complete_analysis_request'))
+   result=FeedContext.calculate(host,f.info)
+  self.assertEqual(result['cp_automatic_repair']['state'],'QUEUED')
+  self.assertEqual(result['cp_automatic_repair']['dependency_candidates'],0)
+  receipt=result['cp_priority'];assess.assert_called_once()
   self.assertEqual(receipt['state'],'COMPLETED');fetch.assert_called_once()
   self.assertEqual(f.s.db.execute('SELECT ts,open,high,low,close,volume FROM candles ORDER BY ts').fetchall(),[tuple(r) for r in rows])
   self.assertEqual(f.s.db.execute('SELECT count(*) FROM candle_recoveries').fetchone()[0],1)
