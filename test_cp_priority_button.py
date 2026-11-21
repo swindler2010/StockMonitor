@@ -10,12 +10,14 @@ import pandas as pd
 
 
 class PriorityButtonTests(unittest.TestCase):
-    def test_colors_require_saved_native_evidence_and_unsupported_is_red(self):
+    def test_colors_follow_automatic_route_not_prior_success(self):
         p=view_fixture.PROBLEM
-        self.assertEqual(repair_capability(p,None),dict(check=True,known=False,label='Проверить первой'))
+        self.assertTrue(repair_capability(p,None)['known'])
+        self.assertEqual(repair_capability(p,None)['label'],'Автоисправление')
         job={'input_fingerprint':'fp','finding':{'state':'NATIVE_ROWS_CONFIRMED'}}
         self.assertTrue(repair_capability(p,job)['known'])
-        self.assertFalse(repair_capability(p,{**job,'status':'RECHECK_QUEUED'})['known'])
+        self.assertTrue(repair_capability(p,{**job,'status':'RECHECK_QUEUED'})['known'])
+        self.assertTrue(repair_capability(p,{**job,'finding':{'state':'SOURCE_DISCREPANCY'}})['known'])
         self.assertFalse(repair_capability({**p,'tf':'1W'},job)['check'])
         with patch('cp_controls.request_repair') as request:
             priority_request(Mock(),p);self.assertTrue(request.call_args.kwargs['priority'])
@@ -69,12 +71,24 @@ class PriorityWindowTests(unittest.TestCase):
             job=lambda work,done,failed,**meta:jobs.append((work,done,failed,meta)) or True)
         theme(app,THEMES['Тёмная']);d=Dialog(app);root.update_idletasks()
         p=copy.deepcopy(view_fixture.PROBLEM);r=present(p,[])
+        red=present({**p,'id':'red','tf':'1W'},[])
         green_problem={**p,'id':'green'}
         job={**view_fixture.ProblemEvidenceTests().job(),'finding':{'state':'NATIVE_ROWS_CONFIRMED'}}
         green=present(green_problem,[job])
-        jobs[0][1](dict(isin='A',at='fixture',total=2,page=0,pages=1,rows=[r,green]));root.update()
+        jobs[0][1](dict(isin='A',at='fixture',total=3,page=0,pages=1,rows=[r,green,red]));root.update()
         self.assertIn('.CPGreen.TButton',str(d.action_buttons['green']['style']))
-        self.assertIn('.CPRed.TButton',str(d.action_buttons[p['id']]['style']))
+        self.assertIn('.CPRed.TButton',str(d.action_buttons['red']['style']))
+        # Native tree scrolling must keep an actionable overlay on each visible row.
+        rows=[present({**p,'id':f'row-{n}'},[]) for n in range(40)]
+        d.shown={r['problem']['id']:r for r in rows};d.tree.delete(*d.tree.get_children())
+        for key in d.shown:d.tree.insert('','end',iid=key,values=['15m','','range','fixture'])
+        d.schedule_buttons();root.update();d.tree.yview_scroll(5,'units');root.update()
+        visible={k for k in d.shown if d.tree.bbox(k,'action')}
+        self.assertTrue(visible)
+        self.assertTrue(all(d.action_buttons[k].winfo_ismapped() for k in visible))
+        self.assertTrue(all(d.action_buttons[k].winfo_y()==d.tree.bbox(k,'action')[1]+2 for k in visible))
+        d.shown={p['id']:r,'green':green};d.tree.delete(*d.tree.get_children())
+        for key in d.shown:d.tree.insert('','end',iid=key,values=['15m','','range','fixture'])
         d.act(p['id']);d.act(p['id']);self.assertEqual(len(jobs),2)
         with patch('cp_controls.request_repair',return_value={'state':'QUEUED'}) as request:
             jobs[1][1](jobs[1][0]());request.assert_called_once();self.assertTrue(request.call_args.kwargs['priority'])
@@ -83,3 +97,4 @@ class PriorityWindowTests(unittest.TestCase):
         d.close()
 
 if __name__=='__main__':unittest.main()
+

@@ -4936,5 +4936,13 @@
   "Нет штатного адресного исправления для этого источника или ТФ": {
     "en": "No supported targeted repair for this source or timeframe",
     "de": "Keine unterstützte gezielte Reparatur für diese Quelle oder Zeiteinheit"
+  },
+  "Автоисправление": {
+    "en": "Auto-repair",
+    "de": "Autoreparatur"
+  },
+  "СР сам проверит архив и источник; исправление зависит от подтверждённых данных": {
+    "en": "CP checks the archive and source automatically; repair requires confirmed data",
+    "de": "CP prüft Archiv und Quelle automatisch; die Reparatur erfordert bestätigte Daten"
   }
 }

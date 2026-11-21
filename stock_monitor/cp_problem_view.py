@@ -21,11 +21,12 @@ def repair_capability(problem,job):
     check=(problem.get('kind')=='context' or
            (problem.get('kind')=='archive' and problem.get('range') and problem.get('tf') in ('5m','15m','1H','1D')
             and meta.get('venue')=='GETTEX' and meta.get('currency')=='EUR' and meta.get('source') in ('gettex','gettex_chart')))
-    finding=(job or {}).get('finding') or {}
-    known=bool(check and job and job.get('input_fingerprint') and job.get('status')!='RECHECK_QUEUED' and
-               (finding.get('can_affect_dq') is True or finding.get('state')=='NATIVE_ROWS_CONFIRMED')
-               and finding.get('state') not in ('INVALID','SOURCE_DISCREPANCY'))
-    return dict(check=bool(check),known=known,label='Решить' if known else 'Проверить первой' if check else 'Нужна помощь')
+    # Capability is the existing service_request route, not a previous repair's
+    # success. Missing TV/native evidence is precisely why a recovery is needed.
+    reason=('СР сам проверит архив и источник; исправление зависит от подтверждённых данных'
+            if check else 'Нет штатного адресного исправления для этого источника или ТФ')
+    return dict(check=bool(check),known=bool(check),label='Автоисправление' if check else 'Нужна помощь',reason=reason)
+
 
 
 def priority_request(store,problem):
@@ -205,15 +206,19 @@ class Dialog:
         if self.closed:return
         for key,button in list(self.action_buttons.items()):
             if key not in self.shown:button.destroy();self.action_buttons.pop(key)
-            else:button.place_forget()
+        visible=set()
         for key,row in self.shown.items():
             bounds=self.tree.bbox(key,'action')
             if not bounds:continue
+            visible.add(key)
             button=self.action_buttons.get(key)
             if button is None:
                 button=ttk.Button(self.tree,command=lambda k=key:self.act(k));self.action_buttons[key]=button
             cap=row['action'];button.configure(text=tr(cap['label']),style=self.p+('.CPGreen.TButton' if cap['known'] else '.CPRed.TButton'),state='disabled' if self.action_busy else 'normal')
             x,y,width,height=bounds;button.place(x=x+2,y=y+2,width=max(1,width-4),height=max(1,height-4))
+            button.lift()
+        for key,button in self.action_buttons.items():
+            if key not in visible:button.place_forget()
 
     def act(self,key):
         if self.closed or self.action_busy or key not in self.shown:return
@@ -246,6 +251,7 @@ class Dialog:
         r=self.shown[picks[0]];problem=r['problem'];meta=problem.get('identity') or {}
         text='\n'.join([tr(r['title'])+' · '+r['span'],
             ' · '.join(str(meta.get(k) or '—') for k in KEYS),
+            tr('Действие')+': '+tr(r['action']['reason']),
             tr('Что делает CP')+': '+str(tr(r['next'])),tr('Следующая попытка')+': '+str(r['next_retry'] or '—'),
             tr('Последняя проверка')+': '+str(r['last']),
             tr('Исходные причины')+': '+json.dumps(problem.get('reasons') or [],ensure_ascii=False),
@@ -294,3 +300,4 @@ def show(app):
     old=getattr(app,'_cp_problem_window',None)
     if old is not None and old.winfo_exists():old.lift();return old
     app._cp_problem_dialog=Dialog(app);return app._cp_problem_dialog.win
+
