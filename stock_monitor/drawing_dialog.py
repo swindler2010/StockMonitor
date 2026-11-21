@@ -29,35 +29,38 @@ class Dialog:
         style.layout(p+'.Tool.TButton',style.layout(p+'.Secondary.TButton'))
         style.configure(p+'.Tool.TButton',font=('Segoe UI',10,'bold'),foreground=palette['text'],padding=(6,4))
         style.configure(p+'.Drawing.TLabel',background='#0a2136' if palette['bg']!='#f8fafc' else '#ffffff',foreground=palette['text'])
-        base=ttk.Frame(win,padding=14,style=p+'.TFrame');base.pack(fill='both',expand=True)
-        ttk.Label(base,text=tr('Рисование')+' • '+info['name'],style=p+'.TLabel',font=('Segoe UI',18,'bold')).pack(anchor='w',pady=(0,12))
-        tabs=ttk.Frame(base,style=p+'.TFrame');tabs.pack(fill='x',pady=(0,10))
+        base=ttk.Frame(win,padding=8,style=p+'.TFrame');base.pack(fill='both',expand=True)
+        ttk.Label(base,text=tr('Рисование')+' • '+info['name'],style=p+'.TLabel',font=('Segoe UI',16,'bold')).pack(anchor='w',pady=(0,6))
+        tabs=ttk.Frame(base,style=p+'.TFrame');tabs.pack(fill='x',pady=(0,6))
         self.tabs={}
-        for text,command in [('Инструменты',lambda:self.tools_box.focus_set()),('Объекты',lambda:self.objects.focus_set()),('Шаблоны',self.templates),('Калькулятор позиции',self.calculator),('Настройки',self.settings)]:
+        for text,command in [('Инструменты',lambda:self.reveal(self.tools_box)),('Избранное',self.favorites),('Объекты',lambda:self.reveal(self.objects)),('Шаблоны',self.templates),('Калькулятор позиции',self.calculator),('Настройки',self.settings)]:
             b=ttk.Button(tabs,text=tr(text),style=p+'.Secondary.TButton',command=command);b.pack(side='left',fill='x',expand=True,padx=(0,7));self.tabs[text]=b
         self.tabs['Инструменты'].configure(style=p+'.Primary.TButton')
-        self.tools_box=tools=ttk.Frame(base,padding=12,style=p+'.Info.TFrame');tools.pack(fill='x',pady=(0,10))
+        body_host=ttk.Frame(base,style=p+'.TFrame');body_host.pack(fill='both',expand=True)
+        self.body_canvas=tk.Canvas(body_host,highlightthickness=0,background=palette['bg'])
+        body_scroll=ttk.Scrollbar(body_host,command=self.body_canvas.yview,style=p+'.Vertical.TScrollbar');body_scroll.pack(side='right',fill='y')
+        self.body_canvas.configure(yscrollcommand=body_scroll.set);self.body_canvas.pack(fill='both',expand=True)
+        body=ttk.Frame(self.body_canvas,style=p+'.TFrame');self.body_item=self.body_canvas.create_window(0,0,window=body,anchor='nw')
+        body.bind('<Configure>',lambda _:self.body_canvas.configure(scrollregion=self.body_canvas.bbox('all')))
+        self.body_canvas.bind('<Configure>',lambda e:self.body_canvas.itemconfigure(self.body_item,width=e.width))
+        self.body_canvas.bind('<MouseWheel>',lambda e:self.body_canvas.yview_scroll(-1 if e.delta>0 else 1,'units'))
+        self.tools_box=tools=ttk.Frame(body,padding=6,style=p+'.Info.TFrame');tools.pack(fill='x',pady=(0,6))
         group_bar=ttk.Frame(tools,style=p+'.TFrame');group_bar.pack(fill='x',pady=(0,8))
         self.group_caption=tk.StringVar(win,tr('Инструменты рисования'))
         ttk.Label(group_bar,textvariable=self.group_caption,style=p+'.Drawing.TLabel',font=('Segoe UI',12,'bold')).pack(side='left')
-        self.tool_group=tk.StringVar(win,next(iter(GROUPS)))
-        self.group_box=CanonicalCombobox(group_bar,textvariable=self.tool_group,values=list(GROUPS),state='readonly',width=30)
+        self.tool_group=tk.StringVar(win,'Все группы')
+        self.group_box=CanonicalCombobox(group_bar,textvariable=self.tool_group,values=['Все группы',*GROUPS],state='readonly',width=30)
         self.group_box.pack(side='right')
-        row=ttk.Frame(tools,style=p+'.TFrame');row.pack(fill='x');self.tool_buttons={}
-        for n in range(6):row.columnconfigure(n,weight=1,uniform='tool')
-        for items in GROUPS.values():
-            for column,(label,kind,count) in enumerate(items):
-                button=ttk.Button(row,text=tr(label).replace(' ','\n',1),image=photo(app.root,'drawing_'+kind,24,palette['text']),compound='top',style=p+'.Tool.TButton',command=lambda k=kind:self.choose(k))
-                button.grid(row=0,column=column,sticky='nsew',padx=3);button.grid_remove();self.tool_buttons[kind]=button
-                app.tooltip(button,tr(label)+(f' · {count} '+tr('точки') if count else ' · '+tr('Произвольное число точек, максимум 256')))
+        from drawing_gallery import Gallery
+        self.gallery=Gallery(self,tools)
         self.tool_group.trace_add('write',lambda *_:self.show_tools());self.show_tools()
-        detail=ttk.Frame(base,padding=12,style=p+'.Info.TFrame');detail.pack(fill='x',pady=(0,10))
+        detail=ttk.Frame(body,padding=6,style=p+'.Info.TFrame');detail.pack(fill='x',pady=(0,6))
         detail_head=ttk.Frame(detail,style=p+'.TFrame');detail_head.pack(fill='x')
         ttk.Label(detail_head,text=tr('Выбранный объект'),style=p+'.Drawing.TLabel',font=('Segoe UI',12,'bold')).pack(side='left')
         self.style_button=ttk.Button(detail_head,text=tr('Стиль…'),command=self.settings);self.style_button.pack(side='right')
         self.detail=tk.StringVar(win,tr('Выберите объект в списке ниже'))
         ttk.Label(detail,textvariable=self.detail,style=p+'.Drawing.TLabel',font=('Segoe UI',10),wraplength=920,justify='left').pack(anchor='w',pady=6)
-        panel=ttk.Frame(base,padding=12,style=p+'.Info.TFrame');panel.pack(fill='both',expand=True,pady=(0,10))
+        panel=ttk.Frame(body,padding=6,style=p+'.Info.TFrame');panel.pack(fill='both',expand=True,pady=(0,6))
         self.count=tk.StringVar(win);ttk.Label(panel,textvariable=self.count,style=p+'.Drawing.TLabel',font=('Segoe UI',12,'bold')).pack(anchor='w',pady=(0,8))
         self.query=tk.StringVar(win)
         searchbar=ttk.Frame(panel,style=p+'.TFrame');searchbar.pack(fill='x',pady=(0,8))
@@ -72,14 +75,14 @@ class Dialog:
         style.layout(p+'.Drawing.Treeview.Heading',[('Treeheading.padding',{'sticky':'nswe','children':[('Treeheading.text',{'sticky':'we'})]})])
         style.configure(p+'.Drawing.Horizontal.TScrollbar',background=palette['grid'],troughcolor=palette['bg'],bordercolor=palette['bg'],lightcolor=palette['bg'],darkcolor=palette['bg'],arrowcolor=palette['muted'])
         style.map(p+'.Drawing.Treeview',background=[('selected','#075585')],foreground=[('selected','#ffffff')])
-        self.objects=ttk.Treeview(host,columns=('kind','at','price','source','currency','layer','state'),show='headings',selectmode='browse',style=p+'.Drawing.Treeview',height=6)
+        self.objects=ttk.Treeview(host,columns=('kind','at','price','source','currency','layer','state'),show='headings',selectmode='browse',style=p+'.Drawing.Treeview',height=3)
         for key,label,width in [('kind','Объект',150),('at','Дата / время',180),('price','Цена',90),('source','Источник',150),('currency','Валюта',75),('layer','Слой',110),('state','Состояние',155)]:
             self.objects.heading(key,text=tr(label));self.objects.column(key,width=width,minwidth=70)
         scroll=ttk.Scrollbar(host,command=self.objects.yview,style=p+'.Vertical.TScrollbar');scroll.pack(side='right',fill='y');self.objects.configure(yscrollcommand=scroll.set)
         horizontal=ttk.Scrollbar(panel,orient='horizontal',command=self.objects.xview,style=p+'.Drawing.Horizontal.TScrollbar');horizontal.pack(side='bottom',fill='x');self.objects.configure(xscrollcommand=horizontal.set)
         self.objects.pack(fill='both',expand=True);self.objects.bind('<<TreeviewSelect>>',lambda _:self.selection())
         self.query.trace_add('write',lambda *_:self.render())
-        actions=ttk.Frame(base,padding=12,style=p+'.Info.TFrame');actions.pack(side='bottom',fill='x',pady=(0,10),before=panel)
+        actions=ttk.Frame(base,padding=6,style=p+'.Info.TFrame');actions.pack(side='bottom',fill='x',pady=(0,6),before=body_host)
         ttk.Label(actions,text=tr('Действия'),style=p+'.Drawing.TLabel',font=('Segoe UI',12,'bold')).pack(anchor='w',pady=(0,8))
         row=ttk.Frame(actions,style=p+'.TFrame');row.pack(fill='x');self.actions={}
         for label,operation in [('Дублировать','copy'),('Изменить цену','price'),('Изменить дату','at'),('Удалить выбранный','delete'),('Текст…','text')]:
@@ -93,6 +96,17 @@ class Dialog:
         win.bind('<Escape>',lambda _:win.destroy())
         win.bind('<Map>',lambda event:win.after_idle(lambda:native_titlebar(win,palette)) if event.widget is win else None,add='+')
         self.render()
+
+    def reveal(self,widget):
+        self.win.update_idletasks()
+        height=max(1,self.body_canvas.bbox('all')[3])
+        at=widget.winfo_rooty()-self.body_canvas.winfo_rooty()+self.body_canvas.canvasy(0)
+        self.body_canvas.yview_moveto(max(0,at)/height)
+        widget.focus_set()
+
+    def favorites(self):
+        self.reveal(self.tools_box)
+        self.gallery.edit_favorites()
 
     def valid(self):
         return self.app.instrument_cfg()['isin']==self.isin and self.app.user_state(self.app.instrument_cfg()).get('drawings',[])==self.listed
@@ -156,8 +170,7 @@ class Dialog:
 
     def show_tools(self):
         self.group_caption.set(tr('Ганн: 1×1 задаётся точками A→B') if self.tool_group.get()=='Ганн' else tr('Ручная разметка — не сигнал') if self.tool_group.get()=='Паттерны и волны' else tr('Фибоначчи: ручные опоры, не торговый сигнал') if self.tool_group.get()=='Фибоначчи' else tr('Кисть и фигуры: Esc — отмена') if self.tool_group.get()=='Свободная разметка' else tr('Инструменты рисования'))
-        for button in self.tool_buttons.values():button.grid_remove()
-        for _,kind,_ in GROUPS.get(self.tool_group.get(),()):self.tool_buttons[kind].grid()
+        self.gallery.filter(self.tool_group.get())
 
     def calculator(self):
         from position_calculator import show
@@ -184,3 +197,4 @@ def show(app):
     if existing is not None and existing.winfo_exists():existing.lift();return existing
     app._drawing_dialog=Dialog(app,info)
     return app._drawing_dialog.win
+

@@ -4554,5 +4554,33 @@
   "Кисть и фигуры: Esc — отмена": {
     "de": "Pinsel und Formen: Esc bricht ab",
     "en": "Brush and shapes: Esc cancels"
+  },
+  "Все группы": {
+    "en": "All groups",
+    "de": "Alle Gruppen"
+  },
+  "Быстрый доступ": {
+    "en": "Quick access",
+    "de": "Schnellzugriff"
+  },
+  "Редактировать избранное": {
+    "en": "Edit favourites",
+    "de": "Favoriten bearbeiten"
+  },
+  "До 12 инструментов": {
+    "en": "Up to 12 tools",
+    "de": "Bis zu 12 Werkzeuge"
+  },
+  "Повторить сохранение": {
+    "en": "Retry saving",
+    "de": "Speichern wiederholen"
+  },
+  "Повторить загрузку": {
+    "en": "Retry loading",
+    "de": "Laden wiederholen"
+  },
+  "Не удалось загрузить избранное": {
+    "en": "Could not load favourites",
+    "de": "Favoriten konnten nicht geladen werden"
   }
 }
