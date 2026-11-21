@@ -43,20 +43,19 @@ def order_choices(state):
 
 
 def check_intent(intent, isin):
+    from paper_account import EXECUTION_TF
+    if intent.get('quote_tf') not in (EXECUTION_TF,'AUTO'):
+        raise ValueError('PAPER_EXECUTION_REQUIRES_15M')
     qty = intent.get('quantity')
     if (intent.get('version') != VERSION or not isinstance(isin,str)
             or re.fullmatch(r'[A-Z]{2}[A-Z0-9]{9}[0-9]',isin) is None
             or intent.get('isin') != isin or intent.get('initiator') not in ('MANUAL', 'CHATGPT')
-            or intent.get('side') not in ('BUY', 'SELL') or intent.get('quote_tf') not in ('5m', '15m', 'AUTO')
+            or intent.get('side') not in ('BUY', 'SELL')
             or not isinstance(intent.get('request_id'), str) or not 8 <= len(intent['request_id']) <= 160):
         raise ValueError('PAPER_ORDER_INTENT_INVALID')
     if (isinstance(qty, bool) or not isinstance(qty, (int, float)) or not math.isfinite(qty)
             or qty <= 0 or Decimal(str(qty)).as_tuple().exponent < -6):
         raise ValueError('PAPER_BAD_QUANTITY')
-
-
-def quote_timeframes(intent):
-    return ('15m', '5m') if not intent or intent['quote_tf']=='AUTO' else (intent['quote_tf'],)
 
 
 def check_binding(result, args):
@@ -72,7 +71,7 @@ def check_binding(result, args):
 
 def validate(db, info, result, args, now):
     from paper_hourly import authority, validate_analysis, order_size, SIZING
-    from paper_account import POLICY, money
+    from paper_account import EXECUTION_TF, POLICY, money
     from paper_protection import entry_plan
     check_binding(result, args)
     cfg = authority(db, info['isin'], result.get('identity'), allow_paused=True)
@@ -81,7 +80,7 @@ def validate(db, info, result, args, now):
         raise ValueError(result['quote_blocker'])
     q = result.get('execution_quote', {})
     if (q.get('identity') != result['identity'] or q.get('isin') != info['isin']
-            or q.get('timeframe') not in quote_timeframes(result['discretionary'])):
+            or q.get('timeframe') != EXECUTION_TF):
         raise ValueError('PAPER_AUTO_QUOTE_IDENTITY_BLOCKED')
     size = order_size(db, info, result, args['side'], now, allow_paused=True)
     quantity = Decimal(str(args['quantity']))
@@ -112,7 +111,8 @@ def denial(error, result=None):
         'PAPER_BUSY' if 'database is locked' in message else 'PAPER_EXECUTION_UNAVAILABLE')
     engine = (result or {}).get('execution_context', {}).get('trading_engine', {})
     descriptions = {
-        'PAPER_STALE_QUOTE':'Цена исполнения устарела; ожидается свежая закрытая свеча.',
+        'PAPER_STALE_QUOTE':'Цена исполнения устарела; ожидается свежая закрытая свеча 15 мин.',
+        'PAPER_EXECUTION_REQUIRES_15M':'Для исполнения нужна закрытая свеча 15 мин.',
         'PAPER_STALE_INPUTS':'Данные изменились во время проверки; повторите поручение с новым расчётом.',
         'PAPER_STALE_WINDOW':'Срок расчёта истёк; требуется новая проверка.',
         'PAPER_BUSY':'Исполнитель занят; повторите после завершения текущей проверки.',

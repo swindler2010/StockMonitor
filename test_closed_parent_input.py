@@ -68,6 +68,32 @@ class ClosedParentInput(unittest.TestCase):
             self.assertEqual(at,pd.Timestamp(now))
 
 
+    def test_weekly_and_monthly_replay_use_only_the_latest_closed_period(self):
+        from timeframes import schedule
+        index=schedule({**self.meta,'timeframe':'1D'},'2026-08-31','2026-11-13').index
+        daily=pd.DataFrame(dict(open=100.,high=101.,low=99.,close=100.,volume=10.),index=index)
+        daily.attrs=dict(self.meta,timeframe='1D')
+        now=pd.Timestamp('2026-11-13T20:45Z')
+        for target,last_day,last_parent in (
+            ('1W','2026-11-06','2026-11-06'), ('1M','2026-10-30','2026-10-01')
+        ):
+            with self.subTest(target=target):
+                closed,as_of=closed_parent_input(daily,'1D',target,now)
+                self.assertLessEqual(as_of,now)
+                self.assertEqual(closed.index[-1],pd.Timestamp(last_day))
+                from calculation_window import exclude_verified_leading_partial
+                parent=exclude_verified_leading_partial(resample(closed,'1D',target,now),target,now)
+                self.assertEqual(parent.index[-1],pd.Timestamp(last_parent))
+                self.assertEqual(parent.attrs['data_quality']['state'],'READY')
+                self.assertTrue(parent.bar_complete.iloc[-1])
+
+                missing=daily.drop(pd.Timestamp(last_day))
+                closed,_=closed_parent_input(missing,'1D',target,now)
+                parent=resample(closed,'1D',target,now)
+                self.assertFalse(parent.bar_complete.iloc[-1])
+                self.assertNotEqual(parent.attrs['data_quality']['state'],'READY')
+
+
 class ClosedParentAcceptedTail(unittest.TestCase):
     from test_tv_accepted_display import AcceptedDisplay as _fixture
     setUp=_fixture.setUp
@@ -98,3 +124,4 @@ class ClosedParentAcceptedTail(unittest.TestCase):
         self.assertNotIn(pd.Timestamp('2026-11-02 15:30'),out.index)
 
 if __name__=='__main__':unittest.main()
+

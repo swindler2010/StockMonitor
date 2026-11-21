@@ -67,6 +67,9 @@ class Desktop014:
             for child in widget.winfo_children():recolor(child)
         recolor(self.root)
         if hasattr(self,'fig'):self.fig.set_facecolor(BG)
+        if hasattr(self,'main_screen'):
+            from main_screen import theme
+            theme(self,palette)
 
     def set_theme(self,name):
         if name not in THEMES:raise ValueError('Неизвестная тема')
@@ -103,18 +106,32 @@ class Desktop014:
 
     def current_quality_signature(self):
         from data_quality import key as quality_key
-        info=self.instrument_cfg();identity=self.store.setting('history_identity:'+info['isin'],{})
-        base=base_for(self.timeframe.get(),self.source_mode(info))
-        report=self.store.setting(quality_key(info,identity.get('symbol','') if self.source_mode(info)=='proxy' else info['isin'],base),{})
-        # Checking the same report again must not restart chart/engine work.
-        # These two timestamps are transport telemetry, already excluded by
-        # input_revisions; all quality states, issues and ranges stay significant.
+        info=self.instrument_cfg();isin=info['isin'];mode=self.source_mode(info)
+        base=base_for(self.timeframe.get(),mode)
+        cache=getattr(self.store,'read_cache',None)
+        if cache is not None:
+            # Poll small semantic revision counters, never decode/stringify an
+            # entire historical DQ report on Tk once a second. SQLite's existing
+            # triggers ignore check timestamps but retain substantive changes.
+            identity_scope='setting:history_identity:'+isin
+            identity_token=cache.token_for([identity_scope])
+            identity_key=(isin,identity_token[identity_scope])
+            saved=getattr(self,'_quality_identity_cache',None)
+            if not saved or saved[0]!=identity_key:
+                saved=(identity_key,self.store.setting('history_identity:'+isin,{}))
+                self._quality_identity_cache=saved
+            symbol=saved[1].get('symbol','') if mode=='proxy' else isin
+            scopes={identity_scope,'instrument:'+isin,'setting:'+quality_key(info,symbol,base)}
+            accepted=getattr(self,'_cp_chart_inputs',{})
+            if accepted.get('isin')==isin and accepted.get('timeframe')==self.timeframe.get():
+                scopes.update(accepted['scopes'])
+            return (isin,base,int(time.time()//60),tuple(sorted(cache.token_for(scopes).items())))
+        # Compatibility for lightweight non-Store callers; production uses the
+        # revision path above. Preserve the established semantic fallback.
+        identity=self.store.setting('history_identity:'+isin,{})
+        report=self.store.setting(quality_key(info,identity.get('symbol','') if mode=='proxy' else isin,base),{})
         report={k:v for k,v in report.items() if k not in ('checked_at','raw_retry_after')}
-        accepted=getattr(self,'_cp_chart_inputs',{})
-        dependencies={}
-        if accepted.get('isin')==info['isin'] and accepted.get('timeframe')==self.timeframe.get():
-            dependencies=self.store.read_cache.token_for(accepted['scopes'])
-        return (info['isin'],base,str(report),int(time.time()//60),tuple(sorted(dependencies.items())))
+        return (isin,base,str(report),int(time.time()//60),())
 
     def quality_tick(self):
         if self.closing:return
@@ -126,10 +143,12 @@ class Desktop014:
         self.root.after(1000,self.quality_tick)
 
     def _load_cached(self):
-        # Legacy mixed archive is retained on disk, but never used implicitly.
-        for info in self.watchlist:
-            f=self.store.load_official(info['isin'])
-            self.data[info['name']]=f;self.data_meta[info['name']]={'base_tf':'15m','source':'GETTEX','gettex':True}
+        # Chart/CORE read SQLite through their existing workers. This legacy
+        # notification buffer is filled by apply_feed only after validation;
+        # eagerly decoding every stock's archive here blocks Tk at startup.
+        names={info['name'] for info in self.watchlist}
+        self.data={name:frame for name,frame in self.data.items() if name in names}
+        self.data_meta={name:meta for name,meta in self.data_meta.items() if name in names}
 
     def build_ui(self):
         from text_menu import install_text_menus
@@ -139,68 +158,20 @@ class Desktop014:
         from development_advisor_view import show as show_development_advisor
         menu=tk.Menu(self.root)
         for title,entries in [
-            ('Файл',[('Добавить инструмент',self.add_stock_dialog),('Копия базы',self.backup_data),('Импорт базы',self.import_legacy_data),('Выход',self.close)]),
-            ('Правка',[('Позиция и уровни',self.position_dialog),('Удалить инструмент',self.remove_instrument),('Сохранить',self.save_user_changes)]),
+            ('Файл',[('Сохранить',self.save_user_changes),('Добавить инструмент',self.add_stock_dialog),('Копия базы',self.backup_data),('Импорт базы',self.import_legacy_data),('Выход',self.close)]),
             ('Вид',[('Портфель',self.show_portfolio),('Журнал решений',self.show_decision_journal),('Карточка',self.show_card),('Новости',self.show_news),('Индикаторы',self.show_indicators),('Рисование',self.show_drawing)]),
+            ('Данные',[('Обновить данные',self.refresh_all_async),('Добавить инструмент',self.add_stock_dialog),('Удалить инструмент',self.remove_instrument)]),
+            ('Инструменты',[('Индикаторы',self.show_indicators),('Рисование',self.show_drawing),('Линейка',self.start_measurement)]),
+            ('CandlePilot',[('Состояние и диагностика',lambda:__import__('candlepilot_health').show(self))]),
+            ('Торговля',[('Портфель / Демо',self.show_portfolio),('Позиция и уровни',self.position_dialog),('Журнал решений',self.show_decision_journal)]),
             ('Настройки',[('Параметры',self.show_settings),('Оформление',self.show_theme)]),
             ('Справка',[(freshness_label('title'),lambda:show_freshness(self)),('Советы по развитию',lambda:show_development_advisor(self)),('Связь с ChatGPT / MCP',self.show_connection),('Диагностика',self.show_ai),('Логотипы: Elbstream',lambda:__import__('webbrowser').open('https://elbstream.com')),('Обновить программу',lambda:self.check_updates(False))])]:
-            sub=tk.Menu(menu,tearoff=False)
+            sub=tk.Menu(menu,tearoff=False,background=BG,foreground=TEXT,activebackground=BLUE,activeforeground=TEXT,font=('Segoe UI',9))
             for label,command in entries:sub.add_command(label=tr(label),command=command)
             menu.add_cascade(label=tr(title),menu=sub)
-        self.root.configure(menu=menu)
-        self.root.minsize(1000,680)
-        outer=ttk.Frame(self.root,padding=10);outer.pack(fill='both',expand=True)
-        top=ttk.Frame(outer);top.pack(fill='x')
-        ttk.Label(top,text=tr('Stock Monitor 0.16 DEV'),style='Title.TLabel').pack(side='left')
-        self.symbol_box=ttk.Combobox(top,textvariable=self.symbol,values=[i['name'] for i in self.watchlist],state='readonly',width=23);self.symbol_box.pack(side='left',padx=10);self.symbol_box.bind('<<ComboboxSelected>>',lambda _:self.refresh_chart())
-        ttk.Button(top,text=tr('Акции ▾'),command=self.show_watchlist).pack(side='left')
-        for label,command in [('＋',self.add_stock_dialog),('Индикаторы',self.show_indicators),('Рисование',self.show_drawing),('Новости',self.show_news),('ⓘ',self.show_card),('Портфель',self.show_portfolio),('Настройки',self.show_settings),('Сохранить',self.save_user_changes)]:
-            b=ttk.Button(top,text=tr(label),command=command);b.pack(side='left',padx=2)
-            if label=='ⓘ':self.tooltip(b,'Информация о компании')
-        bar=ttk.Frame(outer);bar.pack(fill='x',pady=6)
-        self.cp_label=ttk.Label(bar,text=tr('● CandlePilot (CP) — UNKNOWN'),foreground='#ef4444')
-        self.cp_label.pack(side='right',padx=6)
-        self.cp_label.bind('<Button-1>',lambda _:__import__('candlepilot_health').show(self))
-        self.tooltip(self.cp_label,'CandlePilot Health — нажмите для диагностики')
-        self.root.after(500,self._update_candlepilot)
-        self.timeframe_box=ttk.Combobox(bar,textvariable=self.timeframe,values=list(TF),state='readonly',width=5)
-        self.timeframe_box.pack(side='left',padx=3)
-        self.timeframe_box.bind('<<ComboboxSelected>>',lambda _:self.refresh_chart())
-        self.period_box=CanonicalCombobox(bar,textvariable=self.period,values=list(PERIODS),state='readonly',width=12)
-        self.period_box.pack(side='left',padx=3)
-        self.period_box.bind('<<ComboboxSelected>>',lambda _:self.change_period())
-        ttk.Button(bar,text=tr('Линейка'),command=self.start_measurement).pack(side='left',padx=3)
-        from chart_modes import MODES
-        self.chart_mode=tk.StringVar(value=self.store.setting('chart_mode','Candles'))
-        if self.chart_mode.get() not in MODES:self.chart_mode.set('Candles')
-        mode_box=CanonicalCombobox(bar,textvariable=self.chart_mode,values=MODES,state='readonly',width=21)
-        mode_box.pack(side='left',padx=3);mode_box.bind('<<ComboboxSelected>>',self.change_chart_mode)
-        ttk.Button(bar,text=tr('⛶'),width=3,command=self.toggle_chart_fullscreen).pack(side='left',padx=3)
-        self.root.bind('<Escape>',self.escape_chart,add='+')
-        row=ttk.Frame(outer);row.pack(fill='x',pady=(0,5))
-        self.source_choice=tk.StringVar(value=tr('Proxy — автоматически · EUR'));self.source_box=ttk.Label(row,textvariable=self.source_choice,width=38);self.source_box.pack(side='left')
-        ttk.Button(row,text=tr('Обновить данные'),command=self.refresh_all_async).pack(side='left',padx=5)
-        ttk.Button(row,text=tr('Сбросить масштаб'),command=self.reset_view).pack(side='left')
-        ttk.Label(row,textvariable=self.source_status,style='Muted.TLabel').pack(side='left',padx=8)
-        body=ttk.Panedwindow(outer,orient='horizontal');body.pack(fill='both',expand=True)
-        chart=ttk.Frame(body);side=ttk.Frame(body,padding=8);body.add(chart,weight=5);body.add(side,weight=1)
-        self.chart_outer=outer;self.chart_body=body;self.chart_side=side
-        self.fig=Figure(figsize=(10,7),dpi=100,facecolor=BG);self.ax_price=self.fig.add_axes([.09,.3,.88,.65]);self.ax_vol=self.fig.add_axes([.09,.1,.88,.15],sharex=self.ax_price)
-        self.canvas=FigureCanvasTkAgg(self.fig,master=chart);self.canvas.get_tk_widget().pack(fill='both',expand=True)
-        for event,callback in [('motion_notify_event',self.on_motion),('figure_leave_event',self.on_leave),('button_press_event',self.on_press),('button_release_event',self.on_release),('scroll_event',self.on_scroll)]:self.canvas.mpl_connect(event,callback)
-        self.instrument=tk.StringVar();ttk.Label(side,textvariable=self.instrument,wraplength=215).pack(anchor='w')
-        self.decision=tk.StringVar();ttk.Label(side,textvariable=self.decision,font=('Segoe UI',17,'bold'),wraplength=215).pack(anchor='w',pady=10)
-        self.metrics={k:tk.StringVar(value='—') for k in ['price','ema10','ema30','volume','support','resistance','stop','add','updated','rsi','atr','position']}
-        for key,label in [('price','Цена'),('ema10','EMA10'),('ema30','EMA30'),('support','Поддержка'),('resistance','Сопротивление'),('stop','Стоп'),('add','Добавление'),('position','Позиция / результат')]:
-            ttk.Label(side,text=tr(label),style='Muted.TLabel').pack(anchor='w');ttk.Label(side,textvariable=self.metrics[key],wraplength=215).pack(anchor='w',pady=(0,5))
-        from tkinter.scrolledtext import ScrolledText
-        self.explain=tk.StringVar()
-        explanation=ScrolledText(side,height=9,width=27,wrap='word',font=('Segoe UI',9),background=BG,foreground=TEXT)
-        explanation.pack(fill='x',pady=8);explanation.configure(state='disabled')
-        self.explain.trace_add('write',lambda *_:set_text(explanation,self.explain.get()))
-        ttk.Label(side,textvariable=self.metrics['updated'],wraplength=215,style='Muted.TLabel').pack(anchor='w')
-        self.status_label=ttk.Label(outer,textvariable=self.status,wraplength=950);self.status_label.pack(fill='x',pady=4)
-        ttk.Button(outer,textvariable=self.ai_status,command=self.show_ai).pack(anchor='e')
+        self._main_menu=menu
+        from main_screen import build
+        build(self, PERIODS, BG, TEXT)
 
     def tooltip(self,widget,text):
         def enter(_):
@@ -404,11 +375,15 @@ class Desktop014:
             raw.attrs['data_quality'].update(state=persisted_quality['state'],issues=persisted_quality.get('issues',[]),ranges=persisted_quality.get('ranges',[]))
         markers=raw.attrs['data_quality'].get('non_candle_markers',[])
         if markers:raw=raw.loc[~raw.index.isin(pd.to_datetime(markers))]
-        if scoped:
+        from gettex_first import source_contract
+        factual_contract=source_contract(info,raw.attrs)
+        if scoped and not factual_contract:
             from cp_controls import accepted_gap_input
             raw=accepted_gap_input(self.store,info,raw,base,input_clock)
+        from gettex_first import bind
+        raw=bind(raw,info)
         meta=raw.attrs.copy();out=resample(raw,base,tf,now=clock)
-        if scoped:
+        if scoped and not factual_contract:
             from cp_controls import accepted_gap_output
             out=accepted_gap_output(out,tf,clock)
         out.attrs['history_source']=meta.get('source','unknown')
@@ -735,7 +710,9 @@ class Desktop014:
         render_timing.mark('clear_figure')
         settings={**DEFAULT_IND,**self.store.setting('global_indicators',{})}
         panel_names=[k for k in ('Объём','RSI','MACD','ATR','Относительный объём') if settings.get(k)]
-        heights=[4]+[1.4 if name=='Объём' else 1 for name in panel_names];grid=self.fig.add_gridspec(len(heights),1,height_ratios=heights,left=.085,right=.80 if settings['Volume Profile'] else .97,top=.93,bottom=.12,hspace=.10)
+        main=hasattr(self,'main_screen')
+        heights=([5]+[1.1 if name=='Объём' else 1 for name in panel_names]) if main else [4]+[1.4 if name=='Объём' else 1 for name in panel_names]
+        grid=self.fig.add_gridspec(len(heights),1,height_ratios=heights,left=.025 if main else .085,right=.80 if settings['Volume Profile'] else .94 if main else .97,top=.93,bottom=.10 if main else .12,hspace=.10)
         self.ax_price=self.fig.add_subplot(grid[0]);self.ax_vol=self.ax_price
         for index,name in enumerate(panel_names,1):
             ax=self.fig.add_subplot(grid[index],sharex=self.ax_price);self.panels.append((name,ax));self.ax_vol=ax
@@ -743,6 +720,9 @@ class Desktop014:
         for ax in axes:
             ax.set_facecolor(BG);ax.tick_params(colors=MUTED,labelsize=8);ax.grid(color='#273449',alpha=.5)
             for sp in ax.spines.values():sp.set_color('#273449')
+        if hasattr(self,'main_screen'):
+            from main_screen import right_axes
+            right_axes(axes)
         for ax in axes[:-1]:ax.tick_params(labelbottom=False)
         render_timing.mark('create_axes')
         frame=self.frame_for(info,self.timeframe.get());self.current_df=None
@@ -797,8 +777,13 @@ class Desktop014:
         selection=frame.attrs.get('source_selection',{})
         if selection.get('selected') in ('GETTEX_EUR','GETTEX_CHART_EUR'):label+=' • авто EUR 07:30–23:00'
         if self.timeframe.get() in ('2H','3H','4H'):label+=' • календарь сессий'
-        self.ax_price.set_title(f'{info["name"]} • {TF[self.timeframe.get()]} • {label} • {currency}',color=TEXT,fontsize=10)
-        self.ax_price.set_ylabel(currency,color=MUTED)
+        if hasattr(self,'main_screen'):
+            bar=visible.iloc[-1]
+            ticker=frame.attrs.get('symbol') or info.get('symbol') or info['name']
+            title=f"{ticker} · {self.timeframe.get()} · {frame.attrs.get('venue','—')}  ОТКР {number(bar.open)}  МАКС {number(bar.high)}  МИН {number(bar.low)}  ЗАКР {number(bar.close)} {currency}"
+            self.ax_price.set_title(title,color=TEXT,fontsize=8,loc='left')
+        else:self.ax_price.set_title(f'{info["name"]} • {TF[self.timeframe.get()]} • {label} • {currency}',color=TEXT,fontsize=10)
+        self.ax_price.set_ylabel('' if hasattr(self,'main_screen') else currency,color=MUTED)
         def tick(value,_):
             i=int(round(value))
             return visible.index[i].strftime('%d.%m.%y\n%H:%M' if self.timeframe.get() not in ('1D','1W') else '%d.%m.%Y') if 0<=i<len(visible) else ''
@@ -820,7 +805,7 @@ class Desktop014:
         profile_rows=volume_profile_rows(visible,result.get('ohlcv_valid',False)) if settings['Volume Profile'] else None
         if profile_rows is not None and not profile_rows.empty:
             profile_title='Volume Profile\nоценка OHLCV'+('\nчастичная история' if frame.attrs.get('partial_chart') else '')
-            self.profile_axis=self.ax_price.inset_axes([1.025,0,.20,1],sharey=self.ax_price)
+            self.profile_axis=self.ax_price.inset_axes([1.09,0,.16,1] if hasattr(self,'main_screen') else [1.025,0,.20,1],sharey=self.ax_price)
             self.profile_axis.set_facecolor(BG)
             self.profile_axis.tick_params(colors=MUTED,labelsize=6,labelleft=False)
             self.profile_axis.set_title(profile_title,color=TEXT,fontsize=7)
@@ -841,7 +826,49 @@ class Desktop014:
             self.ax_price.callbacks.connect('xlim_changed',update_profile)
         render_timing.mark('volume_profile')
         handles,labels=self.ax_price.get_legend_handles_labels()
-        if handles:self.ax_price.legend(loc='upper left',fontsize=8,facecolor=BG,labelcolor=TEXT)
+        if hasattr(self,'main_screen'):
+            last_display=enriched.iloc[-1]
+            from main_screen import finite_float
+            self.main_screen.levels_visible.set(bool(settings['Уровни анализа']))
+            display_up=finite_float(last_display.close)>=finite_float(last_display.open)
+            for line in self.ax_price.get_lines():
+                if line.get_label()=='EMA '+str(settings['ema_fast']):line.set_color('#ffa600')
+                elif line.get_label()=='EMA '+str(settings['ema_slow']):line.set_color('#00b7ef')
+            def short(value):
+                value=finite_float(value)
+                return f'{value:.2f}' if math.isfinite(value) else '—'
+            def plotted(axis,index=0,column=None):
+                if column and column in visible:return visible[column].iloc[-1]
+                lines=axis.get_lines()
+                values=lines[index].get_ydata() if len(lines)>index else []
+                return values[-1] if len(values) else None
+            for name,axis in self.panels:
+                axis.set_ylabel('')
+                if axis.get_lines() and name in ('RSI','ATR'):axis.get_lines()[0].set_color('#a86cf5' if name=='ATR' else '#00b7ef')
+                caption=name
+                if name=='Объём':
+                    volume=finite_float(last_display.volume)
+                    caption+='  '+(compact_number(volume) if math.isfinite(volume) else '—')
+                elif name=='RSI':caption=f"RSI ({settings['rsi']})  "+short(plotted(axis,column='chart_rsi'))
+                elif name=='MACD':
+                    line_value=plotted(axis,column='chart_macd');signal_value=plotted(axis,1,'chart_macd_signal')
+                    caption=f"MACD ({settings['macd_fast']}, {settings['macd_slow']}, {settings['macd_signal']})  "+short(line_value)+'  '+short(signal_value)+'  '+short(finite_float(line_value)-finite_float(signal_value))
+                elif name=='ATR':caption=f"ATR ({settings['atr']})  "+short(plotted(axis,column='chart_atr'))
+                axis.text(.008,.94,caption,transform=axis.transAxes,ha='left',va='top',color=TEXT,fontsize=8,
+                    bbox=dict(facecolor=BG,edgecolor='none',alpha=.8,pad=1))
+            for i,(handle,label) in enumerate(zip(handles,labels)):
+                field='chart_ema_fast' if label=='EMA '+str(settings['ema_fast']) else 'chart_ema_slow' if label=='EMA '+str(settings['ema_slow']) else None
+                if field:
+                    values=handle.get_ydata() if hasattr(handle,'get_ydata') else []
+                    value=visible[field].iloc[-1] if field in visible else values[-1] if len(values) else None
+                    labels[i]=label+'  '+short(value)
+            for field,color in [('close','#16ce7c' if display_up else '#ff475d'),('support','#16ce7c'),('resistance','#ff475d')]:
+                value=last_display.close if field=='close' else result.get(field)
+                if isinstance(value,(int,float,np.floating)) and math.isfinite(value):
+                    self.ax_price.annotate(f'{value:.2f}',xy=(1,value),xycoords=('axes fraction','data'),
+                        xytext=(3,0),textcoords='offset points',ha='left',va='center',color='white',fontsize=8,
+                        bbox=dict(facecolor=color,edgecolor=color,pad=1.5),annotation_clip=True)
+        if handles:self.ax_price.legend(handles,labels,loc='upper left',fontsize=8,facecolor=BG,labelcolor=TEXT)
         last=enriched.iloc[-1];self.metrics['price'].set(number(last.close)+' '+currency)
         for k in ('ema10','ema30'):
             note=frame.attrs.get('partial_indicators',{})
@@ -874,6 +901,8 @@ class Desktop014:
         if quality.get('state') not in ('RECOVERING','SOURCE_UNAVAILABLE','INVALID','SOURCE_GAP') or frame.attrs.get('data_quality',{}).get('state')=='INVALID':
             quality=frame.attrs.get('data_quality',quality)
         quality_text=quality.get('state','INVALID')
+        if frame.attrs.get('dq_nonblocking'):
+            quality_text='Анализ по GETTEX; предупреждение СР: '+quality_text
         quality_detail='; '.join(quality.get('issues',[])+quality.get('warnings',[]))
         if partial:
             quality_text=str(frame.attrs.get('data_quality',{}).get('state','UNKNOWN'))+' / PARTIAL'
@@ -892,6 +921,9 @@ class Desktop014:
         if full.attrs.get('partial_indicators'):
             from chart_indicators import draw_partial
             return draw_partial(self,full,visible,s,MUTED,BLUE)
+        # Metadata/segment policy was checked above. Numeric plotting must not
+        # deep-copy the whole historical evidence tree on every column read.
+        full=pd.DataFrame(full,copy=False);visible=pd.DataFrame(visible,copy=False)
         close=full.close;series={}
         if s['EMA']:
             for p in (s['ema_fast'],s['ema_slow']):series['EMA '+str(p)]=close.ewm(span=p,min_periods=p,adjust=False).mean()
@@ -1027,23 +1059,10 @@ class Desktop014:
         self.ax_price.set_ylim(y+(c-y)*scale,y+(d-y)*scale);self.user_view=(self.ax_price.get_xlim(),self.ax_price.get_ylim());draw_localized(self)
 
     def show_indicators(self):
-        info=self.instrument_cfg();draft=copy.deepcopy(self.user_state(info));s={**DEFAULT_IND,**self.store.setting('global_indicators',{})}
-        win=tk.Toplevel(self.root);win.title(tr('Индикаторы • все акции'));win.geometry('460x620')
-        actions=ttk.Frame(win,padding=10);actions.pack(side='bottom',fill='x')
-        container=ttk.Frame(win);container.pack(fill='both',expand=True)
-        canvas=tk.Canvas(container,highlightthickness=0);scroll=ttk.Scrollbar(container,orient='vertical',command=canvas.yview)
-        canvas.configure(yscrollcommand=scroll.set);scroll.pack(side='right',fill='y');canvas.pack(side='left',fill='both',expand=True)
-        body=ttk.Frame(canvas,padding=12);window=canvas.create_window((0,0),window=body,anchor='nw')
-        body.bind('<Configure>',lambda e:canvas.configure(scrollregion=canvas.bbox('all')))
-        canvas.bind('<Configure>',lambda e:canvas.itemconfigure(window,width=e.width))
-        values={}
-        for row,(key,val) in enumerate(s.items()):
-            if isinstance(val,bool):
-                v=tk.BooleanVar(value=val);ttk.Checkbutton(body,text=tr(key),variable=v).grid(row=row,column=0,columnspan=2,sticky='w')
-            else:
-                labels={'ema_fast':'EMA быстрая','ema_slow':'EMA медленная','sma':'Период SMA','rsi':'Период RSI','atr':'Период ATR','bb':'Период Боллинджера','bb_dev':'Отклонение Боллинджера','volume':'Период среднего объёма','macd_fast':'MACD быстрый','macd_slow':'MACD медленный','macd_signal':'MACD сигнальный'}
-                v=tk.StringVar(value=str(val));ttk.Label(body,text=tr(labels[key])).grid(row=row,column=0,sticky='w');ttk.Entry(body,textvariable=v,width=8).grid(row=row,column=1)
-            values[key]=v
+        s={**DEFAULT_IND,**self.store.setting('global_indicators',{})}
+        from indicator_dialog import Dialog
+        dialog=Dialog(self,s);win=dialog.win;values=dialog.values
+        self._indicator_dialog=dialog
         def apply():
             try:
                 selected={k:v.get() if isinstance(s[k],bool) else (float(v.get()) if k=='bb_dev' else int(v.get())) for k,v in values.items()}
@@ -1053,33 +1072,11 @@ class Desktop014:
                 selected=validate(selected,s)
                 self.store.set_setting('global_indicators',selected);win.destroy();self.refresh_chart()
             except ValueError as e:messagebox.showerror(tr('Параметры'),tr(str(e)),parent=win)
-        ttk.Button(actions,text=tr('Применить'),command=apply).pack(side='right')
-        ttk.Button(actions,text=tr('По умолчанию'),command=lambda:[values[k].set(v) for k,v in DEFAULT_IND.items()]).pack(side='left')
-        ttk.Label(body,text=tr('Настройки графика. Сценарии используют EMA 10/30,\nRSI/ATR 14, MACD 12/26/9 и средний объём 20.')).grid(row=len(s)+1,column=0,columnspan=2,sticky='w')
+        return dialog.wire(apply,lambda:[values[k].set(v) for k,v in DEFAULT_IND.items()])
 
     def show_drawing(self):
-        info=self.instrument_cfg()
-        windows=getattr(self,'_drawing_windows',{});self._drawing_windows=windows
-        if info['isin'] in windows and windows[info['isin']].winfo_exists():windows[info['isin']].lift();return
-        win=tk.Toplevel(self.root);windows[info['isin']]=win
-        win.title(tr('Рисование • {name}',name=info['name']));body=ttk.Frame(win,padding=12);body.pack(fill='both',expand=True)
-        for label,kind in [('Горизонталь','hline'),('Вертикаль','vline'),('Трендовая линия','trend'),('Луч','ray'),('Зона','zone'),('Маркер цены','marker')]:
-            def choose(k=kind):self.drawing_mode=k;self.drawing_start=None;self.status.set(tr('Укажите ') + (tr('одну точку') if k in ('hline', 'vline', 'marker') else tr('две точки')) + tr(' на графике.'));win.destroy()
-            ttk.Button(body,text=tr(label),command=choose).pack(fill='x',pady=2)
-        objects=tk.Listbox(body,width=50,height=7,bg=BG,fg=TEXT);objects.pack(fill='x',pady=8)
-        listed=copy.deepcopy(self.user_state(info).get('drawings',[]))
-        for n,o in enumerate(listed):objects.insert('end',f'{n+1}: {o["type"]} • {o.get("at",o.get("price",""))}')
-        def remove():
-            if not objects.curselection():return
-            index=objects.curselection()[0];expected=listed
-            from drawing_actions import commit,modify
-            if commit(self,info['isin'],expected,modify(expected,index,'delete')):win.destroy()
-        ttk.Button(body,text=tr('Удалить выбранный объект'),command=remove).pack(fill='x')
-        def history_action(operation):
-            from drawing_actions import travel
-            if travel(self,info['isin'],operation):win.destroy()
-        for label,operation in [('Отменить','undo'),('Повторить','redo')]:
-            ttk.Button(body,text=tr(label),command=lambda op=operation:history_action(op)).pack(fill='x',pady=2)
+        from drawing_dialog import show
+        return show(self)
 
     def show_settings(self):
         super().show_settings()
@@ -1113,29 +1110,8 @@ class Desktop014:
         commit(self,info['isin'],expected,expected+[obj])
 
     def draw_objects(self,objects,frame):
-        mode=frame.attrs.get('source');currency=frame.attrs.get('currency');self.drawing_artists=[]
-        # Pandas may store a DatetimeIndex in microseconds; Timestamp.value is ns.
-        # Normalize display coordinates only; never alter candle timestamps.
-        coordinates=frame.index.as_unit('ns').asi8
-        def locate(at):return float(np.interp(pd.Timestamp(at).value,coordinates,np.arange(len(frame))))
-        for index,obj in enumerate(objects):
-            if obj.get('source_mode',mode)!=mode or obj.get('currency',currency)!=currency:continue
-            try:
-                kind=obj['type'];price=float(obj.get('price',0));at=obj.get('at')
-                if kind=='hline':self.drawing_artists.append((self.ax_price.axhline(price,color=BLUE,ls='--',lw=1.3,picker=6),index));continue
-                if not at or not frame.index[0]<=pd.Timestamp(at)<=frame.index[-1]:continue
-                x=locate(at)
-                if kind=='vline':self.drawing_artists.append((self.ax_price.axvline(x,color=BLUE,ls=':',lw=1.3,picker=6),index));continue
-                if kind=='marker':
-                    artist,=self.ax_price.plot([x],[price],marker='o',color=BLUE,picker=6)
-                    self.ax_price.annotate(f'{price:g}',(x,price),xytext=(5,5),textcoords='offset points',color=BLUE)
-                    self.drawing_artists.append((artist,index));continue
-                end=obj['end'];ex=locate(end['at']);ey=end['price']
-                if kind=='zone':self.drawing_artists.append((self.ax_price.add_patch(Rectangle((min(x,ex),min(price,ey)),abs(ex-x),abs(ey-price),color=BLUE,alpha=.18)),index))
-                else:
-                    if kind=='ray' and ex!=x:ey=price+(ey-price)/(ex-x)*(len(frame)-1-x);ex=len(frame)-1
-                    artist,=self.ax_price.plot([x,ex],[price,ey],color=BLUE,ls='--',lw=1.3,picker=6);self.drawing_artists.append((artist,index))
-            except (KeyError,TypeError,ValueError):continue
+        from drawing_renderer import draw
+        draw(self,objects,frame,BLUE)
 
     def save_user_changes(self):
         self.watchlist=[copy.deepcopy(self.drafts.get(i['isin'],i)) for i in self.watchlist]

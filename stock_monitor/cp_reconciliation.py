@@ -603,6 +603,7 @@ def turn(store, info, now=None):
         progress.update(last_turn=clock.isoformat(),last_created=created,last_checked=checked,
             checked_total=progress.get('checked_total',0)+checked,mode='ASSISTED_ONLY')
         current_jobs=[read(db,k,{}) for k,_ in page]
+        update_suspicious(progress,current_jobs,clock.isoformat())
         previous=progress.get('review_batch')
         retained=[read(db,PREFIX+isin+':'+i['id'],{}) for i in (previous or {}).get('items',[])]
         stable=bool(retained) and pd.Timestamp(previous['valid_until'])>clock and all(
@@ -782,6 +783,38 @@ def register_prior_review(store, spec, native_reference, result, tv_symbol, scre
     return {'state':'RECHECK_QUEUED','id':job['id'],'grants_changed':False,'candles_written':0}
 
 
+def suspicious_finding(job):
+    """Evidence-based attention only; never DQ, NO_TRADES or permission."""
+    finding=job.get('finding',{});state=finding.get('state')
+    meta=job.get('identity',{})
+    if meta.get('source') not in ('gettex','gettex_chart') or meta.get('venue')!='GETTEX':return None
+    if state=='INVALID':return 'INVALID_NATIVE_DATA'
+    if state=='GAP' and finding.get('market_state')=='GAP':return 'CONFIRMED_TRADES_WITHOUT_NATIVE_BAR'
+    if state=='SOURCE_DISCREPANCY' and finding.get('material_difference') is True:
+        return 'CONFIRMED_MATERIAL_SOURCE_DIFFERENCE'
+    # Missing rows, source limits, delays, ordinary zero volume and uncertain
+    # observations are not the most suspicious anomalies. A matching TV hole
+    # remains uncertainty/accepted history, never fabricated exchange evidence.
+    return None
+
+
+def update_suspicious(progress,jobs,checked_at=None):
+    if checked_at is not None:
+        if progress.get('suspicious_version')!=2:
+            progress['suspicious']={};progress['suspicious_version']=2
+        jobs=[j for j in jobs if j.get('checked_at')==checked_at]
+    saved=dict(progress.get('suspicious',{}))
+    for job in jobs:
+        reason=suspicious_finding(job);identifier=job.get('id')
+        if not identifier:continue
+        if not reason:saved.pop(identifier,None);continue
+        saved[identifier]={k:job.get(k) for k in ('id','isin','identity','tf','first','last','end','checked_at','input_fingerprint')}
+        saved[identifier].update(state=reason,reason=job.get('finding',{}).get('reason'),severity='HIGH')
+    progress['suspicious_truncated']=len(saved)>256
+    progress['suspicious']=dict(sorted(saved.items(),key=lambda item:str(item[1].get('checked_at') or ''),reverse=True)[:256])
+    progress['suspicious_note']='Confirmed severe anomalies only; other DQ/jobs preserved separately. Cross-exchange gaps are context, not GETTEX evidence.'
+
+
 def collect(db, isin=None, page=0):
     from collections import Counter
     # Read-only; no job creation, source calls or reclassification on UI/MCP reads.
@@ -799,5 +832,9 @@ def collect(db, isin=None, page=0):
     return dict(version=VERSION,capability=capability(),progress=progress,review_batches=batches,counts=dict(counts),
                 total=total,rows=rows,page=page,pages=max(1,(total+99)//100),
                 source_comparisons=_comparison_summary(comparisons),
+                suspicious=[row for i,p in progress.items() if (not isin or i==isin) and p.get('suspicious_version')==2 for row in p.get('suspicious',{}).values()][:100],
+                suspicious_count=sum(len(p.get('suspicious',{})) for i,p in progress.items() if (not isin or i==isin) and p.get('suspicious_version')==2),
+                suspicious_reviewed_stocks=sum(p.get('suspicious_version')==2 for i,p in progress.items() if not isin or i==isin),
+                suspicious_scope='Saved severe findings from ordinary CP turns; not a new audit or DQ override',
                 source_admission=read(db,SOURCE_POLICY,{}),
                 scope='Diagnostic jobs, not repaired candles or trading permissions',recovered_candles=0)

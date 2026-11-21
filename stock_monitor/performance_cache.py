@@ -61,6 +61,8 @@ def frame_dependency(isin, frame, tf, now):
                 base_tf=meta.get('aggregation_base') or base_for(tf,meta['source']),
                 through=pd.Timestamp(closed.max()).isoformat(),timeframe=tf)
     if meta.get('analysis_scope'):spec['from']=meta['analysis_scope']['start']
+    from gettex_first import bound,VERSION as GETTEX_FIRST
+    if bound(frame):spec['calculation_policy']=GETTEX_FIRST
     spec['recovered_inputs']=[s for item in meta.get('parent_recovery_inputs',[]) if
         (not spec.get('from') or pd.Timestamp(item['parent_at'])>=pd.Timestamp(spec['from']))
         and pd.Timestamp(item['parent_at']).tz_localize(meta['timezone'])<closed.max()
@@ -189,8 +191,11 @@ def capture_closed_inputs(db, specs, token):
     wanted={s['isin'] for s in specs}
     quality_keys={f"{s['isin']}:{s['identity']['symbol']}:{s['base_tf']}" for s in specs}
     tracked={};settings={};strict={};settings_start={}
+    from gettex_first import audit_only_scopes
+    advisory=audit_only_scopes(specs)
     starts={f"{s['isin']}:{s['identity']['symbol']}:{s['base_tf']}":s.get('from') for s in specs}
     for scope,revision in token.items():
+        if scope in advisory:continue
         if scope.startswith('market:'):continue
         if scope.startswith('instrument:') and scope[len('instrument:'):] not in wanted:continue
         if scope.startswith('setting:'):
@@ -381,3 +386,4 @@ class CachedStoreMixin:
         self.read_cache.depend('market:'+args[0]+':'+args[1])
         call=super().load_series
         return self.read_cache.get(('series',args,tuple(sorted(kwargs.items()))),lambda:call(*args,**kwargs),scoped=True,inputs=self.read_cache.token_for(['market:'+args[0]+':'+(args[1] if len(args)>1 else kwargs.get('base','15m'))]))
+

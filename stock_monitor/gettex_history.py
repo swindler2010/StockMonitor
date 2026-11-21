@@ -416,7 +416,7 @@ def _review_coverage(store,summary):
 
 
 
-def acquire_missing_evidence(info,store,http,now=None,budget=8):
+def acquire_missing_evidence(info,store,http,now=None,budget=8,max_seconds=5):
     """Bounded official-file acquisition in the existing serialized feed worker.
 
     Files are shared by all ISINs. Acquisition never certifies absence or changes
@@ -424,6 +424,7 @@ def acquire_missing_evidence(info,store,http,now=None,budget=8):
     Persistent per-day leases/cooldowns also survive an interrupted application.
     """
     import json,hashlib
+    started=time.monotonic();seconds=max(.01,min(5.,float(max_seconds)))
     from timeframes import schedule
     clock=pd.Timestamp(now or pd.Timestamp.now(tz='UTC'))
     cooldown=max(filter(None,[store.setting('candlepilot_source_cooldown',None),store.setting('cp_source_retry:gettex',None)]),default=None)
@@ -486,7 +487,14 @@ def acquire_missing_evidence(info,store,http,now=None,budget=8):
             templates=[urlparse(location) for location in locations.values()]
             if not templates:raise ValueError('NO_PUBLISHED_OFFICIAL_FILE_TEMPLATE')
             u=templates[0]
+            attempts=0
             for name in missing[:max(1,min(8,budget))]:
+                # Never abort HTTP or a write. Yield between completed files,
+                # preserving the cursor and existing global retry/429 policy.
+                # Allow one file even after a slow manifest to avoid starvation.
+                if attempts and time.monotonic()-started>=seconds:
+                    result['yielded']=True;result['stop_reason']='TIME_BUDGET';break
+                attempts+=1
                 url=locations.get(name) or u._replace(path=u.path.rsplit('/',1)[0]+'/'+name,query='',fragment='').geturl()
                 target=cache/name
                 original=target.read_bytes() if target.exists() else None
@@ -565,7 +573,7 @@ def maintain_evidence(info,store,http,parse,now=None):
     return {'classification':classified,'acquisition':acquired,'cached_history':accumulated}
 
 
-def accumulate_cached_batch(store,parse,now=None,max_pairs=16,max_seconds=5):
+def accumulate_cached_batch(store,parse,now=None,max_pairs=16,max_seconds=5,recent_only=False):
     """Drain saved pairs fairly on the existing history lane, without HTTP.
 
     Each pair retains its original atomic checkpoint and all validation. The
@@ -576,7 +584,8 @@ def accumulate_cached_batch(store,parse,now=None,max_pairs=16,max_seconds=5):
     seconds=max(.01,min(5.,float(max_seconds)));results=[];stop='PAIR_BUDGET'
     for _ in range(limit):
         if results and time.monotonic()-started>=seconds:stop='TIME_BUDGET';break
-        result=accumulate_cached_pair(store,parse,now)
+        result=(accumulate_cached_pair(store,parse,now,recent_only=True) if recent_only
+                else accumulate_cached_pair(store,parse,now))
         if result.get('state') in ('IDLE','NOT_ENABLED','INPUT_CHANGED'):
             stop=result['state'];break
         results.append(result)
@@ -589,9 +598,12 @@ def accumulate_cached_batch(store,parse,now=None,max_pairs=16,max_seconds=5):
                  pairs=[r.get('pair') for r in results],
                  seconds=round(time.monotonic()-started,4),pair_limit=limit,
                  seconds_budget=seconds,checked_at=pd.Timestamp(now or pd.Timestamp.now(tz='UTC')).isoformat())
+    summary['updated_isins']=sorted({isin for r in results for isin in r.get('updated_isins',[])})
+    summary['recent_only']=bool(recent_only)
     if results:
         progress=store.setting('gettex_cached_history',{})
         progress['last_batch']=summary
+        if recent_only:progress['last_recent_batch']=summary
         store.set_setting('gettex_cached_history',progress)
     return summary
 
@@ -613,7 +625,7 @@ def _empty_closed_pair(files,anchor,signature):
     except (ValueError,KeyError,OSError,EOFError,UnicodeError):return None
 
 
-def accumulate_cached_pair(store,parse,now=None):
+def accumulate_cached_pair(store,parse,now=None,recent_only=False):
     """One closed official file pair on the existing history lane, no HTTP.
 
     Shared by the registered stocks: new instruments revisit unchanged files
@@ -635,14 +647,18 @@ def accumulate_cached_pair(store,parse,now=None):
         match=re.fullmatch(r'posttrade\.(\d{8}\.\d{2}\.\d{2})\.(mund|munc)\.csv\.gz',path.name)
         if match:pairs.setdefault(match[1],{})[match[2]]=path
     progress=store.setting('gettex_cached_history',{});done=progress.get('pairs',{})
-    for label,files in sorted(pairs.items()):
+    for label,files in sorted(pairs.items(),reverse=recent_only):
         anchor=pd.to_datetime(label,format='%Y%m%d.%H.%M',utc=True)
         if set(files)!=set(('munc','mund')) or anchor>clock:continue
+        if recent_only and anchor<clock-pd.Timedelta(days=1):continue
         signature={mic:[p.stat().st_size,p.stat().st_mtime_ns] for mic,p in files.items()}
         previous=done.get(label,{})
         recheck_empty=(previous.get('state')=='BLOCKED' and previous.get('reason')=='EMPTY_FILE_UNCONFIRMED'
                        and previous.get('empty_calendar_policy',0)<1)
-        if previous.get('signature')==signature and previous.get('universe')==universe and not recheck_empty:continue
+        # Initialize the new diagnostic producer from ONE newest saved pair,
+        # never sweep/reload the old archive or reset its event time to now.
+        clock_bootstrap=(recent_only and progress.get('market_clock_bootstrapped_universe')!=universe)
+        if previous.get('signature')==signature and previous.get('universe')==universe and not recheck_empty and not clock_bootstrap:continue
         hashes={};rows={};errors={};boundary_rows=0
         try:
             with LOCK:
@@ -662,7 +678,7 @@ def accumulate_cached_pair(store,parse,now=None):
                 if signature!={mic:[p.stat().st_size,p.stat().st_mtime_ns] for mic,p in files.items()}:return {'state':'INPUT_CHANGED'}
             if previous.get('sha256') and previous['sha256']!=hashes:
                 raise ValueError('CHANGED_SOURCE_FILE_REQUIRES_EXISTING_RECOVERY')
-            candles=[];trades=[];lo=(anchor-pd.Timedelta(minutes=15)).tz_convert('Europe/Berlin').tz_localize(None);hi=anchor.tz_convert('Europe/Berlin').tz_localize(None)
+            candles=[];trades=[];observed_trades={};lo=(anchor-pd.Timedelta(minutes=15)).tz_convert('Europe/Berlin').tz_localize(None);hi=anchor.tz_convert('Europe/Berlin').tz_localize(None)
             for isin,lines in rows.items():
                 if isin in errors:continue
                 frame=parse(('\n'.join(lines)+'\n').encode(),isin,file_time=anchor)
@@ -680,7 +696,8 @@ def accumulate_cached_pair(store,parse,now=None):
                     pending.extend((isin,'gettex',base,str(t),*(float(row[f]) for f in quality.FIELDS)) for t,row in bars.iterrows())
                 if isin in errors:continue
                 candles.extend(pending);trades.extend((isin,str(t),float(row.price),float(row.volume)) for t,row in frame.iterrows())
-            added=conflicts=0
+                observed_trades[isin]=frame
+            added=conflicts=0;updated_isins=set()
             with store.connect() as db:
                 db.execute('BEGIN IMMEDIATE')
                 current=db.execute('SELECT value FROM settings WHERE key=?',(OWNER_HISTORY_POLICY,)).fetchone()
@@ -705,7 +722,7 @@ def accumulate_cached_pair(store,parse,now=None):
                     if row[0] in rejected:continue
                     old=db.execute('SELECT open,high,low,close,volume FROM candles WHERE isin=? AND source=? AND base_tf=? AND ts=?',row[:4]).fetchone()
                     if old is None:
-                        db.execute('INSERT INTO candles VALUES (?,?,?,?,?,?,?,?,?)',row);added+=1
+                        db.execute('INSERT INTO candles VALUES (?,?,?,?,?,?,?,?,?)',row);added+=1;updated_isins.add(row[0])
                 receipt=dict(signature=signature,sha256=hashes,universe=universe,checked_at=clock.isoformat(),
                     added=added,existing_value_conflicts=conflicts,errors=errors,endpoint_rows_deferred=boundary_rows,
                     state='REVIEW_REQUIRED' if errors or conflicts else 'ACCUMULATED',
@@ -715,8 +732,13 @@ def accumulate_cached_pair(store,parse,now=None):
                     registered_stocks=len(infos),available_pairs=sum(len(v)==2 for v in pairs.values()),
                     current_universe_pairs=sum(v.get('universe')==universe for v in done.values()),
                     candles_added_total=progress.get('candles_added_total',0)+added)
+                if recent_only:progress['market_clock_bootstrapped_universe']=universe
                 db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',('gettex_cached_history',json.dumps(progress)))
-            return dict(state=receipt['state'],pair=label,added=added,conflicts=conflicts,errors=errors)
+            from delivery_observations import official_trades
+            for isin,frame in observed_trades.items():
+                if isin not in rejected:
+                    official_trades(store.directory,isin,frame,hashes,anchor,clock.isoformat())
+            return dict(state=receipt['state'],pair=label,added=added,conflicts=conflicts,errors=errors,updated_isins=sorted(updated_isins))
         except (OSError,EOFError,UnicodeError,ValueError) as error:
             closed_hashes=_empty_closed_pair(files,anchor,signature) if str(error)=='EMPTY_FILE_UNCONFIRMED' else None
             done[label]=dict(signature=signature,sha256=previous.get('sha256') or hashes,universe=universe,

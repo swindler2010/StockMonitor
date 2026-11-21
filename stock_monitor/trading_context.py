@@ -6,6 +6,25 @@ contracts unless explicitly authorized for execution.
 """
 import copy
 
+from paper_account import EXECUTION_TF
+
+
+def closed_period_end(meta, target, now):
+    import pandas as pd
+    from timeframes import schedule
+    local=now.tz_convert(meta['timezone']).tz_localize(None)
+    week=target=='1W'
+    period=local.to_period('W-FRI' if week else 'M')
+    last=period.end_time.normalize()
+    if meta.get('venue')=='GETTEX' and local.year==2026 and last.year>2026:
+        # A W-FRI label may fall in 2027 while its full GETTEX trading
+        # week ends in 2026. Use the confirmed calendar through year-end.
+        last=min(last,pd.Timestamp('2026-12-31'))
+    sessions=schedule({**meta,'timeframe':'1D'},(period-2).start_time,last)
+    ends=sessions.close.groupby(pd.Grouper(freq='W-FRI' if week else 'MS')).max()
+    eligible=ends[ends<=now]
+    return eligible.iloc[-1] if not eligible.empty else None
+
 
 def closed_parent_input(frame, base, target, now):
     """Only children of closed parents belong to this closed CORE context.
@@ -17,10 +36,15 @@ def closed_parent_input(frame, base, target, now):
     import pandas as pd
     from candle_schedule import boundary
     from timeframes import MINUTES,endpoints
-    if frame.empty or target not in (*MINUTES,'1D'):return frame,now
-    due=boundary(frame.attrs,target,now,delay_seconds=0)
-    if not due.get('close_at'):return frame,now
-    cutoff=pd.Timestamp(due['close_at'])
+    if frame.empty:return frame,now
+    if base=='1D' and target in ('1W','1M'):
+        cutoff=closed_period_end(frame.attrs,target,now)
+        if cutoff is None:return frame,now
+    elif target in (*MINUTES,'1D'):
+        due=boundary(frame.attrs,target,now,delay_seconds=0)
+        if not due.get('close_at'):return frame,now
+        cutoff=pd.Timestamp(due['close_at'])
+    else:return frame,now
     raw=frame.copy();raw.attrs['timeframe']=base
     ends=endpoints(raw)
     # Keep malformed timestamps visible to DQ; never erase bad rows in order
@@ -37,17 +61,17 @@ def closed_parent_input(frame, base, target, now):
         out.attrs['intraday_span']=[str(first),str(last)]
     out.attrs['closed_parent_input']=dict(target=target,input_base=base,through=cutoff.isoformat(),
         evaluated_at=pd.Timestamp(now).isoformat(),excluded_forming_children=len(raw)-len(out))
-    return out,now
+    input_clock=cutoff if base=='1D' and target in ('1W','1M') else now
+    return out,input_clock
 
 
-def plan(signal_tf, trend_tf=None, execution_tf=('5m','15m')):
+def plan(signal_tf, trend_tf=None, execution_tf=(EXECUTION_TF,)):
     from timeframes import LABELS
     from trading_engine import profile
     required=tuple(profile(signal_tf) if trend_tf is None else trend_tf)
     if (signal_tf not in LABELS or len(required)!=3 or len(set(required))!=3
         or any(t not in LABELS for t in required)
-        or not execution_tf or len(set(execution_tf))!=len(execution_tf)
-        or any(t not in ('5m','15m') for t in execution_tf)):
+        or tuple(execution_tf)!=(EXECUTION_TF,)):
         raise ValueError('TRADING_TIMEFRAME_CONTRACT_INVALID')
     return dict(version='closed_core_context_v1',strategy='CORE:1',signal_tf=signal_tf,
         required_tf=list(required),execution_tf=list(execution_tf),
@@ -91,5 +115,10 @@ def calculate(store,values,identity,contract,position,now):
     context.closed_specs={};context.set_analysis_scope(now)
     engine=context.trading_analysis(info,analysis_only=True)
     proof=_candidate_proof(store,list(context.closed_specs.values()),store.read_cache.dependencies())
-    manual=manual_context(store,info['isin'],identity,contract['signal_tf'],proof)
+    from gettex_first import VERSION
+    factual=all(engine.get('timeframe_context',{}).get(tf,{}).get('calculation_availability',{}).get('policy')==VERSION
+        and engine.get('timeframe_context',{}).get(tf,{}).get('calculation_availability',{}).get('analysis_available')
+        for tf in contract['required_tf'])
+    manual=None if factual else manual_context(store,info['isin'],identity,contract['signal_tf'],proof)
     return dict(engine=engine,proof=proof,manual=manual,contract=contract)
+

@@ -148,33 +148,5 @@ class LogoMixin:
         if symbol in self.logo_waiters:self.logo_waiters[symbol].append((tree,item))
 
     def show_watchlist(self):
-        import tkinter as tk
-        from tkinter import ttk
-        win=tk.Toplevel(self.root);win.title(tr('Акции'));win.geometry('900x500')
-        credit=ttk.Label(win,text='Логотипы: сайты компаний · Elbstream',cursor='hand2',style='Muted.TLabel')
-        credit.pack(side='bottom',pady=4)
-        credit.bind('<Button-1>',lambda _:__import__('webbrowser').open('https://elbstream.com'))
-        ttk.Label(win,text=tr('Сверху: рабочий деморежим → доступный анализ → график → ожидающие и заблокированные.\nWAIT — ожидание сигнала; исполнение отдельно проверяет свежую цену и все ограничения.'),wraplength=880).pack(anchor='w',padx=8,pady=6)
-        tree=ttk.Treeview(win,columns=('status',),show='tree headings',selectmode='browse')
-        tree.heading('#0',text=tr('Акция'));tree.column('#0',width=280)
-        tree.heading('status',text=tr('Состояние'));tree.column('status',width=580)
-        scrollbar=ttk.Scrollbar(win,orient='vertical',command=tree.yview);scrollbar.pack(side='right',fill='y')
-        tree.configure(yscrollcommand=scrollbar.set);tree.pack(fill='both',expand=True)
-        def render():
-            if not win.winfo_exists():return
-            infos=self.stock_order.ordered() if hasattr(self,'stock_order') else self.watchlist
-            for index,info in enumerate(infos):
-                label=getattr(getattr(self,'stock_order',None),'rows',{}).get(info['isin'],{}).get('label','Ожидается оценка')
-                if not tree.exists(info['isin']):
-                    item=tree.insert('','end',iid=info['isin'],text=info['name']+' • '+info.get('symbol',''))
-                    self.attach_logo(tree,item,info)
-                tree.item(info['isin'],values=(label,));tree.move(info['isin'],'',index)
-        render()
-        if hasattr(self,'stock_order'):
-            self.stock_order.refresh(render)
-            ttk.Button(win,text=tr('Обновить порядок'),command=lambda:self.stock_order.refresh(render)).pack(side='right')
-        def select(event=None):
-            if tree.selection():
-                self.symbol.set(next(i['name'] for i in self.watchlist if i['isin']==tree.selection()[0]));win.destroy();self.refresh_chart()
-        tree.bind('<Double-1>',select);tree.bind('<Return>',select)
-        ttk.Button(win,text=tr('Выбрать'),command=select).pack()
+        from watchlist_dialog import show
+        return show(self)

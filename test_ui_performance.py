@@ -96,7 +96,7 @@ class PerformanceTests(unittest.TestCase):
             store=SimpleNamespace(read_cache=SimpleNamespace(current=lambda token:token=={'instrument:TEST':1})),
             timeframe=SimpleNamespace(get=lambda:'1H'),user_state=lambda _:info,watchlist=[info],closing=False,
             data={},data_meta={},job=lambda *args,**kwargs:jobs.append(args),compute_feed=Mock(),_write_log=Mock(),notify_signal=Mock())
-        with patch('snapshot_worker.inputs',return_value=values):
+        with patch('freshness_runtime.feed_completed'),patch('snapshot_worker.inputs',return_value=values):
             for token,expected in [(None,False),({'instrument:TEST':0},False),({'instrument:TEST':1},True)]:
                 result={'official':'rows','notification':None}
                 if token is not None:result['_input_revisions']=token

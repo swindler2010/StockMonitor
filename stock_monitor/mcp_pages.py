@@ -9,7 +9,27 @@ import time
 class ReadPages:
     def __init__(self, ttl=120, max_bytes=64*1024*1024, max_entries=16, clock=time.monotonic):
         self.ttl=ttl;self.max_bytes=max_bytes;self.max_entries=max_entries;self.clock=clock
-        self.entries=OrderedDict();self.lock=threading.Lock();self.bytes=0
+        self.entries=OrderedDict();self.lock=threading.Lock();self.bytes=0;self.deferred={}
+
+    def begin_deferred(self,section):
+        """Coalesce one slow read on its existing HTTP request thread."""
+        with self.lock:
+            prior=self.deferred.get(section)
+            if prior and prior['status']=='PENDING':return 'PENDING',None
+            if prior:
+                revision=prior.get('revision');entry=self.entries.get((section,revision))
+                if entry and self.clock()-entry[2]<self.ttl:return 'READY',revision
+            self.deferred[section]={'status':'PENDING'}
+            return 'START',None
+
+    def finish_deferred(self,section,load):
+        try:
+            _,revision,_,_=self.read(section,None,load)
+        except Exception as error:
+            # A failed diagnostic is unavailable, never a zero or READY count.
+            _,revision,_,_=self.read(section,None,lambda:({'status':'UNAVAILABLE',
+                'reason':type(error).__name__,'readiness':'NOT_EVALUATED'},{}))
+        with self.lock:self.deferred[section]={'status':'READY','revision':revision}
 
     def read(self,section,expected,load):
         # The cache is per Bridge instance and section. No continuation silently

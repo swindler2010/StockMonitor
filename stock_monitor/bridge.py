@@ -56,6 +56,10 @@ class Bridge:
                         section=args.get('section','snapshot')
                         def load():
                             from mcp_projection import persisted
+                            if section=='quality_evidence':
+                                from dq_evidence import collect
+                                value=collect(bridge.directory/'stock_monitor.sqlite3',args.get('evidence_isin'),args.get('evidence_page',0))
+                                return value,{'published_at':published}
                             if section=='freshness':
                                 from freshness_view import collect
                                 value=collect(bridge.directory)
@@ -63,10 +67,31 @@ class Bridge:
                                 return value,{'published_at':bridge.published_at}
                             if section=='snapshot':
                                 with bridge.lock:return bridge.state,{'published_at':bridge.published_at}
-                            value=persisted(bridge.directory/'stock_monitor.sqlite3') if section=='persisted' else bridge.identity()['candlepilot_health'] if section=='candlepilot_health' else bridge.identity()
+                            if section=='candlepilot_health':
+                                from candlepilot_health import collect
+                                value=collect(bridge.directory/'stock_monitor.sqlite3',state)
+                                value['activity']=getattr(bridge,'cp_activity',{'state':'UNKNOWN'})
+                                return value,{'published_at':published}
+                            value=persisted(bridge.directory/'stock_monitor.sqlite3') if section=='persisted' else bridge.identity(include_candlepilot=False)
+
                             return value,{'published_at':bridge.published_at}
-                        value,revision,metadata,remaining=bridge.read_pages.read(section,args.get('expected_revision'),load)
-                        published=metadata['published_at']
+                        expected=args.get('expected_revision')
+                        if section=='candlepilot_health' and not expected:
+                            deferred,expected=bridge.read_pages.begin_deferred(section)
+                            if deferred!='READY':
+                                self.respond(200,{'status':'INDETERMINATE','section':section,
+                                    'data_status':'NOT_AVAILABLE_YET','readiness':'NOT_EVALUATED',
+                                    'instance_id':bridge.instance_id,'retry_after_seconds':2,
+                                    'hint':'Repeat this read without expected_revision; one full diagnostic is already running. No zero counts inferred.'})
+                                self.wfile.flush()
+                                if deferred=='START':
+                                    # Complete on this existing HTTP thread, after replying.
+                                    # No extra queue, per-stock thread, or Tk calculation.
+                                    bridge.read_pages.finish_deferred(section,load)
+                                return
+                        lease_section=(section+':'+str(args.get('evidence_isin'))+':'+str(args.get('evidence_page',0)) if section=='quality_evidence' else section)
+                        value,revision,metadata,remaining=bridge.read_pages.read(lease_section,expected,load)
+                        published=metadata.get('published_at')
                         result=page(value,args,revision)
                         result.update(instance_id=bridge.instance_id,version='0.16-dev',scope='test',snapshot_published_at=published,
                             page_lease_remaining_seconds=remaining,page_semantics='Pinned read-only publication; does not extend analytics/signal/trade readiness',
@@ -102,7 +127,7 @@ class Bridge:
                         from mcp_server import validate_arguments
                         validate_arguments(action,args)
                         result=receipt(bridge.command_status(args),{k:args[k] for k in ('path','offset','limit','expected_revision') if k in args})
-                    elif action in ('refresh','select','set_levels','add_instrument','remove_instrument','update_position','record_decision','review_decision','read_analytics','paper_trade','get_indicators','set_indicators'):
+                    elif action in ('refresh','select','set_levels','add_instrument','remove_instrument','update_position','record_decision','review_decision','read_analytics','paper_trade','get_indicators','set_indicators','reconcile_dq_evidence'):
                         from mcp_server import validate_arguments
                         validate_arguments(action,args)
                         result=bridge.commands.submit(action,args,obj.get('command',{}))
@@ -196,7 +221,7 @@ class Bridge:
                         'analytics_status':'PENDING','reason':'Background analytics for this selection are not published yet'}
             self.published_at=time.time()
 
-    def identity(self,include_diagnostics=True):
+    def identity(self,include_diagnostics=True,include_candlepilot=True):
         from mcp_server import TOOLS
         path=str((self.directory/'stock_monitor.sqlite3').resolve())
         if not include_diagnostics:
@@ -219,11 +244,14 @@ class Bridge:
         from paper_account import status
         try:paper=status(path)
         except Exception:paper={'status':'UNAVAILABLE','virtual':True}
-        from candlepilot_health import collect
-        try:
-            cp_health=collect(path,self.state)
-            cp_health['activity']=getattr(self,'cp_activity',{'state':'UNKNOWN'})
-        except Exception as error:cp_health={'status':'UNAVAILABLE','reason':type(error).__name__}
+        cp_health={'status':'NOT_READ','tool':'stock_monitor_snapshot','section':'candlepilot_health',
+            'reason':'PAPER runtime does not run the separate full-history CandlePilot diagnostic'}
+        if include_candlepilot:
+            from candlepilot_health import collect
+            try:
+                cp_health=collect(path,self.state)
+                cp_health['activity']=getattr(self,'cp_activity',{'state':'UNKNOWN'})
+            except Exception as error:cp_health={'status':'UNAVAILABLE','reason':type(error).__name__}
         return {'candlepilot_health':cp_health,'paper_account':paper,'version':'0.16-dev','mcp_api_revision':2,'scope':'test','instance_id':self.instance_id,
                 'environment_id':hashlib.sha256(path.encode()).hexdigest()[:16],
                 'database_path':path,'endpoint':f'http://127.0.0.1:{self.server.server_port}/bridge',
@@ -244,5 +272,6 @@ class Bridge:
             if json.loads(self.descriptor.read_text())['token']==self.token:self.descriptor.unlink()
         except (OSError,ValueError,KeyError):pass
         threading.Thread(target=self.server.shutdown,daemon=True).start()
+
 
 

@@ -184,6 +184,60 @@ class HourlyTests(unittest.TestCase):
                 if chosen=='1H':
                     self.assertIn('POSITION_LIMIT', first['timeframes']['4H']['execution_blocker'])
 
+    def test_demo_selector_runs_and_executes_all_five_timeframes(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        from trading_context import plan
+        for tf in hourly.SELECTABLE_TIMEFRAMES:
+            with self.subTest(timeframe=tf):
+                self.db.execute('DELETE FROM paper_fills');self.db.commit()
+                self.assertEqual(hourly.set_signal_timeframe(self.db,tf),tf)
+                self.db.commit()
+                self.cfg=hourly.read(self.db,hourly.CONFIG)
+                for interval in plan(tf)['required_tf']:
+                    self.db.execute('DELETE FROM series WHERE base_tf=?',(interval,))
+                    for ts in pd.date_range('2026-09-01 07:30',periods=40,freq='D'):
+                        self.db.execute('INSERT INTO series VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+                            (self.isin,'gettex_chart','GETTEX','EUR','AAPL.GTX',interval,str(ts),100,102,99,101,20))
+                self.db.commit()
+                def result_for(interval,side='BUY'):
+                    result=self.result_for(side)
+                    result['timeframe']=interval
+                    contract=plan(interval)
+                    proof=capture_closed_inputs(self.db,[dict(isin=self.isin,identity=self.identity,base_tf=t,
+                        timeframe=t,through='2026-11-04T09:30:00Z') for t in contract['required_tf']],
+                        result['_input_revisions'])
+                    result['hourly'].update(timeframe_contract=contract,required_tf=contract['required_tf'],proof=proof)
+                    result['execution_context']['trading_engine']['timeframe_context']={
+                        t:dict(data_quality=dict(state='READY')) for t in contract['required_tf']}
+                    return result
+                wrong_tf='4H' if tf=='1H' else '1H'
+                wrong_result=result_for(wrong_tf)
+                args=dict(self.args,timeframe=wrong_tf)
+                with self.assertRaisesRegex(ValueError,'TIMEFRAME_NOT_SELECTED'):
+                    paper.execute(self.db,self.info,wrong_result,args,self.now)
+                reports={};calls=[]
+                def calculate(kind,values):
+                    calls.append(values['timeframe'])
+                    return result_for(values['timeframe'])
+                store=SimpleNamespace(path='unused',connect=lambda:self.db,
+                    set_setting=lambda key,value:reports.update({key:value}))
+                app=SimpleNamespace(store=store,compute_trading=SimpleNamespace(calculate=calculate),
+                    closing=False,user_dirty=False)
+                with patch.object(hourly.sqlite3,'connect',return_value=self.db),patch.object(hourly.time,'time',return_value=self.now):
+                    report=hourly.run_turn(app,self.info,{},self.cfg)
+                    repeated=hourly.run_turn(app,self.info,{},self.cfg)
+                self.assertEqual(calls,[tf,tf])
+                self.assertEqual(report['state'],'COMPLETED')
+                self.assertTrue(repeated['idempotent'])
+                self.assertEqual([f['timeframe'] for f in paper.ledger(self.db)['fills']],[tf])
+
+    def test_switch_keeps_open_bracket_timeframe(self):
+        self.cfg[hourly.ENTRY_TIMEFRAME_KEY]='30m'
+        self.assertEqual(hourly.turn_timeframes(self.cfg,{'protection':{'signal_tf':'4H'}}),('30m','4H'))
+        self.assertFalse(hourly.signal_allowed(self.cfg,'4H','BUY'))
+        self.assertTrue(hourly.signal_allowed(self.cfg,'30m','SELL'))
+
     def test_4h_rejects_missing_contract_and_changed_closed_input(self):
         from trading_context import plan
         self.result['timeframe']='4H'
@@ -217,7 +271,8 @@ class HourlyTests(unittest.TestCase):
             self.assertEqual(hourly.fresh_quote(store,self.info,self.identity,clock)['bars'][-1]['close'],100)
             with self.assertRaisesRegex(ValueError,'STALE_QUOTE'):hourly.fresh_quote(store,self.info,self.identity,clock+pd.Timedelta(hours=1))
             self.db.execute("UPDATE series SET high=0 WHERE base_tf='15m'")
-            with self.assertRaisesRegex(ValueError,'DATA_BLOCKED'):hourly.fresh_quote(store,self.info,self.identity,clock)
+            with self.assertRaisesRegex(ValueError,'BAD_OHLCV'):hourly.fresh_quote(store,self.info,self.identity,clock)
 
 
 if __name__=='__main__':unittest.main(verbosity=2)
+

@@ -102,9 +102,11 @@ def _analyse_values(frame, info=None, now=None):
     x=_indicator_values(frame)
     # Display may include forming candles; confirmed indicators may not.
     tf=frame.attrs.get('timeframe')
+    from gettex_first import bound
+    factual_input=bound(frame)
     now=pd.Timestamp.now(tz='UTC') if now is None else now
     if tf:
-        closed=x.loc[(bar_ends(frame)<=now)&(x.bar_complete if 'bar_complete' in x else True)]
+        closed=x.loc[(bar_ends(frame)<=now)&(x.bar_complete if 'bar_complete' in x and not factual_input else True)]
     else:
         # Missing timeframe metadata cannot prove that the latest bar is closed.
         closed=x.iloc[:-1]
@@ -128,12 +130,15 @@ def _analyse_values(frame, info=None, now=None):
     result['ohlcv_valid']=bool(valid)
     quality=frame.attrs.get('data_quality',{})
     result['data_quality']=quality
+    from gettex_first import availability
+    availability_state=availability(frame,info,bool(valid),count)
+    result['calculation_availability']=availability_state
     from cp_controls import analysis_quality_allowed
     risk=frame.attrs.get('accepted_risk')
     if risk:
         from cp_controls import analytical_close_series
         result['accepted_risk']={**risk,'price_estimates_used':len(analytical_close_series(actual_closed,values_only=True))-len(actual_closed)}
-    if quality and not analysis_quality_allowed(quality,risk):
+    if quality and not availability_state['source_contract'] and not analysis_quality_allowed(quality,risk):
         result['reason']='Качество данных: '+quality.get('state','INVALID')+'; сигналы отключены до проверки/восстановления.'
         if quality.get('stale_count'):result['reason']+=' Устаревший хвост: '+str(quality['stale_count'])+' ожидаемых интервалов; принятие исторических пропусков не обновляет цену.'
         if quality.get('state')=='INVALID':
@@ -159,6 +164,7 @@ def _analyse_values(frame, info=None, now=None):
     result.update(support=support,resistance=resistance,stop=stop,sufficient_history=True,
                   reason='Индикаторы рассчитаны по закрытым свечам; допуск сигнала проверяет CORE.',
                   facts=facts(closed,support,resistance,stop))
+    availability_state['analysis_available']=bool(availability_state['indicator_computable'])
     movement=(float(last.close)/float(prev.close)-1)*100 if prev.close>0 else None
     relative_volume=float(last.volume/last.volume_mean20) if last.volume_mean20>0 else None
     result['current_context']={
@@ -243,6 +249,11 @@ def _safe_features(frame, info, now, prove_scope=False, demo_initialization=Fals
         enriched,result=_analyse_features(frame, info, now)
         if frame.attrs.get('warmup_context'):result['warmup_context']=frame.attrs['warmup_context']
         if prove_scope and frame.attrs.get('analysis_scope'):
+            from gettex_first import calculation_allowed
+            if calculation_allowed(result):
+                result['scope_initialization']={'checked':False,'basis':'Actual available GETTEX bars; initialization sensitivity is audit-only under issue20',
+                    'closed_bars':result['closed_bar_count'],'policy':'gettex_first_v1'}
+                return enriched,result
             if not result.get('sufficient_history') or not result.get('ohlcv_valid'):
                 result['scope_initialization']={'stable':False,'checked':False,'basis':'Input quality/warmup gate failed before recursive comparison'}
                 return enriched,result
@@ -317,8 +328,11 @@ def analyse_multiframe(frames, selected_tf, info=None, benchmark=None, now=None,
         if reference is None:reference=identity
         if identity!=reference or not all(identity) or meta.get('timeframe')!=tf:
             result.update(data_quality={'state':'INVALID'},reason='Идентичность/TF не подтверждены или различаются')
+            result['calculation_availability']={}
         for key,value in info.get('expected_identity',{}).items():
-            if meta.get(key)!=value:result.update(data_quality={'state':'INVALID'},reason='Несовпадение ожидаемой идентичности: '+key)
+            if meta.get(key)!=value:
+                result.update(data_quality={'state':'INVALID'},reason='Несовпадение ожидаемой идентичности: '+key)
+                result['calculation_availability']={}
         contexts[tf]=result
     answer=evaluate(contexts,selected_tf,info.get('position'),benchmark,required=required)
     for tf,context in answer.get('timeframe_context',{}).items():

@@ -1607,6 +1607,88 @@
       ],
       "automatic_action": "Existing revision_watcher and reconciliation lane",
       "manual_action": "Confirmed current visual discrepancy remains required."
+    },
+    {
+      "id": "gettex_first_nonblocking_audit",
+      "title": "GETTEX-first: ����������� ������� ���������� �� �������������� ��",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "GAP",
+        "UNCONFIRMED",
+        "INVALID",
+        "STALE",
+        "SOURCE_GAP",
+        "RECOVERING"
+      ],
+      "status": "IMPLEMENTED in TEST for verified source contracts; issue20 acceptance ongoing",
+      "steps": [
+        "Validate exact registered listing/provider/ISIN/GETTEX/EUR/timezone and actual numeric OHLCV independently of CP classifications.",
+        "Use existing actual bars for aggregation/indicators/CORE; preserve factual incomplete-coverage flags and original DQ warnings.",
+        "Keep price-only observations at zero volume; never create a missing candle or infer NO_TRADES from absence.",
+        "Audit the entire archive in the existing CP queue and errors view; preserve receipts/corrections; recompute real affected revisions.",
+        "Keep independent quote/session/identity/revision/balance/risk guards; availability is never an execution grant.",
+        "Write bounded decision-time source/input digests, indicators and warnings to the existing journal; do not rewrite previous fills.",
+        "Use one coherent WAL view for analytical reads, retaining final live candle/listing/policy revisions; DQ opinions for explicitly bound factual inputs are audit-only dependencies.",
+        "Keep the deeper whole provider archive for higher TF even when a shorter provider has a newer last bar; never splice its tail.",
+        "Reserve a sequential preparation slot after two operational turns when due, so an expanding admitted universe cannot starve its next candidate.",
+        "Reuse an existing coherent read transaction for optional execution diagnostics; insufficient parent history must return explicit blockers without aborting the candle page.",
+        "Capture observed batched volume paths in the existing MCP indicator exporter, preserving zeros, missing values and the unchanged volume average; never fabricate bars for continuity.",
+        "Deliver heavy full-history CP diagnostics through the existing bounded read-page lease: reply INDETERMINATE first, coalesce repeated requests, then expose the detached as-of result. Keep 120-second expiry and explicit UNAVAILABLE on failure, never inferred zero counts.",
+        "Under explicit GETTEX-first policy, reserve fresh acquisition slots for actual prices and durable reassessment requests. Defer automatic/TV/reviewed historical grant maintenance to ordinary history turns; preserve consumer-time revision/identity/quote/risk validation and legacy-policy behaviour.",
+        "Bound runtime overhead: poll semantic input revisions instead of decoding full historical DQ on Tk; read post-feed analysis from one WAL view; coalesce automatic freshness diagnostics with a 60-second cooldown and publish explicit as-of results; reuse lineage checks only inside the same immutable WAL transaction. Recheck on the next read and retain final live revision validation. Do not warm all legacy archives on Tk startup.",
+        "Validate exact numeric/index/source fields through metadata-free pandas views; retain original source contract and evidence, reject malformed OHLCV/identity as before. Large evidence trees must not be deep-copied for each numeric column.",
+        "After an ordinary official fresh acquisition, ingest one recent already saved complete MUNC/MUND pair for the registered EUR universe before old archive backlog. Reuse atomic source/identity/conflict checks; enqueue existing assessment requests only for changed stocks. Keep old-history turns and separate provider archives. Save only evidence-backed severe anomalies in the existing progress: invalid native rows or confirmed trades without a native bar. Ordinary gaps/zero volume/delays and matching TV absences are not severe; a cross-exchange gap is context, never GETTEX proof.",
+        "Retain the bounded ReadCache only in an owned serial readonly compute child across WAL views, rolling back the view before final live revision checks. Reuse unchanged chart artists only after source/file/selection/revision validation; recompute CORE separately. Use metadata-free numeric plotting views. Yield historical HTTP acquisition between files after a soft time budget, preserve durable cursor/cooldown, and never cancel an active writer or infer data readiness from cache reuse.",
+        "Issue16: obtain market event time only from the existing committed validated official MUNC/MUND positive-quantity trade path. Bind exact UTC-anchored time and file SHA256; persist monotonic confirmed_latest in the existing diagnostic journal. Cached replay, backfill, zero quantity, EMPTY and errors never renew that event clock. Bootstrap at most one recent saved pair per registered universe, preserve candles. Keep provider/venue clocks separate, inclusive age limits and UNKNOWN/MARKET_CLOSED; diagnostic age never grants PAPER execution. Legacy receipts cannot be retroactively promoted to confirmed events."
+      ],
+      "evidence": [
+        "test_gettex_first.py",
+        "test_paper_preparation.py",
+        "test_cp_automatic_repair.py",
+        "test_ui_runtime_budget.py",
+        "test_cp_fresh_priority.py",
+        "test_issue16_event_freshness.py"
+      ],
+      "limits": [
+        "Malformed actual data, missing bars and mathematically insufficient indicator inputs remain unavailable.",
+        "No universal source certification or artificial READY quality; no real broker activation.",
+        "Preserve complete separate provider archives; do not select a shorter archive merely because the longer has a CP suspicion."
+      ],
+      "automatic_action": "Existing source selection, aggregation, analytics/CORE, sequential PAPER preparation and CP audit",
+      "manual_action": "Unconfirmed anomalies remain visible for later evidence-backed review."
+    },
+    {
+      "id": "official_receipt_scope_stability_issue19",
+      "title": "Подтверждение точного GETTEX-окна не зависит от постороннего биржевого извещения",
+      "sources": [
+        "revision_watcher.retime_current",
+        "revision_watcher.receipt_source_current",
+        "cp_assessment.request",
+        "dq_evidence.collect",
+        "calculation_window.calculate_eligibility"
+      ],
+      "states": [
+        "RECHECK_REQUIRED",
+        "SOURCE_TIMEBASE_UNCONFIRMED",
+        "VERIFIED_NATIVE_EMPTY"
+      ],
+      "steps": [
+        "Повторно проверить полные официальные входы, identity, политику и точные native OHLCV; сверить целостность сохранённого source_digest.",
+        "Нормализовать только покрытие внутри исходного закрытого окна; сведения о закрытии другой сессии не меняют факт этого окна. Локальные сделки, файлы, OHLCV и неизвестные авторитетные поля остаются строгими.",
+        "Показать старую TV-сверку как SUPERSEDED_BY_OFFICIAL только при действующей официальной квитанции того же job/ISIN. Это не новое подтверждение NO_TRADES.",
+        "Для повторной оценки использовать cp_assessment_request и существующую справедливую ротацию 2:1; не создавать отдельные разрешения и не менять историю.",
+        "Если GETTEX-first оценка становится STALE при публикации без изменения данных, проверить обязательные policy/grant scopes: они должны быть захвачены в той же WAL-транзакции даже без legacy owner-risk fallback. Не убирать окончательную проверку и не продлевать сроки."
+      ],
+      "evidence": [
+        "test_issue19_scoped_receipts.py",
+        "docs/DQ_EVIDENCE_ISSUE19_RU.md",
+        "test_issue19_scoped_receipts.PolicyPublication"
+      ],
+      "limits": "GETTEX-first: DQ аудит отдельно от доступности анализа всех зарегистрированных акций. Свежесть цены исполнения, identity и риск сохраняются. Реальный DQ не подменяется READY. Живой каталог не является разрешением произвольно импортировать OHLCV.",
+      "status": "9 адресных тестов опубликованного3dd60db PASS21.398с; старый policy-publication дефект воспроизведён STALE, исправленный путь CURRENT и реальное изменение политики отклоняется. Многодневная полная приёмка Issue19 не завершена. Windows: штатная очередьNVIDIA опубликовалаCURRENT20.11 20:03:35 CET,9 аналитическихTF;1H/4H сохраняют независимуюCURRENT-проверку при новых5m/15m. ВнешнийMCP подтвердил актуальные времена, не продлевая срок."
     }
   ],
   "sources": [

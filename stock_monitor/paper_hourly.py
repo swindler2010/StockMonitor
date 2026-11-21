@@ -1,6 +1,6 @@
 """Owner-enabled hourly demo runner. Reuses CORE, Dispatcher and paper executor.
 
-No feed, broker, alternative indicators, inferred gap permission or market orders.
+No feed, broker, inferred gap permission or market orders.
 One position per authorized instrument; deterministic operations per signal bar.
 """
 import copy
@@ -16,6 +16,91 @@ STATUS = 'paper_auto_status:'
 VERSION = 'core_hourly_demo_v1'
 SIZING = 'cash_volatility_v1'
 SIGNAL_TIMEFRAMES = ('1H', '4H')
+SELECTABLE_TIMEFRAMES = ('15m', '30m', '1H', '4H', '1D')
+ENTRY_TIMEFRAME_KEY = 'signal_timeframe'
+STRATEGY_KEY = 'strategy_mode'
+
+
+def configured_strategy(cfg):
+    from paper_entry_modes import STRATEGY_CODES
+    mode=cfg.get(STRATEGY_KEY,'V1')
+    if mode not in STRATEGY_CODES:
+        raise ValueError('PAPER_AUTO_STRATEGY_BLOCKED')
+    return mode
+
+
+def configured_timeframes(cfg):
+    selected = cfg.get(ENTRY_TIMEFRAME_KEY)
+    if selected is None:
+        return SIGNAL_TIMEFRAMES
+    if selected not in SELECTABLE_TIMEFRAMES:
+        raise ValueError('PAPER_AUTO_TIMEFRAME_BLOCKED')
+    return (selected,)
+
+
+def set_trading_mode(db, strategy, timeframe):
+    configured_strategy({STRATEGY_KEY:strategy})
+    if timeframe not in SELECTABLE_TIMEFRAMES:
+        raise ValueError('PAPER_AUTO_TIMEFRAME_BLOCKED')
+    if strategy=='AGGRESSIVE' and timeframe!='1H':
+        raise ValueError('V5_SELECT_1H')
+    db.execute('BEGIN IMMEDIATE')
+    cfg = read(db, CONFIG, {})
+    identities=cfg.get('identities',{})
+    if not identities:
+        raise ValueError('PAPER_AUTO_NOT_AUTHORIZED')
+    authority(db,next(iter(identities)),allow_paused=True)
+    if (cfg.get(ENTRY_TIMEFRAME_KEY), configured_strategy(cfg)) != (timeframe,strategy):
+        cfg.update({ENTRY_TIMEFRAME_KEY:timeframe,STRATEGY_KEY:strategy})
+        db.execute('UPDATE settings SET value=? WHERE key=?', (json.dumps(cfg), CONFIG))
+    return strategy,timeframe
+
+
+def set_signal_timeframe(db, timeframe):
+    return set_trading_mode(db,configured_strategy(read(db,CONFIG,{})),timeframe)[1]
+
+
+def signal_allowed(cfg, timeframe, side):
+    return (timeframe in configured_timeframes(cfg)
+            and (side == 'BUY' or side == 'SELL' and (
+                timeframe != '4H' or cfg.get(ENTRY_TIMEFRAME_KEY) == '4H'
+            )))
+
+
+def turn_timeframes(cfg, held):
+    selected = configured_timeframes(cfg)
+    if held and held.get('auto_entry'):
+        return (held['auto_entry']['timeframe'],)
+    protection_tf = (held.get('protection') or {}).get('signal_tf') if held else None
+    if protection_tf in SELECTABLE_TIMEFRAMES and protection_tf not in selected:
+        return (*selected, protection_tf)
+    return selected
+
+
+def strategy_signal(cfg, result, held=None):
+    engine=result['execution_context']['trading_engine']
+    tf=result['timeframe']
+    original=(held or {}).get('auto_entry')
+    mode=original['strategy_mode'] if original else 'V1' if held and held.get('protection') else configured_strategy(cfg)
+    if engine.get('status')!='READY':
+        return mode,dict(action='BLOCKED',reason=engine.get('reason','CORE_DATA_BLOCKED'))
+    if original and original['timeframe']!=tf:
+        return mode,dict(action='WAIT',reason='PAPER_POSITION_ENTRY_TIMEFRAME')
+    if mode=='V1':
+        decision=dict(action=engine.get('signal','WAIT'),reason=engine.get('reason',''))
+    elif mode=='MOMENTUM' and not original:
+        from paper_v4 import decide
+        if engine.get('demo_initialization') and not engine['demo_initialization'].get('consistent'):
+            return mode,dict(action='BLOCKED',reason='CORE_SEED_UNSTABLE')
+        decision=decide(engine,tf)
+    else:
+        from paper_entry_modes import decision as evaluate
+        decision=evaluate(engine,mode,tf,legacy_position=bool(original and not original.get('strategy_model')))
+    if original and original.get('strategy_model') and mode in ('AGGRESSIVE','MOMENTUM'):
+        return mode,dict(action='HOLD',reason='V5_POSITION_MANAGED_BY_BRACKET')
+    if original and decision['action']=='BUY' and engine.get('timestamp')!=original['signal_at']:
+        return mode,dict(decision,action='HOLD',reason='PAPER_AUTO_POSITION_LIMIT')
+    return mode,decision
 
 
 def variable_size(cfg):
@@ -44,6 +129,8 @@ def authority(db, isin, identity=None, *, allow_paused=False):
             or cfg.get('epoch') != read(db, EPOCH)
             or isin not in cfg.get('identities', {})):
         raise ValueError('PAPER_AUTO_NOT_AUTHORIZED')
+    configured_timeframes(cfg)
+    configured_strategy(cfg)
     exact = cfg['identities'][isin]
     if (exact.get('source') != 'gettex_chart' or exact.get('venue') != 'GETTEX'
             or exact.get('currency') != 'EUR' or exact.get('timezone') != 'Europe/Berlin'
@@ -65,7 +152,7 @@ def ledger_token(db):
     return digest(db.execute('SELECT id,digest FROM paper_fills ORDER BY rowid').fetchall())
 
 
-def order_size(db, info, result, side, now, *, allow_paused=False):
+def order_size(db, info, result, side, now, *, allow_paused=False, strategy=None, protective=None):
     """Integer entry size from free cash and existing CORE volatility/structure.
 
     This is a sizing estimate, not a stop order or a guaranteed loss ceiling.
@@ -80,21 +167,61 @@ def order_size(db, info, result, side, now, *, allow_paused=False):
     if side == 'SELL':
         if len(held) != 1 or held[0]['identity'] != result['identity']:
             raise ValueError('PAPER_INSUFFICIENT_POSITION')
-        qty = Decimal(held[0]['quantity'])
-        if not variable_size(cfg) and qty != 1:
+        qty = Decimal(protective['quantity']) if protective else Decimal(held[0]['quantity'])
+        from paper_v4 import VERSION as V4_MODEL
+        if (not variable_size(cfg) and qty!=1
+                and (held[0].get('auto_entry') or {}).get('strategy_model')!=V4_MODEL):
             raise ValueError('PAPER_INSUFFICIENT_POSITION')
-        return dict(quantity=int(qty) if qty == int(qty) else float(qty), mode='FULL_POSITION')
+        return dict(quantity=int(qty) if qty == int(qty) else float(qty),
+            mode='PARTIAL_POSITION' if qty < Decimal(held[0]['quantity']) else 'FULL_POSITION')
     if side != 'BUY':
         raise ValueError('PAPER_AUTO_SIGNAL_MISMATCH')
     if held:
         raise ValueError('PAPER_AUTO_POSITION_LIMIT')
-    if not variable_size(cfg):
+    if not variable_size(cfg) and strategy is None:
         return dict(quantity=1, mode='FIXED_ONE')
     q = result.get('execution_quote', {})
     if q.get('identity') != result['identity']:
         raise ValueError('PAPER_AUTO_QUOTE_IDENTITY_BLOCKED')
     _, bar = quote(info, q, now,
         stored_listing=stored_identity(db, info, result['identity'], q.get('timeframe')))
+    if strategy and strategy.get('model'):
+        from datetime import datetime, timezone
+        from paper_v5 import VERSION as V5_MODEL, MAX_SHARES, macro_release_day, levels, reversal_level_lost
+        from paper_v4 import MODE as V4_MODE, VERSION as V4_MODEL
+        mode,timeframe=configured_strategy(cfg),result['timeframe']
+        model=strategy['model']
+        if not ((mode=='AGGRESSIVE' and model==V5_MODEL and timeframe=='1H')
+                or (mode==V4_MODE and model==V4_MODEL and timeframe in configured_timeframes(cfg))):
+            raise ValueError('PAPER_AUTO_STRATEGY_BLOCKED')
+        if model==V4_MODEL and datetime.fromisoformat(bar['close_at'])<datetime.fromisoformat(strategy['signal_closed']):
+            raise ValueError('PAPER_V4_QUOTE_BEFORE_SIGNAL')
+        cash=Decimal(state['cash'])
+        reference=Decimal(str(bar['close']))
+        macro=macro_release_day(datetime.fromtimestamp(now,timezone.utc))
+        if macro['state']=='RELEASE_DAY':
+            raise ValueError('PAPER_V5_MACRO_RELEASE_DAY:'+macro['kind'])
+        if model==V4_MODEL and strategy['setup']=='POST_EARNINGS' and reference<=Decimal(str(strategy['entry_level'])):
+            raise ValueError('PAPER_V4_EARNINGS_LEVEL_LOST')
+        if reversal_level_lost(strategy,reference):
+            raise ValueError('PAPER_V5_REVERSAL_LEVEL_LOST')
+        half=Decimal(POLICY['spread_bps'])/Decimal(20000)
+        price=reference*(1+half)
+        fee=money(POLICY['commission'])
+        qty=min(MAX_SHARES,int(max(Decimal(0),cash-fee)//price))
+        while qty>0 and money(price*qty)+fee>cash:
+            qty-=1
+        if qty<1:
+            raise ValueError('PAPER_AUTO_SIZE_BELOW_ONE')
+        if Decimal(str(bar['volume']))<qty:
+            raise ValueError('PAPER_V5_QUOTE_VOLUME_BELOW_SIZE')
+        stop,target=levels(reference,Decimal(str(strategy['atr'])))
+        if not 0<stop<reference<target:
+            raise ValueError('PAPER_STRATEGY_LEVELS_INVALID_AT_FILL')
+        risk=(price-stop*(1-half))*qty+2*fee
+        return dict(quantity=qty,mode=model,cash_basis=str(cash),allocation_limit=str(cash),
+                    stop=str(stop),target=str(target),estimated_risk=str(risk),macro_calendar=macro,
+                    gross_and_fee=str(money(price*qty)+fee),risk_is_estimate=True)
     facts = result.get('execution_context', {}).get('trading_engine', {}).get('timeframe_context', {}).get(result['timeframe'], {}).get('facts', {})
     try:
         atr, support = (Decimal(str(facts[k])) for k in ('atr', 'support'))
@@ -106,47 +233,62 @@ def order_size(db, info, result, side, now, *, allow_paused=False):
     reference = Decimal(str(bar['close']))
     half = Decimal(POLICY['spread_bps'])/Decimal(20000)
     price = reference*(1+half)
-    allocation = money(cash*Decimal(cfg['sizing']['allocation_fraction']))
-    risk_budget = money(cash*Decimal(cfg['sizing']['risk_fraction']))
-    # Two ATR or distance below existing support, whichever is larger, plus spread.
-    distance = max(2*atr, reference-support*Decimal('.995')) + 2*reference*half
+    sizing=cfg.get('sizing',{})
+    allocation = money(cash*Decimal(sizing.get('allocation_fraction','0.45')))
+    risk_fraction=Decimal(sizing.get('risk_fraction','0.01'))
+    if strategy is None:
+        # Two ATR or distance below existing support, whichever is larger, plus spread.
+        distance=max(2*atr,reference-support*Decimal('.995'))+2*reference*half
+    else:
+        stop,target,minimum=(Decimal(str(strategy[k])) for k in ('stop','target','entry_rr'))
+        if not (0<stop<reference<target):
+            raise ValueError('PAPER_STRATEGY_LEVELS_INVALID_AT_FILL')
+        distance=price-stop*(1-half)
+        risk_fraction=min(risk_fraction,Decimal(str(strategy['risk_fraction'])))
+    risk_budget = money(cash*risk_fraction)
     qty = min(int((allocation-fee)//price), int((risk_budget-2*fee)//distance))
+    if not variable_size(cfg):
+        qty=min(qty,1)
     while qty > 0 and (money(price*qty)+fee > min(cash, allocation)
             or distance*qty+2*fee > risk_budget):
         qty -= 1
     if qty < 1:
         raise ValueError('PAPER_AUTO_SIZE_BELOW_ONE')
-    return dict(quantity=qty, mode=SIZING, cash_basis=str(cash), allocation_limit=str(allocation),
+    if strategy is not None:
+        reward=(target*(1-half)-price)*qty-2*fee
+        if reward < minimum*(distance*qty+2*fee):
+            raise ValueError('PAPER_STRATEGY_REWARD_TOO_LOW_AFTER_COSTS')
+    return dict(quantity=qty, mode=SIZING if variable_size(cfg) else 'FIXED_ONE', cash_basis=str(cash), allocation_limit=str(allocation),
         risk_budget=str(risk_budget), reference_risk_per_share=str(distance),
         estimated_risk=str(distance*qty+2*fee), gross_and_fee=str(money(price*qty)+fee),
-        risk_is_estimate=True, target_equity=cfg['target_equity'])
+        risk_is_estimate=True, target_equity=cfg.get('target_equity'))
 
 
-def fresh_quote(store, info, identity, now, timeframes=('15m', '5m')):
-    """Current real 15m/5m quote, independent of the hourly signal's price."""
+def fresh_quote(store, info, identity, now):
+    """Latest closed native 15m quote, independent of the signal interval."""
     import pandas as pd
     import data_quality as dq
     from analytics import bar_ends
     from eur_listings import stored_identity
-    from paper_account import quote, POLICY
-    candidates = []
+    from paper_account import EXECUTION_TF, quote, POLICY
+    tf=EXECUTION_TF
+    candidates=[]
     with store.connect() as db:
-        for tf in timeframes:
-            store.read_cache.depend('market:' + info['isin'] + ':' + tf)
-            store.read_cache.depend('setting:gettex_chart:' + info['isin'] + ':' + tf)
-            rows = db.execute('SELECT ts,open,high,low,close,volume FROM series WHERE '
-                'isin=? AND source=? AND venue=? AND currency=? AND symbol=? AND base_tf=? '
-                'ORDER BY ts DESC LIMIT 4', (info['isin'], identity['source'], identity['venue'],
-                    identity['currency'], identity['symbol'], tf)).fetchall()
-            for ts, *vals in rows:
-                frame = pd.DataFrame([vals], columns=dq.FIELDS, index=pd.DatetimeIndex([pd.Timestamp(ts)]))
-                frame.attrs = dict(identity, timeframe=tf)
-                end = bar_ends(frame)[0]
-                if pd.notna(end) and end <= now:
-                    candidates.append((end, tf, frame))
+        store.read_cache.depend('market:' + info['isin'] + ':' + tf)
+        store.read_cache.depend('setting:gettex_chart:' + info['isin'] + ':' + tf)
+        rows = db.execute('SELECT ts,open,high,low,close,volume FROM series WHERE '
+            'isin=? AND source=? AND venue=? AND currency=? AND symbol=? AND base_tf=? '
+            'ORDER BY ts DESC LIMIT 4', (info['isin'], identity['source'], identity['venue'],
+                identity['currency'], identity['symbol'], tf)).fetchall()
+        for ts, *vals in rows:
+            frame = pd.DataFrame([vals], columns=dq.FIELDS, index=pd.DatetimeIndex([pd.Timestamp(ts)]))
+            frame.attrs = dict(identity, timeframe=tf)
+            end = bar_ends(frame)[0]
+            if pd.notna(end) and end <= now:
+                candidates.append((end, frame))
         if not candidates:
             raise ValueError('PAPER_NO_CLOSED_BAR')
-        end, tf, frame = max(candidates, key=lambda c: (c[0], c[1] == '15m'))
+        end, frame = max(candidates, key=lambda c: c[0])
         if not 0 <= (now-end).total_seconds() <= POLICY['max_bar_age_seconds']:
             raise ValueError('PAPER_STALE_QUOTE')
         quality = dq.audit(frame, tf, identity, now)
@@ -182,11 +324,22 @@ def calculate(store, values):
     now = pd.Timestamp.now(tz='UTC')
 
     signal_tf = values.get('timeframe', '1H')
-    if signal_tf not in SIGNAL_TIMEFRAMES or (preparing and signal_tf != '1H'):
+    if (signal_tf not in SELECTABLE_TIMEFRAMES
+            or (preparing and signal_tf != '1H')
+            or (values.get('_paper_order') and signal_tf not in SIGNAL_TIMEFRAMES)):
         raise ValueError('PAPER_AUTO_TIMEFRAME_BLOCKED')
     contract=plan(signal_tf)
     calculated=calculate_context(store,values,identity,contract,position,now)
     engine,proof,manual=(calculated[k] for k in ('engine','proof','manual'))
+    if (signal_tf=='1H' and engine.get('status')=='READY' and configured_strategy(cfg)=='AGGRESSIVE'
+            and not values.get('_paper_order') and not preparing):
+        from paper_v5 import context as opening_range
+        engine['v5_opening_range']=opening_range(store,info,identity,engine.get('timestamp'),now,cfg['identities'])
+    if (engine.get('status')=='READY' and configured_strategy(cfg)=='MOMENTUM' and not position
+            and not values.get('_paper_order') and not preparing):
+        from paper_v4 import context as selected_context
+        engine['v4_selected_context']=selected_context(store,info,identity,engine.get('timestamp'),now,
+                                                       cfg['identities'],signal_tf)
     result = dict(isin=info['isin'], timeframe=signal_tf, identity=identity,
         execution_context=dict(status='MANUAL_RISK_ACCEPTED' if manual else 'HOURLY_DEMO_READY',
             isin=info['isin'], checked_at=now.isoformat(), analysis_ready=engine.get('status') == 'READY',
@@ -198,13 +351,12 @@ def calculate(store, values):
     if preparing:result['hourly']['preparation_only']=True
     # Analysis is useful even while prices are stale. Its status cannot place a fill.
     try:
-        from paper_orders import check_intent, quote_timeframes
+        from paper_orders import check_intent
         order = values.get('_paper_order')
         if order:
             check_intent(order, info['isin'])
             result['discretionary'] = copy.deepcopy(order)
-        result['execution_quote'] = fresh_quote(store, info, identity, now,
-            quote_timeframes(order))
+        result['execution_quote'] = fresh_quote(store, info, identity, now)
     except ValueError as error:
         result['quote_blocker'] = str(error)
     return result
@@ -220,13 +372,12 @@ def calculate_snapshot(store, values):
     from contextlib import contextmanager
     from performance_cache import ReadCache,validate_closed_inputs,InputRevisionChanged,_setting_value
     from cp_controls import manual_gate
+    from paper_account import EXECUTION_TF
     def quote_tail(db, result):
-        meta=result['identity'];rows=[]
-        for tf in ('5m','15m'):
-            rows.append((tf,db.execute('SELECT ts,open,high,low,close,volume FROM series WHERE '
-                'isin=? AND source=? AND venue=? AND currency=? AND symbol=? AND base_tf=? '
-                'ORDER BY ts DESC LIMIT 4',(result['isin'],meta['source'],meta['venue'],meta['currency'],meta['symbol'],tf)).fetchall()))
-        return rows
+        meta=result['identity']
+        return db.execute('SELECT ts,open,high,low,close,volume FROM series WHERE '
+            'isin=? AND source=? AND venue=? AND currency=? AND symbol=? AND base_tf=? '
+            'ORDER BY ts DESC LIMIT 4',(result['isin'],meta['source'],meta['venue'],meta['currency'],meta['symbol'],EXECUTION_TF)).fetchall()
     captured=copy.copy(store);captured.read_cache=ReadCache(store.path)
     @contextmanager
     def connect():yield captured.read_cache.db
@@ -241,7 +392,7 @@ def calculate_snapshot(store, values):
             quote_rows=quote_tail(db,result)
             listing_prefix='setting:gettex_chart:'+result['isin']+':'
             quote_listings={scope:_setting_value(db,scope[len('setting:'):]) for scope in token
-                if scope in (listing_prefix+'5m',listing_prefix+'15m')}
+                if scope == listing_prefix+EXECUTION_TF}
         token=dict(token)
     finally:captured.read_cache.close()
     proof=result['hourly']['proof']
@@ -294,9 +445,9 @@ def validate_analysis(db, info, result, now, cfg):
     if engine.get('demo_initialization') and not engine['demo_initialization'].get('consistent'):
         raise ValueError('PAPER_AUTO_SEED_BLOCKED')
     signal_tf = result.get('timeframe')
-    if signal_tf not in SIGNAL_TIMEFRAMES:
+    if signal_tf not in SELECTABLE_TIMEFRAMES:
         raise ValueError('PAPER_AUTO_TIMEFRAME_BLOCKED')
-    if signal_tf == '4H':
+    if signal_tf != '1H':
         from trading_context import plan
         if h.get('timeframe_contract') != plan(signal_tf):
             raise ValueError('PAPER_AUTO_DEPENDENCY_BLOCKED')
@@ -314,6 +465,9 @@ def validate_analysis(db, info, result, now, cfg):
             raise ValueError('PAPER_MANUAL_CONTEXT_CHANGED')
     elif contract.get('status') != 'HOURLY_DEMO_READY' or any(
             engine.get('timeframe_context', {}).get(tf, {}).get('data_quality', {}).get('state') != 'READY'
+            and not (engine.get('timeframe_context', {}).get(tf, {}).get('calculation_availability',{}).get('policy')=='gettex_first_v1'
+                and engine.get('timeframe_context', {}).get(tf, {}).get('calculation_availability',{}).get('source_contract') is True
+                and engine.get('timeframe_context', {}).get(tf, {}).get('calculation_availability',{}).get('analysis_available') is True)
             for tf in required):
         raise ValueError('PAPER_AUTO_DQ_BLOCKED')
     if not benchmark_ready(engine.get('benchmark_context', {})):
@@ -321,42 +475,71 @@ def validate_analysis(db, info, result, now, cfg):
     return manual
 
 
+def held_position(db, isin):
+    from paper_account import ledger
+    return next((p for p in ledger(db).get('positions',[])
+                 if p['isin']==isin and Decimal(p['quantity'])>0),None)
+
+
 def validate(db, info, result, args, now):
     """Inside paper_account's BEGIN IMMEDIATE, immediately before execution."""
     from trading_engine import VERSION as CORE_VERSION
-    cfg = authority(db, info['isin'], result.get('identity'))
+    from paper_entry_modes import STRATEGY_CODES
+    from paper_protection import decision, entry_plan, strategy_plan
+    isin=info['isin']
+    cfg=authority(db,isin,result.get('identity'))
     if result.get('hourly',{}).get('preparation_only'):
         raise ValueError('PAPER_PREPARATION_CANNOT_EXECUTE')
-    manual = validate_analysis(db,info,result,now,cfg)
-    engine = result.get('execution_context',{}).get('trading_engine',{})
-    protective = None
+    manual=validate_analysis(db,info,result,now,cfg)
+    engine=result['execution_context']['trading_engine']
+    tf=result['timeframe']
+    held=held_position(db,isin)
+    mode,signal=strategy_signal(cfg,result,held)
+    protective=None
     if args.get('_protection'):
-        from paper_protection import decision
-        protective = decision(db, info, result, now)
-        if not protective or protective != args['_protection'] or args.get('side') != 'SELL':
+        protective=decision(db,info,result,now)
+        if not protective or protective!=args['_protection'] or args['side']!='SELL':
             raise ValueError('PAPER_PROTECTION_TRIGGER_CHANGED')
-    if not protective and (engine.get('signal') not in ('BUY','SELL') or engine['signal'] != args.get('side')):
-        raise ValueError('PAPER_AUTO_SIGNAL_MISMATCH')
-    if not protective and result['timeframe']=='4H' and args['side']!='BUY':
-        raise ValueError('PAPER_4H_ENTRY_ONLY')
+    side=args['side']
+    if not protective:
+        action=signal['action']
+        # Preserve historical idempotence and the explicit position-limit guard.
+        if not (action==side or held and side=='BUY' and action=='HOLD'):
+            raise ValueError('PAPER_AUTO_SIGNAL_MISMATCH')
+        original_exit=held and held.get('auto_entry') and side=='SELL'
+        if not original_exit and not signal_allowed(cfg,tf,side):
+            if tf=='4H' and cfg.get(ENTRY_TIMEFRAME_KEY) is None:
+                raise ValueError('PAPER_4H_ENTRY_ONLY')
+            raise ValueError('PAPER_AUTO_TIMEFRAME_NOT_SELECTED')
     if result.get('quote_blocker'):
         raise ValueError(result['quote_blocker'])
-    size = order_size(db, info, result, args['side'], now)
-    if Decimal(str(args.get('quantity'))) != Decimal(str(size['quantity'])):
+    buy_setup=signal if side=='BUY' and mode!='V1' else None
+    size=order_size(db,info,result,side,now,strategy=buy_setup,protective=protective)
+    if Decimal(str(args.get('quantity')))!=Decimal(str(size['quantity'])):
         raise ValueError('PAPER_AUTO_SIZE_BLOCKED')
-    signal_at = engine.get('timestamp')
-    command = protective['request_id'] if protective else request_id(cfg, info['isin'], signal_at, result['timeframe'])
-    if not signal_at or args.get('request_id') != command:
+    signal_at=engine.get('timestamp')
+    command=protective['request_id'] if protective else request_id(cfg,isin,signal_at,tf)
+    if not signal_at or args.get('request_id')!=command:
         raise ValueError('PAPER_AUTO_REQUEST_MISMATCH')
-    q = result.get('execution_quote', {})
-    if q.get('identity') != result['identity'] or q.get('isin') != info['isin']:
+    q=result.get('execution_quote',{})
+    if q.get('identity')!=result['identity'] or q.get('isin')!=isin:
         raise ValueError('PAPER_AUTO_QUOTE_IDENTITY_BLOCKED')
-    receipt = dict(context=VERSION, strategy='CORE:'+CORE_VERSION, timeframe=result['timeframe'], signal=engine['signal'],
-        signal_at=signal_at, quote_timeframe=q['timeframe'], manual_risk=manual, epoch=cfg['epoch'], sizing=size)
-    if protective:receipt['protective_exit']=protective
-    elif args['side']=='BUY':
-        from paper_protection import entry_plan
-        plan=entry_plan(cfg,result,size,now)
+    receipt=dict(context=VERSION,strategy='CORE:'+CORE_VERSION if mode=='V1' else STRATEGY_CODES[mode],
+        strategy_mode=mode,strategy_label=STRATEGY_CODES[mode],timeframe=tf,signal=signal['action'],
+        signal_at=signal_at,quote_timeframe=q['timeframe'],manual_risk=manual,epoch=cfg['epoch'],sizing=size)
+    receipt['signal_reason']=signal.get('reason','')
+    from gettex_first import decision_evidence
+    receipt['data_context']=decision_evidence(result)
+    if protective:
+        receipt['protective_exit']=protective
+    elif side=='BUY':
+        if buy_setup and buy_setup.get('model'):
+            receipt['strategy_model']=buy_setup['model']
+            receipt['entry_evidence']={k:buy_setup[k] for k in ('opening_high','relative_volume','atr',
+                'breadth_positive','breadth_available','breadth_required','breadth_inputs','setup','daily_down_closes','entry_level')}
+            if buy_setup.get('report_date'):
+                receipt['entry_evidence']['report_date']=buy_setup['report_date']
+        plan=strategy_plan(result,buy_setup,mode,size,now) if buy_setup else entry_plan(cfg,result,size,now)
         if plan:receipt['protection']=plan
     return receipt
 
@@ -366,15 +549,32 @@ def request_id(cfg, isin, signal_at, timeframe='1H'):
     return 'auto'+timeframe.lower()+'-' + digest([cfg['epoch'], isin, signal_at])
 
 
-def order_command(db, info, result, now):
-    """Existing CORE order, or an explicitly configured protective exit."""
-    from paper_protection import decision
-    isin=info['isin'];cfg=authority(db,isin,result['identity'])
+def order_command(db, info, result, now, *, manage=False):
+    """Prepare one order on the existing PAPER account."""
+    from paper_protection import decision, write_management
+    isin=info['isin']
+    cfg=authority(db,isin,result['identity'])
     engine=result['execution_context']['trading_engine']
+    held=held_position(db,isin)
+    mode,signal=strategy_signal(cfg,result,held)
     protective=decision(db,info,result,now)
-    side=protective['side'] if protective else engine.get('signal')
+    management=protective if protective and 'management' in protective else None
+    if management:
+        protective=None
+    side=protective['side'] if protective else signal['action']
     signal_tf=result['timeframe']
-    if side not in ('BUY','SELL') or (signal_tf=='4H' and side=='SELL' and not protective):return None
+    original_exit=bool(held and held.get('auto_entry') and signal_tf==held['auto_entry']['timeframe'] and side=='SELL')
+    if management and manage:
+        from paper_account import validate_execution_inputs, validate_session
+        token=validate_execution_inputs(db,result,isin)
+        validate_analysis(db,info,result,now,cfg)
+        quote_tf=result['execution_quote']['timeframe']
+        if 'setting:gettex_chart:'+isin+':'+quote_tf not in token:
+            raise ValueError('PAPER_NO_LISTING_REVISION')
+        validate_session(result['identity'],now)
+        write_management(db,management['management'],management['entry_request_id'])
+    if not (protective or original_exit or signal_allowed(cfg,signal_tf,side)):
+        return None
     if result.get('quote_blocker'):raise ValueError(result['quote_blocker'])
     command=protective['request_id'] if protective else request_id(cfg,isin,engine['timestamp'],signal_tf)
     prior=db.execute('SELECT payload FROM paper_fills WHERE id=?',(command,)).fetchone()
@@ -382,7 +582,9 @@ def order_command(db, info, result, now):
         receipt=json.loads(prior[0])
         if receipt['side']!=side:raise ValueError('PAPER_REQUEST_REUSED')
         qty=float(receipt['quantity']);qty=int(qty) if qty.is_integer() else qty
-    else:qty=order_size(db,info,result,side,now)['quantity']
+    else:
+        setup=signal if side=='BUY' and mode!='V1' else None
+        qty=order_size(db,info,result,side,now,strategy=setup,protective=protective)['quantity']
     args=dict(isin=isin,timeframe=signal_tf,side=side,quantity=qty,request_id=command,_deadline=now+30)
     if protective:args['_protection']=protective
     return args
@@ -415,29 +617,46 @@ def compact(result):
 
 
 def run_turn(app, info, values, cfg):
-    """Evaluate both signals in sequence and persist each admission outcome."""
+    """Evaluate the configured signal intervals and any existing protection."""
     from paper_account import execute
+    from paper_entry_modes import STRATEGY_CODES
     from paper_preparation import retry_inputs
     isin=info['isin']
     with app.store.connect() as db:
+        cfg=authority(db,isin)
         wake=retry_inputs(db,isin,cfg['identities'][isin])
+        held=held_position(db,isin)
     reports={}
+    decisions=[]
     filled=False
-    for signal_tf in SIGNAL_TIMEFRAMES:
+    for signal_tf in turn_timeframes(cfg,held):
         report=dict(timeframe=signal_tf,at=time.time())
+        result=None
         try:
             result=app.compute_trading.calculate('paper_hourly',dict(values,timeframe=signal_tf))
             report.update(compact(result))
+            mode,signal=strategy_signal(cfg,result,held)
+            report.update(strategy=STRATEGY_CODES[mode],signal=signal['action'],reason=signal['reason'])
+            from gettex_first import decision_evidence
+            evidence=decision_evidence(result)
+            evidence.update(strategy_signal=signal['action'],strategy_reason=signal['reason'])
+            report['data_context_digest']=digest(evidence)
+            decisions.append((signal_tf,evidence))
             ready=report['core']=='READY'
-            report['state']='WAIT' if ready else 'BLOCKED'
-            if ready and (report['signal'] in ('BUY','SELL') or cfg.get('protection')):
+            report['state']='WAIT' if ready and signal['action']!='BLOCKED' else 'BLOCKED'
+            managed=bool(held and held.get('protection'))
+            if filled and report['signal']=='BUY':
+                report.update(state='BLOCKED',execution_blocker='ValueError: PAPER_AUTO_POSITION_LIMIT')
+                reports[signal_tf]=report
+                continue
+            if ready and not (held and held.get('auto_entry')) and not signal_allowed(cfg,signal_tf,'BUY'):
+                report.update(state='PROTECTION_ONLY',reason='Контроль защиты открытой позиции')
+            actionable=signal_allowed(cfg,signal_tf,report['signal']) or bool(
+                held and held.get('auto_entry') and signal['action'] in ('BUY','SELL'))
+            if ready and (actionable or managed or cfg.get('protection')):
                 if app.closing or app.user_dirty:
                     raise ValueError('PAPER_APP_NOT_READY')
-                actionable=report['signal'] in ('BUY','SELL')
                 if not actionable:
-                    # WAIT/HOLD must not contend with a CP writer merely because
-                    # brackets are enabled. Read the existing protective trigger;
-                    # a real exit is re-evaluated under the original write lock.
                     from paper_protection import decision
                     with app.store.connect() as db:
                         actionable=bool(decision(db,info,result,time.time()))
@@ -445,7 +664,7 @@ def run_turn(app, info, values, cfg):
                 if actionable:
                     with sqlite3.connect(app.store.path,timeout=.2) as db:
                         db.execute('BEGIN IMMEDIATE')
-                        args=order_command(db,info,result,time.time())
+                        args=order_command(db,info,result,time.time(),manage=True)
                         if args and filled and args['side']=='BUY':
                             raise ValueError('PAPER_AUTO_FILL_ALREADY_IN_TURN')
                         answer=execute(db,info,result,args) if args else None
@@ -460,10 +679,31 @@ def run_turn(app, info, values, cfg):
             if not message.startswith('InputRevisionChanged:'):
                 message=type(error).__name__+': '+message
             report.update(state='BLOCKED',execution_blocker=message)
+        if (result is not None and signal_tf=='1H' and configured_strategy(cfg)=='AGGRESSIVE'
+                and report.get('core')=='READY' and not report.get('quote_blocker')):
+            from paper_v5_context_study import capture
+            try:
+                report['context_study']=capture(app.store.path,info,result,time.time(),
+                    completed=report.get('state')=='COMPLETED')
+            except (ValueError,sqlite3.Error) as error:
+                report['context_study']=str(error)
+            except Exception as error:
+                report['context_study']=type(error).__name__
         reports[signal_tf]=report
     retry=any(row.get('execution_blocker','').startswith(('InputRevisionChanged:','ValueError: PAPER_STALE_INPUTS'))
         for row in reports.values())
-    status=dict(reports['1H'],timeframes=reports,retry_inputs=wake,next_check=time.time()+(15 if retry else 60))
+    selected=cfg.get(ENTRY_TIMEFRAME_KEY)
+    primary=reports.get(selected or '1H') or next(iter(reports.values()))
+    status=dict(primary,timeframes=reports,retry_inputs=wake,signal_timeframe=selected,
+        strategy_mode=configured_strategy(cfg),
+        next_check=time.time()+(15 if retry else 60))
+    previous=app.store.setting(STATUS+isin,{}) if hasattr(app.store,'setting') else {}
+    if callable(getattr(app.store,'event',None)):
+        for interval,evidence in decisions:
+            row=reports[interval];prior=previous.get('timeframes',{}).get(interval,{})
+            if prior.get('data_context_digest')!=row.get('data_context_digest'):
+                app.store.event('paper_data_decision',dict(at=row['at'],decision=evidence,
+                    outcome={k:row.get(k) for k in ('state','signal','reason','quote_blocker','execution_blocker','request_id')}))
     app.store.set_setting(STATUS+isin,status)
     return status
 
@@ -472,6 +712,7 @@ class Runtime:
     """One bounded trading job; owned read client, existing Dispatcher and ledger."""
     def __init__(self, app):
         self.app = app;self.busy = False;self.cursor = 0;self.preparation_after = 0
+        self.operational_turns = 0
 
     def start(self):
         self.app.root.after(15000, self.tick)
@@ -483,13 +724,21 @@ class Runtime:
         cfg = app.store.setting(CONFIG, {})
         ids = list(cfg.get('identities', {})) if cfg.get('enabled') else []
         submitted = False
-        if ids and not self.busy and not app.user_dirty:
+        preparation_due=bool(ids and cfg.get('automatic_admission',{}).get('enabled')
+            and time.time() >= self.preparation_after)
+        # With five or more admitted stocks the round-robin can always find a
+        # due trading calculation. Reserve one existing lane slot after two
+        # operational turns so sequential preparation cannot starve forever.
+        yield_preparation=preparation_due and self.operational_turns>=2
+        if ids and not self.busy and not app.user_dirty and not yield_preparation:
             isin = ids[self.cursor % len(ids)];self.cursor += 1
             info = next((i for i in app.watchlist if i['isin'] == isin), None)
             previous = app.store.setting(STATUS+isin, {})
             wake=previous.get('retry_inputs',{})
             inputs_changed=bool(wake) and app.store.read_cache.token_for(wake)!=wake
-            if info and (inputs_changed or time.time() >= previous.get('next_check', 0)):
+            if info and (inputs_changed or previous.get('signal_timeframe') != cfg.get(ENTRY_TIMEFRAME_KEY)
+                         or previous.get('strategy_mode','V1') != cfg.get(STRATEGY_KEY,'V1')
+                         or time.time() >= previous.get('next_check', 0)):
                 values = dict(watchlist=[copy.deepcopy(info)], drafts={}, feed_errors={}, symbol=info['name'],
                     timeframe='1H', period='Max', ai_config=copy.deepcopy(app.ai_config),
                     instrument_revisions=app.store.read_cache.token_for(['instrument:'+isin]))
@@ -510,6 +759,7 @@ class Runtime:
 
                 if app.job(work, done, failed, lane='trading', key='paper_auto_hourly', isin=isin) is False:
                     self.busy = False
+                else:self.operational_turns += 1
         # Idle trading slots only. The existing owned client and dispatcher do
         # one sequential candidate; no new threads, downloads or order path.
         if (ids and not submitted and not self.busy and not app.user_dirty
@@ -522,4 +772,6 @@ class Runtime:
             def prepared(_):self.busy = False
             if app.job(prepare,prepared,prepared,lane='trading',key='paper_preparation') is False:
                 self.busy = False
+            else:self.operational_turns = 0
         app.root.after(15000, self.tick)
+

@@ -149,6 +149,8 @@ def accepted_display_slots(meta,missing,target,now):
 
 
 def aggregate(frame,base,target,now=None):
+    from gettex_first import bound
+    nonblocking=bound(frame)
     now=pd.Timestamp(now or pd.Timestamp.now(tz='UTC'))
     meta=frame.attrs.copy();zone=meta.get('timezone')
     raw_report=quality.audit(frame,base,now=now,
@@ -158,7 +160,7 @@ def aggregate(frame,base,target,now=None):
     # Availability/recovery is a separate gate, not a replacement for candle validation.
     if inherited.get('state')=='INVALID' and raw_report['state']!='INVALID':raw_report=inherited
     source_gap=inherited.get('state')=='SOURCE_GAP' and raw_report['state'] in ('READY','STALE','GAP')
-    if raw_report['state']=='INVALID':
+    if raw_report['state']=='INVALID' and not nonblocking:
         out=frame.iloc[:0].copy();out.attrs['data_quality']=raw_report;return out
     # Pandas copies attrs on every slice/column access. Large DQ reports made
     # session aggregation repeatedly deep-copy the same metadata thousands of
@@ -184,8 +186,8 @@ def aggregate(frame,base,target,now=None):
             tv_used.extend(map(str,tv))
             day_records,day_excluded,day_gaps=_session_buckets(tuple(meta.get(k) for k in quality.IDENTITY),
                 base,target,opening,closing,tuple(stamps),tuple(map(tuple,numeric[left:right])),tuple(empty),
-                source_gap or raw_report['state'] in ('GAP','UNCONFIRMED'),
-                frame.index[0] if stamps[0]==frame.index[0] else opening,
+                (source_gap or raw_report['state'] in ('GAP','UNCONFIRMED')) and not nonblocking,
+                frame.index[0] if stamps[0]==frame.index[0] and not nonblocking else opening,
                 bool(meta.get('display_live_tail')) and stamps[-1]==frame.index[-1])
             excluded.extend(day_excluded);gap_excluded.extend(day_gaps)
             for start,end,o,h,l,c,v,complete in day_records:
@@ -242,8 +244,13 @@ def daily_provenance(daily, out, target, now=None, base='1D'):
     meta=daily.attrs.copy()
     inherited=meta.get('data_quality',{})
     try:
-        raw=quality.audit(daily,base,expected={k:meta.get(k) for k in quality.IDENTITY},now=now,
-            check_stale=not bool(meta.get('closed_parent_input') and base in MINUTES))
+        scope=meta.get('closed_parent_input',{})
+        bounded=(scope.get('input_base')==base and scope.get('target')==target
+                 and (base in MINUTES or (base=='1D' and target in ('1W','1M'))))
+        # Check freshness on the parent below. New child sessions in an
+        # unfinished period cannot make the most recent completed parent stale.
+        raw=quality.audit(daily,base,expected={k:meta.get(k) for k in quality.IDENTITY},
+            now=now,check_stale=not bounded)
         first=out.index[0]-pd.Timedelta(days=6) if target=='1W' else out.index[0]
         last=out.index[-1] if target in ('1D','1W') else out.index[-1]+pd.offsets.MonthBegin(1)-pd.Timedelta(days=1)
         if meta.get('venue')=='GETTEX' and base=='1D' and int(quality.GETTEX_DAILY_START[:4])<=daily.index.min().year<=daily.index.max().year<=2026:
@@ -299,3 +306,4 @@ def daily_provenance(daily, out, target, now=None, base='1D'):
                 out.attrs['daily_provenance']['leading_partial']=str(out.index[0])
     except (ValueError,KeyError,TypeError,IndexError) as error:
         out.attrs['data_quality']={'state':'INVALID','issues':['DAILY_PROVENANCE: '+str(error)]}
+
