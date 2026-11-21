@@ -51,7 +51,7 @@ def present(problem,jobs):
     influence='Исторический риск принят' if accepted else 'Требуется проверка анализа' if problem.get('kind')=='context' else 'Диагностика архива'
     tv,job=tv_result(problem,jobs);repair=problem.get('repair') or {};review=problem.get('historical_review') or {}
     reason=repair.get('reason') or review.get('reason') or ((job or {}).get('finding') or {}).get('reason')
-    next_step=reason or ('Ожидание штатного восстановления' if repair.get('state') in ('QUEUED','RUNNING') else 'CP проверит доступные источники')
+    next_step=reason or ('Ожидание штатного восстановления' if repair.get('state') in ('QUEUED','RUNNING') else 'Нет сохранённого задания восстановления')
     return dict(problem=problem,tf=problem.get('tf','—'),span=' — '.join(str(v) for v in problem.get('range') or []) or '—',
                 title=STATES.get(state,state),severity=severity,tv=tv,influence=influence,next=next_step,
                 source=' / '.join(str((problem.get('identity') or {}).get(k) or '—') for k in ('source','venue','currency')),

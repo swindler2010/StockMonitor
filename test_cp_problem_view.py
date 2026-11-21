@@ -29,6 +29,7 @@ class ProblemEvidenceTests(unittest.TestCase):
     def test_severity_and_acceptance_are_display_only(self):
         before=copy.deepcopy(PROBLEM);row=present(PROBLEM,[])
         self.assertEqual(row['influence'],'Диагностика архива');self.assertEqual(PROBLEM,before)
+        self.assertEqual(row['next'],'Нет сохранённого задания восстановления')
         self.assertEqual(present({**PROBLEM,'state':'INVALID'},[])['severity'],'Высокая')
         accepted=present({**PROBLEM,'accepted':True},[]);self.assertEqual(accepted['severity'],'Низкая')
         self.assertEqual(accepted['tv'],'Не проверено')

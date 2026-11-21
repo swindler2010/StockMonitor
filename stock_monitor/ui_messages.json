@@ -4904,5 +4904,9 @@
   "Архив отдельно": {
     "en": "Separate archive",
     "de": "Separates Archiv"
+  },
+  "Нет сохранённого задания восстановления": {
+    "en": "No saved recovery request",
+    "de": "Kein gespeicherter Wiederherstellungsauftrag"
   }
 }
