@@ -1059,23 +1059,10 @@ class Desktop014:
         self.ax_price.set_ylim(y+(c-y)*scale,y+(d-y)*scale);self.user_view=(self.ax_price.get_xlim(),self.ax_price.get_ylim());draw_localized(self)
 
     def show_indicators(self):
-        info=self.instrument_cfg();draft=copy.deepcopy(self.user_state(info));s={**DEFAULT_IND,**self.store.setting('global_indicators',{})}
-        win=tk.Toplevel(self.root);win.title(tr('Индикаторы • все акции'));win.geometry('460x620')
-        actions=ttk.Frame(win,padding=10);actions.pack(side='bottom',fill='x')
-        container=ttk.Frame(win);container.pack(fill='both',expand=True)
-        canvas=tk.Canvas(container,highlightthickness=0);scroll=ttk.Scrollbar(container,orient='vertical',command=canvas.yview)
-        canvas.configure(yscrollcommand=scroll.set);scroll.pack(side='right',fill='y');canvas.pack(side='left',fill='both',expand=True)
-        body=ttk.Frame(canvas,padding=12);window=canvas.create_window((0,0),window=body,anchor='nw')
-        body.bind('<Configure>',lambda e:canvas.configure(scrollregion=canvas.bbox('all')))
-        canvas.bind('<Configure>',lambda e:canvas.itemconfigure(window,width=e.width))
-        values={}
-        for row,(key,val) in enumerate(s.items()):
-            if isinstance(val,bool):
-                v=tk.BooleanVar(value=val);ttk.Checkbutton(body,text=tr(key),variable=v).grid(row=row,column=0,columnspan=2,sticky='w')
-            else:
-                labels={'ema_fast':'EMA быстрая','ema_slow':'EMA медленная','sma':'Период SMA','rsi':'Период RSI','atr':'Период ATR','bb':'Период Боллинджера','bb_dev':'Отклонение Боллинджера','volume':'Период среднего объёма','macd_fast':'MACD быстрый','macd_slow':'MACD медленный','macd_signal':'MACD сигнальный'}
-                v=tk.StringVar(value=str(val));ttk.Label(body,text=tr(labels[key])).grid(row=row,column=0,sticky='w');ttk.Entry(body,textvariable=v,width=8).grid(row=row,column=1)
-            values[key]=v
+        s={**DEFAULT_IND,**self.store.setting('global_indicators',{})}
+        from indicator_dialog import Dialog
+        dialog=Dialog(self,s);win=dialog.win;values=dialog.values
+        self._indicator_dialog=dialog
         def apply():
             try:
                 selected={k:v.get() if isinstance(s[k],bool) else (float(v.get()) if k=='bb_dev' else int(v.get())) for k,v in values.items()}
@@ -1085,9 +1072,7 @@ class Desktop014:
                 selected=validate(selected,s)
                 self.store.set_setting('global_indicators',selected);win.destroy();self.refresh_chart()
             except ValueError as e:messagebox.showerror(tr('Параметры'),tr(str(e)),parent=win)
-        ttk.Button(actions,text=tr('Применить'),command=apply).pack(side='right')
-        ttk.Button(actions,text=tr('По умолчанию'),command=lambda:[values[k].set(v) for k,v in DEFAULT_IND.items()]).pack(side='left')
-        ttk.Label(body,text=tr('Настройки графика. Сценарии используют EMA 10/30,\nRSI/ATR 14, MACD 12/26/9 и средний объём 20.')).grid(row=len(s)+1,column=0,columnspan=2,sticky='w')
+        return dialog.wire(apply,lambda:[values[k].set(v) for k,v in DEFAULT_IND.items()])
 
     def show_drawing(self):
         info=self.instrument_cfg()
