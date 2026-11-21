@@ -26333,3 +26333,14 @@ display_details использует только уже прочитанные 
 [Код 4908385](https://github.com/swindler2010/StockMonitor/commit/490838569aef543a246ebb39788d812597c872fc) · [PR #21](https://github.com/swindler2010/StockMonitor/pull/21) · [Отчёт](https://github.com/swindler2010/StockMonitor/blob/work1/gettex-first-issue20/docs/WATCHLIST_DIALOG_DESIGN_RU.md). Откат адресными UI/metadata hunks из before watchlist design, без замены SQLite. Чужие изменения и приватные данные не опубликованы, auto-merge нет.
 
 Остаются выбранные окна поиска/добавления, новостей и рисования. Отсутствовавшие ранее CSV/Yahoo-импорты не изображены работающими. Календарь/премаркет всё ещё требуют фактического источника, а не копирования примера.
+
+
+## 21.11.2026 — Work1: выбранный дизайн поиска/добавления акции
+
+Установлено в Windows 0.16 TEST. Новое представление: заголовок/подсказка, поиск с очисткой, отдельные столбцы результата, семь прежних полей в двух колонках, закреплённые действия. ISIN/валюта не угадываются: в Search-ответе неизвестные поля остаются прочерком, подтверждённые заполняет прежний resolver.
+
+Вложенные add/find совпали по AST с исходником до оформления. Сохранены generation guard, проверка запрошенного ISIN, exact identity/history/profile, дубликаты и register_confirmed_instrument. Clear увеличивает тот же generation и не допускает поздний resolver после очистки. Три целевых теста PASS 6,214 с; те же три теста опубликованных объектов a7de5a1 PASS 7,339 с. Положительная регистрация проверена только в изолированном макете приложения. Реальные инструменты/позиции ради теста не создавались.
+
+Windows: штатный запуск, открытие прежним меню, реальный Search Apple вернул четыре строки, очистка убрала их и сохранила Add disabled. Финальный повторный запуск подтвердил тёмный заголовок после Map и полностью видимые поля/кнопки. Контрольные хеши PAPER/журналов/global_indicators/paper_epoch/theme/selected совпали. Прежний Search и источник identity не менялись.
+
+[Код a7de5a1](https://github.com/swindler2010/StockMonitor/commit/a7de5a1ebb37fcf520344a34a1c1f5908cd6ac17) · [PR #21](https://github.com/swindler2010/StockMonitor/pull/21) · [Отчёт](https://github.com/swindler2010/StockMonitor/blob/work1/gettex-first-issue20/docs/INSTRUMENT_DIALOG_DESIGN_RU.md). Откат только собственных UI-hunks и instrument_dialog; SQLite не заменять. Чужие изменения/приватные данные не публикуются, слияния нет. Пиксельное тождество концепту не заявляется; остаются новости/рисование и фактический источник календаря/премаркета.
