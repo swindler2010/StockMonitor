@@ -4712,5 +4712,189 @@
   "Цена ручной модели превышает допустимый предел": {
     "en": "Manual model price exceeds the permitted limit",
     "de": "Der Preis des manuellen Modells überschreitet die zulässige Grenze"
+  },
+  "Информация": {
+    "en": "Information",
+    "de": "Information"
+  },
+  "Пропуск свечей": {
+    "en": "Missing candles",
+    "de": "Fehlende Kerzen"
+  },
+  "CP проверит доступные источники": {
+    "en": "CP will check available sources",
+    "de": "CP prüft verfügbare Quellen"
+  },
+  "Сохранённое наблюдение; отсутствие в TV не доказывает отсутствие сделок.": {
+    "en": "Saved observation; absence in TV is not proof of no trades.",
+    "de": "Gespeicherte Beobachtung; Fehlen in TV beweist nicht, dass keine Geschäfte stattfanden."
+  },
+  "Данные или оценка устарели": {
+    "en": "Data or assessment outdated",
+    "de": "Daten oder Bewertung veraltet"
+  },
+  "Сверка TV": {
+    "en": "TV comparison",
+    "de": "TV-Abgleich"
+  },
+  "Подробная диагностика…": {
+    "en": "Advanced diagnostics…",
+    "de": "Erweiterte Diagnose…"
+  },
+  "Исторический риск принят": {
+    "en": "Historical risk accepted",
+    "de": "Historisches Risiko akzeptiert"
+  },
+  "Последняя проверка": {
+    "en": "Last check",
+    "de": "Letzte Prüfung"
+  },
+  "Данных недостаточно": {
+    "en": "Insufficient evidence",
+    "de": "Unzureichende Nachweise"
+  },
+  "Диагностика архива": {
+    "en": "Archive diagnostics",
+    "de": "Archivdiagnose"
+  },
+  "Следующая попытка": {
+    "en": "Next attempt",
+    "de": "Nächster Versuch"
+  },
+  "Дата / диапазон": {
+    "en": "Date / range",
+    "de": "Datum / Zeitraum"
+  },
+  "В очереди сверки": {
+    "en": "Queued for comparison",
+    "de": "Zum Abgleich vorgemerkt"
+  },
+  "Требуется проверка входов анализа": {
+    "en": "Analysis inputs need verification",
+    "de": "Analyseeingaben müssen verifiziert werden"
+  },
+  "Расходятся OHLCV": {
+    "en": "OHLCV differ",
+    "de": "OHLCV weichen ab"
+  },
+  "Ожидание штатного восстановления": {
+    "en": "Awaiting normal recovery",
+    "de": "Warten auf reguläre Wiederherstellung"
+  },
+  "Сохранённые проблемы": {
+    "en": "Saved problems",
+    "de": "Gespeicherte Probleme"
+  },
+  "Нужна повторная сверка": {
+    "en": "Recheck required",
+    "de": "Erneuter Abgleich erforderlich"
+  },
+  "Не проверено": {
+    "en": "Not checked",
+    "de": "Nicht geprüft"
+  },
+  "CandlePilot • проблемы выбранной акции": {
+    "en": "CandlePilot • selected stock problems",
+    "de": "CandlePilot • Probleme der gewählten Aktie"
+  },
+  "Высокая": {
+    "en": "High",
+    "de": "Hoch"
+  },
+  "Средняя": {
+    "en": "Medium",
+    "de": "Mittel"
+  },
+  "Исходные причины": {
+    "en": "Original reasons",
+    "de": "Ursprüngliche Gründe"
+  },
+  "Ограничение глубины источника": {
+    "en": "Source depth limit",
+    "de": "Begrenzte Quellentiefe"
+  },
+  "Ранее совпало наличие свечей": {
+    "en": "Candle presence matched previously",
+    "de": "Kerzenverfügbarkeit stimmte zuvor überein"
+  },
+  "Влияние": {
+    "en": "Impact",
+    "de": "Auswirkung"
+  },
+  "Очередь временно занята": {
+    "en": "Queue temporarily busy",
+    "de": "Warteschlange vorübergehend belegt"
+  },
+  "Низкая": {
+    "en": "Low",
+    "de": "Gering"
+  },
+  "Расходится наличие свечей": {
+    "en": "Candle presence differs",
+    "de": "Kerzenverfügbarkeit weicht ab"
+  },
+  "Пропуск у источника": {
+    "en": "Source gap",
+    "de": "Lücke bei der Quelle"
+  },
+  "Чтение сохранённых проблем…": {
+    "en": "Reading saved problems…",
+    "de": "Gespeicherte Probleme werden gelesen…"
+  },
+  "Требуется проверка анализа": {
+    "en": "Analysis inputs need checking",
+    "de": "Analyseeingaben müssen geprüft werden"
+  },
+  "Некорректные цены или объёмы": {
+    "en": "Invalid prices or volumes",
+    "de": "Ungültige Preise oder Volumina"
+  },
+  "Не удалось прочитать проблемы": {
+    "en": "Could not read problems",
+    "de": "Probleme konnten nicht gelesen werden"
+  },
+  "Серьёзность — категория диагностики, не вероятность убытка. TV не выдаёт торговый допуск.": {
+    "en": "Severity is a diagnostic category, not loss probability. TV does not grant trading permission.",
+    "de": "Schweregrad ist eine Diagnosekategorie, keine Verlustwahrscheinlichkeit. TV erteilt keine Handelsfreigabe."
+  },
+  "Интервал пока не подтверждён": {
+    "en": "Interval not confirmed yet",
+    "de": "Intervall noch nicht bestätigt"
+  },
+  "Что делает CP": {
+    "en": "What CP does",
+    "de": "Was CP tut"
+  },
+  "В сохранённых отчётах проблем не найдено. Это не подтверждает полноту истории или готовность торговли.": {
+    "en": "No problems found in saved reports. This does not prove complete history or trading readiness.",
+    "de": "Keine Probleme in gespeicherten Berichten gefunden. Dies bestätigt weder vollständige Historie noch Handelsbereitschaft."
+  },
+  "Серьёзность": {
+    "en": "Severity",
+    "de": "Schweregrad"
+  },
+  "Источник недоступен": {
+    "en": "Source unavailable",
+    "de": "Quelle nicht verfügbar"
+  },
+  "Ожидает повторной проверки": {
+    "en": "Awaiting recheck",
+    "de": "Erneute Prüfung ausstehend"
+  },
+  "Ранее совпали OHLCV": {
+    "en": "OHLCV matched previously",
+    "de": "OHLCV stimmten zuvor überein"
+  },
+  "Старый архив": {
+    "en": "Older archive",
+    "de": "Älteres Archiv"
+  },
+  "Показывать архив старше 5 лет": {
+    "en": "Show archive older than 5 years",
+    "de": "Archiv älter als 5 Jahre anzeigen"
+  },
+  "Источник / площадка": {
+    "en": "Source / venue",
+    "de": "Quelle / Handelsplatz"
   }
 }

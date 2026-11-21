@@ -291,6 +291,11 @@ def collect(path,snapshot=None,problem_isin=None,problem_page=0):
     return result
 
 def show(app):
+    from cp_problem_view import show as show_problems
+    return show_problems(app)
+
+
+def show_advanced(app):
     import tkinter as tk
     from tkinter import ttk, messagebox
     prior = getattr(app, '_cp_health_window', None)
