@@ -24,7 +24,7 @@ class NewsDashboardTests(unittest.TestCase):
         self.saved={'news:A':dict(status='AVAILABLE',articles=[article()]),'news:N':dict(status='AVAILABLE',articles=[article('NVIDIA')])}
         self.app=SimpleNamespace(root=self.root,watchlist=[dict(name='Apple',isin='A',profile_symbol='APC'),dict(name='NVIDIA',isin='N',profile_symbol='NVD')],
             symbol=tk.StringVar(self.root,'Apple'),store=SimpleNamespace(setting=lambda key,default=None:self.saved.get(key,default)),
-            news_runtime=SimpleNamespace(refresh=Mock(return_value=True)),tooltip=Mock(),
+            news_runtime=SimpleNamespace(refresh=Mock(return_value=True),translate_news=Mock(return_value=True)),tooltip=Mock(),
             job=lambda work,done,failed,**kwargs:self.jobs.append(kwargs) or done(work()) or True)
         theme(self.app,THEMES['Тёмная']);self.dialog=Dialog(self.app);self.root.update()
 
@@ -75,5 +75,40 @@ class NewsDashboardTests(unittest.TestCase):
         self.assertIsNone(chart_preview(self.app,'N'))
         self.assertEqual(len(chart_preview(self.app,'A')['prices']),60)
 
+
+class LocalizedNewsWidgetsTests(unittest.TestCase):
+    setUp=NewsDashboardTests.setUp
+    # Only the added scenario, not a second inherited run of the old suite.
+    def test_article_footer_keeps_both_original_actions_visible(self):
+        source=prepare(self.saved['news:A'])['articles'][0]
+        self.dialog.article({**source,'translation':{'status':'TRANSLATED'},'original_title':source['title']})
+        self.root.update()
+        win=self.dialog.win.winfo_children()[-1]
+        from tkinter import ttk
+        def descendants(widget):
+            for child in widget.winfo_children():
+                yield child
+                yield from descendants(child)
+        buttons=[w for w in descendants(win) if isinstance(w,ttk.Button)]
+        self.assertEqual(len(buttons),2)
+        for button in buttons:
+            self.assertTrue(button.winfo_ismapped())
+            self.assertLess(button.winfo_rooty()+button.winfo_height(),win.winfo_rooty()+win.winfo_height())
+        win.destroy()
+
+    def test_translated_card_original_and_filters_follow_german_interface(self):
+        import i18n
+        from news_translation import update_cache
+        value=self.saved['news:A']
+        cache=update_cache(prepare(value)['articles'],'de',{},translator=lambda r,t:dict(status='TRANSLATED',target=t,title='Apple meldet Ergebnisse',summary='Originale Fakten.'))
+        self.saved['news_translation:de:A']=cache
+        self.dialog.close()
+        with patch.object(i18n,'_language','de'):
+            self.dialog=Dialog(self.app);self.root.update()
+            self.assertEqual(self.dialog.provider.get(),'Alle')
+            self.assertEqual(self.dialog.rows[0]['title'],'Apple meldet Ergebnisse')
+            self.assertEqual(self.dialog.rows[0]['original_title'],value['articles'][0]['title'])
+            self.assertIn('Maschinelle',details(self.dialog.rows[0]))
+            self.dialog.close()
 
 if __name__=='__main__':unittest.main()

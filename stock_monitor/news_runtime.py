@@ -25,6 +25,7 @@ class NewsRuntime:
     def __init__(self, app):
         self.app, self.busy, self.timer = app, False, None
         self.client = None
+        self.calendar_next = None
 
     def start(self):
         if self.timer is None:
@@ -34,6 +35,14 @@ class NewsRuntime:
         self.timer = None
         if self.app.closing:
             return
+        if self.calendar_next is None:
+            from official_calendar import SETTING
+            with self.app.store.connect() as db:
+                row = db.execute("SELECT json_extract(value,'$.attempted_at') FROM settings WHERE key=?", (SETTING,)).fetchone()
+            try: self.calendar_next = datetime.fromisoformat(row[0]).timestamp() + 86400
+            except (ValueError, TypeError, IndexError): self.calendar_next = 0
+        if not self.busy and time.time() >= self.calendar_next:
+            self.refresh_calendar()
         if not self.busy:
             targets = [('market', None)] + [(i['isin'], i.get('profile_symbol') or i.get('history_symbol'))
                                            for i in self.app.watchlist if i.get('kind') != 'benchmark']
@@ -82,4 +91,56 @@ class NewsRuntime:
         accepted=self.app.job(work,
                      done, failed, key='news:'+key, lane='misc', isin=None if key == 'market' else key)
         if not accepted:self.busy=False
+        return bool(accepted)
+
+    def refresh_calendar(self):
+        """One global daily turn in the existing sequential auxiliary worker."""
+        if self.busy or self.app.closing: return False
+        from official_calendar import SETTING, refresh
+        self.busy = True
+        def work():
+            previous = self.app.store.setting(SETTING, {})
+            if self.client is None: self.client = FeedClient(self.app.store.directory/'provider_cache'/'news-rss')
+            result = refresh(previous, self.client)
+            self.app.store.set_setting(SETTING, result)
+            return result
+        def done(result):
+            self.busy = False
+            self.calendar_next = time.time() + 86400
+            if self.app.closing: return
+            listener = getattr(self.app, '_calendar_listener', None)
+            if listener: listener(result)
+        def failed(_):
+            self.busy = False
+            self.calendar_next = time.time() + 3600
+        accepted = self.app.job(work, done, failed, key='official-calendar', lane='misc')
+        if not accepted: failed(None)
+        return bool(accepted)
+
+    def translate_news(self, key, rows, target, callback=None):
+        """At most three local articles per turn; same single misc-worker ownership."""
+        if self.busy or self.app.closing: return False
+        from news_translation import setting, update_cache, cached_snapshot, fingerprint
+        wanted = [fingerprint(r) for r in rows[:12]]
+        self.busy = True
+        def work():
+            snapshot = self.app.store.setting('news:'+key, {})
+            current = snapshot.get('articles') or []
+            ordered = sorted(current[:100], key=lambda r: fingerprint(r) not in wanted)
+            cache = update_cache(ordered, target, self.app.store.setting(setting(key, target), {}))
+            # Re-read source fingerprints before saving a display cache. A changed
+            # headline/summary can never inherit another input's translation.
+            latest = self.app.store.setting('news:'+key, {})
+            valid = {fingerprint(r) for r in (latest.get('articles') or [])[:100]}
+            cache['items'] = {k: v for k, v in cache['items'].items() if k in valid}
+            self.app.store.set_setting(setting(key, target), cache)
+            return cached_snapshot(self.app.store, key, target)
+        def done(result):
+            self.busy = False
+            if self.app.closing: return
+            if callback: callback(result)
+        def failed(_):
+            self.busy = False
+        accepted = self.app.job(work, done, failed, key=('news-translation', key, target), lane='misc')
+        if not accepted: failed(None)
         return bool(accepted)

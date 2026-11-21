@@ -1,6 +1,6 @@
 """Auxiliary news only. Call from the existing Dispatcher, never the Tk thread.
 
-No portfolio/market writes, paid APIs or article translation.
+No portfolio/market writes, paid APIs or translation of original source records.
 Caller persists returned snapshots in news:<ISIN> / news:market.
 """
 from datetime import datetime, timezone
@@ -75,7 +75,7 @@ def normalize(rows, now=None):
                        'events': [k for k, pattern in EVENTS.items() if re.search(pattern, title, re.I)],
                        'event_basis': 'HEADLINE_KEYWORDS_NOT_CONFIRMED_EVENT',
                        'text_quality': 'UPSTREAM_REPLACEMENT_CHARACTERS' if '\ufffd' in title+plain(raw.get('summary')) else 'AS_PROVIDED',
-                       'translation': {'status': 'DISABLED_BY_OWNER', 'text_is_original': True}})
+                       'translation': {'status': 'ORIGINAL_UNTRANSLATED', 'text_is_original': True}})
     return sorted(result, key=lambda x: x['published'] or '', reverse=True)[:100]
 
 
@@ -148,7 +148,7 @@ def market_news(previous=None, fetch=download_feed):
     result=snapshot(rows, errors, previous)
     times=[a.get('fetched_at') for a in rows if a.get('fetched_at')]
     if times:result['fetched_at']=max(times)
-    return {**result,'source_attempts':attempts,'translation_policy':'ORIGINAL_ONLY_BY_OWNER_REQUEST'}
+    return {**result,'source_attempts':attempts,'translation_policy':'ORIGINAL_SOURCE_WITH_SEPARATE_DISPLAY_TRANSLATION'}
 
 
 def company_news(instrument, client, previous=None):
@@ -196,5 +196,5 @@ def company_news(instrument, client, previous=None):
     result['articles']=result['articles'][:30]
     return {**result,'schema_version':2,'identity':identity,'isin':isin,'symbol':symbol,'source_attempts':attempts,
             'fallback_status':'USED' if any(a.get('matched',0)>0 for a in attempts[1:]) else 'EXHAUSTED' if len(attempts)>1 or not rows else 'NOT_NEEDED',
-            'translation_policy':'ORIGINAL_ONLY_BY_OWNER_REQUEST',
+            'translation_policy':'ORIGINAL_SOURCE_WITH_SEPARATE_DISPLAY_TRANSLATION',
             'identity_notice':'News name matching does not verify the watchlist security, ISIN or exchange listing.'}

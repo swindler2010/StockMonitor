@@ -6,7 +6,7 @@ from tkinter import ttk
 from datetime import datetime,timezone
 import webbrowser
 
-from i18n import tr
+from i18n import tr, language
 from indicator_dialog import styles
 from themes import THEMES
 from news_engine import normalize,safe_url
@@ -19,7 +19,10 @@ def prepare(value):
     value=value if isinstance(value,dict) else {}
     rows=value.get('articles') or []
     rows=[row for row in rows[:100] if isinstance(row,dict)] if isinstance(rows,(list,tuple)) else []
-    return dict(snapshot=value,articles=normalize(rows))
+    from news_translation import project
+    articles = normalize(rows)
+    if value.get('_translation_target'): articles = project(articles, value.get('_translation_cache', {}), value['_translation_target'])
+    return dict(snapshot=value,articles=articles)
 
 
 def chart_preview(app,isin):
@@ -44,7 +47,7 @@ def filtered(rows,query='',days=None,provider='Все',event='Все',oldest=Fal
     key=next((k for k,v in EVENTS.items() if v==event),None)
     out=[]
     for row in rows:
-        if query.casefold() not in (row['title']+' '+row.get('summary','')).casefold():continue
+        if query.casefold() not in (row['title']+' '+row.get('summary','')+' '+row.get('original_title','')+' '+row.get('original_summary','')).casefold():continue
         if provider!='Все' and row.get('provider')!=provider:continue
         if key and key not in row.get('events',[]):continue
         if days is not None:
@@ -55,6 +58,15 @@ def filtered(rows,query='',days=None,provider='Все',event='Все',oldest=Fal
     return sorted(out,key=lambda r:r.get('published') or '',reverse=not oldest)
 
 
+def date_note(article):
+    return tr({'CURRENT':'Дата: последние 7 дней','STALE':'Дата: старше 7 дней','FUTURE':'Дата источника в будущем'}.get(article.get('date_status'),'Дата неизвестна'))
+
+
+def translation_note(article):
+    status=article.get('translation',{}).get('status')
+    return tr({'TRANSLATED':'Машинный перевод', 'ALREADY_TARGET':'На выбранном языке', 'PENDING':'Перевод ожидается; показан оригинал'}.get(status,'Перевод недоступен; показан оригинал'))
+
+
 def details(article):
     publisher=tr('Издатель указан источником') if article.get('publisher_status')=='NAMED_BY_FEED' else tr('Показан домен ссылки; первичный издатель может отличаться')
     link=tr('Ссылка агрегатора ведёт к публикации') if article.get('link_kind')=='AGGREGATOR_LINK_TO_ORIGINAL' else tr('Ссылка на публикацию')
@@ -62,9 +74,10 @@ def details(article):
     if article.get('relevance')=='OFFICIAL_ISSUER_FEED':scope=tr('Официальная лента компании')
     lines=[article['title'],str(article.get('published') or tr('Дата неизвестна'))+' · '+str(article.get('provider') or '—'),
            publisher,article.get('summary') or tr('Краткое содержание не предоставлено источником'),scope,
-           tr('Состояние даты')+': '+str(article.get('date_status') or 'UNKNOWN'),
+           tr('Состояние даты')+': '+date_note(article),
            tr('Возможные события по заголовку, не подтверждённый календарь')+': '+(', '.join(tr(EVENTS[k]) for k in article.get('events',[]) if k in EVENTS) or '—'),
-           tr('Текст приведён на языке оригинала. Перевод отключён.'),link+': '+article['url']]
+           translation_note(article),link+': '+article['url']]
+    if article.get('translation',{}).get('error'):lines.append(tr('Ошибка перевода')+': '+str(article['translation']['error']))
     if article.get('text_quality')=='UPSTREAM_REPLACEMENT_CHARACTERS':lines.append(tr('Источник содержит повреждённые символы'))
     return '\n\n'.join(lines)
 
@@ -73,7 +86,7 @@ class Dialog:
     def __init__(self,app):
         from main_screen import native_titlebar
         self.app=app;self.closed=False;self.generation=0;self.page=0;self.days=None;self.packet={};self.rows=[];self.shown=[]
-        self.render_timer=self.freshness_timer=None
+        self.render_timer=self.freshness_timer=self.translation_timer=None
         self.win=win=tk.Toplevel(app.root);app._news_window=win
         width=min(1500,max(1000,app.root.winfo_width()-40),win.winfo_screenwidth()-70)
         height=min(870,max(620,app.root.winfo_height()-70),win.winfo_screenheight()-90)
@@ -81,7 +94,7 @@ class Dialog:
         self.palette=palette=THEMES.get(app.store.setting('theme','Тёмная'),THEMES['Тёмная'])
         self.p=p=styles(app.root,palette)
         self.targets=[(tr('Рынок и экономика'),'market',None)]+[(i['name'],i['isin'],i.get('profile_symbol') or i.get('history_symbol')) for i in app.watchlist if i.get('kind')!='benchmark']
-        self.query=tk.StringVar(win);self.provider=tk.StringVar(win,'Все');self.category=tk.StringVar(win,'Все');self.sort=tk.StringVar(win,'Сначала новые')
+        self.query=tk.StringVar(win);self.provider=tk.StringVar(win,tr('Все'));self.category=tk.StringVar(win,tr('Все'));self.sort=tk.StringVar(win,tr('Сначала новые'))
         self.status=tk.StringVar(win);self.result_text=tk.StringVar(win);self.heading=tk.StringVar(win);self.compact=tk.BooleanVar(win,False)
         base=ttk.Frame(win,padding=10,style=p+'.TFrame');base.pack(fill='both',expand=True)
         top=ttk.Frame(base,style=p+'.TFrame');top.pack(fill='x',pady=(0,10))
@@ -105,14 +118,14 @@ class Dialog:
         for label,days in [('Все',None),('24 ч',1),('3 д',3),('7 д',7),('14 д',14),('30 д',30),('3 мес',90)]:
             b=ttk.Button(periods,text=tr(label),command=lambda value=days:self.period(value));b.pack(side='left',padx=(0,3));self.period_buttons[days]=b
         filters=ttk.Frame(centre,style='Desk.TFrame');filters.pack(fill='x',pady=(0,8))
-        self.provider_box=ttk.Combobox(filters,textvariable=self.provider,values=['Все'],state='readonly',width=20);self.provider_box.pack(side='left',padx=(0,5))
-        ttk.Combobox(filters,textvariable=self.category,values=['Все',*EVENTS.values()],state='readonly',width=18).pack(side='left',padx=5)
+        self.provider_box=ttk.Combobox(filters,textvariable=self.provider,values=[tr('Все')],state='readonly',width=20);self.provider_box.pack(side='left',padx=(0,5))
+        ttk.Combobox(filters,textvariable=self.category,values=[tr('Все'),*(tr(v) for v in EVENTS.values())],state='readonly',width=18).pack(side='left',padx=5)
         ttk.Label(filters,text=tr('Тональность: не рассчитана'),style='DeskMuted.TLabel').pack(side='left',padx=8)
         search=ttk.Entry(filters,textvariable=self.query,style=p+'.TEntry',font=('Segoe UI',10));search.pack(side='left',fill='x',expand=True,padx=(5,0))
         app.tooltip(search,'Поиск в заголовках и кратком содержании')
         toolbar=ttk.Frame(centre,style='Desk.TFrame');toolbar.pack(fill='x',pady=(0,7))
         ttk.Label(toolbar,textvariable=self.result_text,style='DeskMuted.TLabel').pack(side='left')
-        ttk.Combobox(toolbar,textvariable=self.sort,values=['Сначала новые','Сначала старые'],state='readonly',width=20).pack(side='left',padx=12)
+        ttk.Combobox(toolbar,textvariable=self.sort,values=[tr('Сначала новые'),tr('Сначала старые')],state='readonly',width=20).pack(side='left',padx=12)
         ttk.Checkbutton(toolbar,text=tr('Компактный список'),variable=self.compact,command=self.schedule).pack(side='right')
         paging=ttk.Frame(centre,style='Desk.TFrame');paging.pack(side='bottom',fill='x',pady=(7,0))
         self.page_text=tk.StringVar(win)
@@ -149,19 +162,23 @@ class Dialog:
         def done(packet):self.receive(key,generation,packet)
         def failed(message):
             if not self.closed and generation==self.generation:self.status.set(tr('Кэш новостей временно недоступен')+': '+str(message or 'QUEUE_BUSY')[:160])
-        if self.app.job(lambda:prepare(self.app.store.setting('news:'+key,{})),done,failed,lane='read',key=('news-panel-cache',id(self.win),generation)) is False:failed(None)
+        from news_translation import cached_snapshot
+        target=language()
+        if self.app.job(lambda:prepare(cached_snapshot(self.app.store,key,target)),done,failed,lane='read',key=('news-panel-cache',id(self.win),generation)) is False:failed(None)
 
     def project(self,key,value):
         if self.closed or key!=self.target()[1]:return
         generation=self.generation
-        self.app.job(lambda:prepare(value),lambda packet:self.receive(key,generation,packet),lambda _:None,lane='read',key=('news-panel-projection',id(self.win),generation))
+        from news_translation import cached_snapshot
+        target=language()
+        self.app.job(lambda:prepare(cached_snapshot(self.app.store,key,target)),lambda packet:self.receive(key,generation,packet),lambda _:None,lane='read',key=('news-panel-projection',id(self.win),generation))
 
     def receive(self,key,generation,packet):
         if self.closed or key!=self.target()[1] or generation!=self.generation:return
         self.packet=packet.get('snapshot',{});self.rows=packet.get('articles',[])
         providers=sorted({r.get('provider') or '—' for r in self.rows})
-        if tuple(self.provider_box['values'])!=('Все',*providers):self.provider_box.configure(values=['Все',*providers])
-        if self.provider.get() not in ('Все',*providers):self.provider.set('Все')
+        if tuple(self.provider_box['values'])!=(tr('Все'),*providers):self.provider_box.configure(values=[tr('Все'),*providers])
+        if self.provider.get() not in (tr('Все'),*providers):self.provider.set(tr('Все'))
         state=self.packet.get('status','NOT_LOADED')
         try:
             if time.time()-datetime.fromisoformat(self.packet['attempted_at']).timestamp()>3600 and self.rows:state='STALE_CACHE'
@@ -187,7 +204,9 @@ class Dialog:
 
     def render(self):
         if self.closed:return
-        rows=filtered(self.rows,self.query.get(),self.days,self.provider.get(),self.category.get(),self.sort.get()=='Сначала старые')
+        provider='Все' if self.provider.get()==tr('Все') else self.provider.get()
+        category=next((v for v in EVENTS.values() if tr(v)==self.category.get()),'Все')
+        rows=filtered(self.rows,self.query.get(),self.days,provider,category,self.sort.get()==tr('Сначала старые'))
         self.pages=max(1,(len(rows)+PAGE_SIZE-1)//PAGE_SIZE);self.page=min(self.page,self.pages-1)
         self.shown=rows[self.page*PAGE_SIZE:(self.page+1)*PAGE_SIZE]
         self.result_text.set(tr('Найдено')+f': {len(rows)} / {len(self.rows)}')
@@ -200,7 +219,7 @@ class Dialog:
             title=ttk.Label(card,text=article['title'],style='Desk.TLabel',font=('Segoe UI',12,'bold'),wraplength=700,justify='left')
             title.pack(fill='x',anchor='w')
             card.bind('<Configure>',lambda event,label=title:label.configure(wraplength=max(200,event.width-28)))
-            ttk.Label(card,text=str(article.get('provider') or '—')+' · '+str(article.get('published') or tr('Дата неизвестна'))+' · '+str(article.get('date_status') or 'UNKNOWN'),style='DeskMuted.TLabel',font=('Segoe UI',9)).pack(anchor='w',pady=(5,3))
+            ttk.Label(card,text=translation_note(article)+' · '+str(article.get('provider') or '—')+' · '+str(article.get('published') or tr('Дата неизвестна'))+' · '+date_note(article),style='DeskMuted.TLabel',font=('Segoe UI',9)).pack(anchor='w',pady=(5,3))
             if not self.compact.get():
                 summary=article.get('summary') or tr('Краткое содержание не предоставлено источником')
                 summary_label=ttk.Label(card,text=summary[:220]+('…' if len(summary)>220 else ''),style='Desk.TLabel',wraplength=700,justify='left')
@@ -210,6 +229,21 @@ class Dialog:
             ttk.Button(actions,text=tr('Подробнее / источник'),command=lambda row=article:self.article(row)).pack(side='left')
             ttk.Button(actions,text=tr('Оригинал ↗'),command=lambda row=article:self.original(row)).pack(side='right')
         self.summary()
+        self.schedule_translation()
+
+    def schedule_translation(self):
+        if self.closed or self.translation_timer is not None: return
+        if not any(r.get('translation',{}).get('status')=='PENDING' for r in self.shown): return
+        def run():
+            self.translation_timer=None
+            if self.closed: return
+            _,key,_=self.target();generation=self.generation;target=language()
+            # Pass original source rows, never translate a translation again.
+            requested=[{**r,'title':r.get('original_title',r['title']),'summary':r.get('original_summary',r.get('summary',''))} for r in self.shown]
+            def received(value):
+                if not self.closed and target==language(): self.receive(key,generation,prepare(value))
+            if not self.app.news_runtime.translate_news(key,requested,target,received): self.schedule_translation()
+        self.translation_timer=self.win.after(1000,run)
 
     def summary(self):
         for widget in self.side.winfo_children():widget.destroy()
@@ -252,9 +286,18 @@ class Dialog:
     def article(self,row):
         win=self.text_window('Материал и первоисточник','800x560')
         from tkinter.scrolledtext import ScrolledText
+        footer=ttk.Frame(win,padding=(12,8));footer.pack(side='bottom',fill='x')
+        if row.get('translation',{}).get('status')=='TRANSLATED':
+            ttk.Button(footer,text=tr('Показать исходный текст'),command=lambda:self.source_text(row)).pack(side='left')
+        ttk.Button(footer,text=tr('Открыть оригинал'),command=lambda:self.original(row)).pack(side='right')
         box=ScrolledText(win,wrap='word',background=self.palette['bg'],foreground=self.palette['text'],font=('Segoe UI',11),padx=14,pady=14)
         box.pack(fill='both',expand=True);box.insert('1.0',details(row));box.configure(state='disabled')
-        ttk.Button(win,text=tr('Открыть оригинал'),command=lambda:self.original(row)).pack(pady=8)
+
+    def source_text(self,row):
+        from tkinter.scrolledtext import ScrolledText
+        win=self.text_window('Исходный текст','800x450')
+        box=ScrolledText(win,wrap='word',background=self.palette['bg'],foreground=self.palette['text'],font=('Segoe UI',11),padx=14,pady=14)
+        box.pack(fill='both',expand=True);box.insert('1.0',row.get('original_title','')+'\n\n'+row.get('original_summary',''));box.configure(state='disabled')
 
     def original(self,row):
         url=safe_url(row.get('url'))
@@ -276,7 +319,7 @@ class Dialog:
     def cleanup(self):
         if self.closed:return
         self.closed=True
-        for timer in (self.render_timer,self.freshness_timer):
+        for timer in (self.render_timer,self.freshness_timer,self.translation_timer):
             if timer is not None:
                 try:self.win.after_cancel(timer)
                 except tk.TclError:pass

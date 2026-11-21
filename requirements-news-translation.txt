@@ -1,0 +1,4 @@
+# Optional offline display translation; no torch, remote API or paid service.
+ctranslate2==4.9.0
+sentencepiece==0.2.3
+lingua-language-detector==2.1.1

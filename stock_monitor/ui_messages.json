@@ -2563,8 +2563,8 @@
     "de": "Offizieller Scalable MCP: https://mcp.scalable.capital/mcp\nOffizielle CLI: https://github.com/ScalableCapital/scalable-cli\n\nWählen Sie zum Lesen über die CLI deren ausführbare Datei in den Verbindungseinstellungen. Melden Sie sich selbst beim offiziellen Dienst an. Dokumentierte vorkompilierte CLI-Versionen sind für macOS/Linux; eine Windows-CLI ist hier nicht enthalten.\n\nStock Monitor erlaubt dem Adapter nur das Lesen von Übersicht, Positionen, Funktionen und Nachrichten.\n\n"
   },
   "Отчётность": {
-    "en": "Financial statements",
-    "de": "Finanzberichte"
+    "de": "Geschäftsergebnisse",
+    "en": "Earnings"
   },
   "Отчётность: KPI и графики": {
     "en": "Financial statements: KPIs and charts",
@@ -4094,5 +4094,173 @@
   "неделя": {
     "de": "Woche",
     "en": "Week"
+  },
+  "Машинный перевод": {
+    "de": "Maschinelle Übersetzung",
+    "en": "Machine translation"
+  },
+  "На выбранном языке": {
+    "de": "In der gewählten Sprache",
+    "en": "In selected language"
+  },
+  "Перевод ожидается; показан оригинал": {
+    "de": "Übersetzung ausstehend; Original angezeigt",
+    "en": "Translation pending; showing original"
+  },
+  "Перевод недоступен; показан оригинал": {
+    "de": "Übersetzung nicht verfügbar; Original angezeigt",
+    "en": "Translation unavailable; showing original"
+  },
+  "Показать исходный текст": {
+    "de": "Quelltext anzeigen",
+    "en": "Show source text"
+  },
+  "Исходный текст": {
+    "de": "Quelltext",
+    "en": "Source text"
+  },
+  "Источник содержит повреждённые символы": {
+    "de": "Die Quelle enthält beschädigte Zeichen",
+    "en": "Source contains damaged characters"
+  },
+  "Чтение сохранённых новостей…": {
+    "de": "Gespeicherte Nachrichten werden gelesen…",
+    "en": "Reading saved news…"
+  },
+  "Состояние даты": {
+    "de": "Datumsstatus",
+    "en": "Date status"
+  },
+  "Возможные события по заголовку, не подтверждённый календарь": {
+    "de": "Mögliche Ereignisse laut Überschrift, kein bestätigter Kalender",
+    "en": "Possible headline events, not a confirmed calendar"
+  },
+  "Найдено": {
+    "de": "Gefunden",
+    "en": "Found"
+  },
+  "Получено": {
+    "de": "Abgerufen",
+    "en": "Retrieved"
+  },
+  "Ошибки": {
+    "de": "Fehler",
+    "en": "Errors"
+  },
+  "↻ Обновить": {
+    "de": "↻ Aktualisieren",
+    "en": "↻ Refresh"
+  },
+  "Тональность: не рассчитана": {
+    "de": "Stimmung: nicht berechnet",
+    "en": "Sentiment: not calculated"
+  },
+  "Компактный список": {
+    "de": "Kompakte Liste",
+    "en": "Compact list"
+  },
+  "Источники и ошибки": {
+    "de": "Quellen und Fehler",
+    "en": "Sources and errors"
+  },
+  "Тональность новостей": {
+    "de": "Nachrichtenstimmung",
+    "en": "News sentiment"
+  },
+  "Не рассчитана. Процент влияния на цену источник не предоставляет.": {
+    "de": "Nicht berechnet. Die Quelle liefert keine prozentuale Kurswirkung.",
+    "en": "Not calculated. The source does not provide percentage price impact."
+  },
+  "Упоминания событий": {
+    "de": "Ereigniserwähnungen",
+    "en": "Event mentions"
+  },
+  "По словам в заголовке. Это не подтверждённые события или календарь.": {
+    "de": "Nach Wörtern in der Überschrift. Keine bestätigten Ereignisse oder Kalenderdaten.",
+    "en": "Based on headline keywords. Not confirmed events or a calendar."
+  },
+  "Кэш новостей временно недоступен": {
+    "de": "Nachrichtencache vorübergehend nicht verfügbar",
+    "en": "News cache temporarily unavailable"
+  },
+  "Материалы отсутствуют или не подходят фильтрам. Это не означает отсутствия событий.": {
+    "de": "Keine passenden Artikel. Das bedeutet nicht, dass es keine Ereignisse gibt.",
+    "en": "No matching articles. This does not mean there are no events."
+  },
+  "Подробнее / источник": {
+    "de": "Details / Quelle",
+    "en": "Details / source"
+  },
+  "Оригинал ↗": {
+    "de": "Original ↗",
+    "en": "Original ↗"
+  },
+  "Цена: нет соответствующего открытого графика": {
+    "de": "Kurs: kein passender geöffneter Chart",
+    "en": "Price: no matching open chart"
+  },
+  "Публикаций в сохранённой ленте": {
+    "de": "Artikel im gespeicherten Feed",
+    "en": "Articles in saved feed"
+  },
+  "Архив открытого графика": {
+    "de": "Archiv des geöffneten Charts",
+    "en": "Open chart archive"
+  },
+  "Все": {
+    "de": "Alle",
+    "en": "All"
+  },
+  "Сначала новые": {
+    "de": "Neueste zuerst",
+    "en": "Newest first"
+  },
+  "Сначала старые": {
+    "de": "Älteste zuerst",
+    "en": "Oldest first"
+  },
+  "Прогноз": {
+    "de": "Ausblick",
+    "en": "Guidance"
+  },
+  "Дивиденды": {
+    "de": "Dividenden",
+    "en": "Dividends"
+  },
+  "Сделки": {
+    "de": "Transaktionen",
+    "en": "Deals"
+  },
+  "Руководство": {
+    "de": "Führung",
+    "en": "Management"
+  },
+  "Сохранённая лента: обновление не подтверждено": {
+    "de": "Gespeicherter Feed: Aktualisierung nicht bestätigt",
+    "en": "Saved feed: refresh not confirmed"
+  },
+  "Материал и первоисточник": {
+    "de": "Artikel und Originalquelle",
+    "en": "Article and original source"
+  },
+  "Источники новостей": {
+    "de": "Nachrichtenquellen",
+    "en": "News sources"
+  },
+  "Ошибка перевода": {
+    "de": "Übersetzungsfehler",
+    "en": "Translation error"
+  },
+  "Дата: последние 7 дней": {
+    "de": "Datum: letzte 7 Tage",
+    "en": "Date: last 7 days"
+  },
+  "Дата: старше 7 дней": {
+    "de": "Datum: älter als 7 Tage",
+    "en": "Date: older than 7 days"
+  },
+  "Дата источника в будущем": {
+    "de": "Quelldatum liegt in der Zukunft",
+    "en": "Source date is in the future"
   }
 }

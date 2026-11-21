@@ -193,6 +193,7 @@ class Screen:
         self._signature = None
         self._selection_pending = None
         self._news_key = None
+        self._news_translation_timer = None
         self._logo_signature = None
         self._shown_isin = None
         self.logo_images = {}
@@ -257,10 +258,15 @@ class Screen:
                 self.tree.see(iid)
             self.context.set(' · '.join(str(v) for v in (selected.get('symbol'), selected.get('isin'), selected.get('currency')) if v))
             if iid != self._news_key:
+                if self._news_translation_timer is not None:
+                    self.app.root.after_cancel(self._news_translation_timer);self._news_translation_timer=None
                 self._news_key = iid
                 self.news_tree.delete(*self.news_tree.get_children())
                 self.news_text.set(tr('Новости: чтение сохранённой ленты…'))
-                app.job(lambda: app.store.setting('news:' + iid, {}),
+                from news_translation import cached_snapshot
+                from i18n import language
+                target_language=language()
+                app.job(lambda: cached_snapshot(app.store, iid, target_language),
                         lambda value, key=iid: self.show_news(key, value),
                         lambda _, key=iid: self.show_news(key, {}), lane='misc', key='main-screen-news')
             self.asset_logo.configure(image=self.header_images.get(iid, ''), text='' if iid in self.header_images else '◈')
@@ -399,7 +405,17 @@ class Screen:
     def show_news(self, key, value):
         if key != self._news_key or getattr(self.app, 'closing', False):
             return
-        articles = value.get('articles') or []
+        from news_translation import project
+        from i18n import language
+        articles = project(value.get('articles') or [],value.get('_translation_cache',{}),language())
+        if self._news_translation_timer is None and any(r['translation']['status']=='PENDING' for r in articles[:3]):
+            def translate_visible():
+                self._news_translation_timer=None
+                if self._closed or key!=self._news_key:return
+                runtime=getattr(self.app,'news_runtime',None)
+                if runtime and not runtime.translate_news(key,(value.get('articles') or [])[:3],language(),lambda packet:self.show_news(key,packet)):
+                    self._news_translation_timer=self.app.root.after(5000,translate_visible)
+            self._news_translation_timer=self.app.root.after(1500,translate_visible)
         lines = [tr('Сохранённые новости') + ' · ' + str(value.get('attempted_at') or tr('время не подтверждено'))]
         for article in articles[:2]:
             lines.append(str(article.get('provider') or '—') + '  ·  ' + str(article.get('title') or '—')[:210])
@@ -408,7 +424,7 @@ class Screen:
             self.news_text.set(lines[0]+f' · {len(articles)}' if articles else tr('Сохранённых новостей нет. Откройте «Новости» для загрузки.'))
             self.news_tree.delete(*self.news_tree.get_children())
             for article in articles[:5]:
-                self.news_tree.insert('', 'end', values=(str(article.get('published') or '—')[:16], article.get('provider') or '—', article.get('title') or '—'))
+                self.news_tree.insert('', 'end', values=(str(article.get('published') or '—')[:16], article.get('provider') or '—', ('⌛ ' if article.get('translation',{}).get('status') not in ('TRANSLATED','ALREADY_TARGET') else '')+(article.get('title') or '—')))
 
     def selection_changed(self, *_):
         # Coalesce symbol/TF writes. No source or account work on the UI thread.
@@ -567,7 +583,7 @@ class Screen:
 
     def close(self):
         self._closed = True
-        for timer in (self._clock_timer, self._account_timer, self._delta_timer, self._selection_pending, self._favorite_timer):
+        for timer in (self._clock_timer, self._account_timer, self._delta_timer, self._selection_pending, self._favorite_timer, self._news_translation_timer):
             if timer is not None:
                 try:self.app.root.after_cancel(timer)
                 except tk.TclError:pass
@@ -912,7 +928,7 @@ def build(app, periods, bg, text):
     screen.news.grid(row=0,column=0,sticky='nsew',padx=(0,6))
     news_bar = ttk.Frame(screen.news, style='Desk.TFrame')
     news_bar.pack(fill='x')
-    for label, command in [('Новости', app.show_news), ('События', app.show_news), ('Отчёты', app.show_news), ('Календарь', lambda:calendar.focus_set())]:
+    for label, command in [('Новости', app.show_news), ('События', app.show_news), ('Отчёты', app.show_news), ('Календарь', lambda:screen.calendar_panel.show())]:
         ttk.Button(news_bar, text=tr(label), command=command).pack(side='left', padx=(0, 2))
     screen.news_text = tk.StringVar(app.root)
     screen.news_label = ttk.Label(screen.news, textvariable=screen.news_text, style='DeskMuted.TLabel', wraplength=650, font=('Segoe UI', 8))
@@ -938,9 +954,8 @@ def build(app, periods, bg, text):
     calendar = ttk.Frame(screen.bottom_shared, padding=9, height=139, style='DeskCard.TFrame')
     calendar.grid(row=0,column=1,sticky='nsew')
     calendar.pack_propagate(False)
-    ttk.Label(calendar, text=tr('▦ Экономический календарь'), style='Desk.TLabel', font=('Segoe UI', 10, 'bold')).pack(anchor='w', pady=(0, 9))
-    ttk.Label(calendar, text=tr('Нет загруженных событий.'), style='DeskMuted.TLabel', wraplength=255, font=('Segoe UI', 9)).pack(anchor='w')
-    ttk.Button(calendar, text=tr('Новости и события'), command=app.show_news).pack(anchor='w', pady=8)
+    from calendar_panel import Panel as CalendarPanel
+    screen.calendar_panel = CalendarPanel(app, calendar)
     scroller = tk.Canvas(side, highlightthickness=0, background=bg, width=286)
     scrollbar = ttk.Scrollbar(side, command=scroller.yview,style='Desk.Vertical.TScrollbar')
     scroller.configure(yscrollcommand=scrollbar.set)
