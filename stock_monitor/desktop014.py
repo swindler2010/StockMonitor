@@ -1075,28 +1075,8 @@ class Desktop014:
         return dialog.wire(apply,lambda:[values[k].set(v) for k,v in DEFAULT_IND.items()])
 
     def show_drawing(self):
-        info=self.instrument_cfg()
-        windows=getattr(self,'_drawing_windows',{});self._drawing_windows=windows
-        if info['isin'] in windows and windows[info['isin']].winfo_exists():windows[info['isin']].lift();return
-        win=tk.Toplevel(self.root);windows[info['isin']]=win
-        win.title(tr('Рисование • {name}',name=info['name']));body=ttk.Frame(win,padding=12);body.pack(fill='both',expand=True)
-        for label,kind in [('Горизонталь','hline'),('Вертикаль','vline'),('Трендовая линия','trend'),('Луч','ray'),('Зона','zone'),('Маркер цены','marker')]:
-            def choose(k=kind):self.drawing_mode=k;self.drawing_start=None;self.status.set(tr('Укажите ') + (tr('одну точку') if k in ('hline', 'vline', 'marker') else tr('две точки')) + tr(' на графике.'));win.destroy()
-            ttk.Button(body,text=tr(label),command=choose).pack(fill='x',pady=2)
-        objects=tk.Listbox(body,width=50,height=7,bg=BG,fg=TEXT);objects.pack(fill='x',pady=8)
-        listed=copy.deepcopy(self.user_state(info).get('drawings',[]))
-        for n,o in enumerate(listed):objects.insert('end',f'{n+1}: {o["type"]} • {o.get("at",o.get("price",""))}')
-        def remove():
-            if not objects.curselection():return
-            index=objects.curselection()[0];expected=listed
-            from drawing_actions import commit,modify
-            if commit(self,info['isin'],expected,modify(expected,index,'delete')):win.destroy()
-        ttk.Button(body,text=tr('Удалить выбранный объект'),command=remove).pack(fill='x')
-        def history_action(operation):
-            from drawing_actions import travel
-            if travel(self,info['isin'],operation):win.destroy()
-        for label,operation in [('Отменить','undo'),('Повторить','redo')]:
-            ttk.Button(body,text=tr(label),command=lambda op=operation:history_action(op)).pack(fill='x',pady=2)
+        from drawing_dialog import show
+        return show(self)
 
     def show_settings(self):
         super().show_settings()

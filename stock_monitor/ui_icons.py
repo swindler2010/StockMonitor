@@ -72,6 +72,18 @@ def photo(root, name, size=18, color=None):
     elif name=='indicators':
         for x,y in ((6,8),(12,16),(18,5)):
             line([(x,2),(x,22)]);d.ellipse((x*4-5,y*4-5,x*4+5,y*4+5),fill='#0d1827',outline=color,width=4)
+    elif name.startswith('drawing_'):
+        kind=name.removeprefix('drawing_')
+        if kind=='hline':line([(3,12),(21,12)])
+        elif kind=='vline':line([(12,3),(12,21)])
+        elif kind in ('trend','ray'):
+            line([(3,21),(21,3)])
+            if kind=='ray':line([(14,3),(21,3),(21,10)])
+            else:
+                for x,y in ((4,20),(20,4)):d.ellipse((x*4-5,y*4-5,x*4+5,y*4+5),fill=color)
+        elif kind=='zone':box((3,5,21,19),width=4)
+        elif kind=='marker':
+            d.line([(12*4,3*4),(21*4,12*4),(12*4,21*4),(3*4,12*4),(12*4,3*4)],fill=color,width=5)
     elif name=='reset':
         d.arc((12,12,84,84),start=35,end=310,fill=color,width=5);line([(19,3),(20,10),(13,8)])
     cache[key]=ImageTk.PhotoImage(image.resize((size,size),Image.Resampling.LANCZOS),master=root)
