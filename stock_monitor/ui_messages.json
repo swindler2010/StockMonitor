@@ -4908,5 +4908,33 @@
   "Нет сохранённого задания восстановления": {
     "en": "No saved recovery request",
     "de": "Kein gespeicherter Wiederherstellungsauftrag"
+  },
+  "Не удалось поставить задачу": {
+    "en": "Could not queue the task",
+    "de": "Aufgabe konnte nicht eingereiht werden"
+  },
+  "Решить": {
+    "en": "Resolve",
+    "de": "Beheben"
+  },
+  "Действие": {
+    "en": "Action",
+    "de": "Aktion"
+  },
+  "Нужна помощь": {
+    "en": "Help needed",
+    "de": "Hilfe erforderlich"
+  },
+  "Приоритетная задача поставлена в штатную очередь": {
+    "en": "Priority task added to the normal queue",
+    "de": "Prioritätsaufgabe in die reguläre Warteschlange gestellt"
+  },
+  "Проверить первой": {
+    "en": "Check first",
+    "de": "Zuerst prüfen"
+  },
+  "Нет штатного адресного исправления для этого источника или ТФ": {
+    "en": "No supported targeted repair for this source or timeframe",
+    "de": "Keine unterstützte gezielte Reparatur für diese Quelle oder Zeiteinheit"
   }
 }

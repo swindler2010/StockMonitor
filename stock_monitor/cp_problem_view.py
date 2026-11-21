@@ -16,6 +16,25 @@ STATES={'INVALID':'Некорректные цены или объёмы','GAP':
         'ANALYSIS_BLOCKED':'Требуется проверка входов анализа'}
 
 
+def repair_capability(problem,job):
+    meta=problem.get('identity') or {}
+    check=(problem.get('kind')=='context' or
+           (problem.get('kind')=='archive' and problem.get('range') and problem.get('tf') in ('5m','15m','1H','1D')
+            and meta.get('venue')=='GETTEX' and meta.get('currency')=='EUR' and meta.get('source') in ('gettex','gettex_chart')))
+    finding=(job or {}).get('finding') or {}
+    known=bool(check and job and job.get('input_fingerprint') and job.get('status')!='RECHECK_QUEUED' and
+               (finding.get('can_affect_dq') is True or finding.get('state')=='NATIVE_ROWS_CONFIRMED')
+               and finding.get('state') not in ('INVALID','SOURCE_DISCREPANCY'))
+    return dict(check=bool(check),known=known,label='Решить' if known else 'Проверить первой' if check else 'Нужна помощь')
+
+
+def priority_request(store,problem):
+    # The existing writer revalidates DQ/identity/evidence, retries and risk.
+    if not repair_capability(problem,None)['check']:raise ValueError('Нет штатного адресного исправления для этого источника или ТФ')
+    from cp_controls import request_repair
+    return request_repair(store,problem,priority=True)
+
+
 def same_problem(problem,job):
     if problem.get('isin')!=job.get('isin') or problem.get('tf')!=job.get('tf'):return False
     a,b=problem.get('identity') or {},job.get('identity') or {}
@@ -52,7 +71,7 @@ def present(problem,jobs):
     tv,job=tv_result(problem,jobs);repair=problem.get('repair') or {};review=problem.get('historical_review') or {}
     reason=repair.get('reason') or review.get('reason') or ((job or {}).get('finding') or {}).get('reason')
     next_step=reason or ('Ожидание штатного восстановления' if repair.get('state') in ('QUEUED','RUNNING') else 'Нет сохранённого задания восстановления')
-    return dict(problem=problem,tf=problem.get('tf','—'),span=' — '.join(str(v) for v in problem.get('range') or []) or '—',
+    return dict(problem=problem,action=repair_capability(problem,job),tf=problem.get('tf','—'),span=' — '.join(str(v) for v in problem.get('range') or []) or '—',
                 title=STATES.get(state,state),severity=severity,tv=tv,influence=influence,next=next_step,
                 source=' / '.join(str((problem.get('identity') or {}).get(k) or '—') for k in ('source','venue','currency')),
                 last=repair.get('finished_at') or repair.get('checked_at') or (job or {}).get('checked_at') or '—',
@@ -116,7 +135,7 @@ class Dialog:
     def __init__(self,app):
         from main_screen import native_titlebar
         self.app=app;self.closed=False;self.generation=0;self.page=0;self.packet={};self.shown={};self.busy=False;self.timer=None
-        self.win=w=tk.Toplevel(app.root);app._cp_problem_window=w
+        self.win=w=tk.Toplevel(app.root);app._cp_problem_window=w;self.action_buttons={};self.paint_timer=None;self.action_busy=False
         w.title(tr('CandlePilot • проблемы выбранной акции'));w.geometry('1280x740');w.minsize(950,600)
         palette=THEMES.get(app.store.setting('theme','Тёмная'),THEMES['Тёмная']);self.p=p=styles(app.root,palette)
         base=ttk.Frame(w,padding=12,style=p+'.TFrame');base.pack(fill='both',expand=True)
@@ -134,18 +153,20 @@ class Dialog:
         self.include_old=tk.BooleanVar(w,False)
         ttk.Checkbutton(base,text=tr('Показывать старые и другие архивы'),variable=self.include_old,command=self.select,style=p+'.TCheckbutton').pack(anchor='w',pady=(0,6))
         host=ttk.Frame(base,style=p+'.TFrame');host.pack(fill='both',expand=True)
-        columns=('tf','span','title','severity','tv','influence','source')
+        columns=('tf','action','span','title','severity','tv','influence','source')
         style=ttk.Style(w);style.configure(p+'.CP.Treeview',background=palette['bg'],fieldbackground=palette['bg'],foreground=palette['text'],rowheight=32,font=('Segoe UI',10),borderwidth=0,relief='flat')
         style.map(p+'.CP.Treeview',background=[('selected','#075585')],foreground=[('selected','#ffffff')])
         style.layout(p+'.CP.Treeview.Heading',[('Treeheading.padding',{'sticky':'nsew','children':[('Treeheading.text',{'sticky':'we'})]})])
         style.configure(p+'.CP.Treeview.Heading',background=palette['panel'],foreground=palette['text'],font=('Segoe UI',10,'bold'),padding=(6,8))
         style.configure(p+'.CP.Horizontal.TScrollbar',background=palette['grid'],troughcolor=palette['bg'],bordercolor=palette['bg'],lightcolor=palette['bg'],darkcolor=palette['bg'],arrowcolor=palette['muted'])
+        self.action_styles(p,palette)
         self.tree=ttk.Treeview(host,columns=columns,show='headings',style=p+'.CP.Treeview',selectmode='browse')
-        for key,label,width in zip(columns,('ТФ','Дата / диапазон','Проблема','Серьёзность','Сверка TV','Влияние','Источник / площадка'),(60,230,220,100,210,180,190)):
+        for key,label,width in zip(columns,('ТФ','Действие','Дата / диапазон','Проблема','Серьёзность','Сверка TV','Влияние','Источник / площадка'),(55,135,205,195,95,195,155,180)):
             self.tree.heading(key,text=tr(label));self.tree.column(key,width=width,minwidth=60)
         vertical=ttk.Scrollbar(host,command=self.tree.yview,style=p+'.Vertical.TScrollbar');vertical.pack(side='right',fill='y')
-        self.tree.configure(yscrollcommand=vertical.set);self.tree.pack(fill='both',expand=True)
-        horizontal=ttk.Scrollbar(base,orient='horizontal',command=self.tree.xview,style=p+'.CP.Horizontal.TScrollbar');horizontal.pack(fill='x');self.tree.configure(xscrollcommand=horizontal.set)
+        self.tree.configure(yscrollcommand=lambda a,b:(vertical.set(a,b),self.schedule_buttons()));self.tree.pack(fill='both',expand=True)
+        horizontal=ttk.Scrollbar(base,orient='horizontal',command=self.tree.xview,style=p+'.CP.Horizontal.TScrollbar');horizontal.pack(fill='x');self.tree.configure(xscrollcommand=lambda a,b:(horizontal.set(a,b),self.schedule_buttons()))
+        self.tree.bind('<Configure>',lambda _:self.schedule_buttons(),add='+')
         self.tree.tag_configure('high',foreground='#ff5866');self.tree.tag_configure('medium',foreground='#efc462')
         self.tree.bind('<<TreeviewSelect>>',self.details)
         self.detail=tk.Text(base,height=7,wrap='word',background=palette['bg'],foreground=palette['text'],font=('Segoe UI',10),relief='flat')
@@ -162,6 +183,59 @@ class Dialog:
 
     def select(self):
         self.page=0;self.generation+=1;self.tree.delete(*self.tree.get_children());self.shown={};self.clear_detail();self.refresh()
+
+    def action_styles(self,p,palette):
+        from PIL import Image,ImageDraw,ImageTk
+        cache=getattr(self.app.root,'_cp_action_images',None)
+        if cache is None:self.app.root._cp_action_images=cache={}
+        if p in cache:return
+        cache[p]=[];style=ttk.Style(self.win)
+        for name,fill,edge in [('Green','#104c30','#25e772'),('Red','#4c1b27','#ff5866')]:
+            bitmap=Image.new('RGBA',(96,96));ImageDraw.Draw(bitmap).rounded_rectangle((2,2,93,93),radius=15,fill=fill,outline=edge,width=4)
+            image=ImageTk.PhotoImage(bitmap.resize((32,32),Image.Resampling.LANCZOS),master=self.app.root);cache[p].append(image)
+            element=p+'.CP'+name;style.element_create(element,'image',image,border=6,sticky='nsew')
+            style.layout(element+'.TButton',[(element,{'sticky':'nsew','children':[('Button.padding',{'sticky':'nsew','children':[('Button.label',{'sticky':'nsew'})]})]})])
+            style.configure(element+'.TButton',foreground='#ffffff',font=('Segoe UI',9,'bold'),padding=(3,1))
+
+    def schedule_buttons(self):
+        if not self.closed and self.paint_timer is None:self.paint_timer=self.win.after_idle(self.paint_buttons)
+
+    def paint_buttons(self):
+        self.paint_timer=None
+        if self.closed:return
+        for key,button in list(self.action_buttons.items()):
+            if key not in self.shown:button.destroy();self.action_buttons.pop(key)
+            else:button.place_forget()
+        for key,row in self.shown.items():
+            bounds=self.tree.bbox(key,'action')
+            if not bounds:continue
+            button=self.action_buttons.get(key)
+            if button is None:
+                button=ttk.Button(self.tree,command=lambda k=key:self.act(k));self.action_buttons[key]=button
+            cap=row['action'];button.configure(text=tr(cap['label']),style=self.p+('.CPGreen.TButton' if cap['known'] else '.CPRed.TButton'),state='disabled' if self.action_busy else 'normal')
+            x,y,width,height=bounds;button.place(x=x+2,y=y+2,width=max(1,width-4),height=max(1,height-4))
+
+    def act(self,key):
+        if self.closed or self.action_busy or key not in self.shown:return
+        row=self.shown[key];self.tree.selection_set(key);self.details()
+        if not row['action']['check']:
+            self.clear_detail(self.detail.get('1.0','end')+'\n'+tr('Нет штатного адресного исправления для этого источника или ТФ'));return
+        self.action_busy=True;self.schedule_buttons();problem=row['problem'];isin=problem['isin'];generation=self.generation
+        def done(value):
+            self.action_busy=False
+            # An explicit queued owner request survives closing this read-only view.
+            info=next((i for i in self.app.watchlist if i.get('isin')==isin),None)
+            if info is not None and hasattr(self.app,'start_feed'):
+                self.app.start_feed(info)
+                if hasattr(self.app,'dispatcher'):self.app.dispatcher.prioritize_feed('feed:'+isin)
+            if self.closed:return
+            self.refresh();self.status.set(tr('Приоритетная задача поставлена в штатную очередь')+' · '+str(value.get('state','')))
+        def failed(error):
+            self.action_busy=False
+            if self.closed:return
+            self.schedule_buttons()
+            if generation==self.generation:self.status.set(tr('Не удалось поставить задачу')+': '+str(error))
+        if self.app.job(lambda:priority_request(self.app.store,problem),done,failed,lane='read',key=('cp-owner-repair',isin,problem['id'])) is False:failed(tr('Очередь временно занята'))
 
     def clear_detail(self,text=''):
         self.detail.configure(state='normal');self.detail.delete('1.0','end');self.detail.insert('1.0',text);self.detail.configure(state='disabled')
@@ -194,8 +268,9 @@ class Dialog:
             if generation!=self.generation:self.refresh();return
             self.packet=value;self.page=value['page'];self.tree.delete(*self.tree.get_children());self.shown={};self.clear_detail()
             for n,r in enumerate(value['rows']):
-                key=str(n);self.shown[key]=r
-                self.tree.insert('','end',iid=key,values=[tr(str(r[k])) for k in ('tf','span','title','severity','tv','influence','source')],tags=('high' if r['severity']=='Высокая' else 'medium' if r['severity']=='Средняя' else '',))
+                key=r['problem']['id'];self.shown[key]=r
+                self.tree.insert('','end',iid=key,values=[tr(r['action']['label']) if k=='action' else tr(str(r[k])) for k in ('tf','action','span','title','severity','tv','influence','source')],tags=('high' if r['severity']=='Высокая' else 'medium' if r['severity']=='Средняя' else '',))
+            self.schedule_buttons()
             self.status.set(tr('Сохранённые проблемы')+f": {value['total']} · {self.page+1}/{value['pages']} · "+tr('Архив отдельно')+f": {value.get('archived_count',0)} · "+str(value['at']))
             if not value['rows']:self.clear_detail(tr('В сохранённых отчётах проблем не найдено. Это не подтверждает полноту истории или готовность торговли.'))
             self.timer=self.win.after(60000,self.refresh)
@@ -210,6 +285,7 @@ class Dialog:
     def cleanup(self):
         self.closed=True;self.generation+=1
         if self.timer is not None:self.win.after_cancel(self.timer);self.timer=None
+        if self.paint_timer is not None:self.win.after_cancel(self.paint_timer);self.paint_timer=None
 
     def close(self):self.cleanup();self.win.destroy()
 
@@ -218,4 +294,3 @@ def show(app):
     old=getattr(app,'_cp_problem_window',None)
     if old is not None and old.winfo_exists():old.lift();return old
     app._cp_problem_dialog=Dialog(app);return app._cp_problem_dialog.win
-

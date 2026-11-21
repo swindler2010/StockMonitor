@@ -1126,15 +1126,21 @@ def _queue_repair(db,problem,at,origin=None):
     return item
 
 
-def request_repair(store,problem):
+def request_repair(store,problem,priority=False):
     isin=problem['isin']
     with store.connect() as db:
         db.execute('BEGIN IMMEDIATE');current={p['id']:p for p in problems(db,isin)}
         if problem['id'] not in current:raise ValueError('Проблема изменилась. Обновите список')
-        return _queue_repair(db,current[problem['id']],stamp())
+        at=stamp();item=_queue_repair(db,current[problem['id']],at)
+        if priority:
+            item={**item,'owner_priority_at':at}
+            requests=read(db,'cp_repair_requests:'+isin,{})
+            requests[repair_id(current[problem['id']])]=item
+            write(db,'cp_repair_requests:'+isin,requests)
+        return item
 
 def _automatic_request(item):
-    return (item.get('origin') or {}).get('kind')=='AUTOMATIC_DEPENDENCY'
+    return (item.get('origin') or {}).get('kind')=='AUTOMATIC_DEPENDENCY' and not item.get('owner_priority_at')
 
 
 def _automatic_repair_enabled(info,policy):
@@ -1248,7 +1254,9 @@ def due_request(db,isin=None,now=None,include_automatic=True):
     # contain attempts/started_at, so no queue migration or reset is necessary.
     def order(item):
         attempted=item.get('last_attempt_at') or item.get('legacy_rotation_at') or (item.get('started_at') if item.get('attempts',0)>0 else None)
-        return _automatic_request(item),pd.Timestamp(attempted or item['requested_at']),pd.Timestamp(item['requested_at'])
+        priority=item.get('owner_priority_at')
+        return (0 if priority else 1,-pd.Timestamp(priority).value if priority else 0,
+                _automatic_request(item),pd.Timestamp(attempted or item['requested_at']),pd.Timestamp(item['requested_at']))
     return min(pending,key=order) if pending else None
 
 def service_request(info,store,recover_gettex,now=None):
