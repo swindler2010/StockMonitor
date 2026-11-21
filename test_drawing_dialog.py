@@ -60,6 +60,8 @@ class DrawingDialogTests(unittest.TestCase):
     def test_group_switch_exposes_fibonacci_and_shapes_without_changing_drafts(self):
         self.d.tool_group.set('Фибоначчи');self.root.update()
         self.assertTrue(self.d.tool_buttons['fib'].winfo_ismapped())
+        for kind in ('fib_fan','fib_arcs','fib_timezones'):self.assertTrue(self.d.tool_buttons[kind].winfo_ismapped())
+        self.assertIn('не торговый сигнал',self.d.group_caption.get())
         self.assertFalse(self.d.tool_buttons['hline'].winfo_ismapped())
         self.d.tool_group.set('Фигуры и аннотации');self.root.update()
         self.assertTrue(self.d.tool_buttons['circle'].winfo_ismapped())

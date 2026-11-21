@@ -9,6 +9,7 @@ from themes import THEMES
 from drawing_actions import commit, modify, travel, chart_identity
 
 from drawing_tools import REGISTRY,GROUPS
+from localized_widgets import CanonicalCombobox
 
 TOOLS=tuple((value['name'],kind,'') for kind,value in REGISTRY.items())
 NAMES={kind:value['name'] for kind,value in REGISTRY.items()}
@@ -40,7 +41,8 @@ class Dialog:
         self.group_caption=tk.StringVar(win,tr('Инструменты рисования'))
         ttk.Label(group_bar,textvariable=self.group_caption,style=p+'.Drawing.TLabel',font=('Segoe UI',12,'bold')).pack(side='left')
         self.tool_group=tk.StringVar(win,next(iter(GROUPS)))
-        ttk.Combobox(group_bar,textvariable=self.tool_group,values=list(GROUPS),state='readonly',width=30).pack(side='right')
+        self.group_box=CanonicalCombobox(group_bar,textvariable=self.tool_group,values=list(GROUPS),state='readonly',width=30)
+        self.group_box.pack(side='right')
         row=ttk.Frame(tools,style=p+'.TFrame');row.pack(fill='x');self.tool_buttons={}
         for n in range(6):row.columnconfigure(n,weight=1,uniform='tool')
         for items in GROUPS.values():
@@ -153,7 +155,7 @@ class Dialog:
             self.listed=copy.deepcopy(self.app.user_state(self.app.instrument_cfg()).get('drawings',[]));self.render()
 
     def show_tools(self):
-        self.group_caption.set(tr('Ганн: 1×1 задаётся точками A→B') if self.tool_group.get()=='Ганн' else tr('Ручная разметка — не сигнал') if self.tool_group.get()=='Паттерны и волны' else tr('Инструменты рисования'))
+        self.group_caption.set(tr('Ганн: 1×1 задаётся точками A→B') if self.tool_group.get()=='Ганн' else tr('Ручная разметка — не сигнал') if self.tool_group.get()=='Паттерны и волны' else tr('Фибоначчи: ручные опоры, не торговый сигнал') if self.tool_group.get()=='Фибоначчи' else tr('Инструменты рисования'))
         for button in self.tool_buttons.values():button.grid_remove()
         for _,kind,_ in GROUPS.get(self.tool_group.get(),()):self.tool_buttons[kind].grid()
 

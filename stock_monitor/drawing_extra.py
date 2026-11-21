@@ -7,6 +7,7 @@ from matplotlib.transforms import Affine2D,IdentityTransform
 from matplotlib.colors import to_rgba
 from drawing_tools import fib_levels,REGISTRY
 from drawing_complex import render as complex_render
+from drawing_fibonacci import render as fibonacci_render
 
 
 class DataCircle(Circle):
@@ -33,6 +34,7 @@ def extra(app,obj,frame,locate,style,kw,register):
     if any(not math.isfinite(x) or not math.isfinite(y) or y<=0 for x,y in xy):return True
     x,y=xy[0];ax=app.ax_price
     if complex_render(kind,xy,app,frame,style,kw,register):return True
+    if fibonacci_render(kind,xy,app,frame,style,kw,register):return True
     def line(xs,ys,**overrides):
         artist,=ax.plot(xs,ys,**{**kw,**overrides});register(artist)
     def label(x,y,text,**options):

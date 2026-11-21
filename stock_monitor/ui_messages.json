@@ -4262,5 +4262,81 @@
   "Дата источника в будущем": {
     "de": "Quelldatum liegt in der Zukunft",
     "en": "Source date is in the future"
+  },
+  "Веер Фибоначчи": {
+    "de": "Fibonacci-Fächer",
+    "en": "Fibonacci fan"
+  },
+  "Дуги Фибоначчи": {
+    "de": "Fibonacci-Bögen",
+    "en": "Fibonacci arcs"
+  },
+  "Временные зоны Фибоначчи": {
+    "de": "Fibonacci-Zeitzonen",
+    "en": "Fibonacci time zones"
+  },
+  "Фибоначчи: ручные опоры, не торговый сигнал": {
+    "de": "Fibonacci: manuelle Anker, kein Handelssignal",
+    "en": "Fibonacci: manual anchors, not a trading signal"
+  },
+  "Фибоначчи: вторая точка должна быть позже первой и иметь другую цену": {
+    "de": "Fibonacci: Der zweite Punkt muss später liegen und einen anderen Kurs haben",
+    "en": "Fibonacci: second point must be later and have a different price"
+  },
+  "Временные зоны: вторая точка должна быть позже первой": {
+    "de": "Zeitzonen: Der zweite Punkt muss später liegen",
+    "en": "Time zones: second point must be later"
+  },
+  "Фибоначчи: нужны две разные отметки времени": {
+    "de": "Fibonacci: zwei verschiedene Zeitpunkte erforderlich",
+    "en": "Fibonacci: two distinct time anchors required"
+  },
+  "Фибоначчи: требуется линейная шкала": {
+    "de": "Fibonacci: lineare Skalierung erforderlich",
+    "en": "Fibonacci: linear scale required"
+  },
+  "Временные зоны: интервалы баров, не календарные дни": {
+    "de": "Zeitzonen: Balkenintervalle, keine Kalendertage",
+    "en": "Time zones: bar intervals, not calendar days"
+  },
+  "Дуги: радиус A–B в экранном масштабе": {
+    "de": "Bögen: Radius A–B im Bildschirmmaßstab",
+    "en": "Arcs: radius A–B in screen scale"
+  },
+  "Веер: укажите начало и конец движения слева направо; уровни по линейной цене.": {
+    "de": "Fächer: Anfang und Ende von links nach rechts wählen; lineare Kursniveaus.",
+    "en": "Fan: choose start and end from left to right; linear price levels."
+  },
+  "Дуги: укажите A и B слева направо. Центр B; радиус зависит от масштаба экрана.": {
+    "de": "Bögen: A und B von links nach rechts wählen. Mittelpunkt B; Radius hängt vom Bildschirmmaßstab ab.",
+    "en": "Arcs: choose A and B from left to right. Center B; radius depends on screen scale."
+  },
+  "Временные зоны: укажите начало и конец базового интервала слева направо. Шаг — бары текущего ТФ.": {
+    "de": "Zeitzonen: Basisintervall von links nach rechts wählen. Einheit: Balken des aktuellen Zeitrahmens.",
+    "en": "Time zones: choose the base interval from left to right. Unit: bars of the current timeframe."
+  },
+  "Фибоначчи": {
+    "de": "Fibonacci",
+    "en": "Fibonacci"
+  },
+  "Линии тренда": {
+    "de": "Trendlinien",
+    "en": "Trend lines"
+  },
+  "Ганн": {
+    "de": "Gann",
+    "en": "Gann"
+  },
+  "Паттерны и волны": {
+    "de": "Muster und Wellen",
+    "en": "Patterns and waves"
+  },
+  "Фигуры и аннотации": {
+    "de": "Formen und Anmerkungen",
+    "en": "Shapes and annotations"
+  },
+  "Позиции и измерения": {
+    "de": "Positionen und Messungen",
+    "en": "Positions and measurements"
   }
 }

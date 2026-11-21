@@ -87,6 +87,12 @@ def photo(root, name, size=18, color=None):
         elif kind in ('fib','fib_extension'):
             for y in (3,7,12,17,21):line([(3,y),(21,y)],width=3)
             if kind=='fib_extension':line([(3,20),(9,10),(14,14),(21,3)],width=4)
+        elif kind=='fib_fan':
+            for y in (3,7,12,17,21):line([(3,21),(21,y)],width=3)
+        elif kind=='fib_arcs':
+            for r in (6,12,18):d.arc(((12-r)*4,(20-r)*4,(12+r)*4,(20+r)*4),180,360,fill=color,width=3)
+        elif kind=='fib_timezones':
+            for x in (2,4,7,12,20):line([(x,3),(x,21)],width=3)
         elif kind=='channel':
             line([(3,15),(21,3)]);line([(3,21),(21,9)])
         elif kind=='extended':line([(2,22),(22,2)])
