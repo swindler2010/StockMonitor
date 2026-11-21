@@ -8,10 +8,10 @@ from ui_icons import photo
 from themes import THEMES
 from drawing_actions import commit, modify, travel, chart_identity
 
-TOOLS=(('Горизонталь','hline','━'),('Вертикаль','vline','│'),
-       ('Трендовая линия','trend','╱'),('Луч','ray','↗'),
-       ('Зона','zone','▱'),('Маркер цены','marker','◇'))
-NAMES={kind:label for label,kind,_ in TOOLS}
+from drawing_tools import REGISTRY,GROUPS
+
+TOOLS=tuple((value['name'],kind,'') for kind,value in REGISTRY.items())
+NAMES={kind:value['name'] for kind,value in REGISTRY.items()}
 
 
 class Dialog:
@@ -32,16 +32,22 @@ class Dialog:
         ttk.Label(base,text=tr('Рисование')+' • '+info['name'],style=p+'.TLabel',font=('Segoe UI',18,'bold')).pack(anchor='w',pady=(0,12))
         tabs=ttk.Frame(base,style=p+'.TFrame');tabs.pack(fill='x',pady=(0,10))
         self.tabs={}
-        for text,command in [('Инструменты',lambda:self.tools_box.focus_set()),('Объекты',lambda:self.objects.focus_set()),('Настройки',self.settings)]:
+        for text,command in [('Инструменты',lambda:self.tools_box.focus_set()),('Объекты',lambda:self.objects.focus_set()),('Шаблоны',self.templates),('Настройки',self.settings)]:
             b=ttk.Button(tabs,text=tr(text),style=p+'.Secondary.TButton',command=command);b.pack(side='left',fill='x',expand=True,padx=(0,7));self.tabs[text]=b
         self.tabs['Инструменты'].configure(style=p+'.Primary.TButton')
         self.tools_box=tools=ttk.Frame(base,padding=12,style=p+'.Info.TFrame');tools.pack(fill='x',pady=(0,10))
-        ttk.Label(tools,text=tr('Линии и фигуры'),style=p+'.Drawing.TLabel',font=('Segoe UI',12,'bold')).pack(anchor='w',pady=(0,8))
+        group_bar=ttk.Frame(tools,style=p+'.TFrame');group_bar.pack(fill='x',pady=(0,8))
+        ttk.Label(group_bar,text=tr('Инструменты рисования'),style=p+'.Drawing.TLabel',font=('Segoe UI',12,'bold')).pack(side='left')
+        self.tool_group=tk.StringVar(win,next(iter(GROUPS)))
+        ttk.Combobox(group_bar,textvariable=self.tool_group,values=list(GROUPS),state='readonly',width=30).pack(side='right')
         row=ttk.Frame(tools,style=p+'.TFrame');row.pack(fill='x');self.tool_buttons={}
-        for n,(label,kind,icon) in enumerate(TOOLS):
-            row.columnconfigure(n,weight=1,uniform='tool')
-            button=ttk.Button(row,text=tr(label).replace(' ','\n',1),image=photo(app.root,'drawing_'+kind,24,palette['text']),compound='top',style=p+'.Tool.TButton',command=lambda k=kind:self.choose(k))
-            button.grid(row=0,column=n,sticky='nsew',padx=3);self.tool_buttons[kind]=button
+        for n in range(6):row.columnconfigure(n,weight=1,uniform='tool')
+        for items in GROUPS.values():
+            for column,(label,kind,count) in enumerate(items):
+                button=ttk.Button(row,text=tr(label).replace(' ','\n',1),image=photo(app.root,'drawing_'+kind,24,palette['text']),compound='top',style=p+'.Tool.TButton',command=lambda k=kind:self.choose(k))
+                button.grid(row=0,column=column,sticky='nsew',padx=3);button.grid_remove();self.tool_buttons[kind]=button
+                app.tooltip(button,tr(label)+f' · {count} '+tr('точки'))
+        self.tool_group.trace_add('write',lambda *_:self.show_tools());self.show_tools()
         detail=ttk.Frame(base,padding=12,style=p+'.Info.TFrame');detail.pack(fill='x',pady=(0,10))
         detail_head=ttk.Frame(detail,style=p+'.TFrame');detail_head.pack(fill='x')
         ttk.Label(detail_head,text=tr('Выбранный объект'),style=p+'.Drawing.TLabel',font=('Segoe UI',12,'bold')).pack(side='left')
@@ -73,7 +79,7 @@ class Dialog:
         actions=ttk.Frame(base,padding=12,style=p+'.Info.TFrame');actions.pack(side='bottom',fill='x',pady=(0,10),before=panel)
         ttk.Label(actions,text=tr('Действия'),style=p+'.Drawing.TLabel',font=('Segoe UI',12,'bold')).pack(anchor='w',pady=(0,8))
         row=ttk.Frame(actions,style=p+'.TFrame');row.pack(fill='x');self.actions={}
-        for label,operation in [('Дублировать','copy'),('Изменить цену','price'),('Изменить дату','at'),('Удалить выбранный','delete')]:
+        for label,operation in [('Дублировать','copy'),('Изменить цену','price'),('Изменить дату','at'),('Удалить выбранный','delete'),('Текст…','text')]:
             b=ttk.Button(row,text=tr(label),style=p+'.Secondary.TButton',command=lambda op=operation:self.change(op));b.pack(side='left',fill='x',expand=True,padx=(0,6));self.actions[operation]=b
         footer=ttk.Frame(base,style=p+'.TFrame');footer.pack(side='bottom',fill='x',before=actions)
         for label,operation in [('↶ Отменить','undo'),('↷ Повторить','redo')]:
@@ -92,8 +98,8 @@ class Dialog:
 
     def choose(self,kind):
         if not self.valid():self.reject();return
-        self.app.drawing_mode=kind;self.app.drawing_start=None
-        self.app.status.set(tr('Укажите ')+(tr('одну точку') if kind in ('hline','vline','marker') else tr('две точки'))+tr(' на графике.'))
+        from drawing_tools import start
+        start(self.app,kind)
         self.win.destroy()
 
     def render(self):
@@ -107,7 +113,7 @@ class Dialog:
     def selection(self):
         selected=self.objects.selection();obj=self.listed[int(selected[0])] if selected else None
         for operation,button in self.actions.items():
-            enabled=obj is not None and not(obj.get('locked',False) and operation!='copy') and not(operation=='price' and obj.get('type')=='vline') and not(operation=='at' and obj.get('type')=='hline')
+            enabled=obj is not None and not(obj.get('locked',False) and operation!='copy') and not(operation=='price' and obj.get('type')=='vline') and not(operation=='at' and obj.get('type')=='hline') and not(operation=='text' and obj.get('type') not in ('text','note'))
             button.configure(state='normal' if enabled else 'disabled')
         self.style_button.configure(state='normal' if obj and not obj.get('locked',False) else 'disabled')
         for op,button in self.flags.items():button.configure(state='normal' if obj and not(obj.get('locked',False) and op not in ('locked','visible')) else 'disabled')
@@ -127,8 +133,9 @@ class Dialog:
         if operation=='price':value=simpledialog.askfloat(tr('Цена объекта'),tr('Новая цена начальной точки'),initialvalue=self.listed[index].get('price'),parent=self.win)
         elif operation in ('visible','locked'):value=not self.listed[index].get(operation,operation=='visible')
         elif operation=='layer':value=simpledialog.askstring(tr('Слой объекта'),tr('Имя слоя'),initialvalue=self.listed[index].get('layer','Основной'),parent=self.win)
+        elif operation=='text':value=simpledialog.askstring(tr('Текст рисунка'),tr('Введите текст (до 240 символов)'),initialvalue=self.listed[index].get('text',''),parent=self.win)
         elif operation=='at':value=simpledialog.askstring(tr('Дата объекта'),tr('Новая дата начальной точки'),initialvalue=self.listed[index].get('at'),parent=self.win)
-        if operation in ('price','at','layer') and value is None:return
+        if operation in ('price','at','layer','text') and value is None:return
         if not self.valid() or identity!=chart_identity(self.app):self.reject();return
         try:
             changed=modify(self.listed,index,operation,value)
@@ -143,6 +150,14 @@ class Dialog:
         if not self.valid():self.reject();return
         if travel(self.app,self.isin,operation):
             self.listed=copy.deepcopy(self.app.user_state(self.app.instrument_cfg()).get('drawings',[]));self.render()
+
+    def show_tools(self):
+        for button in self.tool_buttons.values():button.grid_remove()
+        for _,kind,_ in GROUPS.get(self.tool_group.get(),()):self.tool_buttons[kind].grid()
+
+    def templates(self):
+        dialog=self.settings()
+        if dialog is not None:dialog.preset_box.focus_set()
 
     def settings(self):
         selected=self.objects.selection()

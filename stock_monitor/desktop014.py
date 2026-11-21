@@ -1096,18 +1096,8 @@ class Desktop014:
         self.update_ai_view()
 
     def drawing_click(self,event):
-        i=int(round(event.xdata))
-        if not 0<=i<len(self.current_df):return
-        point={'at':str(self.current_df.index[i]),'price':float(event.ydata)}
-        if not math.isfinite(point['price']) or point['price']<=0:return
-        obj={'type':self.drawing_mode,**point,'source_mode':self.chart_meta.get('source'),'currency':self.chart_meta.get('currency')}
-        if self.drawing_mode not in ('hline','vline','marker'):
-            if self.drawing_start is None:self.drawing_start=point;self.status.set(tr('Укажите вторую точку.'));return
-            obj.update(self.drawing_start);obj['end']=point
-        info=self.instrument_cfg();expected=copy.deepcopy(self.user_state(info).get('drawings',[]))
-        self.drawing_mode=None;self.drawing_start=None
-        from drawing_actions import commit
-        commit(self,info['isin'],expected,expected+[obj])
+        from drawing_tools import click
+        click(self,event)
 
     def draw_objects(self,objects,frame):
         from drawing_renderer import draw

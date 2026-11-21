@@ -28,7 +28,7 @@ class Dialog:
             ttk.Radiobutton(scopes,text=tr(text),variable=self.scope,value=text,style=p+'.Scope.TRadiobutton').pack(side='left',padx=8)
         grid=ttk.Frame(base,padding=12,style=p+'.Info.TFrame');grid.pack(fill='x')
         grid.columnconfigure(1,weight=1);self.values={};self.entries={}
-        for row,(key,label) in enumerate([('color','Цвет линии'),('width','Толщина'),('linestyle','Тип линии'),('opacity','Непрозрачность'),('fill','Заливка зоны'),('fill_opacity','Непрозрачность заливки'),('fontsize','Размер метки цены')]):
+        for row,(key,label) in enumerate([('color','Цвет линии'),('width','Толщина'),('linestyle','Тип линии'),('opacity','Непрозрачность'),('fill','Заливка фигур'),('fill_opacity','Непрозрачность заливки'),('fontsize','Размер текста и меток')]):
             ttk.Label(grid,text=tr(label),style=p+'.Drawing.TLabel',font=('Segoe UI',11)).grid(row=row,column=0,sticky='w',pady=6,padx=(0,20))
             field=ttk.Frame(grid,style=p+'.TFrame');field.grid(row=row,column=1,sticky='ew',pady=6)
             v=tk.StringVar(win);self.values[key]=v
@@ -38,8 +38,8 @@ class Dialog:
             if key in ('color','fill'):
                 ttk.Button(field,text=tr('Выбрать'),command=lambda k=key:self.color(k)).pack(side='right',padx=(7,0))
         self.label=tk.BooleanVar(win)
-        ttk.Checkbutton(grid,text=tr('Показывать цену у маркера'),variable=self.label,style=p+'.TCheckbutton').grid(row=7,column=0,columnspan=2,sticky='w',pady=8)
-        ttk.Label(base,text=tr('Непрозрачность: 0,05–1; заливка: 0–1. Метка цены применяется к маркерам. Стили не меняют свечи и торговые уровни.'),style=p+'.TLabel',font=('Segoe UI',9),wraplength=690).pack(anchor='w',pady=9)
+        ttk.Checkbutton(grid,text=tr('Показывать цены в метках'),variable=self.label,style=p+'.TCheckbutton').grid(row=7,column=0,columnspan=2,sticky='w',pady=8)
+        ttk.Label(base,text=tr('Непрозрачность: 0,05–1; заливка: 0–1. Цены в метках: маркер и Фибоначчи. Стили не меняют свечи и торговые уровни.'),style=p+'.TLabel',font=('Segoe UI',9),wraplength=690).pack(anchor='w',pady=9)
         saved=ttk.Frame(base,padding=12,style=p+'.Info.TFrame');saved.pack(fill='x',pady=(0,8))
         ttk.Label(saved,text=tr('Шаблоны стиля • эта акция'),style=p+'.Drawing.TLabel',font=('Segoe UI',11,'bold')).pack(anchor='w',pady=(0,6))
         row=ttk.Frame(saved,style=p+'.TFrame');row.pack(fill='x')

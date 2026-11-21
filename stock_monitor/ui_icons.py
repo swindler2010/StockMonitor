@@ -82,6 +82,23 @@ def photo(root, name, size=18, color=None):
             else:
                 for x,y in ((4,20),(20,4)):d.ellipse((x*4-5,y*4-5,x*4+5,y*4+5),fill=color)
         elif kind=='zone':box((3,5,21,19),width=4)
+        elif kind in ('ellipse','circle'):d.ellipse((12,20 if kind=='ellipse' else 12,84,76 if kind=='ellipse' else 84),outline=color,width=5)
+        elif kind=='triangle':line([(3,21),(12,3),(21,21),(3,21)])
+        elif kind in ('fib','fib_extension'):
+            for y in (3,7,12,17,21):line([(3,y),(21,y)],width=3)
+            if kind=='fib_extension':line([(3,20),(9,10),(14,14),(21,3)],width=4)
+        elif kind=='channel':
+            line([(3,15),(21,3)]);line([(3,21),(21,9)])
+        elif kind=='extended':line([(2,22),(22,2)])
+        elif kind in ('arrow','double_arrow'):
+            line([(3,21),(21,3),(21,10)]);line([(21,3),(14,3)])
+            if kind=='double_arrow':line([(3,14),(3,21),(10,21)])
+        elif kind in ('text','note'):
+            line([(5,4),(19,4)]);line([(12,4),(12,21)])
+            if kind=='note':box((2,2,22,22),width=2,radius=2)
+        elif kind=='measure':
+            line([(3,21),(21,3)])
+            for p in (7,11,15):line([(p,24-p),(p-2,22-p)],width=4)
         elif kind=='marker':
             d.line([(12*4,3*4),(21*4,12*4),(12*4,21*4),(3*4,12*4),(12*4,3*4)],fill=color,width=5)
     elif name=='reset':

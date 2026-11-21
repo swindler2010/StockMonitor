@@ -57,7 +57,16 @@ class DrawingDialogTests(unittest.TestCase):
             self.assertLessEqual(bottom,self.d.win.winfo_height())
             self.assertGreater(button.winfo_height(),20)
 
-    def test_six_existing_tools_and_singleton_preserve_click_modes(self):
+    def test_group_switch_exposes_fibonacci_and_shapes_without_changing_drafts(self):
+        self.d.tool_group.set('Фибоначчи');self.root.update()
+        self.assertTrue(self.d.tool_buttons['fib'].winfo_ismapped())
+        self.assertFalse(self.d.tool_buttons['hline'].winfo_ismapped())
+        self.d.tool_group.set('Фигуры и аннотации');self.root.update()
+        self.assertTrue(self.d.tool_buttons['circle'].winfo_ismapped())
+        self.assertTrue(self.d.tool_buttons['text'].winfo_ismapped())
+        self.assertFalse(self.d.tool_buttons['fib'].winfo_ismapped());self.assertFalse(self.drafts)
+
+    def test_registered_tools_and_singleton_preserve_click_modes(self):
         same=show(self.app);self.assertIs(same,self.d.win)
         self.assertEqual(set(self.d.tool_buttons),{x[1] for x in TOOLS})
         self.d.tool_buttons['trend'].invoke();self.assertEqual(self.app.drawing_mode,'trend')

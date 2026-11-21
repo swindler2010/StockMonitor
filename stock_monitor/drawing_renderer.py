@@ -5,6 +5,7 @@ import pandas as pd
 from matplotlib.patches import Rectangle
 from matplotlib.colors import to_rgba
 from drawing_styles import effective
+from drawing_extra import extra
 
 
 def draw(app,objects,frame,color):
@@ -17,6 +18,7 @@ def draw(app,objects,frame,color):
     for index,obj in enumerate(objects):
         if obj.get('visible',True) is False:continue
         if obj.get('source_mode',mode)!=mode or obj.get('currency',currency)!=currency:continue
+        if any(key in obj and obj[key]!=frame.attrs.get(key) for key in ('venue','symbol')):continue
         try:
             kind=obj['type'];price=float(obj.get('price',0));at=obj.get('at')
             if not math.isfinite(price) or price<0:continue
@@ -26,6 +28,7 @@ def draw(app,objects,frame,color):
             kw=dict(color=style['color'],linewidth=style['width'],linestyle=style['linestyle'],alpha=style['opacity'],zorder=zorder)
             def register(artist):
                 if not obj.get('locked',False):artist.set_picker(6);app.drawing_artists.append((artist,index))
+            if extra(app,obj,frame,locate,style,kw,register):continue
             if kind=='hline':register(app.ax_price.axhline(price,**kw));continue
             if not at or not frame.index[0]<=pd.Timestamp(at)<=frame.index[-1]:continue
             x=locate(at)
