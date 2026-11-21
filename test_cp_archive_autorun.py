@@ -81,6 +81,15 @@ class ArchiveAutorun(unittest.TestCase):
   with patch('requests.get',side_effect=AssertionError('saved replay only')):
    receipt=cp.service_request(f.info,f.s,changed,f.now)
   self.assertNotEqual(receipt['state'],'COMPLETED');self.assertEqual(f.s.db.execute('SELECT count(*) FROM candles').fetchone()[0],2)
+ def test_all_supported_saved_range_states_are_planned_but_policy_is_required(self):
+  f=self.f;f.s.set_setting('cp_eligibility:'+f.isin,{})
+  for state in ('GAP','UNCONFIRMED','INVALID','SOURCE_UNAVAILABLE','SOURCE_LIMITED','STALE','RECOVERING'):
+   with self.subTest(state=state):
+    f.s.set_setting(f.key,{})
+    f.s.set_setting(f.qkey,{**f.q,'state':state})
+    self.assertEqual(f.plan()['state'],'QUEUED')
+  f.s.set_setting(f.key,{});f.s.set_setting('cp_gettex_source_policy',{})
+  self.assertEqual(f.plan()['state'],'NOT_ENABLED');self.assertFalse(f.jobs())
 
 if __name__=='__main__':unittest.main()
 

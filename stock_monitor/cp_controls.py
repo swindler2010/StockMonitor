@@ -1194,8 +1194,7 @@ def automatic_repair_turn(store,info,now=None):
             except (KeyError,TypeError,ValueError):continue
         candidates={};dependencies=set()
         for problem in problems(db,isin):
-            if (problem['kind']!='archive' or not problem.get('range')
-                    or problem['state'] not in ('GAP','SOURCE_GAP','UNCONFIRMED','INVALID','SOURCE_UNAVAILABLE')):continue
+            if problem['kind']!='archive' or not problem.get('range'):continue
             meta=problem['identity'];base=problem['tf']
             if (base not in ('5m','15m','1H','1D') or meta.get('source') not in ('gettex','gettex_chart')
                     or meta.get('venue')!='GETTEX' or meta.get('currency')!='EUR'
