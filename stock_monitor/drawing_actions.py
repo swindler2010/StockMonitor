@@ -48,7 +48,7 @@ def modify(objects,index,operation,value=None):
         result[index]['layer']=value.strip()
     elif operation=='text':
         from drawing_tools import text_value
-        if result[index].get('type') not in ('text','note'):raise ValueError('У объекта нет текста')
+        if result[index].get('type') not in ('text','note','callout'):raise ValueError('У объекта нет текста')
         result[index]['text']=text_value(value)
     elif operation in ('front','back'):
         obj=result.pop(index);result.insert(len(result) if operation=='front' else 0,obj)
@@ -167,7 +167,7 @@ def context_menu(app,event,index):
     menu=tk.Menu(app.root,tearoff=False)
     for label,operation in [('Копировать','copy'),('Изменить цену','price'),('Изменить дату','at'),('Изменить текст','text'),('Удалить','delete'),('Отменить','undo'),('Повторить','redo')]:
         disabled=(operation=='price' and expected[index].get('type')=='vline') or (operation=='at' and expected[index].get('type')=='hline')
-        disabled=disabled or (operation=='text' and expected[index].get('type') not in ('text','note')) or (expected[index].get('locked',False) and operation in ('price','at','text','delete'))
+        disabled=disabled or (operation=='text' and expected[index].get('type') not in ('text','note','callout')) or (expected[index].get('locked',False) and operation in ('price','at','text','delete'))
         menu.add_command(label=tr(label),command=lambda op=operation:apply(op),state='disabled' if disabled else 'normal')
     widget=app.canvas.get_tk_widget()
     try:menu.tk_popup(widget.winfo_rootx()+int(event.x),widget.winfo_rooty()+widget.winfo_height()-int(event.y))

@@ -48,6 +48,7 @@ class Dialog:
         style.configure('Watchlist.Treeview',font=('Segoe UI',10),rowheight=37,background=palette['bg'],fieldbackground=palette['bg'],foreground=palette['text'],borderwidth=0,bordercolor=palette['bg'],lightcolor=palette['bg'],darkcolor=palette['bg'])
         style.configure('Watchlist.Treeview.Heading',font=('Segoe UI',10,'bold'),background=palette['panel'],foreground=palette['text'],padding=(5,8),bordercolor=palette['grid'],lightcolor=palette['panel'],darkcolor=palette['panel'],borderwidth=0,relief='flat')
         style.map('Watchlist.Treeview',background=[('selected','#11355b')],foreground=[('selected','#ffffff')])
+        style.layout('Watchlist.TButton',style.layout(p+'.Secondary.TButton'))
         style.configure('Watchlist.TButton',font=('Segoe UI',10),padding=(10,6))
         style.configure('Watchlist.Horizontal.TScrollbar',background=palette['grid'],troughcolor=palette['bg'],bordercolor=palette['bg'],lightcolor=palette['bg'],darkcolor=palette['bg'],arrowcolor=palette['muted'],arrowsize=10)
         win.iconphoto(False,photo(app.root,'chart',32))
@@ -90,7 +91,7 @@ class Dialog:
                                        (self.sort,['По готовности','По названию','По тикеру'],15)]:
             label='Фильтр' if variable is self.state else 'ТФ' if variable is self.tf else 'Площадка' if variable is self.venue else 'Порядок'
             ttk.Label(filters,text=tr(label)+':',style='DeskMuted.TLabel',font=('Segoe UI',9)).pack(side='left',padx=(5,0))
-            box=CanonicalCombobox(filters,textvariable=variable,values=options,state='readonly',width=width)
+            box=CanonicalCombobox(filters,textvariable=variable,values=options,state='readonly',style=p+'.TCombobox',width=width)
             box.pack(side='left',padx=3)
             if variable is self.venue:self.venue_box=box
             variable.trace_add('write',lambda *_:self.render())

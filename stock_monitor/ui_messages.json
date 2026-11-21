@@ -4586,5 +4586,131 @@
   "Сохранение избранного…": {
     "en": "Saving favourites…",
     "de": "Favoriten werden gespeichert…"
+  },
+  "Линия с углом": {
+    "en": "Trend angle",
+    "de": "Trendwinkel"
+  },
+  "Смещённый канал": {
+    "en": "Offset channel",
+    "de": "Versetzter Kanal"
+  },
+  "Спираль Фибоначчи": {
+    "en": "Fibonacci spiral",
+    "de": "Fibonacci-Spirale"
+  },
+  "Выноска": {
+    "en": "Callout",
+    "de": "Sprechblase"
+  },
+  "Иконка (звезда)": {
+    "en": "Icon (star)",
+    "de": "Symbol (Stern)"
+  },
+  "Смайл (улыбка)": {
+    "en": "Smile",
+    "de": "Smiley"
+  },
+  "Флаг": {
+    "en": "Flag",
+    "de": "Flagge"
+  },
+  "Проекция цены": {
+    "en": "Price projection",
+    "de": "Preisprojektion"
+  },
+  "Проекция времени": {
+    "en": "Time projection",
+    "de": "Zeitprojektion"
+  },
+  "Экранный угол": {
+    "en": "Screen angle",
+    "de": "Bildschirmwinkel"
+  },
+  "баров": {
+    "en": "bars",
+    "de": "Balken"
+  },
+  "ручная модель, без издержек": {
+    "en": "manual model, excluding costs",
+    "de": "manuelles Modell, ohne Kosten"
+  },
+  "Вход": {
+    "en": "Entry",
+    "de": "Einstieg"
+  },
+  "Уровни модели должны быть положительными": {
+    "en": "Model levels must be positive",
+    "de": "Modellniveaus müssen positiv sein"
+  },
+  "Стоп и цель: укажите точки правее входа": {
+    "en": "Stop and target: choose points to the right of entry",
+    "de": "Stopp und Ziel: Punkte rechts vom Einstieg wählen"
+  },
+  "Проекция цены должна быть положительной": {
+    "en": "Projected price must be positive",
+    "de": "Der projizierte Preis muss positiv sein"
+  },
+  "Проекция времени: B должна быть позже A": {
+    "en": "Time projection: B must be later than A",
+    "de": "Zeitprojektion: B muss nach A liegen"
+  },
+  "Неизвестная версия ручной разметки": {
+    "en": "Unknown manual annotation version",
+    "de": "Unbekannte Version der manuellen Zeichnung"
+  },
+  "Спираль: 3 витка, экранный масштаб": {
+    "en": "Spiral: 3 turns, screen scale",
+    "de": "Spirale: 3 Windungen, Bildschirmmaßstab"
+  },
+  "Канал: требуется линейная шкала": {
+    "en": "Channel: linear scale required",
+    "de": "Kanal: lineare Skala erforderlich"
+  },
+  "Смещённый канал: A–B — центр": {
+    "en": "Offset channel: A–B is the centre",
+    "de": "Versetzter Kanal: A–B ist die Mitte"
+  },
+  "Угол измеряется на экране и меняется при масштабе; укажите A и B.": {
+    "en": "Angle is measured on screen and changes with zoom; select A and B.",
+    "de": "Der Winkel wird am Bildschirm gemessen und ändert sich beim Zoomen; A und B wählen."
+  },
+  "A–B — центр канала; третья точка задаёт смещение границы.": {
+    "en": "A–B is the channel centre; the third point sets the boundary offset.",
+    "de": "A–B ist die Kanalmitte; der dritte Punkt legt den Randabstand fest."
+  },
+  "Спираль: укажите центр и внешний конец; 3 витка в экранном масштабе.": {
+    "en": "Spiral: select centre and outer end; 3 turns at screen scale.",
+    "de": "Spirale: Mitte und äußeres Ende wählen; 3 Windungen im Bildschirmmaßstab."
+  },
+  "Проекция цены: движение A→B, затем точка начала C. Не прогноз.": {
+    "en": "Price projection: movement A→B, then start C. Not a forecast.",
+    "de": "Preisprojektion: Bewegung A→B, dann Start C. Keine Prognose."
+  },
+  "Проекция времени: интервал A→B, затем точка C; шаг в барах, не календарных днях.": {
+    "en": "Time projection: interval A→B, then C; bar steps, not calendar days.",
+    "de": "Zeitprojektion: Intervall A→B, dann C; Balkenschritte, keine Kalendertage."
+  },
+  "Ручная Long-модель: вход, затем стоп ниже и цель выше правее входа. Без заявки.": {
+    "en": "Manual Long model: entry, lower stop and higher target to its right. No order.",
+    "de": "Manuelles Long-Modell: Einstieg, tieferer Stopp und höheres Ziel rechts davon. Kein Auftrag."
+  },
+  "Ручная Short-модель: вход, затем стоп выше и цель ниже правее входа. Без заявки.": {
+    "en": "Manual Short model: entry, higher stop and lower target to its right. No order.",
+    "de": "Manuelles Short-Modell: Einstieg, höherer Stopp und tieferes Ziel rechts davon. Kein Auftrag."
+  },
+  "Long Position": {
+    "ru": "Длинная позиция",
+    "en": "Long Position",
+    "de": "Long-Position"
+  },
+  "Short Position": {
+    "ru": "Короткая позиция",
+    "en": "Short Position",
+    "de": "Short-Position"
+  },
+  "Цена ручной модели превышает допустимый предел": {
+    "en": "Manual model price exceeds the permitted limit",
+    "de": "Der Preis des manuellen Modells überschreitet die zulässige Grenze"
   }
 }

@@ -49,7 +49,7 @@ class Dialog:
         self.group_caption=tk.StringVar(win,tr('Инструменты рисования'))
         ttk.Label(group_bar,textvariable=self.group_caption,style=p+'.Drawing.TLabel',font=('Segoe UI',12,'bold')).pack(side='left')
         self.tool_group=tk.StringVar(win,'Все группы')
-        self.group_box=CanonicalCombobox(group_bar,textvariable=self.tool_group,values=['Все группы',*GROUPS],state='readonly',width=30)
+        self.group_box=CanonicalCombobox(group_bar,textvariable=self.tool_group,values=['Все группы',*GROUPS],state='readonly',style=p+'.TCombobox',width=30)
         self.group_box.pack(side='right')
         from drawing_gallery import Gallery
         self.gallery=Gallery(self,tools)
@@ -130,7 +130,7 @@ class Dialog:
     def selection(self):
         selected=self.objects.selection();obj=self.listed[int(selected[0])] if selected else None
         for operation,button in self.actions.items():
-            enabled=obj is not None and not(obj.get('locked',False) and operation!='copy') and not(operation=='price' and obj.get('type')=='vline') and not(operation=='at' and obj.get('type')=='hline') and not(operation=='text' and obj.get('type') not in ('text','note'))
+            enabled=obj is not None and not(obj.get('locked',False) and operation!='copy') and not(operation=='price' and obj.get('type')=='vline') and not(operation=='at' and obj.get('type')=='hline') and not(operation=='text' and obj.get('type') not in ('text','note','callout'))
             button.configure(state='normal' if enabled else 'disabled')
         self.style_button.configure(state='normal' if obj and not obj.get('locked',False) else 'disabled')
         for op,button in self.flags.items():button.configure(state='normal' if obj and not(obj.get('locked',False) and op not in ('locked','visible')) else 'disabled')

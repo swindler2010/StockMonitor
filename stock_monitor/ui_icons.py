@@ -93,6 +93,37 @@ def photo(root, name, size=18, color=None):
             for r in (6,12,18):d.arc(((12-r)*4,(20-r)*4,(12+r)*4,(20+r)*4),180,360,fill=color,width=3)
         elif kind=='fib_timezones':
             for x in (2,4,7,12,20):line([(x,3),(x,21)],width=3)
+        elif kind=='angle':
+            line([(3,20),(21,20)]);line([(3,20),(21,4)])
+            d.arc((12,44,52,84),270,360,fill=color,width=3)
+        elif kind=='offset_channel':
+            for delta in (0,5,10):line([(3,12+delta),(21,2+delta)],width=3)
+        elif kind=='fib_spiral':
+            points=[]
+            for n in range(121):
+                t=n*math.pi*4/120;r=9*math.exp(.22*(t-4*math.pi));points.append((12+r*math.cos(t),12+r*math.sin(t)))
+            line(points,width=3)
+        elif kind in ('price_projection','time_projection'):
+            if kind=='price_projection':
+                line([(6,20),(6,4),(3,8)]);line([(6,4),(9,8)]);line([(14,20),(20,4)],width=3)
+            else:
+                line([(3,12),(21,12),(17,8)]);line([(21,12),(17,16)])
+                for x in (3,10,21):line([(x,4),(x,20)],width=2)
+        elif kind in ('long_position','short_position'):
+            box((3,3,21,12),outline='#25e772' if kind=='long_position' else '#ff5866',width=3)
+            box((3,12,21,21),outline='#ff5866' if kind=='long_position' else '#25e772',width=3)
+            line([(12,18),(12,6)],width=3)
+        elif kind=='callout':
+            box((3,3,21,15),radius=2,width=3);line([(8,15),(5,21),(14,15)],width=3)
+        elif kind=='icon':
+            pts=[(12+(9 if n%2==0 else 4)*math.cos(-math.pi/2+n*math.pi/5),12+(9 if n%2==0 else 4)*math.sin(-math.pi/2+n*math.pi/5)) for n in range(10)]
+            line(pts+[pts[0]],width=3)
+        elif kind=='smile':
+            d.ellipse((8,8,88,88),outline=color,width=4)
+            for x in (8,16):d.ellipse((x*4-3,8*4-3,x*4+3,8*4+3),fill=color)
+            d.arc((24,32,72,72),20,160,fill=color,width=4)
+        elif kind=='flag':
+            line([(5,22),(5,2),(21,5),(17,12),(5,10)],width=3)
         elif kind=='regression':
             for offset in (0,5,10):line([(3,12+offset),(21,2+offset)],width=3)
         elif kind=='brush':

@@ -48,7 +48,7 @@ class Dialog:
             variable=self.fields[key]=tk.StringVar(win)
             if key in ('venue','currency'):
                 values=('GETTEX','XETRA','FRA','NASDAQ','NYSE') if key=='venue' else ('EUR','USD','GBP','CHF')
-                widget=ttk.Combobox(form,textvariable=variable,values=values,state='normal',width=18,font=('Segoe UI',11),style='Instrument.TCombobox')
+                widget=ttk.Combobox(form,textvariable=variable,values=values,state='normal',width=18,font=('Segoe UI',11),style=p+'.TCombobox')
             else:widget=ttk.Entry(form,textvariable=variable,style=p+'.TEntry',font=('Segoe UI',11),width=26)
             widget.grid(row=row,column=column+1,sticky='ew',pady=3,padx=(0,22) if column==0 else 0)
         table=ttk.Frame(body,style=p+'.TFrame');table.pack(fill='both',expand=True)

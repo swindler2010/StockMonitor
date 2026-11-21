@@ -9,6 +9,7 @@ from drawing_tools import fib_levels,REGISTRY
 from drawing_complex import render as complex_render
 from drawing_fibonacci import render as fibonacci_render
 from drawing_advanced import render as advanced_render
+from drawing_projection import render as projection_render
 
 
 class DataCircle(Circle):
@@ -35,6 +36,7 @@ def extra(app,obj,frame,locate,style,kw,register):
     xy=[(locate(p['at']),float(p['price'])) for p in points]
     if any(not math.isfinite(x) or not math.isfinite(y) or y<=0 for x,y in xy):return True
     x,y=xy[0];ax=app.ax_price
+    if projection_render(kind,obj,xy,app,frame,style,kw,register):return True
     if advanced_render(kind,obj,xy,app,frame,style,kw,register):return True
     if complex_render(kind,xy,app,frame,style,kw,register):return True
     if fibonacci_render(kind,xy,app,frame,style,kw,register):return True

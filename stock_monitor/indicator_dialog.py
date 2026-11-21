@@ -68,6 +68,14 @@ def styles(root,palette):
                 ('Button.padding',{'sticky':'nsew','children':[('Button.label',{'sticky':'nsew'})]})]})])
             style.configure(prefix+'.'+name+'.TButton',foreground='#ffffff' if name=='Primary' else text,
                             padding=(12,7),font=('Segoe UI',11,'bold'))
+    # Use the same rounded field artwork for dropdowns in every design screen.
+    style.layout(prefix+'.TCombobox',[(prefix+'Field',{'sticky':'nsew','children':[
+        ('Combobox.downarrow',{'side':'right','sticky':'ns'}),
+        ('Combobox.padding',{'sticky':'nsew','children':[('Combobox.textarea',{'sticky':'nsew'})]})]})])
+    style.configure(prefix+'.TCombobox',fieldbackground=field,background=field,foreground=text,
+                    arrowcolor=text,padding=(7,4),font=('Segoe UI',10))
+    style.map(prefix+'.TCombobox',foreground=[('disabled',palette['muted']),('!disabled',text)],
+              fieldbackground=[('readonly',field)],selectbackground=[('readonly',field)],selectforeground=[('readonly',text)])
     cache[key]=(prefix,photos)
     return prefix
 
