@@ -95,6 +95,7 @@ class AutomaticRepair(unittest.TestCase):
  def test_identity_window_and_optional_tfs_never_create_permissions(self):
   for change in ('foreign_isin','currency','venue','source','outside','optional','ready','unconfirmed_identity'):
    with self.subTest(change=change):
+    self.s.set_setting(self.key,{});self.s.set_setting(self.qkey,self.q)
     spec=copy.deepcopy(self.spec);row=dict(analysis_ready=False,blockers=['blocked'],_closed_input=spec);tf='4H'
     if change=='foreign_isin':spec['isin']='OTHER'
     if change in ('currency','venue','source'):
@@ -105,7 +106,11 @@ class AutomaticRepair(unittest.TestCase):
     if change=='unconfirmed_identity':
      spec['identity']['source']='gettex_chart';q=copy.deepcopy(self.q);q['identity']=spec['identity'];self.s.set_setting(self.qkey,q)
     self.s.set_setting('cp_eligibility:'+self.isin,dict(isin=self.isin,timeframes={tf:row}))
-    self.plan();self.assertFalse(self.jobs())
+    result=self.plan()
+    # Invalid/ready calculation scopes do not prevent independent recovery of
+    # a valid saved GETTEX archive; they must not become dependency authority.
+    self.assertEqual(result['dependency_candidates'],1 if change=='unconfirmed_identity' else 0)
+    self.assertEqual(bool(self.jobs()),change!='unconfirmed_identity')
   self.assertIsNone(self.s.setting('cp_manual_risk:'+self.isin));self.assertEqual(self.s.db.execute('SELECT count(*) FROM candles').fetchone()[0],0)
  def test_actual_5m_dependency_allowed_but_foreign_benchmark_not_planned(self):
   spec=dict(self.spec,base_tf='5m');q=dict(self.q,base_tf='5m');qkey=self.qkey[:-3]+'5m';self.s.set_setting(qkey,q)

@@ -1168,7 +1168,7 @@ def automatic_repair_turn(store,info,now=None):
         active=[x for x in requests.values() if _automatic_request(x) and x.get('state') in ('QUEUED','RUNNING','WAITING')]
         if active:return dict(state='PENDING',request_id=repair_id(active[0]['problem']))
         assessment=read(db,'cp_eligibility:'+isin,{})
-        if assessment.get('isin')!=isin:return {'state':'AWAITING_ASSESSMENT'}
+        if assessment.get('isin')!=isin:assessment={}
         specs=[]
         for candidate in assessment.get('candidates',[]):
             if not candidate.get('analysis_ready'):
@@ -1192,13 +1192,23 @@ def automatic_repair_turn(store,info,now=None):
                 if pd.isna(start) or pd.isna(end) or start>end:continue
                 scopes.setdefault((digest(meta),base),set()).add((start,end))
             except (KeyError,TypeError,ValueError):continue
-        candidates={}
+        candidates={};dependencies=set()
         for problem in problems(db,isin):
             if (problem['kind']!='archive' or not problem.get('range')
                     or problem['state'] not in ('GAP','SOURCE_GAP','UNCONFIRMED','INVALID','SOURCE_UNAVAILABLE')):continue
             meta=problem['identity'];base=problem['tf']
-            for first,last in scopes.get((digest(meta),base),[]):
-                a,b=map(pd.Timestamp,problem['range']);a=max(a,first);b=min(b,last)
+            if (base not in ('5m','15m','1H','1D') or meta.get('source') not in ('gettex','gettex_chart')
+                    or meta.get('venue')!='GETTEX' or meta.get('currency')!='EUR'
+                    or meta.get('timezone')!='Europe/Berlin'):continue
+            try:
+                begin,end=map(pd.Timestamp,problem['range'])
+                if begin.tzinfo is not None or end.tzinfo is not None or pd.isna(begin) or pd.isna(end) or begin>end:continue
+            except (ValueError,TypeError):continue
+            closed=clock.tz_convert('Europe/Berlin').tz_localize(None)-STEPS[base]
+            windows=[*( (first,last,True) for first,last in scopes.get((digest(meta),base),[]) ),(begin,min(end,closed),False)]
+            for first,last,dependency in windows:
+                a,b=begin,end;a=max(a,first);b=min(b,last)
+
                 if a>b:continue
                 # One date per request keeps fingerprints and native retries
                 # bounded even when a saved missing range spans months.
@@ -1206,14 +1216,15 @@ def automatic_repair_turn(store,info,now=None):
                     left=max(a,day);right=min(b,day+pd.Timedelta(days=1)-STEPS[base])
                     if left>right:continue
                     part=dict(problem,range=[str(left),str(right)])
-                    part['id']=digest(part);candidates[repair_id(part)]=part
+                    part['id']=digest(part);target=repair_id(part);candidates[target]=part
+                    if dependency:dependencies.add(target)
         progress=read(db,key,{})
         # Timestamp cursor survives restart; no fixed first bad interval loop.
-        ordered=sorted(candidates,key=lambda k:(candidates[k]['range'][0],k),reverse=True)
+        ordered=sorted(candidates,key=lambda k:(k in dependencies,candidates[k]['range'][0],k),reverse=True)
         cursor=progress.get('cursor')
         if cursor in ordered:
             index=ordered.index(cursor)+1;ordered=ordered[index:]+ordered[:index]
-        result=dict(state='NO_ADDRESSABLE_DEPENDENCY' if not ordered else 'CHECKED',checked=0,candidates=len(ordered))
+        result=dict(state='NO_ADDRESSABLE_DEPENDENCY' if not ordered else 'CHECKED',checked=0,candidates=len(ordered),dependency_candidates=len(dependencies))
         for target in ordered[:4]:
             problem=candidates[target];progress['cursor']=target;result['checked']+=1
             try:
@@ -1235,6 +1246,8 @@ def automatic_repair_turn(store,info,now=None):
             item=_queue_repair(db,problem,clock.isoformat(),origin)
             result.update(state=item['state'],request_id=target,range=problem['range'],identity=problem['identity'],base=problem['tf'])
             break
+        for field in ('request_id','range','identity','base','reason','priority'):
+            progress.pop(field,None)
         progress.update(result,last_turn=clock.isoformat());write(db,key,progress)
         return result
 
