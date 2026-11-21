@@ -32,7 +32,7 @@ class Favorites:
         def fail(_):
             self.busy=False; self.error=True; self.refresh()
         if self.app.job(lambda:self.app.store.setting(KEY,DEFAULT),done,fail,
-                        lane='misc',key='drawing-favorites-read') is False: fail(None)
+                        lane='read',key='drawing-favorites-read') is False: fail(None)
 
     def toggle(self, kind):
         if not self.loaded or self.busy or kind not in REGISTRY: return
@@ -48,7 +48,7 @@ class Favorites:
         def done(_): self.busy=False; self.pending=False; self.refresh()
         def fail(_): self.busy=False; self.pending=True; self.error=True; self.refresh()
         if self.app.job(lambda:self.app.store.set_setting(KEY,captured),done,fail,
-                        lane='misc',key='drawing-favorites-save:'+str(self.sequence)) is False: fail(None)
+                        lane='read',key='drawing-favorites-save:'+str(self.sequence)) is False: fail(None)
 
 
 class Gallery:
@@ -140,8 +140,9 @@ class Gallery:
         self.edit.configure(text=tr('Повторить сохранение' if manager.error and manager.loaded else 'Повторить загрузку' if manager.error else 'Готово' if self.editing else 'Редактировать избранное'),
                             state='disabled' if manager.busy or not manager.loaded and not manager.error else 'normal')
         if not self.editing and not manager.error:self.edit.configure(text=tr('Редактировать избранное').replace(' ','\n',1))
-        self.quick_note.set(tr('Избранное не сохранено' if manager.pending else 'Не удалось загрузить избранное' if manager.error else 'До 12 инструментов' if self.editing else ''))
+        self.quick_note.set(tr('Сохранение избранного…' if manager.busy and manager.loaded else 'Загрузка…' if manager.busy else 'Избранное не сохранено' if manager.pending else 'Не удалось загрузить избранное' if manager.error else 'До 12 инструментов' if self.editing else ''))
         for kind,button in self.star_buttons.items():
             button.configure(text='★' if kind in manager.items else '☆',state='disabled' if manager.busy or not manager.loaded or len(manager.items)>=12 and kind not in manager.items else 'normal')
             if self.editing:button.pack(fill='x')
             else:button.pack_forget()
+

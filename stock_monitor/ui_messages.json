@@ -4582,5 +4582,9 @@
   "Не удалось загрузить избранное": {
     "en": "Could not load favourites",
     "de": "Favoriten konnten nicht geladen werden"
+  },
+  "Сохранение избранного…": {
+    "en": "Saving favourites…",
+    "de": "Favoriten werden gespeichert…"
   }
 }

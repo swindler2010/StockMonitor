@@ -82,5 +82,29 @@ class GalleryLayoutTests(unittest.TestCase):
         d.win.destroy()
         self.assertEqual(g.favorites.views,[])
 
+
+class PreferenceQueueTests(unittest.TestCase):
+    def test_53_200_background_jobs_do_not_starve_ui_settings_under_pressure(self):
+        import threading
+        from performance_dispatcher import Dispatcher
+        for count in (53,200):
+            with self.subTest(count=count):
+                block=threading.Event();started=threading.Event();loaded=threading.Event();saved=threading.Event()
+                dispatcher=Dispatcher(lambda f,v:f(v),workers=2,sample=lambda _:({'cpu':99,'ram':0},None))
+                try:
+                    with dispatcher.cv:dispatcher.pressure={'cpu':99,'ram':0}
+                    dispatcher.submit(lambda:(started.set(),block.wait(5)),lambda _:None,lambda _:None,key='occupied',lane='feed_update')
+                    self.assertTrue(started.wait(2))
+                    for n in range(count):dispatcher.submit(lambda:None,lambda _:None,lambda _:None,key='background:'+str(n),lane='misc')
+                    app=SimpleNamespace(store=SimpleNamespace(setting=lambda k,d:['fib'],set_setting=lambda k,v:saved.set()),job=dispatcher.submit)
+                    manager=Favorites(app)
+                    manager.refresh=lambda:loaded.set() if manager.loaded and not manager.busy else None
+                    manager.load();self.assertTrue(loaded.wait(2))
+                    manager.toggle('zone');self.assertTrue(saved.wait(2))
+                    self.assertFalse(block.is_set())
+                finally:
+                    dispatcher.close();block.set()
+                    for thread in [*dispatcher.threads,dispatcher.monitor]:thread.join(2)
+
 if __name__=='__main__':unittest.main()
 
