@@ -33,7 +33,7 @@ class Dialog:
         ttk.Label(base,text=tr('Рисование')+' • '+info['name'],style=p+'.TLabel',font=('Segoe UI',18,'bold')).pack(anchor='w',pady=(0,12))
         tabs=ttk.Frame(base,style=p+'.TFrame');tabs.pack(fill='x',pady=(0,10))
         self.tabs={}
-        for text,command in [('Инструменты',lambda:self.tools_box.focus_set()),('Объекты',lambda:self.objects.focus_set()),('Шаблоны',self.templates),('Настройки',self.settings)]:
+        for text,command in [('Инструменты',lambda:self.tools_box.focus_set()),('Объекты',lambda:self.objects.focus_set()),('Шаблоны',self.templates),('Калькулятор позиции',self.calculator),('Настройки',self.settings)]:
             b=ttk.Button(tabs,text=tr(text),style=p+'.Secondary.TButton',command=command);b.pack(side='left',fill='x',expand=True,padx=(0,7));self.tabs[text]=b
         self.tabs['Инструменты'].configure(style=p+'.Primary.TButton')
         self.tools_box=tools=ttk.Frame(base,padding=12,style=p+'.Info.TFrame');tools.pack(fill='x',pady=(0,10))
@@ -49,7 +49,7 @@ class Dialog:
             for column,(label,kind,count) in enumerate(items):
                 button=ttk.Button(row,text=tr(label).replace(' ','\n',1),image=photo(app.root,'drawing_'+kind,24,palette['text']),compound='top',style=p+'.Tool.TButton',command=lambda k=kind:self.choose(k))
                 button.grid(row=0,column=column,sticky='nsew',padx=3);button.grid_remove();self.tool_buttons[kind]=button
-                app.tooltip(button,tr(label)+f' · {count} '+tr('точки'))
+                app.tooltip(button,tr(label)+(f' · {count} '+tr('точки') if count else ' · '+tr('Произвольное число точек, максимум 256')))
         self.tool_group.trace_add('write',lambda *_:self.show_tools());self.show_tools()
         detail=ttk.Frame(base,padding=12,style=p+'.Info.TFrame');detail.pack(fill='x',pady=(0,10))
         detail_head=ttk.Frame(detail,style=p+'.TFrame');detail_head.pack(fill='x')
@@ -155,9 +155,13 @@ class Dialog:
             self.listed=copy.deepcopy(self.app.user_state(self.app.instrument_cfg()).get('drawings',[]));self.render()
 
     def show_tools(self):
-        self.group_caption.set(tr('Ганн: 1×1 задаётся точками A→B') if self.tool_group.get()=='Ганн' else tr('Ручная разметка — не сигнал') if self.tool_group.get()=='Паттерны и волны' else tr('Фибоначчи: ручные опоры, не торговый сигнал') if self.tool_group.get()=='Фибоначчи' else tr('Инструменты рисования'))
+        self.group_caption.set(tr('Ганн: 1×1 задаётся точками A→B') if self.tool_group.get()=='Ганн' else tr('Ручная разметка — не сигнал') if self.tool_group.get()=='Паттерны и волны' else tr('Фибоначчи: ручные опоры, не торговый сигнал') if self.tool_group.get()=='Фибоначчи' else tr('Кисть и фигуры: Esc — отмена') if self.tool_group.get()=='Свободная разметка' else tr('Инструменты рисования'))
         for button in self.tool_buttons.values():button.grid_remove()
         for _,kind,_ in GROUPS.get(self.tool_group.get(),()):self.tool_buttons[kind].grid()
+
+    def calculator(self):
+        from position_calculator import show
+        return show(self.app)
 
     def templates(self):
         dialog=self.settings()

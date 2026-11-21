@@ -7,7 +7,9 @@ from drawing_actions import chart_identity,commit
 from drawing_complex import PATTERNS
 
 GROUPS={
-    'Линии тренда':(('Горизонталь','hline',1),('Вертикаль','vline',1),('Трендовая линия','trend',2),('Луч','ray',2),('Расширенная линия','extended',2),('Параллельный канал','channel',3)),
+    'Линии тренда':(('Горизонталь','hline',1),('Вертикаль','vline',1),('Трендовая линия','trend',2),('Луч','ray',2),('Расширенная линия','extended',2)),
+    'Каналы':(('Параллельный канал','channel',3),('Регрессионный канал','regression',2)),
+    'Свободная разметка':(('Кисть','brush',0),('Ломаная','polyline',0),('Многоугольник','polygon',0)),
     'Фибоначчи':(('Коррекция Фибоначчи','fib',2),('Расширение Фибоначчи','fib_extension',3),('Веер Фибоначчи','fib_fan',2),('Дуги Фибоначчи','fib_arcs',2),('Временные зоны Фибоначчи','fib_timezones',2)),
     'Ганн':(('Веер Ганна','gann_fan',2),('Сетка Ганна','gann_box',2),('Квадрат Ганна','gann_square',2)),
     'Паттерны и волны':(('ABCD (разметка)','abcd',4),('XABCD (разметка)','xabcd',5),('Импульс Эллиотта','elliott_impulse',6),('Коррекция Эллиотта','elliott_correction',4),('Треугольник Эллиотта','elliott_triangle',6),('Циклы','cycles',2)),
@@ -25,7 +27,9 @@ def text_value(value):
 
 
 def build(kind,points,text=None):
-    if kind not in REGISTRY or len(points)!=REGISTRY[kind]['points']:raise ValueError('Неверное число точек')
+    if kind not in REGISTRY:raise ValueError('Неизвестный инструмент')
+    count=REGISTRY[kind]['points']
+    if (count and len(points)!=count) or (not count and not (3 if kind=='polygon' else 2)<=len(points)<=256):raise ValueError('Неверное число точек')
     points=copy.deepcopy(points)
     for p in points:
         if set(p)!={'at','price'} or isinstance(p['price'],bool) or not math.isfinite(float(p['price'])) or float(p['price'])<=0 or pd.isna(pd.Timestamp(p['at'])):raise ValueError('Неверная точка')
@@ -35,6 +39,7 @@ def build(kind,points,text=None):
         if dx==0 and dy==0:raise ValueError('Точки должны различаться')
         if kind in ('zone','ellipse') and (dx==0 or dy==0):raise ValueError('Фигуре нужны ширина и высота')
         if kind in ('fib','fib_extension') and (dx==0 or dy==0):raise ValueError('Фибоначчи: нужны разные время и цена')
+        if kind=='regression' and dx<=0:raise ValueError('Каналу нужны две разные отметки времени')
         if kind=='channel' and dx==0:raise ValueError('Каналу нужны две разные отметки времени')
         if kind.startswith('gann_') and (dx<=0 or dy==0):raise ValueError('Ганн: вторая точка должна быть позже первой и иметь другую цену')
         if kind in ('fib_fan','fib_arcs') and (dx<=0 or dy==0):raise ValueError('Фибоначчи: вторая точка должна быть позже первой и иметь другую цену')
@@ -44,8 +49,11 @@ def build(kind,points,text=None):
         if len(points)==3:
             c=points[2];cx=(pd.Timestamp(c['at'])-pd.Timestamp(a['at'])).total_seconds();cy=c['price']-a['price']
             if kind in ('triangle','channel') and abs(dx*cy-dy*cx)<=1e-12:raise ValueError('Третья точка должна находиться вне первой линии')
+    if kind=='polygon':
+        a,b=points[:2];dx=(pd.Timestamp(b['at'])-pd.Timestamp(a['at'])).total_seconds();dy=b['price']-a['price']
+        if not any(abs(dx*(p['price']-a['price'])-dy*(pd.Timestamp(p['at'])-pd.Timestamp(a['at'])).total_seconds())>1e-9 for p in points[2:]):raise ValueError('Многоугольнику нужны три неколлинеарные вершины')
     obj=dict(type=kind,**points[0])
-    if len(points)>3:obj['vertices']=points
+    if len(points)>3 or kind in ('brush','polygon','polyline'):obj['vertices']=points
     else:
         if len(points)>1:obj['end']=points[1]
         if len(points)>2:obj['third']=points[2]
@@ -62,11 +70,19 @@ def fib_levels(a,b,c=None):
 
 def start(app,kind):
     if kind not in REGISTRY:raise ValueError('Неизвестный инструмент')
+    from drawing_freeform import clear_preview
+    clear_preview(app)
+    app._drawing_generation=getattr(app,'_drawing_generation',0)+1
+    if getattr(app,'measuring',False):app.clear_measurement()
     app.drawing_mode=kind;app.drawing_start=None;app._drawing_capture=None
     count=REGISTRY[kind]['points']
+    if kind in ('brush','polygon','polyline'):
+        from drawing_freeform import bind_escape
+        bind_escape(app)
     hints={'circle':'Укажите центр круга, затем точку радиуса.', 'fib':'Укажите начало и конец движения; 0 — у конца, 1 — у начала.',
            'fib_extension':'Укажите начало движения, конец движения и конец коррекции.', 'channel':'Укажите две точки первой линии и точку параллельной границы.'}
     hints.update(fib_fan='Веер: укажите начало и конец движения слева направо; уровни по линейной цене.',fib_arcs='Дуги: укажите A и B слева направо. Центр B; радиус зависит от масштаба экрана.',fib_timezones='Временные зоны: укажите начало и конец базового интервала слева направо. Шаг — бары текущего ТФ.')
+    hints.update(brush='Кисть: удерживайте левую кнопку мыши; отпускание завершает штрих. Esc — отмена.',polygon='Многоугольник: клики добавляют вершины; двойной клик завершает. Esc — отмена.',polyline='Ломаная: клики добавляют вершины; двойной клик завершает. Esc — отмена.',regression='Регрессия: укажите начало и конец участка. Снимок по close, канал ±2σ; не сигнал.')
     if kind.startswith('gann_'):hints[kind]='Ганн: укажите две точки линии 1×1 слева направо. Масштаб задаётся этими точками.'
     if kind in PATTERNS:hints[kind]='Ручная разметка, не проверка паттерна. Укажите по времени: '+', '.join(PATTERNS[kind])+'.'
     app.status.set(tr(hints.get(kind, 'Укажите точку на графике.' if count==1 else f'Укажите {count} точки на графике.')))
@@ -90,6 +106,31 @@ def click(app,event):
         i=int(round(event.xdata));price=float(event.ydata)
         if not 0<=i<len(app.current_df) or price<=0:return
     except (TypeError,ValueError,OverflowError):return
+    capture=capture_for(app,kind)
+    if capture is None:return
+    capture['points'].append(dict(at=str(app.current_df.index[i]),price=price))
+    if len(capture['points'])<REGISTRY[kind]['points']:
+        app.drawing_start=capture['points'][0];app.status.set(tr('Укажите следующую точку')+f" ({len(capture['points'])+1}/{REGISTRY[kind]['points']}).");return
+    if kind=='regression':
+        from drawing_regression import submit
+        submit(app,capture);return
+    text=None
+    if kind in ('text','note'):
+        from tkinter.simpledialog import askstring
+        text=askstring(tr('Текст рисунка'),tr('Введите текст (до 240 символов)'),parent=app.root)
+        if text is None:cancel(app,'Рисование отменено.');return
+    if not current(app,capture):cancel(app,'Контекст графика изменился. Рисунок не добавлен.');return
+    try:obj=build(kind,capture['points'],text)
+    except (ValueError,TypeError) as error:cancel(app,str(error));return
+    obj.update(source_mode=app.chart_meta.get('source'),currency=app.chart_meta.get('currency'))
+    for key in ('venue','symbol'):
+        if app.chart_meta.get(key):obj[key]=app.chart_meta[key]
+    if commit(app,capture['isin'],capture['expected'],capture['expected']+[obj]):
+        app.drawing_mode=None;app.drawing_start=None;app._drawing_capture=None
+    else:cancel(app,'Разметка изменилась. Рисунок не добавлен.')
+
+
+def capture_for(app,kind):
     info=app.instrument_cfg();capture=getattr(app,'_drawing_capture',None)
     if capture is None:
         if hasattr(app,'_accepted_trading_chart'):
@@ -105,20 +146,4 @@ def click(app,event):
         capture=dict(kind=kind,isin=info['isin'],meta=chart_identity(app),dates=app.current_df.index.copy(),expected=copy.deepcopy(app.user_state(info).get('drawings',[])),points=[])
         app._drawing_capture=capture
     if capture['kind']!=kind or not current(app,capture):cancel(app,'График, акция или разметка изменились. Выберите инструмент рисования заново.');return
-    capture['points'].append(dict(at=str(app.current_df.index[i]),price=price))
-    if len(capture['points'])<REGISTRY[kind]['points']:
-        app.drawing_start=capture['points'][0];app.status.set(tr('Укажите следующую точку')+f" ({len(capture['points'])+1}/{REGISTRY[kind]['points']}).");return
-    text=None
-    if kind in ('text','note'):
-        from tkinter.simpledialog import askstring
-        text=askstring(tr('Текст рисунка'),tr('Введите текст (до 240 символов)'),parent=app.root)
-        if text is None:cancel(app,'Рисование отменено.');return
-    if not current(app,capture):cancel(app,'Контекст графика изменился. Рисунок не добавлен.');return
-    try:obj=build(kind,capture['points'],text)
-    except (ValueError,TypeError) as error:cancel(app,str(error));return
-    obj.update(source_mode=app.chart_meta.get('source'),currency=app.chart_meta.get('currency'))
-    for key in ('venue','symbol'):
-        if app.chart_meta.get(key):obj[key]=app.chart_meta[key]
-    if commit(app,capture['isin'],capture['expected'],capture['expected']+[obj]):
-        app.drawing_mode=None;app.drawing_start=None;app._drawing_capture=None
-    else:cancel(app,'Разметка изменилась. Рисунок не добавлен.')
+    return capture

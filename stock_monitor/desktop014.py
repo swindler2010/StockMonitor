@@ -995,6 +995,8 @@ class Desktop014:
         self._latest_motion=None
 
     def _process_motion(self,event):
+        from drawing_freeform import motion
+        if motion(self,event):return
         if getattr(self,'_drawing_drag',None) is not None:return
         if getattr(self,'measure_start',None) is not None:
             if event.inaxes==self.ax_price and event.xdata is not None and event.ydata is not None:
@@ -1024,6 +1026,8 @@ class Desktop014:
         draw_localized(self)
 
     def on_press(self,event):
+        from drawing_freeform import press
+        if press(self,event):return
         if getattr(self,'measuring',False) and event.button==1 and event.inaxes==self.ax_price and event.xdata is not None and self.current_df is not None and len(self.current_df):
             self.clear_cursor();self.drag=None
             self.measure_start=(max(0,min(len(self.current_df)-1,round(event.xdata))),event.ydata)
@@ -1043,6 +1047,8 @@ class Desktop014:
         self.clear_cursor();b=self.ax_price.bbox;self.drag=(event.x,event.y,self.ax_price.get_xlim(),self.ax_price.get_ylim(),b.width,b.height)
 
     def on_release(self,event):
+        from drawing_freeform import release
+        if release(self,event):return
         from drawing_actions import finish_drag
         if finish_drag(self,event):return
         if getattr(self,"_motion_timer",None) is not None:

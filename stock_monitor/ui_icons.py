@@ -93,6 +93,13 @@ def photo(root, name, size=18, color=None):
             for r in (6,12,18):d.arc(((12-r)*4,(20-r)*4,(12+r)*4,(20+r)*4),180,360,fill=color,width=3)
         elif kind=='fib_timezones':
             for x in (2,4,7,12,20):line([(x,3),(x,21)],width=3)
+        elif kind=='regression':
+            for offset in (0,5,10):line([(3,12+offset),(21,2+offset)],width=3)
+        elif kind=='brush':
+            line([(2,18),(6,5),(11,19),(16,6),(22,11)],width=4)
+        elif kind in ('polygon','polyline'):
+            points=[(3,18),(7,4),(17,6),(22,18),(12,13)]
+            line(points+([points[0]] if kind=='polygon' else []),width=4)
         elif kind=='channel':
             line([(3,15),(21,3)]);line([(3,21),(21,9)])
         elif kind=='extended':line([(2,22),(22,2)])

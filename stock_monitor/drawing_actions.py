@@ -73,6 +73,7 @@ def modify(objects,index,operation,value=None):
             if key in result[index]:result[index][key]['at']=str(pd.Timestamp(result[index][key]['at'])+delta)
         for point in result[index].get('vertices',[]):point['at']=str(pd.Timestamp(point['at'])+delta)
     else:raise ValueError('UNKNOWN_OPERATION')
+    if operation in ('price','at') and result[index].get('type')=='regression':result[index]['regression_transformed']=True
     return result
 
 

@@ -8,6 +8,7 @@ from matplotlib.colors import to_rgba
 from drawing_tools import fib_levels,REGISTRY
 from drawing_complex import render as complex_render
 from drawing_fibonacci import render as fibonacci_render
+from drawing_advanced import render as advanced_render
 
 
 class DataCircle(Circle):
@@ -27,12 +28,14 @@ def extra(app,obj,frame,locate,style,kw,register):
     if kind not in REGISTRY or kind in ('hline','vline','trend','ray','zone','marker'):return False
     points=obj['vertices'] if 'vertices' in obj else [obj]+[obj[k] for k in ('end','third') if k in obj]
     if not isinstance(points,list):return True
-    if len(points)!=REGISTRY[kind]['points']:return True
+    count=REGISTRY[kind]['points']
+    if (count and len(points)!=count) or (not count and not (3 if kind=='polygon' else 2)<=len(points)<=256):return True
     if 'vertices' in obj and any(points[0].get(key)!=obj.get(key) for key in ('at','price')):return True
     if any(not frame.index[0]<=pd.Timestamp(p['at'])<=frame.index[-1] for p in points):return True
     xy=[(locate(p['at']),float(p['price'])) for p in points]
     if any(not math.isfinite(x) or not math.isfinite(y) or y<=0 for x,y in xy):return True
     x,y=xy[0];ax=app.ax_price
+    if advanced_render(kind,obj,xy,app,frame,style,kw,register):return True
     if complex_render(kind,xy,app,frame,style,kw,register):return True
     if fibonacci_render(kind,xy,app,frame,style,kw,register):return True
     def line(xs,ys,**overrides):

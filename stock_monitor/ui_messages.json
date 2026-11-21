@@ -240,8 +240,8 @@
     "de": "Kurs"
   },
   "Количество": {
-    "en": "Quantity",
-    "de": "Anzahl"
+    "de": "Menge",
+    "en": "Quantity"
   },
   "Валюта": {
     "en": "Currency",
@@ -4338,5 +4338,221 @@
   "Позиции и измерения": {
     "de": "Positionen und Messungen",
     "en": "Positions and measurements"
+  },
+  "Каналы": {
+    "de": "Kanäle",
+    "en": "Channels"
+  },
+  "Свободная разметка": {
+    "de": "Freies Zeichnen",
+    "en": "Freehand drawing"
+  },
+  "Регрессионный канал": {
+    "de": "Regressionskanal",
+    "en": "Regression channel"
+  },
+  "Кисть": {
+    "de": "Pinsel",
+    "en": "Brush"
+  },
+  "Ломаная": {
+    "de": "Polylinie",
+    "en": "Polyline"
+  },
+  "Многоугольник": {
+    "de": "Polygon",
+    "en": "Polygon"
+  },
+  "Калькулятор позиции": {
+    "de": "Positionsrechner",
+    "en": "Position calculator"
+  },
+  "Произвольное число точек, максимум 256": {
+    "de": "Variable Punktzahl, maximal 256",
+    "en": "Variable point count, maximum 256"
+  },
+  "Достигнут предел 256 точек. Завершите фигуру или нажмите Esc.": {
+    "de": "Limit von 256 Punkten erreicht. Figur abschließen oder Esc drücken.",
+    "en": "256-point limit reached. Finish the shape or press Esc."
+  },
+  "Многоугольнику нужны три неколлинеарные вершины": {
+    "de": "Das Polygon benötigt drei nicht kollineare Eckpunkte",
+    "en": "Polygon requires three non-collinear vertices"
+  },
+  "Кисть: удерживайте левую кнопку мыши; отпускание завершает штрих. Esc — отмена.": {
+    "de": "Pinsel: linke Maustaste halten; Loslassen beendet den Strich. Esc bricht ab.",
+    "en": "Brush: hold the left mouse button; release ends the stroke. Esc cancels."
+  },
+  "Многоугольник: клики добавляют вершины; двойной клик завершает. Esc — отмена.": {
+    "de": "Polygon: Klicks setzen Eckpunkte; Doppelklick beendet. Esc bricht ab.",
+    "en": "Polygon: clicks add vertices; double-click finishes. Esc cancels."
+  },
+  "Ломаная: клики добавляют вершины; двойной клик завершает. Esc — отмена.": {
+    "de": "Polylinie: Klicks setzen Punkte; Doppelklick beendet. Esc bricht ab.",
+    "en": "Polyline: clicks add vertices; double-click finishes. Esc cancels."
+  },
+  "Регрессия: укажите начало и конец участка. Снимок по close, канал ±2σ; не сигнал.": {
+    "de": "Regression: Anfang und Ende wählen. Schlusskurs-Schnappschuss, Kanal ±2σ; kein Signal.",
+    "en": "Regression: select interval start and end. Close-price snapshot, channel ±2σ; not a signal."
+  },
+  "Регрессия: требуется от 3 до 5000 корректных цен закрытия": {
+    "de": "Regression: 3 bis 5000 gültige Schlusskurse erforderlich",
+    "en": "Regression: 3 to 5000 valid closing prices required"
+  },
+  "Регрессия: канал выходит за допустимые цены": {
+    "de": "Regression: Kanal liegt außerhalb gültiger Preise",
+    "en": "Regression: channel exceeds valid prices"
+  },
+  "Расчёт снимка регрессии…": {
+    "de": "Regressions-Schnappschuss wird berechnet…",
+    "en": "Calculating regression snapshot…"
+  },
+  "Цены изменились. Повторите построение регрессии.": {
+    "de": "Kurse geändert. Regression erneut zeichnen.",
+    "en": "Prices changed. Draw the regression again."
+  },
+  "Очередь занята. Повторите построение регрессии.": {
+    "de": "Warteschlange belegt. Regression erneut zeichnen.",
+    "en": "Queue busy. Draw the regression again."
+  },
+  "Нет снимка регрессии": {
+    "de": "Kein Regressions-Schnappschuss",
+    "en": "No regression snapshot"
+  },
+  "Регрессия: требуется линейная шкала": {
+    "de": "Regression: lineare Skalierung erforderlich",
+    "en": "Regression: linear scale required"
+  },
+  "Снимок регрессии ±2σ": {
+    "de": "Regressions-Schnappschuss ±2σ",
+    "en": "Regression snapshot ±2σ"
+  },
+  "Позиционный калькулятор — модель": {
+    "de": "Positionsrechner — Modell",
+    "en": "Position calculator — model"
+  },
+  "Позиционный калькулятор": {
+    "de": "Positionsrechner",
+    "en": "Position calculator"
+  },
+  "Только ручная модель. Примеры не являются котировкой. Счёт, риск стратегии и заявки не изменяются.": {
+    "de": "Nur manuelles Modell. Beispiele sind keine Kurse. Konto, Strategierisiko und Aufträge bleiben unverändert.",
+    "en": "Manual model only. Examples are not quotes. Account, strategy risk and orders are unchanged."
+  },
+  "Направление модели": {
+    "de": "Modellrichtung",
+    "en": "Model direction"
+  },
+  "Покупка (Long)": {
+    "de": "Kauf (Long)",
+    "en": "Buy (Long)"
+  },
+  "Продажа (Short)": {
+    "de": "Verkauf (Short)",
+    "en": "Sell (Short)"
+  },
+  "Валюта всех сумм и цен": {
+    "de": "Währung aller Beträge und Preise",
+    "en": "Currency of all amounts and prices"
+  },
+  "Модельный капитал": {
+    "de": "Modellkapital",
+    "en": "Model capital"
+  },
+  "Доступные средства модели": {
+    "de": "Verfügbares Modellkapital",
+    "en": "Available model funds"
+  },
+  "Риск модели, %": {
+    "de": "Modellrisiko, %",
+    "en": "Model risk, %"
+  },
+  "Цена входа": {
+    "de": "Einstiegskurs",
+    "en": "Entry price"
+  },
+  "Цена стопа": {
+    "de": "Stoppkurs",
+    "en": "Stop price"
+  },
+  "Цена цели": {
+    "de": "Zielkurs",
+    "en": "Target price"
+  },
+  "Шаг количества": {
+    "de": "Mengenschritt",
+    "en": "Quantity step"
+  },
+  "Издержки полного цикла на акцию": {
+    "de": "Gesamtkosten je Aktie",
+    "en": "Round-trip costs per share"
+  },
+  "Фиксированные издержки полного цикла": {
+    "de": "Fixe Gesamtkosten",
+    "en": "Fixed round-trip costs"
+  },
+  "Риск / бюджет": {
+    "de": "Risiko / Budget",
+    "en": "Risk / budget"
+  },
+  "Результат у цели после издержек": {
+    "de": "Ergebnis am Ziel nach Kosten",
+    "en": "Result at target after costs"
+  },
+  "Прибыль / риск": {
+    "de": "Gewinn / Risiko",
+    "en": "Reward / risk"
+  },
+  "Номинал / резерв средств": {
+    "de": "Nominal / Kapitalreserve",
+    "en": "Notional / cash reserve"
+  },
+  "Издержки модели": {
+    "de": "Modellkosten",
+    "en": "Model costs"
+  },
+  "Рассчитать модель": {
+    "de": "Modell berechnen",
+    "en": "Calculate model"
+  },
+  "Введите конечные числа в пределах модели": {
+    "de": "Endliche Zahlen innerhalb der Modellgrenzen eingeben",
+    "en": "Enter finite numbers within model limits"
+  },
+  "Неверное направление модели": {
+    "de": "Ungültige Modellrichtung",
+    "en": "Invalid model direction"
+  },
+  "Проверьте положительные цены, капитал, шаг и риск 0–100%": {
+    "de": "Positive Kurse, Kapital, Mengenschritt und Risiko 0–100% prüfen",
+    "en": "Check positive prices, capital, step and risk 0–100%"
+  },
+  "Long: стоп < вход < цель. Short: цель < вход < стоп.": {
+    "de": "Long: Stopp < Einstieg < Ziel. Short: Ziel < Einstieg < Stopp.",
+    "en": "Long: stop < entry < target. Short: target < entry < stop."
+  },
+  "Средств или бюджета риска недостаточно для одного шага количества.": {
+    "de": "Kapital oder Risikobudget reicht nicht für einen Mengenschritt.",
+    "en": "Funds or risk budget do not cover one quantity step."
+  },
+  "Short — только модель: наличие акций, заём и разрешение торговли не проверяются.": {
+    "de": "Short ist nur ein Modell: Bestand, Leihe und Handelsfreigabe werden nicht geprüft.",
+    "en": "Short is a model only: holdings, borrowing and trading eligibility are not checked."
+  },
+  "Смещённый снимок регрессии ±2σ": {
+    "de": "Verschobener Regressions-Schnappschuss ±2σ",
+    "en": "Shifted regression snapshot ±2σ"
+  },
+  "Без разделителей тысяч. Точка или запятая — десятичный знак.": {
+    "de": "Keine Tausendertrennzeichen. Punkt oder Komma als Dezimalzeichen.",
+    "en": "No thousands separators. Dot or comma is the decimal mark."
+  },
+  "Параметры изменены. Нажмите «Рассчитать модель».": {
+    "de": "Parameter geändert. „Modell berechnen“ drücken.",
+    "en": "Parameters changed. Press Calculate model."
+  },
+  "Кисть и фигуры: Esc — отмена": {
+    "de": "Pinsel und Formen: Esc bricht ab",
+    "en": "Brush and shapes: Esc cancels"
   }
 }

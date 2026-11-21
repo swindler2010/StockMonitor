@@ -32,7 +32,7 @@ class ExtendedDrawingTests(unittest.TestCase):
         objects=[]
         for kind,definition in REGISTRY.items():
             all_points=self.points+[dict(at=str(self.frame.index[i]),price=price) for i,price in [(20,130),(25,115),(30,135)]]
-            obj=build(kind,all_points[:definition['points']],text='$ literal <text>')
+            obj=build(kind,all_points[:definition['points'] or 3],text='$ literal <text>')
             objects.append({**obj,'source_mode':'gettex','currency':'EUR','venue':'GETTEX','symbol':'ABC'})
         original=self.frame.copy(deep=True)
         self.app.ax_price=Figure(figsize=(10,5)).subplots();self.app.ax_price.set(xlim=(0,40),ylim=(80,160))
