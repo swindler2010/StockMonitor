@@ -279,7 +279,7 @@ def _reviewed_partition_plan(db,job,inputs,now,policy):
  from cp_reconciliation import _observation_current,SOURCE_POLICY
  from cp_controls import read
  a=pd.Timestamp(job['first']);meta=job['identity'];obs=job.get('observation') or {}
- reviewed=bool(job['tf']=='15m' and obs.get('result') in ('PRESENT','DIFFERENT') and _observation_current(job,inputs))
+ reviewed=bool(job['tf'] in ('5m','15m') and obs.get('result') in ('PRESENT','DIFFERENT') and _observation_current(job,inputs))
  sp=read(db,SOURCE_POLICY,{})
  reviewed=reviewed and sp.get('approved') is True and sp.get('version')==1 and sp.get('scope')=='registered_stocks' and sp.get('exclusive_venue')=='GETTEX'
  windows=[(a-pd.Timedelta(minutes=offset),a+pd.Timedelta(minutes=width-offset)) for width in (30,45,60) for offset in range(0,width,15)]
@@ -323,7 +323,10 @@ def _reviewed_partition_plan(db,job,inputs,now,policy):
      first=str(left),end=str(end),job_id=job['id'],policy_digest=digest(policy),input_fingerprint=inputs['fingerprint'],
      before=native,source=source,source_digest=digest(source),created_at=now.isoformat(),relocations=moves,
      native_trade_partition=partition,zero_observations_corroborated=True,origin='Current visual discrepancy; complete official tape uniquely reproduces all original OHLCV with bounded native timestamp delay; conserved 5m/15m window')
-  except (ValueError,KeyError,TypeError):continue
+  except ValueError as error:
+   if str(error) in ('RETIME_OTHER_CURRENT_TV_REFERENCE_CONFLICT','RETIME_CURRENT_TV_BOUND_CONTEXT_CHANGED','RETIME_VISUAL_REFERENCE_WINDOW_TOO_DENSE'):raise
+   continue
+  except (KeyError,TypeError):continue
  return None
 
 

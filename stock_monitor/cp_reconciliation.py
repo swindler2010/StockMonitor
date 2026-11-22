@@ -595,7 +595,9 @@ def _native_empty_pending(db,isin,limit):
       AND json_extract(value,'$.identity.currency')='EUR'
       AND json_extract(value,'$.status') IN ('AWAITING_USER','AWAITING_SOURCE')
       AND ((json_extract(value,'$.finding.state') IN ('SOURCE_TIMEBASE_UNCONFIRMED','GAP','NATIVE_ROWS_PRESENT')
-        AND COALESCE(json_extract(value,'$.native_empty_algorithm'),0)<?)
+        AND (COALESCE(json_extract(value,'$.native_empty_algorithm'),0)<?
+          OR (json_extract(value,'$.tf')='5m' AND json_extract(value,'$.observation.result') IN ('PRESENT','DIFFERENT')
+            AND COALESCE(json_extract(value,'$.native_empty_algorithm'),0)<9)))
         OR (json_extract(value,'$.tf')='5m' AND json_extract(value,'$.first')=json_extract(value,'$.last')
           AND json_extract(value,'$.finding.state')='SOURCE_DISCREPANCY'
           AND json_extract(value,'$.observation.result')='DIFFERENT'
@@ -661,7 +663,7 @@ def turn(store, info, now=None, native_empty_only=False):
             seeded=[]
             for _,raw in _native_empty_pending(db,isin,NATIVE_EMPTY_LIMIT):
                 job=json.loads(raw);old=dict(job)
-                job.update(native_empty_algorithm=NATIVE_EMPTY_ALGORITHM,positive_price_algorithm=1,status='QUEUED',next_check=clock.isoformat())
+                job.update(native_empty_algorithm=9 if job['tf']=='5m' and (job.get('observation') or {}).get('result') in ('PRESENT','DIFFERENT') else NATIVE_EMPTY_ALGORITHM,positive_price_algorithm=1,status='QUEUED',next_check=clock.isoformat())
                 _save_job(db,job,old);seeded.append((key(job),json.dumps(job,ensure_ascii=False)))
             progress['native_empty_batch_at']=clock.isoformat()
         else:seeded=_seed_official_empty_checks(db,info,clock,progress,max(0,INGEST_LIMIT-segments))
