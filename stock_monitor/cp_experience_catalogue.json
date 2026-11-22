@@ -4,6 +4,32 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "official_empty_confirmation_supersedes_stale_archive_diagnostic",
+      "title": "Подтверждённый GETTEX-пропуск не возвращается в активные ошибки старого DQ",
+      "sources": [
+        "cp_problem_view.native_empty_resolution",
+        "cp_controls._official_empty_problem_current",
+        "revision_watcher.retime_current"
+      ],
+      "states": [
+        "RESOLVED_NATIVE",
+        "NO_TRADES",
+        "UNCONFIRMED"
+      ],
+      "steps": [
+        "Не повторять ручную сверку TV для уже доказанного официальным источником пустого интервала. Терминальной строки RESOLVED_NATIVE самой по себе недостаточно.",
+        "В readonly-транзакции проверить тот же ISIN/source/venue/currency/TF/одиночный диапазон, текущий APPLIED VERIFIED_NATIVE_EMPTY receipt, полные парные публикации, текущую политику и реальные строки через существующий валидатор.",
+        "Подтверждённый интервал сохранить в общем реестре, убрать только из активного списка и показать в разделе «Подтверждено GETTEX». DQ/OHLCV/разрешения не переписывать.",
+        "Если политика отозвана, источник/родной ряд изменился или DQ INVALID — оставить/вернуть активную проблему. TV-статус показывать отдельно, не выдавать официальный receipt за проведённую TV-сверку."
+      ],
+      "evidence": [
+        "test_cp_problem_view.ProblemEvidenceTests.test_live_official_empty_receipt_resolves_stale_dq_and_changed_inputs_reopen",
+        "Readonly Windows TEST reproduction: Apple 10.11.2026 22:45 and Broadcom 16.11.2026 22:45 had UNCONFIRMED while the existing official-empty validator returned true."
+      ],
+      "limits": "Только отображение и повторная проверка существующего подтверждения. Нет новых свечей, обхода freshness/торговых защит или разрешения по одному статусу очереди. Весь запрос всех акций остаётся IN_PROGRESS.",
+      "status": "7 affected UI scenarios PASS /2.295s; Windows verification pending"
+    },
+    {
       "id": "current_tv_acceptance_separate_from_active_errors",
       "title": "Действующая сверка TV хранится в реестре, а не в активных ошибках",
       "sources": [

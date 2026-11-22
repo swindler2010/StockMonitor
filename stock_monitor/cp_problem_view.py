@@ -33,7 +33,50 @@ def accepted_tv_absence(problem):
                 and evidence.get('job_ids') and evidence.get('native_binding'))
 
 
+def native_empty_resolution(db,problem,jobs):
+    """Reuse the live official-empty validator, never a terminal job label alone.
+
+    Called only inside the existing readonly view transaction. The revision
+    map is captured from that transaction for the validator; it is not an
+    analytical dependency proof or a permission to execute a paper order.
+    """
+    if (problem.get('kind')!='archive' or problem.get('tf')!='15m'
+            or problem.get('state') not in ('GAP','SOURCE_GAP','UNCONFIRMED')
+            or not problem.get('range') or len(problem['range'])!=2
+            or problem['range'][0]!=problem['range'][1]):return None
+    for job in jobs:
+        if (not same_problem(problem,job) or job.get('status')!='RESOLVED_NATIVE'
+                or (job.get('finding') or {}).get('state')!='NO_TRADES'
+                or (job.get('official_timebase_repair') or {}).get('state')!='APPLIED'):continue
+        from cp_reconciliation import _spec
+        from cp_controls import _official_empty_problem_current
+        from revision_watcher import RETIME_PREFIX,RETIME_POLICY
+        try:
+            spec=_spec(problem['isin'],problem['identity'],'15m',*problem['range'])
+            receipt=RETIME_PREFIX+problem['isin']+':'+spec['id']
+            scopes=['setting:'+receipt,'setting:'+RETIME_POLICY,'setting:interval_evidence:'+problem['isin']]
+            revisions={k:r for k,r in db.execute('SELECT scope,revision FROM input_revisions WHERE scope IN (?,?,?)',scopes)}
+            if not _official_empty_problem_current(db,problem,dict(revisions=revisions)):continue
+            return dict(state='CONFIRMED_NO_TRADES',current=True,isin=problem['isin'],identity=problem['identity'],
+                        tf='15m',range=problem['range'],job_id=spec['id'],receipt_key=receipt,
+                        checked_at=job.get('checked_at'),revisions=revisions)
+        except (ValueError,KeyError,TypeError,sqlite3.OperationalError):continue
+    return None
+
+
+def confirmed_native_absence(problem):
+    proof=problem.get('native_resolution') or {}
+    return bool(proof.get('current') is True and proof.get('state')=='CONFIRMED_NO_TRADES'
+                and proof.get('isin')==problem.get('isin') and proof.get('identity')==problem.get('identity')
+                and proof.get('tf')==problem.get('tf')=='15m' and proof.get('range')==problem.get('range')
+                and problem.get('kind')=='archive' and problem.get('state') in ('GAP','SOURCE_GAP','UNCONFIRMED')
+                and proof.get('receipt_key') and proof.get('job_id'))
+
+
 def repair_capability(problem,job):
+    if confirmed_native_absence(problem):
+        return dict(check=False,known=True,color='Green',label='Подтверждено GETTEX',
+                    reason='Отсутствие сделок подтверждено GETTEX; свечи не создавались')
     if accepted_tv_absence(problem):
         return dict(check=False,known=True,color='Green',label='Принято по TV',
                     reason='Пропуск сверён с TV и принят; реальные свечи не изменены')
@@ -96,17 +139,17 @@ def tv_result(problem,jobs):
 
 def present(problem,jobs):
     state=problem.get('state','UNKNOWN');accepted=problem.get('accepted') is True
-    tv_accepted=accepted_tv_absence(problem)
-    severity='Низкая' if accepted else 'Высокая' if state in ('INVALID','ANALYSIS_BLOCKED') else 'Информация' if state=='SOURCE_LIMITED' else 'Средняя'
-    influence='Исторический риск принят' if accepted else 'Требуется проверка анализа' if problem.get('kind')=='context' else 'Диагностика архива'
+    tv_accepted=accepted_tv_absence(problem);native=confirmed_native_absence(problem)
+    severity='Информация' if native else 'Низкая' if accepted else 'Высокая' if state in ('INVALID','ANALYSIS_BLOCKED') else 'Информация' if state=='SOURCE_LIMITED' else 'Средняя'
+    influence='Подтверждение источника' if native else 'Исторический риск принят' if accepted else 'Требуется проверка анализа' if problem.get('kind')=='context' else 'Диагностика архива'
     tv,job=tv_result(problem,jobs);repair=problem.get('repair') or {};review=problem.get('historical_review') or {}
     reason=repair.get('reason') or review.get('reason') or ((job or {}).get('finding') or {}).get('reason')
-    next_step=('Пропуск сверён с TV и принят; реальные свечи не изменены' if tv_accepted else reason or ('Ожидание штатного восстановления' if repair.get('state') in ('QUEUED','RUNNING') else 'Нет сохранённого задания восстановления'))
+    next_step=('Отсутствие сделок подтверждено GETTEX; свечи не создавались' if native else 'Пропуск сверён с TV и принят; реальные свечи не изменены' if tv_accepted else reason or ('Ожидание штатного восстановления' if repair.get('state') in ('QUEUED','RUNNING') else 'Нет сохранённого задания восстановления'))
     return dict(problem=problem,action=repair_capability(problem,job),tf=problem.get('tf','—'),span=' — '.join(str(v) for v in problem.get('range') or []) or '—',
-                title='Пропуск сверён с TV и принят' if tv_accepted else STATES.get(state,state),severity=severity,tv='Совпало отсутствие свечей; принято' if tv_accepted else tv,influence=influence,next=next_step,
+                title='Отсутствие сделок подтверждено GETTEX' if native else 'Пропуск сверён с TV и принят' if tv_accepted else STATES.get(state,state),severity=severity,tv='Совпало отсутствие свечей; принято' if tv_accepted else tv,influence=influence,next=next_step,
                 source=' / '.join(str((problem.get('identity') or {}).get(k) or '—') for k in ('source','venue','currency')),
                 last=repair.get('finished_at') or repair.get('checked_at') or (job or {}).get('checked_at') or '—',
-                next_retry=None if tv_accepted else repair.get('next_retry') or review.get('next_retry'),job=job,work=tr('Сверка принята') if tv_accepted else repair_progress(repair))
+                next_retry=None if tv_accepted or native else repair.get('next_retry') or review.get('next_retry'),job=job,work=tr('Подтверждено GETTEX') if native else tr('Сверка принята') if tv_accepted else repair_progress(repair))
 
 
 def repair_progress(receipt):
@@ -139,7 +182,8 @@ def receipt_clock(receipt):
     return max(values,default=0)
 
 
-def read(path,isin,page=0,include_old=False,now=None,accepted_only=False):
+def read(path,isin,page=0,include_old=False,now=None,accepted_only=False,native_only=False):
+    if accepted_only and native_only:raise ValueError('Choose one review view')
     from cp_controls import view
     with closing(sqlite3.connect(Path(path).resolve().as_uri()+'?mode=ro',uri=True)) as db:
         db.execute('PRAGMA query_only=ON');db.execute('BEGIN')
@@ -179,12 +223,19 @@ def read(path,isin,page=0,include_old=False,now=None,accepted_only=False):
             return problem.get('kind')=='archive' and all(meta.get(k) for k in ('source','venue','currency')) and not venue_allowed(info,meta)
         archived_count=sum(old_archive(p) or other_archive(p) for p in problems)
         visible=problems if include_old else [p for p in problems if not (old_archive(p) or other_archive(p))]
+        def with_native_resolution(p):
+            proof=native_empty_resolution(db,p,indexed.get(binding(p.get('isin'),p.get('tf'),p.get('identity') or {},p.get('range')),[]))
+            return dict(p,native_resolution=proof) if proof else p
+        visible=[with_native_resolution(p) for p in visible]
         # Keep current, revision-checked acceptances in the shared persisted CP
         # registry, but do not present them as active errors. Revoked/changed
         # scopes return here automatically; no DQ record or evidence is deleted.
-        accepted_count=sum(accepted_tv_absence(p) for p in visible)
-        active_count=len(visible)-accepted_count
-        visible=[p for p in visible if accepted_tv_absence(p)==bool(accepted_only)]
+        native_count=sum(confirmed_native_absence(p) for p in visible)
+        accepted_count=sum(accepted_tv_absence(p) and not confirmed_native_absence(p) for p in visible)
+        active_count=len(visible)-accepted_count-native_count
+        visible=[p for p in visible if (confirmed_native_absence(p) if native_only else
+                 accepted_tv_absence(p) and not confirmed_native_absence(p) if accepted_only else
+                 not (accepted_tv_absence(p) or confirmed_native_absence(p)))]
         rows=[present(p,indexed.get(binding(p.get('isin'),p.get('tf'),p.get('identity') or {},p.get('range')),[])) for p in visible]
     order={'Высокая':0,'Средняя':1,'Низкая':2,'Информация':3}
     def scope(row):
@@ -195,7 +246,7 @@ def read(path,isin,page=0,include_old=False,now=None,accepted_only=False):
         return 1
     rows.sort(key=lambda r:(scope(r),order[r['severity']],r['tf'],r['span']))
     pages=max(1,(len(rows)+99)//100);page=min(max(0,int(page)),pages-1)
-    return dict(isin=isin,at=datetime.now(timezone.utc).isoformat(),total=len(rows),accepted_count=accepted_count,active_count=active_count,accepted_only=accepted_only,old_archive=old_count,archived_count=archived_count,include_old=include_old,page=page,pages=pages,rows=rows[page*100:(page+1)*100])
+    return dict(isin=isin,at=datetime.now(timezone.utc).isoformat(),total=len(rows),accepted_count=accepted_count,native_count=native_count,active_count=active_count,accepted_only=accepted_only,native_only=native_only,old_archive=old_count,archived_count=archived_count,include_old=include_old,page=page,pages=pages,rows=rows[page*100:(page+1)*100])
 
 
 class Dialog:
@@ -217,7 +268,7 @@ class Dialog:
         self.refresh_button=ttk.Button(top,text=tr('Обновить'),style=p+'.Secondary.TButton',command=self.refresh);self.refresh_button.pack(side='left',padx=7)
         ttk.Button(top,text=tr('Подробная диагностика…'),style=p+'.Secondary.TButton',command=lambda:__import__('candlepilot_health').show_advanced(app)).pack(side='left')
         self.status=tk.StringVar(w,tr('Чтение сохранённых проблем…'));ttk.Label(base,textvariable=self.status,style=p+'.TLabel').pack(anchor='w',pady=6)
-        self.view_mode=ttk.Combobox(base,values=[tr('Активные проблемы'),tr('Принятые сверки TV')],state='readonly',style=p+'.TCombobox',width=30)
+        self.view_mode=ttk.Combobox(base,values=[tr('Активные проблемы'),tr('Принятые сверки TV'),tr('Подтверждено GETTEX')],state='readonly',style=p+'.TCombobox',width=30)
         self.view_mode.current(0);self.view_mode.pack(anchor='w',pady=(0,6))
         self.view_mode.bind('<<ComboboxSelected>>',lambda _:self.select())
         self.include_old=tk.BooleanVar(w,False)
@@ -380,7 +431,7 @@ class Dialog:
         if self.closed or self.choice.current()<0:return
         if self.busy:return
         self.busy=True;self.refresh_button.configure(state='disabled')
-        isin=self.infos[self.choice.current()]['isin'];generation=self.generation;page=self.page;include_old=self.include_old.get();accepted_only=self.view_mode.current()==1
+        isin=self.infos[self.choice.current()]['isin'];generation=self.generation;page=self.page;include_old=self.include_old.get();accepted_only=self.view_mode.current()==1;native_only=self.view_mode.current()==2
         self.status.set(tr('Чтение сохранённых проблем…'))
         def done(value):
             self.busy=False
@@ -395,8 +446,8 @@ class Dialog:
             if selected and selected[0] in self.shown:self.tree.selection_set(selected[0])
             self.apply_receipts(self.receipts);self.schedule_watch()
             self.schedule_buttons()
-            self.status.set(tr('Активные проблемы')+f": {value.get('active_count',value['total'])} · "+tr('Принятые сверки TV')+f": {value.get('accepted_count',0)} · {self.page+1}/{value['pages']} · "+tr('Архив отдельно')+f": {value.get('archived_count',0)} · "+str(value['at']))
-            if not value['rows']:self.clear_detail(tr('Принятых сверок TV пока нет' if accepted_only else 'В сохранённых отчётах проблем не найдено. Это не подтверждает полноту истории или готовность торговли.'))
+            self.status.set(tr('Активные проблемы')+f": {value.get('active_count',value['total'])} · "+tr('Принятые сверки TV')+f": {value.get('accepted_count',0)} · "+tr('Подтверждено GETTEX')+f": {value.get('native_count',0)} · {self.page+1}/{value['pages']} · "+tr('Архив отдельно')+f": {value.get('archived_count',0)} · "+str(value['at']))
+            if not value['rows']:self.clear_detail(tr('Подтверждённых интервалов GETTEX пока нет' if native_only else 'Принятых сверок TV пока нет' if accepted_only else 'В сохранённых отчётах проблем не найдено. Это не подтверждает полноту истории или готовность торговли.'))
             self.timer=self.win.after(60000,self.refresh)
         def failed(error):
             self.busy=False
@@ -404,7 +455,7 @@ class Dialog:
             if generation!=self.generation:self.refresh();return
             self.refresh_button.configure(state='normal');self.status.set(tr('Не удалось прочитать проблемы')+': '+str(error))
         if self.timer is not None:self.win.after_cancel(self.timer);self.timer=None
-        if self.app.job(lambda:read(self.app.store.path,isin,page,include_old,accepted_only=accepted_only),done,failed,lane='read',key=('cp-problem-view',id(self.win),generation,page)) is False:failed(tr('Очередь временно занята'))
+        if self.app.job(lambda:read(self.app.store.path,isin,page,include_old,accepted_only=accepted_only,native_only=native_only),done,failed,lane='read',key=('cp-problem-view',id(self.win),generation,page)) is False:failed(tr('Очередь временно занята'))
 
     def cleanup(self):
         self.closed=True;self.generation+=1

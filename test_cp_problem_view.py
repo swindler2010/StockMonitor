@@ -11,6 +11,63 @@ PROBLEM=dict(isin='A',tf='15m',identity=META,range=['2026-11-12 08:15','2026-11-
 
 
 class ProblemEvidenceTests(unittest.TestCase):
+    def test_live_official_empty_receipt_resolves_stale_dq_and_changed_inputs_reopen(self):
+        import pandas as pd
+        import cp_reconciliation as rv
+        import revision_watcher as rw
+        from test_cp_tv_legacy_reference import FlatStore
+        f=tempfile.NamedTemporaryFile(prefix='CP native view isolated ',suffix='.sqlite3',dir='C:/Users/panus/Documents/Codex/СМ-Архив',delete=False)
+        path=Path(f.name);f.close();store=FlatStore(path)
+        def cleanup():
+            store.read_cache.close()
+            for suffix in ('','-wal','-shm'):Path(str(path)+suffix).unlink(missing_ok=True)
+        self.addCleanup(cleanup)
+        isin='US69608A1088';info=dict(isin=isin,name='Fixture',kind='stock',history_venue_lock='GETTEX')
+        meta={**META,'symbol':'PTXG.GTX'};official={**meta,'source':'gettex','symbol':isin}
+        store.save_instrument(info);first='2026-11-13 21:15:00';now=pd.Timestamp('2026-11-14T10:00Z')
+        proof=dict(isin=isin,identity=official,basis='complete_published_trade_files',checked_at='2026-11-14T09:00Z',
+                   no_trades=[],trade_intervals=[],zero_quantity_intervals=[],reference={'GETTEX:20261113':{}})
+        rows=[('2026-11-13 21:00:00',100.,100.,100.,100.,2.),('2026-11-13 21:30:00',101.,101.,101.,101.,3.)]
+        for at in pd.date_range('2026-11-13 21:00','2026-11-13 21:45',freq='5min',inclusive='left'):
+            field='trade_intervals' if str(at) in {r[0] for r in rows} else 'no_trades'
+            proof[field].append([str(at),str(at+pd.Timedelta(minutes=5))])
+        for tm in ('20.15','20.30','20.45'):
+            for board in ('munc','mund'):proof['reference']['GETTEX:20261113']['posttrade.20261113.'+tm+'.'+board+'.csv.gz']='a'*64
+        for base in ('5m','15m'):
+            store.set_setting('gettex_chart:'+isin+':'+base,dict(state='SAVED',identity=meta,
+                listing_proof={**meta, 'isin':isin,'status':'CONFIRMED','verified_at':'2026-11-13T12:00Z'}))
+        policy=dict(version=rw.RETIME_VERSION,approved=True)
+        store.set_setting(rw.RETIME_POLICY,policy);store.set_setting('interval_evidence:'+isin,proof)
+        key='data_quality:'+isin+':'+meta['symbol']+':15m'
+        report=dict(identity=meta,state='UNCONFIRMED',base_tf='15m',ranges=[[first,first]])
+        store.set_setting(key,report)
+        with store.connect() as db:
+            for base in ('5m','15m'):
+                db.executemany('INSERT INTO candles VALUES (?,?,?,?,?,?,?,?,?)',[(isin,'gettex',base,*r) for r in rows])
+                db.executemany('INSERT INTO series VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',[(isin,*[meta[k] for k in rw.IDENTITY[:4]],base,*r) for r in rows])
+            db.executemany('INSERT INTO trades VALUES (?,?,?,?)',[(isin,str(pd.Timestamp(r[0])+pd.Timedelta(minutes=1)),r[1],r[5]) for r in rows])
+        self.assertEqual(read(path,isin)['active_count'],1)
+        with patch('gettex_history.attach_known_interruptions',return_value=False):rv.turn(store,info,now)
+        with store.connect() as db:
+            before={t:db.execute('SELECT * FROM '+t+' ORDER BY rowid').fetchall() for t in ('candles','series','settings')}
+        active=read(path,isin);resolved=read(path,isin,native_only=True)
+        self.assertEqual((active['active_count'],active['native_count'],active['accepted_count']),(0,1,0))
+        row=resolved['rows'][0];self.assertEqual(row['title'],'Отсутствие сделок подтверждено GETTEX')
+        self.assertEqual(row['problem']['state'],'UNCONFIRMED');self.assertEqual(row['tv'],'Не проверено')
+        self.assertFalse(row['action']['check']);self.assertIsNone(row['next_retry'])
+        self.assertEqual(store.setting(key),report);self.assertIsNone(store.setting('cp_manual_risk:'+isin))
+        with store.connect() as db:
+            self.assertEqual(before,{t:db.execute('SELECT * FROM '+t+' ORDER BY rowid').fetchall() for t in before})
+        store.set_setting(rw.RETIME_POLICY,{**policy,'approved':False})
+        self.assertEqual((read(path,isin)['active_count'],read(path,isin,native_only=True)['total']),(1,0))
+        store.set_setting(rw.RETIME_POLICY,policy)
+        store.set_setting(key,{**report,'state':'INVALID'})
+        self.assertEqual((read(path,isin)['active_count'],read(path,isin)['native_count']),(1,0))
+        store.set_setting(key,report)
+        with store.connect() as db:
+            db.execute('INSERT INTO series VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',(isin,*[meta[k] for k in rw.IDENTITY[:4]],'5m',first,100.,100.,100.,100.,1.))
+        self.assertEqual((read(path,isin)['active_count'],read(path,isin)['native_count']),(1,0))
+
     def test_accepted_tv_reviews_leave_active_errors_but_remain_readable_and_reopen(self):
         f=tempfile.NamedTemporaryFile(prefix='CP TV accepted isolated ',suffix='.sqlite3',dir='C:/Users/panus/Documents/Codex/СМ-Архив',delete=False)
         path=Path(f.name);f.close();self.addCleanup(lambda:path.unlink(missing_ok=True))

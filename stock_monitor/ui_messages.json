@@ -5040,5 +5040,25 @@
   "Сверка принята": {
     "en": "Review accepted",
     "de": "Abgleich akzeptiert"
+  },
+  "Подтверждено GETTEX": {
+    "en": "Confirmed by GETTEX",
+    "de": "Von GETTEX bestätigt"
+  },
+  "Отсутствие сделок подтверждено GETTEX; свечи не создавались": {
+    "en": "No trades confirmed by GETTEX; no candles were created",
+    "de": "Keine Geschäfte durch GETTEX bestätigt; keine Kerzen wurden erstellt"
+  },
+  "Отсутствие сделок подтверждено GETTEX": {
+    "en": "No trades confirmed by GETTEX",
+    "de": "Keine Geschäfte durch GETTEX bestätigt"
+  },
+  "Подтверждение источника": {
+    "en": "Source confirmation",
+    "de": "Quellenbestätigung"
+  },
+  "Подтверждённых интервалов GETTEX пока нет": {
+    "en": "No confirmed GETTEX intervals yet",
+    "de": "Noch keine bestätigten GETTEX-Intervalle"
   }
 }
