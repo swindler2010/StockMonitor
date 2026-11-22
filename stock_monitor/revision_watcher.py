@@ -227,6 +227,46 @@ def _reviewed_closing_tick(db,job,inputs,now,policy):
  except (ValueError,KeyError,TypeError,IndexError):return None
 
 
+def _reviewed_price_samples(db,job,inputs,now,policy):
+ """Full quantities, but one opening price and at most one extreme not sampled.
+
+ Only the first 5m child may differ. Its unchanged close and full quantity
+ must be exact; omitting the independently published first positive price
+ and at most one isolated interior extreme must reproduce ALL old prices.
+ """
+ from cp_controls import read,digest
+ from cp_reconciliation import SOURCE_POLICY
+ sp=read(db,SOURCE_POLICY,{})
+ if not (sp.get('approved') is True and sp.get('version')==1
+     and sp.get('scope')=='registered_stocks' and sp.get('exclusive_venue')=='GETTEX'):return None
+ a=pd.Timestamp(job['first']);end=a+pd.Timedelta(minutes=15);meta=job['identity']
+ try:
+  source=_official_window(db,job['isin'],str(a),str(end),now)
+  native={base:_native(db,job['isin'],meta,base,str(a),str(end)) for base in ('5m','15m')}
+  if len(native['15m'])!=1 or not native['5m']:return None
+  for base in native:
+   if [r[0] for r in native[base]]!=[r[0] for r in source['rows'][base]]:return None
+   if any(old[4:]!=confirmed[4:] for old,confirmed in zip(native[base],source['rows'][base])):return None
+  if native['5m'][1:]!=source['rows']['5m'][1:]:return None
+  original=native['5m'][0];confirmed=source['rows']['5m'][0]
+  if original==confirmed or original[1]==confirmed[1] or _aggregate(native['5m'])!=list(native['15m'][0][1:]):return None
+  ticks=[t for t in source['trades'] if pd.Timestamp(original[0])<=pd.Timestamp(t[0])<pd.Timestamp(original[0])+pd.Timedelta(minutes=5)]
+  if not 2<=len(ticks)<=64 or any(t[2]<=0 for t in ticks):return None
+  if sum(t[2] for t in ticks)!=original[5] or original[3]<=ticks[0][1]<=original[2]:return None
+  matches=[]
+  for interior in [None]+[k for k in range(1,len(ticks)-1) if not original[3]<=ticks[k][1]<=original[2]]:
+   removed={0} if interior is None else {0,interior}
+   prices=[t[1] for k,t in enumerate(ticks) if k not in removed]
+   if prices and [prices[0],max(prices),min(prices),prices[-1]]==list(original[1:5]):matches.append(removed)
+  if len(matches)!=1:return None
+  return dict(version=RETIME_VERSION,mode='VERIFIED_NATIVE_PRICE_SAMPLES',isin=job['isin'],identity=meta,
+    first=str(a),end=str(end),job_id=job['id'],policy_digest=digest(policy),source_policy_digest=digest(sp),
+    input_fingerprint=inputs['fingerprint'],before=native,source=source,source_digest=digest(source),created_at=now.isoformat(),
+    omitted_price_ticks=[ticks[k] for k in sorted(matches[0])],
+    origin='Current visual discrepancy; complete paired official GETTEX tape uniquely reproduces every native price when only its first positive child price and at most one isolated interior extreme are not sampled; all quantities and closes conserved; original values retained')
+ except (ValueError,KeyError,TypeError,IndexError):return None
+
+
 def _reviewed_price_closing_partition(db,job,inputs,native,source,now,policy):
  """Existing zero price delayed <=15m plus exactly one missing final tick.
 
@@ -295,6 +335,8 @@ def retime_plan(db,job,inputs,now):
    if opening:return opening
    closing=_reviewed_closing_tick(db,job,inputs,now,policy)
    if closing:return closing
+   samples=_reviewed_price_samples(db,job,inputs,now,policy)
+   if samples:return samples
   # An explicitly reviewed existing candle can omit a real traded extreme.
   # Keep this narrower than a general provider overwrite: identical timestamps,
   # open/close/volume, unchanged neighbour and conserved complete parent window.
@@ -452,7 +494,7 @@ def retime_current(db,receipt,now=None):
  try:
   policy=read(db,RETIME_POLICY,{})
   if policy.get('approved') is not True or digest(policy)!=receipt['policy_digest']:return False
-  if receipt.get('mode') in ('VERIFIED_NATIVE_CLOSING_TICK','VERIFIED_PRICE_CLOSING_TICK_PARTITION'):
+  if receipt.get('mode') in ('VERIFIED_NATIVE_CLOSING_TICK','VERIFIED_PRICE_CLOSING_TICK_PARTITION','VERIFIED_NATIVE_PRICE_SAMPLES'):
    from cp_reconciliation import SOURCE_POLICY
    if digest(read(db,SOURCE_POLICY,{}))!=receipt.get('source_policy_digest'):return False
   row=db.execute('SELECT payload FROM instruments WHERE isin=?',(receipt['isin'],)).fetchone()

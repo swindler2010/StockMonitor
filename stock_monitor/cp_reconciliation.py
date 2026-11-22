@@ -71,7 +71,24 @@ def due_observation(db, infos, now=None):
             # rotate using the last actual reconciliation turn, not polling.
             serviced=max(observed,pd.Timestamp(progress['last_turn'])) if progress.get('last_turn') else observed
             candidates.append((serviced,observed,isin,job['id']))
-    if not candidates:return None
+    if not candidates:
+        # A deployed repair may predate the dependent-scope wake-up. Read only
+        # bounded receipt metadata here; the owned feed worker revalidates the
+        # full source proof and performs the actual queue updates.
+        from revision_watcher import RETIME_PREFIX
+        rows=db.execute("""SELECT r.value FROM settings r LEFT JOIN settings p
+          ON p.key=? || json_extract(r.value,'$.isin')
+          WHERE r.key>=? AND r.key<? AND json_extract(r.value,'$.state')='APPLIED'
+          AND json_extract(r.value,'$.mode') IN ('VERIFIED_NATIVE_CLOSING_TICK','VERIFIED_PRICE_CLOSING_TICK_PARTITION','VERIFIED_NATIVE_PRICE_SAMPLES')
+          AND NOT EXISTS (SELECT 1 FROM json_each(COALESCE(json_extract(p.value,'$.native_repair_rechecks_seen'),'[]')) WHERE value=r.key)
+          AND (json_extract(p.value,'$.last_turn') IS NULL OR julianday(json_extract(p.value,'$.last_turn'))<=julianday(?))
+          ORDER BY json_extract(r.value,'$.created_at'),r.key LIMIT 8""",
+          (PROGRESS,RETIME_PREFIX,RETIME_PREFIX+'\uffff',(clock-pd.Timedelta(minutes=5)).isoformat())).fetchall()
+        for raw, in rows:
+            receipt=json.loads(raw)
+            if receipt['isin'] in registered:
+                return dict(isin=receipt['isin'],job_id=receipt['job_id'],reason='NATIVE_REPAIR_FOLLOWUP')
+        return None
     _,at,isin,jid=min(candidates)
     return dict(isin=isin,job_id=jid,observed_at=at.isoformat(),reason='SAVED_OBSERVATION_RECHECK')
 
@@ -522,15 +539,15 @@ def _resume_repaired_scopes(db,isin,clock):
     p=read(db,PROGRESS+isin,{});seen=list(p.get('native_repair_rechecks_seen',[]));prefix=RETIME_PREFIX+isin+':'
     rows=db.execute("""SELECT key,value FROM settings WHERE key>=? AND key<?
       AND json_extract(value,'$.state')='APPLIED'
-      AND json_extract(value,'$.mode') IN ('VERIFIED_NATIVE_CLOSING_TICK','VERIFIED_PRICE_CLOSING_TICK_PARTITION')
+      AND json_extract(value,'$.mode') IN ('VERIFIED_NATIVE_CLOSING_TICK','VERIFIED_PRICE_CLOSING_TICK_PARTITION','VERIFIED_NATIVE_PRICE_SAMPLES')
       ORDER BY json_extract(value,'$.created_at') DESC LIMIT 8""",(prefix,prefix+'\uffff')).fetchall()
     count=0
     for key,raw in rows:
         if key in seen:continue
         if count>=2:break
-        receipt=json.loads(raw)
-        if not retime_current(db,receipt,clock):continue
-        result=_queue_repaired_scopes(db,key,receipt,clock);count+=1
+        receipt=json.loads(raw);count+=1
+        if retime_current(db,receipt,clock):result=_queue_repaired_scopes(db,key,receipt,clock)
+        else:result=dict(queued=[],complete=True,reason='REPAIR_PROOF_CHANGED')
         if result['complete']:seen.append(key)
         p=read(db,PROGRESS+isin,{})
         p.update(native_repair_rechecks_seen=seen[-64:],last_native_repair_rechecks=dict(receipt_key=key,at=clock.isoformat(),**result))
