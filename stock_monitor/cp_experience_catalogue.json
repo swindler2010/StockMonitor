@@ -4,6 +4,32 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "delayed_zero_price_and_missing_final_tick",
+      "title": "Нулевая цена с задержкой и ровно одна пропущенная последняя запись",
+      "sources": [
+        "revision_watcher._reviewed_price_closing_partition",
+        "revision_watcher.publish_retime",
+        "cp_reconciliation.turn"
+      ],
+      "states": [
+        "ZERO_QUANTITY_UNCONFIRMED",
+        "VERIFIED_PRICE_CLOSING_TICK_PARTITION"
+      ],
+      "steps": [
+        "Только текущее ZERO_VOLUME наблюдение одной закрытой15m-свечи GETTEX/EUR при обеих действующих политиках.",
+        "Полные парные официальные публикации должны содержать эту нулевую цену и положительную последнюю запись. Уникальное упорядоченное разбиение всех записей кроме последней точно воспроизводит каждую исходную5m-свечу; все исходные15m точно строятся из них.",
+        "Каждая задержанная нулевая цена уже существует в native с теми же OHLCV и подтверждается в официальном слоте не далее15минут. Никакие дополнительные нулевые цены, неизвестный оборот либо удаление положительных свечей не допускаются.",
+        "Сохранить исходные значения, метки перераспределения нулевых цен и конечную перепроверку перед штатной публикацией. Нулевое количество остаётся нулевым; это не NO_TRADES. Индикаторы/допуск пересчитывает обычная очередь."
+      ],
+      "evidence": [
+        "test_cp_delayed_closing_tick.DelayedClosing.test_complete_tape_unique_native_prefix_and_review_restore_price_and_close",
+        "test_cp_native_closing_tick",
+        "test_cp_price_observation"
+      ],
+      "limits": "Не произвольная замена всех данных. Только полностью объяснённое уникальное временное перераспределение существующей цены и одна последняя запись из подтверждённого GETTEX. Нет новых торговых разрешений/изменения счёта. При изменении входов, недостаточных парных файлах или отзыве политики — отказ.",
+      "status": "New composite scenario failed RETIME_NOT_CONSERVED before fix; new plus2affected scenarios PASS4.314s. Real Palantir22Oct19:30–20:00 exact preflight matched; Windows publication pending."
+    },
+    {
       "id": "saved_observation_survives_deduplicated_fresh_feed",
       "title": "Приоритетная сохранённая сверка действительно получает исторический ход",
       "sources": [
@@ -25,7 +51,7 @@
         "test_cp_observation_priority.ObservationPriority.test_priority_existing_serial_queue_200"
       ],
       "limits": "Выбор маршрута, не гарантия получения источником данных или торгового допуска. Сохраняются cooldown, DQ, identity, freshness, ревизии и последовательный writer.",
-      "status": "Negative current-review branch reproduced before patch; 1new scenario with4variants plus relevant53/200 queue checks PASS /0.042s. Windows deployment pending."
+      "status": "Installed Windows TEST after normal restart. New scenario4variants and53/200 queue checks PASS0.042s. Two newly saved observations reached normal CP checks in42.483514/40.235998s, AWAITING_SOURCE with precise data reasons; no manual turn or fake READY. This is one observed batch, not an overall latency guarantee."
     },
     {
       "id": "official_exact_missing_closing_tick",

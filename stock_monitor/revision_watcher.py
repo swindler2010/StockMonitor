@@ -227,6 +227,54 @@ def _reviewed_closing_tick(db,job,inputs,now,policy):
  except (ValueError,KeyError,TypeError,IndexError):return None
 
 
+def _reviewed_price_closing_partition(db,job,inputs,native,source,now,policy):
+ """Existing zero price delayed <=15m plus exactly one missing final tick.
+
+ The unique complete prefix reproduces EVERY original child; native parents
+ must exactly aggregate those children. Only independently published values
+ are written, including the observed zero price. No arbitrary provider merge.
+ """
+ from cp_controls import read,digest
+ from cp_reconciliation import SOURCE_POLICY
+ sp=read(db,SOURCE_POLICY,{})
+ if not (sp.get('approved') is True and sp.get('version')==1
+     and sp.get('scope')=='registered_stocks' and sp.get('exclusive_venue')=='GETTEX'):return None
+ ticks=source['trades'];a=pd.Timestamp(job['first'])
+ if len(ticks)<2 or ticks[-1][2]<=0 or not native['5m'] or not native['15m']:return None
+ if native==source['rows']:return None
+ if pd.Timestamp(ticks[-1][0]).floor('5min')!=pd.Timestamp(native['5m'][-1][0]):return None
+ partition=_trade_partition(native['5m'],ticks[:-1])
+ if partition is None:return None
+ parents={r[0] for r in native['15m']}
+ if {str(pd.Timestamp(r[0]).floor('15min')) for r in native['5m']}!=parents:return None
+ for parent in native['15m']:
+  if _aggregate([r for r in native['5m'] if pd.Timestamp(parent[0])<=pd.Timestamp(r[0])<pd.Timestamp(parent[0])+pd.Timedelta(minutes=15)])!=list(parent[1:]):return None
+ if not parents<={r[0] for r in source['rows']['15m']}:return None
+ quoted=[r for r in source['rows']['15m'] if r[0]==str(a)]
+ if len(quoted)!=1 or quoted[0][5]!=0 or len(set(quoted[0][1:5]))!=1:return None
+ actual={r[0]:r for r in source['rows']['5m']};reassigned=[]
+ for original in native['5m']:
+  if original[5]>0:
+   if original[0] not in actual:return None
+   continue
+  matches=[r for r in actual.values() if list(r[1:])==list(original[1:])
+    and pd.Timedelta(0)<=pd.Timestamp(original[0])-pd.Timestamp(r[0])<=pd.Timedelta(minutes=15)]
+  if len(matches)!=1 or len(set(original[1:5]))!=1:return None
+  if original!=matches[0]:reassigned.append(dict(old_at=original[0],confirmed_at=matches[0][0],ohlcv=list(original[1:])))
+ if not reassigned:return None
+ # No additional zero-price observation may be introduced without its exact
+ # already existing native value; zero quantity is never invented turnover.
+ for actual_row in actual.values():
+  if actual_row[5]==0 and not any(list(r[1:])==list(actual_row[1:]) for r in native['5m']):return None
+ return dict(version=RETIME_VERSION,mode='VERIFIED_PRICE_CLOSING_TICK_PARTITION',isin=job['isin'],identity=job['identity'],
+   first=str(a),end=str(pd.Timestamp(inputs['neighbors']['after'][0])+pd.Timedelta(minutes=15)),
+   job_id=job['id'],policy_digest=digest(policy),source_policy_digest=digest(sp),input_fingerprint=inputs['fingerprint'],
+   before=native,source=source,source_digest=digest(source),created_at=now.isoformat(),
+   native_trade_partition=partition,recovered_closing_tick=ticks[-1],zero_price_reassignments=reassigned,
+   zero_observations_corroborated=True,
+   origin='Current zero-price review; complete paired official GETTEX tape uniquely reproduces all native children and parents except its final positive tick, including bounded delayed existing zero prices; original values retained')
+
+
 def retime_plan(db,job,inputs,now):
  """Bounded verified same-session repairs, retaining original native OHLCV."""
  from cp_controls import read,digest
@@ -311,6 +359,9 @@ def retime_plan(db,job,inputs,now):
   raise ValueError('RETIME_VISUAL_REFERENCE_CONFLICT_OR_CHANGED')
  source=_official_window(db,job['isin'],str(a),str(b),now,allow_zero_rows=zero_observed)
  before={base:_native(db,job['isin'],meta,base,str(a),str(b)) for base in ('5m','15m')}
+ if zero_observed:
+  closing=_reviewed_price_closing_partition(db,job,inputs,before,source,now,policy)
+  if closing:return closing
  if any(not before[base] or _aggregate(before[base])!=_aggregate(source['rows'][base]) for base in before):
   raise ValueError('RETIME_NOT_CONSERVED')
  if zero_observed:
@@ -401,13 +452,13 @@ def retime_current(db,receipt,now=None):
  try:
   policy=read(db,RETIME_POLICY,{})
   if policy.get('approved') is not True or digest(policy)!=receipt['policy_digest']:return False
-  if receipt.get('mode')=='VERIFIED_NATIVE_CLOSING_TICK':
+  if receipt.get('mode') in ('VERIFIED_NATIVE_CLOSING_TICK','VERIFIED_PRICE_CLOSING_TICK_PARTITION'):
    from cp_reconciliation import SOURCE_POLICY
    if digest(read(db,SOURCE_POLICY,{}))!=receipt.get('source_policy_digest'):return False
   row=db.execute('SELECT payload FROM instruments WHERE isin=?',(receipt['isin'],)).fetchone()
   if not row or not stored_identity(db,json.loads(row[0]),receipt['identity'],'15m'):return False
   source=_official_window(db,receipt['isin'],receipt['first'],receipt['end'],pd.Timestamp(now or pd.Timestamp.now(tz='UTC')),
-   allow_zero_rows=receipt.get('mode') in ('VERIFIED_NATIVE_EMPTY','VERIFIED_PRICE_OBSERVATION_TIMEBASE') and receipt.get('zero_observations_corroborated') is True)
+   allow_zero_rows=receipt.get('mode') in ('VERIFIED_NATIVE_EMPTY','VERIFIED_PRICE_OBSERVATION_TIMEBASE','VERIFIED_PRICE_CLOSING_TICK_PARTITION') and receipt.get('zero_observations_corroborated') is True)
   if not receipt_source_current(source,receipt):return False
   return all(digest(_native(db,receipt['isin'],receipt['identity'],base,receipt['first'],receipt['end']))==digest(rows)
              for base,rows in source['rows'].items())
