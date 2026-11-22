@@ -416,6 +416,8 @@ class Desktop014:
         def apply(plan):
             if self.closing:return
             self.cp_schedule_last=plan
+            self._cp_observation_request=dict(plan.get('observation_recheck') or {})
+            self._cp_observation_requested_at=time.time()
             self._cp_fresh_request=dict(plan.get('fresh') or {})
             self._cp_fresh_requested_at=time.time()
             if plan.get('fresh'):
@@ -474,7 +476,17 @@ class Desktop014:
                 focus=dict(getattr(self,'_cp_focus',{}))
                 captured=dict(info)
                 fresh=dict(getattr(self,'_cp_fresh_request',{}))
-                if fresh.get('isin')==info['isin'] and 0<=time.time()-getattr(self,'_cp_fresh_requested_at',0)<90:
+                review=dict(getattr(self,'_cp_observation_request',{}))
+                if (review.get('isin')==info['isin'] and review.get('job_id')
+                        and 0<=time.time()-getattr(self,'_cp_observation_requested_at',0)<90):
+                    # The planner reserved this serial turn for saved evidence.
+                    # An older same-key fresh payload must not silently replace
+                    # that history route. No running writer is interrupted; live
+                    # acquisition remains due for the next fair planner turn.
+                    captured.pop('_gettex_poll_only',None)
+                    captured.pop('_eligibility_only',None)
+                    captured['_review_only']=True
+                elif fresh.get('isin')==info['isin'] and 0<=time.time()-getattr(self,'_cp_fresh_requested_at',0)<90:
                     # Upgrade the already queued same-ISIN job; no second writer
                     # or cancellation. Archive maintenance remains due afterwards.
                     captured.update({k:fresh[k] for k in ('_gettex_poll_only','_cp_focus','_cp_foreground','_cp_position') if k in fresh})

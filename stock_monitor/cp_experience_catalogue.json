@@ -4,6 +4,30 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "saved_observation_survives_deduplicated_fresh_feed",
+      "title": "Приоритетная сохранённая сверка действительно получает исторический ход",
+      "sources": [
+        "desktop014.Desktop014._scheduled_refresh",
+        "desktop014.Desktop014._gettex_worker",
+        "feed_worker.FeedContext.calculate"
+      ],
+      "states": [
+        "RECHECK_QUEUED"
+      ],
+      "steps": [
+        "Планировщик передаёт существующий due_observation и время его выбора в текущий процесс.",
+        "Перед исполнением одного уже ожидающего serial feed проверить актуальный точный ISIN/job_id и срок90с. Сохранённая сверка получает прежний _review_only-маршрут; старый payload свежей загрузки не должен вытеснять это назначение.",
+        "Иная акция, отсутствующий или просроченный запрос не меняют fresh-маршрут. Не запускать второй writer, не прерывать текущий, не менять данные/разрешения; обычные fresh acquisition и оценки остаются в очереди."
+      ],
+      "evidence": [
+        "test_cp_pending_observation_route.PendingObservationRoute.test_live_saved_review_replaces_queued_fresh_payload_but_stale_or_other_review_does_not",
+        "test_cp_observation_priority.ObservationPriority.test_priority_existing_serial_queue_53",
+        "test_cp_observation_priority.ObservationPriority.test_priority_existing_serial_queue_200"
+      ],
+      "limits": "Выбор маршрута, не гарантия получения источником данных или торгового допуска. Сохраняются cooldown, DQ, identity, freshness, ревизии и последовательный writer.",
+      "status": "Negative current-review branch reproduced before patch; 1new scenario with4variants plus relevant53/200 queue checks PASS /0.042s. Windows deployment pending."
+    },
+    {
       "id": "official_exact_missing_closing_tick",
       "title": "Восстановление ровно одной пропущенной последней записи GETTEX",
       "sources": [
@@ -27,7 +51,7 @@
         "test_cp_native_extrema.NativeExtrema.test_only_current_isolated_positive_trade_extreme_is_repaired_by_cp"
       ],
       "limits": "Не произвольная замена поставщика или OHLCV; без участия Work при конкретном повторе с уже сохранённым актуальным DIFFERENT и полными данными. Desktop самостоятельно не управляется. Не меняет счёт, торговые разрешения, DQ/freshness/risk проверки. Утрата исходных сведений либо разрешения оставляет блокировку.",
-      "status": "New scenario with positive/zero closing tick PASS /2.168s, affected extrema scenario PASS. Two real Palantir preflight plans:23Oct17:30 and16Nov12:00; normal Windows queue verification pending."
+      "status": "Installed Windows TEST: both real15m targets RESOLVED_NATIVE; 4 existing5m/15m rows changed by ordinary CP,0 added/relocated. Official current proof true; all8 protected checks true; scoped rollback dry-run eligible2. New positive/zero final-tick scenario PASS /2.168s; affected extrema PASS. Full all-stock request IN_PROGRESS."
     },
     {
       "id": "official_empty_confirmation_supersedes_stale_archive_diagnostic",
