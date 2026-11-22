@@ -126,6 +126,79 @@ class FiveMinutePartition(unittest.TestCase):
      s.read_cache.close()
      for suffix in ('','-wal','-shm'):Path(str(path)+suffix).unlink(missing_ok=True)
 
+ def test_current_review_restores_missing_parents_only_with_unique_full_native_partition(self):
+  from cp_controls import read,write
+  root=Path(__file__).parent.parent.parent/'СМ-Архив';f=tempfile.NamedTemporaryFile(dir=root,prefix='CP reviewed-parent isolated ',suffix='.sqlite3',delete=False);path=Path(f.name);f.close();s=FlatStore(path)
+  try:
+   isin='US0378331005';now=pd.Timestamp.now(tz='UTC');info=dict(isin=isin,name='Fixture',kind='stock',history_venue_lock='GETTEX');s.save_instrument(info)
+   meta=dict(source='gettex_chart',symbol='FIX.GTX',venue='GETTEX',currency='EUR',timezone='Europe/Berlin');om={**meta,'source':'gettex','symbol':isin}
+   def stamp(t):return '2026-11-13 '+t+':00'
+   ticks=[(stamp(t),99.+n,float(n+1)) for n,t in enumerate(('10:00','10:16','10:31','10:46'))]
+   source5=[(str(pd.Timestamp(at).floor('5min')),p,p,p,p,q) for at,p,q in ticks]
+   native5=[source5[0],(stamp('10:50'),100.,102.,100.,102.,9.)]
+   def parents(rows):
+    return [(str(at),*rw._aggregate([r for r in rows if at<=pd.Timestamp(r[0])<at+pd.Timedelta(minutes=15)])) for at in sorted({pd.Timestamp(r[0]).floor('15min') for r in rows})]
+   native={'5m':native5,'15m':parents(native5)};official={'5m':source5,'15m':parents(source5)}
+   proof=dict(isin=isin,identity=om,basis='complete_published_trade_files',checked_at=now.isoformat(),no_trades=[],trade_intervals=[],zero_quantity_intervals=[],reference={'GETTEX:20261113':{}})
+   for at in pd.date_range(stamp('10:00'),stamp('11:00'),freq='5min',inclusive='left'):
+    field='trade_intervals' if str(at) in {r[0] for r in source5} else 'no_trades';proof[field].append([str(at),str(at+pd.Timedelta(minutes=5))])
+   for tm in ('09.15','09.30','09.45','10.00'):
+    for board in ('munc','mund'):proof['reference']['GETTEX:20261113'][f'posttrade.20261113.{tm}.{board}.csv.gz']='a'*64
+   s.set_setting(rv.SOURCE_POLICY,dict(version=1,approved=True,scope='registered_stocks',exclusive_venue='GETTEX'));s.set_setting(rw.RETIME_POLICY,dict(approved=True,version=rw.RETIME_VERSION));s.set_setting('interval_evidence:'+isin,proof)
+   for base in native:s.set_setting('gettex_chart:'+isin+':'+base,dict(state='SAVED',identity=meta,listing_proof={**meta,'isin':isin,'status':'CONFIRMED','verified_at':now.isoformat()}))
+   with s.connect() as d:
+    for base in native:
+     d.executemany('INSERT INTO series VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',[(isin,*[meta[k] for k in rw.IDENTITY[:4]],base,*r) for r in native[base]])
+     d.executemany('INSERT INTO candles VALUES (?,?,?,?,?,?,?,?,?)',[(isin,'gettex',base,*r) for r in official[base]])
+    d.executemany('INSERT INTO trades VALUES (?,?,?,?)',[(isin,*r) for r in ticks]);job,_=rv._enqueue(d,rv._spec(isin,meta,'15m',stamp('10:15'),stamp('10:30')),{'kind':'fixture'},now);inputs=rv._input(d,job)
+    self.assertIsNone(rw._reviewed_partition_plan(d,job,inputs,now,read(d,rw.RETIME_POLICY,{})))
+    old=dict(job);job.update(status='AWAITING_SOURCE',input_fingerprint=inputs['fingerprint'],fingerprint_version=rv.FINGERPRINT_VERSION,finding=rv._classify(job,inputs,now));rv._save_job(d,job,old);d.commit()
+    self.assertEqual(rv._native_empty_pending(d,isin,8),[])
+    old=dict(job);job['observation']=dict(result='PRESENT',at=now.isoformat(),identity_confirmed=True,tv_symbol='GETTEX:FIX',input_fingerprint=inputs['fingerprint'],fingerprint_version=rv.FINGERPRINT_VERSION);rv._save_job(d,job,old);d.commit()
+    self.assertEqual(len(rv._native_empty_pending(d,isin,8)),1)
+    plan=rw.retime_plan(d,job,inputs,now);self.assertIsNotNone(plan);self.assertTrue(plan['reviewed_window_partition']);self.assertEqual(plan['max_native_delay_minutes'],45)
+    stale=copy.deepcopy(job);stale['observation']['input_fingerprint']='changed';self.assertIsNone(rw._reviewed_partition_plan(d,stale,inputs,now,read(d,rw.RETIME_POLICY,{})))
+    absent=copy.deepcopy(job);absent['observation']['result']='ABSENT';self.assertIsNone(rw._reviewed_partition_plan(d,absent,inputs,now,read(d,rw.RETIME_POLICY,{})))
+    d.execute("UPDATE series SET volume=volume+1 WHERE base_tf='15m'")
+    with self.assertRaisesRegex(ValueError,'RETIME_'):rw.publish_retime(d,job,inputs,plan,now)
+    d.rollback()
+   with patch('gettex_history.attach_known_interruptions',return_value=False):rv.turn(s,info,now,native_empty_only=True)
+   receipt=s.setting(rw.RETIME_PREFIX+isin+':'+job['id']);self.assertEqual(receipt['mode'],'VERIFIED_NATIVE_TRADE_PARTITION')
+   with s.connect() as d:
+    self.assertTrue(rw.retime_current(d,receipt));self.assertEqual(rv._classify(job,rv._input(d,job),now)['state'],'NATIVE_ROWS_CONFIRMED')
+    for base in native:self.assertEqual(rw._native(d,isin,meta,base,stamp('10:00'),stamp('11:00')),official[base])
+   self.assertEqual(receipt['before']['5m'],[list(r) for r in native5 if receipt['first']<=r[0]<receipt['end']]);self.assertIsNone(s.setting('cp_manual_risk:'+isin))
+  finally:
+   s.read_cache.close()
+   for suffix in ('','-wal','-shm'):Path(str(path)+suffix).unlink(missing_ok=True)
+
+ def test_reviewed_parent_moves_only_to_unique_identical_confirmed_parent(self):
+  root=Path(__file__).parent.parent.parent/'СМ-Архив';f=tempfile.NamedTemporaryFile(dir=root,prefix='CP exact-parent isolated ',suffix='.sqlite3',delete=False);path=Path(f.name);f.close();s=FlatStore(path)
+  try:
+   isin='US0378331005';now=pd.Timestamp.now(tz='UTC');info=dict(isin=isin,name='Fixture',kind='stock',history_venue_lock='GETTEX');s.save_instrument(info)
+   meta=dict(source='gettex_chart',symbol='FIX.GTX',venue='GETTEX',currency='EUR',timezone='Europe/Berlin');om={**meta,'source':'gettex','symbol':isin};a='2026-11-13 10:15:00';b='2026-11-13 10:45:00';old='2026-11-13 10:30:00';values=[100.,100.,100.,100.,2.]
+   proof=dict(isin=isin,identity=om,basis='complete_published_trade_files',checked_at=now.isoformat(),no_trades=[],trade_intervals=[[a,'2026-11-13 10:20:00']],zero_quantity_intervals=[],reference={'GETTEX:20261113':{}})
+   for at in pd.date_range('2026-11-13 10:00:00','2026-11-13 11:15:00',freq='5min',inclusive='left'):
+    if str(at)!=a:proof['no_trades'].append([str(at),str(at+pd.Timedelta(minutes=5))])
+   for tm in ('09.15','09.30','09.45','10.00','10.15'):
+    for board in ('munc','mund'):proof['reference']['GETTEX:20261113'][f'posttrade.20261113.{tm}.{board}.csv.gz']='a'*64
+   s.set_setting(rv.SOURCE_POLICY,dict(version=1,approved=True,scope='registered_stocks',exclusive_venue='GETTEX'));s.set_setting(rw.RETIME_POLICY,dict(approved=True,version=rw.RETIME_VERSION));s.set_setting('interval_evidence:'+isin,proof)
+   for base in ('5m','15m'):s.set_setting('gettex_chart:'+isin+':'+base,dict(state='SAVED',identity=meta,listing_proof={**meta,'isin':isin,'status':'CONFIRMED','verified_at':now.isoformat()}))
+   with s.connect() as d:
+    for base in ('5m','15m'):
+     d.execute('INSERT INTO series VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',(isin,*[meta[k] for k in rw.IDENTITY[:4]],base,old,*values));d.execute('INSERT INTO candles VALUES (?,?,?,?,?,?,?,?,?)',(isin,'gettex',base,a,*values))
+    d.execute('INSERT INTO trades VALUES (?,?,?,?)',(isin,'2026-11-13 10:16:00',100.,2.));job,_=rv._enqueue(d,rv._spec(isin,meta,'15m',a,a),{'kind':'fixture'},now);i=rv._input(d,job)
+    prev=dict(job);job.update(status='AWAITING_SOURCE',input_fingerprint=i['fingerprint'],finding=rv._classify(job,i,now),observation=dict(result='PRESENT',at=now.isoformat(),identity_confirmed=True,tv_symbol='GETTEX:FIX',input_fingerprint=i['fingerprint'],fingerprint_version=rv.FINGERPRINT_VERSION));rv._save_job(d,job,prev);d.commit()
+    plan=rw.retime_plan(d,job,i,now);self.assertEqual({r['base_tf'] for r in plan['relocations']},{'5m','15m'})
+   with patch('gettex_history.attach_known_interruptions',return_value=False):rv.turn(s,info,now,native_empty_only=True)
+   receipt=s.setting(rw.RETIME_PREFIX+isin+':'+job['id']);self.assertEqual(receipt['relocated'],2);self.assertEqual(receipt['added'],0)
+   with s.connect() as d:
+    self.assertTrue(rw.retime_current(d,receipt))
+    for base in ('5m','15m'):self.assertEqual(rw._native(d,isin,meta,base,a,b),[(a,*values)])
+  finally:
+   s.read_cache.close()
+   for suffix in ('','-wal','-shm'):Path(str(path)+suffix).unlink(missing_ok=True)
+
  def test_open_problem_list_refreshes_on_new_evidence_not_unchanged_poll(self):
   from types import SimpleNamespace
   from unittest.mock import Mock
