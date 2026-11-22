@@ -273,6 +273,41 @@ def _trade_partition(native,trades,max_delay=15):
  return solutions[0] if len(solutions)==1 else None
 
 
+def _sampled_price_partition(native,trades,max_delay=45):
+ """Unique full-quantity partition with one omitted positive interior price.
+
+ No event quantity is removed. This models a sampled native extreme only;
+ the caller must conserve the whole window and verify every native parent.
+ """
+ if not native or len(native)>9 or len(trades)>5000:return None
+ solutions=[];attempts=0
+ def visit(i,j,parts,omitted):
+  nonlocal attempts
+  if len(solutions)>1:return
+  if i==len(native):
+   if j==len(trades) and len(omitted)==1:solutions.append((parts,omitted))
+   return
+  row=native[i];at=pd.Timestamp(row[0]);volume=0.;prices=[]
+  for k in range(j,len(trades)):
+   attempts+=1
+   if attempts>20000:raise ValueError('RETIME_PARTITION_COMPLEXITY_LIMIT')
+   stamp,price,qty=trades[k];t=pd.Timestamp(stamp)
+   if not at-pd.Timedelta(minutes=max_delay)<=t<at+pd.Timedelta(minutes=5):break
+   volume+=qty;prices.append(price)
+   if volume>row[5]:break
+   if volume!=row[5]:continue
+   expected=list(row[1:5]);actual=[prices[0],max(prices),min(prices),prices[-1]]
+   if actual==expected:visit(i+1,k+1,parts+[(j,k+1)],omitted)
+   elif not omitted:
+    for x in range(1,len(prices)-1):
+     if trades[j+x][2]<=0 or row[3]<=prices[x]<=row[2]:continue
+     kept=prices[:x]+prices[x+1:]
+     if kept and [kept[0],max(kept),min(kept),kept[-1]]==expected:
+      visit(i+1,k+1,parts+[(j,k+1)],[dict(native_at=row[0],event_index=j+x,event=trades[j+x])])
+ visit(0,0,[],[])
+ return solutions[0] if len(solutions)==1 else None
+
+
 def _reviewed_partition_plan(db,job,inputs,now,policy):
  """A real timestamp redistribution, proved by every original native value."""
  from cp_controls import digest
@@ -293,7 +328,10 @@ def _reviewed_partition_plan(db,job,inputs,now,policy):
    if native==source['rows']:continue
    # The original parent must itself be exactly built from its native children.
    if any(_aggregate([r for r in native['5m'] if pd.Timestamp(p[0])<=pd.Timestamp(r[0])<pd.Timestamp(p[0])+pd.Timedelta(minutes=15)])!=list(p[1:]) for p in native['15m']):continue
-   partition=_trade_partition(native['5m'],source['trades'],max_delay=45 if reviewed else 15)
+   partition=_trade_partition(native['5m'],source['trades'],max_delay=45 if reviewed else 15);sampled=None
+   if partition is None and reviewed and obs.get('result')=='DIFFERENT':
+    sampled=_sampled_price_partition(native['5m'],source['trades'])
+    if sampled:partition=sampled[0]
    if partition is None:continue
    official_stamps={r[0] for r in source['rows']['5m']};moves=[]
    if reviewed:
@@ -333,7 +371,9 @@ def _reviewed_partition_plan(db,job,inputs,now,policy):
      **(dict(reviewed_window_partition=True,source_policy_digest=digest(sp),max_native_delay_minutes=45,lineage_before=lineage) if reviewed else {}),
      first=str(left),end=str(end),job_id=job['id'],policy_digest=digest(policy),input_fingerprint=inputs['fingerprint'],
      before=native,source=source,source_digest=digest(source),created_at=now.isoformat(),relocations=moves,
-     native_trade_partition=partition,zero_observations_corroborated=True,origin='Current visual discrepancy; complete official tape uniquely reproduces all original OHLCV with bounded native timestamp delay; conserved 5m/15m window')
+     native_trade_partition=partition,zero_observations_corroborated=True,
+     **(dict(sampled_positive_interior_price=sampled[1],sampled_price_version=1) if sampled else {}),
+     origin=('Current DIFFERENT review; complete paired official tape uniquely partitions every native quantity and reproduces native prices except one positive interior extreme already counted in volume; exact native parents and conserved full5m/15m window' if sampled else 'Current visual discrepancy; complete official tape uniquely reproduces all original OHLCV with bounded native timestamp delay; conserved 5m/15m window'))
   except ValueError as error:
    if str(error) in ('RETIME_OTHER_CURRENT_TV_REFERENCE_CONFLICT','RETIME_CURRENT_TV_BOUND_CONTEXT_CHANGED','RETIME_VISUAL_REFERENCE_WINDOW_TOO_DENSE'):raise
    continue
