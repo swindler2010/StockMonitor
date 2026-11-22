@@ -16,7 +16,27 @@ STATES={'INVALID':'Некорректные цены или объёмы','GAP':
         'ANALYSIS_BLOCKED':'Требуется проверка входов анализа'}
 
 
+def accepted_tv_absence(problem):
+    # `accepted` comes from effective_accepted's current revision/policy checks.
+    # A stored observation alone, a manual risk grant or an old repair receipt
+    # must never turn an unresolved input into a completed TV review.
+    evidence=problem.get('acceptance_evidence') or {}
+    return bool(problem.get('accepted') is True
+                and problem.get('accepted_by')=='candlepilot_owner_tv_policy'
+                and problem.get('kind')=='archive'
+                and problem.get('state') in ('UNCONFIRMED','GAP','SOURCE_GAP')
+                and evidence.get('status')=='OWNER_ACCEPTED_TV_ABSENCE'
+                and evidence.get('price_model')=='actual_closed_bars_only_v1'
+                and evidence.get('identity')==problem.get('identity')
+                and evidence.get('timeframe')==problem.get('tf')
+                and evidence.get('range')==problem.get('range')
+                and evidence.get('job_ids') and evidence.get('native_binding'))
+
+
 def repair_capability(problem,job):
+    if accepted_tv_absence(problem):
+        return dict(check=False,known=True,color='Green',label='Принято по TV',
+                    reason='Пропуск сверён с TV и принят; реальные свечи не изменены')
     meta=problem.get('identity') or {}
     check=(problem.get('kind')=='context' or
            (problem.get('kind')=='archive' and problem.get('range') and problem.get('tf') in ('5m','15m','1H','1D')
@@ -76,16 +96,17 @@ def tv_result(problem,jobs):
 
 def present(problem,jobs):
     state=problem.get('state','UNKNOWN');accepted=problem.get('accepted') is True
+    tv_accepted=accepted_tv_absence(problem)
     severity='Низкая' if accepted else 'Высокая' if state in ('INVALID','ANALYSIS_BLOCKED') else 'Информация' if state=='SOURCE_LIMITED' else 'Средняя'
     influence='Исторический риск принят' if accepted else 'Требуется проверка анализа' if problem.get('kind')=='context' else 'Диагностика архива'
     tv,job=tv_result(problem,jobs);repair=problem.get('repair') or {};review=problem.get('historical_review') or {}
     reason=repair.get('reason') or review.get('reason') or ((job or {}).get('finding') or {}).get('reason')
-    next_step=reason or ('Ожидание штатного восстановления' if repair.get('state') in ('QUEUED','RUNNING') else 'Нет сохранённого задания восстановления')
+    next_step=('Пропуск сверён с TV и принят; реальные свечи не изменены' if tv_accepted else reason or ('Ожидание штатного восстановления' if repair.get('state') in ('QUEUED','RUNNING') else 'Нет сохранённого задания восстановления'))
     return dict(problem=problem,action=repair_capability(problem,job),tf=problem.get('tf','—'),span=' — '.join(str(v) for v in problem.get('range') or []) or '—',
-                title=STATES.get(state,state),severity=severity,tv=tv,influence=influence,next=next_step,
+                title='Пропуск сверён с TV и принят' if tv_accepted else STATES.get(state,state),severity=severity,tv='Совпало отсутствие свечей; принято' if tv_accepted else tv,influence=influence,next=next_step,
                 source=' / '.join(str((problem.get('identity') or {}).get(k) or '—') for k in ('source','venue','currency')),
                 last=repair.get('finished_at') or repair.get('checked_at') or (job or {}).get('checked_at') or '—',
-                next_retry=repair.get('next_retry') or review.get('next_retry'),job=job,work=repair_progress(repair))
+                next_retry=None if tv_accepted else repair.get('next_retry') or review.get('next_retry'),job=job,work=tr('Сверка принята') if tv_accepted else repair_progress(repair))
 
 
 def repair_progress(receipt):
@@ -118,7 +139,7 @@ def receipt_clock(receipt):
     return max(values,default=0)
 
 
-def read(path,isin,page=0,include_old=False,now=None):
+def read(path,isin,page=0,include_old=False,now=None,accepted_only=False):
     from cp_controls import view
     with closing(sqlite3.connect(Path(path).resolve().as_uri()+'?mode=ro',uri=True)) as db:
         db.execute('PRAGMA query_only=ON');db.execute('BEGIN')
@@ -158,6 +179,12 @@ def read(path,isin,page=0,include_old=False,now=None):
             return problem.get('kind')=='archive' and all(meta.get(k) for k in ('source','venue','currency')) and not venue_allowed(info,meta)
         archived_count=sum(old_archive(p) or other_archive(p) for p in problems)
         visible=problems if include_old else [p for p in problems if not (old_archive(p) or other_archive(p))]
+        # Keep current, revision-checked acceptances in the shared persisted CP
+        # registry, but do not present them as active errors. Revoked/changed
+        # scopes return here automatically; no DQ record or evidence is deleted.
+        accepted_count=sum(accepted_tv_absence(p) for p in visible)
+        active_count=len(visible)-accepted_count
+        visible=[p for p in visible if accepted_tv_absence(p)==bool(accepted_only)]
         rows=[present(p,indexed.get(binding(p.get('isin'),p.get('tf'),p.get('identity') or {},p.get('range')),[])) for p in visible]
     order={'Высокая':0,'Средняя':1,'Низкая':2,'Информация':3}
     def scope(row):
@@ -168,7 +195,7 @@ def read(path,isin,page=0,include_old=False,now=None):
         return 1
     rows.sort(key=lambda r:(scope(r),order[r['severity']],r['tf'],r['span']))
     pages=max(1,(len(rows)+99)//100);page=min(max(0,int(page)),pages-1)
-    return dict(isin=isin,at=datetime.now(timezone.utc).isoformat(),total=len(rows),old_archive=old_count,archived_count=archived_count,include_old=include_old,page=page,pages=pages,rows=rows[page*100:(page+1)*100])
+    return dict(isin=isin,at=datetime.now(timezone.utc).isoformat(),total=len(rows),accepted_count=accepted_count,active_count=active_count,accepted_only=accepted_only,old_archive=old_count,archived_count=archived_count,include_old=include_old,page=page,pages=pages,rows=rows[page*100:(page+1)*100])
 
 
 class Dialog:
@@ -190,6 +217,9 @@ class Dialog:
         self.refresh_button=ttk.Button(top,text=tr('Обновить'),style=p+'.Secondary.TButton',command=self.refresh);self.refresh_button.pack(side='left',padx=7)
         ttk.Button(top,text=tr('Подробная диагностика…'),style=p+'.Secondary.TButton',command=lambda:__import__('candlepilot_health').show_advanced(app)).pack(side='left')
         self.status=tk.StringVar(w,tr('Чтение сохранённых проблем…'));ttk.Label(base,textvariable=self.status,style=p+'.TLabel').pack(anchor='w',pady=6)
+        self.view_mode=ttk.Combobox(base,values=[tr('Активные проблемы'),tr('Принятые сверки TV')],state='readonly',style=p+'.TCombobox',width=30)
+        self.view_mode.current(0);self.view_mode.pack(anchor='w',pady=(0,6))
+        self.view_mode.bind('<<ComboboxSelected>>',lambda _:self.select())
         self.include_old=tk.BooleanVar(w,False)
         ttk.Checkbutton(base,text=tr('Показывать старые и другие архивы'),variable=self.include_old,command=self.select,style=p+'.TCheckbutton').pack(anchor='w',pady=(0,6))
         host=ttk.Frame(base,style=p+'.TFrame');host.pack(fill='both',expand=True)
@@ -263,7 +293,7 @@ class Dialog:
         if self.closed or self.action_busy or key not in self.shown:return
         row=self.shown[key];self.tree.selection_set(key);self.details()
         if not row['action']['check']:
-            self.clear_detail(self.detail.get('1.0','end')+'\n'+tr('Нет штатного адресного исправления для этого источника или ТФ'));return
+            self.clear_detail(self.detail.get('1.0','end')+'\n'+tr(row['action']['reason']));return
         self.action_busy=True;self.schedule_buttons();self.status.set(tr('Постановка приоритетного задания…'));problem=row['problem'];isin=problem['isin'];generation=self.generation
         def done(value):
             self.action_busy=False
@@ -350,7 +380,7 @@ class Dialog:
         if self.closed or self.choice.current()<0:return
         if self.busy:return
         self.busy=True;self.refresh_button.configure(state='disabled')
-        isin=self.infos[self.choice.current()]['isin'];generation=self.generation;page=self.page;include_old=self.include_old.get()
+        isin=self.infos[self.choice.current()]['isin'];generation=self.generation;page=self.page;include_old=self.include_old.get();accepted_only=self.view_mode.current()==1
         self.status.set(tr('Чтение сохранённых проблем…'))
         def done(value):
             self.busy=False
@@ -365,8 +395,8 @@ class Dialog:
             if selected and selected[0] in self.shown:self.tree.selection_set(selected[0])
             self.apply_receipts(self.receipts);self.schedule_watch()
             self.schedule_buttons()
-            self.status.set(tr('Сохранённые проблемы')+f": {value['total']} · {self.page+1}/{value['pages']} · "+tr('Архив отдельно')+f": {value.get('archived_count',0)} · "+str(value['at']))
-            if not value['rows']:self.clear_detail(tr('В сохранённых отчётах проблем не найдено. Это не подтверждает полноту истории или готовность торговли.'))
+            self.status.set(tr('Активные проблемы')+f": {value.get('active_count',value['total'])} · "+tr('Принятые сверки TV')+f": {value.get('accepted_count',0)} · {self.page+1}/{value['pages']} · "+tr('Архив отдельно')+f": {value.get('archived_count',0)} · "+str(value['at']))
+            if not value['rows']:self.clear_detail(tr('Принятых сверок TV пока нет' if accepted_only else 'В сохранённых отчётах проблем не найдено. Это не подтверждает полноту истории или готовность торговли.'))
             self.timer=self.win.after(60000,self.refresh)
         def failed(error):
             self.busy=False
@@ -374,7 +404,7 @@ class Dialog:
             if generation!=self.generation:self.refresh();return
             self.refresh_button.configure(state='normal');self.status.set(tr('Не удалось прочитать проблемы')+': '+str(error))
         if self.timer is not None:self.win.after_cancel(self.timer);self.timer=None
-        if self.app.job(lambda:read(self.app.store.path,isin,page,include_old),done,failed,lane='read',key=('cp-problem-view',id(self.win),generation,page)) is False:failed(tr('Очередь временно занята'))
+        if self.app.job(lambda:read(self.app.store.path,isin,page,include_old,accepted_only=accepted_only),done,failed,lane='read',key=('cp-problem-view',id(self.win),generation,page)) is False:failed(tr('Очередь временно занята'))
 
     def cleanup(self):
         self.closed=True;self.generation+=1
@@ -389,4 +419,3 @@ def show(app):
     old=getattr(app,'_cp_problem_window',None)
     if old is not None and old.winfo_exists():old.lift();return old
     app._cp_problem_dialog=Dialog(app);return app._cp_problem_dialog.win
-

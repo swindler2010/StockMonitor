@@ -11,6 +11,47 @@ PROBLEM=dict(isin='A',tf='15m',identity=META,range=['2026-11-12 08:15','2026-11-
 
 
 class ProblemEvidenceTests(unittest.TestCase):
+    def test_accepted_tv_reviews_leave_active_errors_but_remain_readable_and_reopen(self):
+        f=tempfile.NamedTemporaryFile(prefix='CP TV accepted isolated ',suffix='.sqlite3',dir='C:/Users/panus/Documents/Codex/СМ-Архив',delete=False)
+        path=Path(f.name);f.close();self.addCleanup(lambda:path.unlink(missing_ok=True))
+        with closing(sqlite3.connect(path)) as db:
+            db.execute('create table settings(key primary key,value)');db.commit()
+        problem={**copy.deepcopy(PROBLEM),'accepted':True,'accepted_by':'candlepilot_owner_tv_policy',
+                 'acceptance_evidence':dict(status='OWNER_ACCEPTED_TV_ABSENCE',price_model='actual_closed_bars_only_v1',
+                    identity=copy.deepcopy(META),timeframe='15m',range=PROBLEM['range'][:],job_ids=['review'],native_binding='current')}
+        before=path.read_bytes();original=copy.deepcopy(problem)
+        invalid={**PROBLEM,'id':'invalid','state':'INVALID'}
+        with patch('cp_controls.view',return_value=[problem,invalid]):
+            active=read(path,'A');accepted=read(path,'A',accepted_only=True)
+        self.assertEqual((active['total'],active['active_count'],active['accepted_count']),(1,1,1))
+        self.assertEqual(active['rows'][0]['problem']['state'],'INVALID')
+        self.assertEqual(accepted['total'],1);self.assertEqual(accepted['rows'][0]['problem'],original)
+        with patch('cp_controls.view',return_value=[{**problem,'accepted':False},invalid]):
+            active=read(path,'A');accepted=read(path,'A',accepted_only=True)
+        self.assertEqual((active['total'],accepted['total']),(2,0))
+        self.assertEqual(path.read_bytes(),before);self.assertEqual(problem,original)
+
+    def test_current_tv_acceptance_supersedes_waiting_receipt_without_changing_dq(self):
+        problem={**copy.deepcopy(PROBLEM),'accepted':True,'accepted_by':'candlepilot_owner_tv_policy',
+                 'repair':dict(state='BLOCKED',reason='old missing source',next_retry='later'),
+                 'acceptance_evidence':dict(status='OWNER_ACCEPTED_TV_ABSENCE',
+                    price_model='actual_closed_bars_only_v1',identity=copy.deepcopy(META),
+                    timeframe=PROBLEM['tf'],range=PROBLEM['range'][:],job_ids=['review'],native_binding='current')}
+        before=copy.deepcopy(problem);row=present(problem,[])
+        self.assertEqual(row['action']['label'],'Принято по TV')
+        self.assertEqual(row['action']['color'],'Green');self.assertFalse(row['action']['check'])
+        self.assertEqual(row['title'],'Пропуск сверён с TV и принят')
+        self.assertIsNone(row['next_retry']);self.assertEqual(problem,before)
+        self.assertEqual(row['problem']['state'],'UNCONFIRMED')
+        for change in [dict(accepted=False),dict(accepted_by='manual'),dict(state='INVALID'),
+                       dict(identity={**META,'source':'gettex'}),dict(tf='5m'),
+                       dict(range=['2026-11-12 08:30','2026-11-12 08:30']),
+                       dict(acceptance_evidence={**problem['acceptance_evidence'],'native_binding':None})]:
+            with self.subTest(change=change):
+                candidate={**problem,**change};negative=present(candidate,[])
+                self.assertNotEqual(negative['action']['label'],'Принято по TV')
+                self.assertEqual(negative['title'],{'INVALID':'Некорректные цены или объёмы'}.get(candidate['state'],'Интервал пока не подтверждён'))
+
     def job(self):
         return dict(isin='A',tf='15m',identity=META,first='2026-11-12 08:15',last='2026-11-12 08:15',
                     input_fingerprint='same',checked_at='2026-11-14',observation={'identity_confirmed':True,'input_fingerprint':'same','result':'ABSENT'},
@@ -79,4 +120,3 @@ class ProblemWindowTests(unittest.TestCase):
         self.assertTrue(d.closed)
 
 if __name__=='__main__':unittest.main()
-

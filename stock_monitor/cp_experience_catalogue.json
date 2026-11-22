@@ -4,6 +4,32 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "current_tv_acceptance_separate_from_active_errors",
+      "title": "Действующая сверка TV хранится в реестре, а не в активных ошибках",
+      "sources": [
+        "cp_controls.view",
+        "cp_problem_view.accepted_tv_absence",
+        "cp_problem_view.read"
+      ],
+      "states": [
+        "OWNER_ACCEPTED_TV_ABSENCE",
+        "UNCONFIRMED",
+        "GAP",
+        "SOURCE_GAP"
+      ],
+      "steps": [
+        "Использовать только действующее effective_accepted с проверенной identity, TF, диапазоном и native_binding; сохранённого скриншота или старой квитанции BLOCKED недостаточно.",
+        "Принятый диапазон убрать из активного списка проблем, сохранив исходный DQ, свечи и запись подтверждения в общем реестре акции. Показать запись в разделе «Принятые сверки TV».",
+        "При отзыве подтверждения или существенном изменении входов диапазон автоматически возвращается в активные проблемы. INVALID не маскировать. Не ставить повторное восстановление уже принятого неизменного диапазона по кнопке."
+      ],
+      "evidence": [
+        "test_cp_problem_view.ProblemEvidenceTests.test_accepted_tv_reviews_leave_active_errors_but_remain_readable_and_reopen",
+        "test_cp_problem_view.ProblemEvidenceTests.test_current_tv_acceptance_supersedes_waiting_receipt_without_changing_dq"
+      ],
+      "limits": "Только отображение действующего подтверждения. Не NO_TRADES, не изменение DQ/OHLCV или торговых допусков; расхождение объёмов и неподтверждённая история остаются отдельными проблемами.",
+      "status": "Targeted tests PASS; Windows verification pending"
+    },
+    {
       "id": "source_files_missing_is_not_absent_trades",
       "title": "Нет файлов периода — не утверждение об отсутствии сделок",
       "sources": [

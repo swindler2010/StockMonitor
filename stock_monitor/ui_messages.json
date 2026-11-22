@@ -5008,5 +5008,37 @@
   "Постановка приоритетного задания…": {
     "en": "Queuing priority task…",
     "de": "Prioritätsaufgabe wird eingereiht…"
+  },
+  "Активные проблемы": {
+    "en": "Active problems",
+    "de": "Aktive Probleme"
+  },
+  "Принятые сверки TV": {
+    "en": "Accepted TV reviews",
+    "de": "Akzeptierte TV-Abgleiche"
+  },
+  "Принятых сверок TV пока нет": {
+    "en": "No accepted TV reviews yet",
+    "de": "Noch keine akzeptierten TV-Abgleiche"
+  },
+  "Принято по TV": {
+    "en": "Accepted after TV review",
+    "de": "Nach TV-Abgleich akzeptiert"
+  },
+  "Пропуск сверён с TV и принят; реальные свечи не изменены": {
+    "en": "The gap was reviewed against TV and accepted; actual candles are unchanged",
+    "de": "Die Lücke wurde mit TV abgeglichen und akzeptiert; echte Kerzen bleiben unverändert"
+  },
+  "Пропуск сверён с TV и принят": {
+    "en": "Gap reviewed against TV and accepted",
+    "de": "Lücke mit TV abgeglichen und akzeptiert"
+  },
+  "Совпало отсутствие свечей; принято": {
+    "en": "Matching absence of candles; accepted",
+    "de": "Übereinstimmendes Fehlen von Kerzen; akzeptiert"
+  },
+  "Сверка принята": {
+    "en": "Review accepted",
+    "de": "Abgleich akzeptiert"
   }
 }
