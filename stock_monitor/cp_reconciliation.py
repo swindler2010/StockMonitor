@@ -173,7 +173,7 @@ def _input(db, job):
     if tf in ('5m','15m') and rows and len(rows)<int((pd.Timestamp(job['last'])-pd.Timestamp(job['first']))/pd.Timedelta(minutes=5 if tf=='5m' else 15))+1:
         prefix=RETIME_PREFIX+isin+':'
         siblings=db.execute("""SELECT value FROM settings WHERE key>=? AND key<? AND key<>?
-          AND json_extract(value,'$.state')='APPLIED' AND json_extract(value,'$.mode') IN ('VERIFIED_NATIVE_EMPTY','VERIFIED_NATIVE_TRADE_PARTITION')
+          AND json_extract(value,'$.state')='APPLIED' AND json_extract(value,'$.mode') IN ('VERIFIED_NATIVE_EMPTY','VERIFIED_NATIVE_TRADE_PARTITION','VERIFIED_NATIVE_POSITIVE_PRICE_EXTREME')
           AND json_extract(value,'$.first')<? AND json_extract(value,'$.end')>?
           AND json_extract(value,'$.identity.source')=? AND json_extract(value,'$.identity.symbol')=?
           AND json_extract(value,'$.identity.venue')=? AND json_extract(value,'$.identity.currency')=?
@@ -593,9 +593,13 @@ def _native_empty_pending(db,isin,limit):
       AND json_extract(value,'$.identity.source')='gettex_chart'
       AND json_extract(value,'$.identity.venue')='GETTEX'
       AND json_extract(value,'$.identity.currency')='EUR'
-      AND json_extract(value,'$.finding.state') IN ('SOURCE_TIMEBASE_UNCONFIRMED','GAP','NATIVE_ROWS_PRESENT')
       AND json_extract(value,'$.status') IN ('AWAITING_USER','AWAITING_SOURCE')
-      AND COALESCE(json_extract(value,'$.native_empty_algorithm'),0)<?
+      AND ((json_extract(value,'$.finding.state') IN ('SOURCE_TIMEBASE_UNCONFIRMED','GAP','NATIVE_ROWS_PRESENT')
+        AND COALESCE(json_extract(value,'$.native_empty_algorithm'),0)<?)
+        OR (json_extract(value,'$.tf')='5m' AND json_extract(value,'$.first')=json_extract(value,'$.last')
+          AND json_extract(value,'$.finding.state')='SOURCE_DISCREPANCY'
+          AND json_extract(value,'$.observation.result')='DIFFERENT'
+          AND COALESCE(json_extract(value,'$.positive_price_algorithm'),0)<1))
       ORDER BY json_extract(value,'$.first') DESC,key LIMIT ?""",
       (prefix,prefix+'\uffff',NATIVE_EMPTY_ALGORITHM,limit)).fetchall()
 
@@ -657,7 +661,7 @@ def turn(store, info, now=None, native_empty_only=False):
             seeded=[]
             for _,raw in _native_empty_pending(db,isin,NATIVE_EMPTY_LIMIT):
                 job=json.loads(raw);old=dict(job)
-                job.update(native_empty_algorithm=NATIVE_EMPTY_ALGORITHM,status='QUEUED',next_check=clock.isoformat())
+                job.update(native_empty_algorithm=NATIVE_EMPTY_ALGORITHM,positive_price_algorithm=1,status='QUEUED',next_check=clock.isoformat())
                 _save_job(db,job,old);seeded.append((key(job),json.dumps(job,ensure_ascii=False)))
             progress['native_empty_batch_at']=clock.isoformat()
         else:seeded=_seed_official_empty_checks(db,info,clock,progress,max(0,INGEST_LIMIT-segments))
@@ -710,9 +714,9 @@ def turn(store, info, now=None, native_empty_only=False):
                 if correction:
                     current['official_timebase_repair']=publish_retime(db,current,inputs,correction,clock)
                     if (correction.get('mode')=='VERIFIED_NATIVE_EMPTY'
-                            or correction.get('reviewed_tf')=='5m' and correction.get('mode')=='VERIFIED_NATIVE_TRADE_PARTITION'):
-                        # No rows changed: finish the proof on this same writer
-                        # transaction instead of adding a second queued pass.
+                            or correction.get('reviewed_tf')=='5m' and correction.get('mode') in ('VERIFIED_NATIVE_TRADE_PARTITION','VERIFIED_NATIVE_POSITIVE_PRICE_EXTREME')):
+                        # Finish the current proof on this same writer transaction
+                        # instead of adding a second queued pass.
                         inputs=_input(db,current);result=_classify(current,inputs,clock)
                         allowed=('NO_TRADES',) if correction.get('mode')=='VERIFIED_NATIVE_EMPTY' else ('NO_TRADES','NATIVE_ROWS_CONFIRMED')
                         if result['state'] not in allowed:raise ValueError('RETIME_EMPTY_PUBLICATION_RECHECK_FAILED')

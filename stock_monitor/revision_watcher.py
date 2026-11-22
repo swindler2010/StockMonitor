@@ -119,6 +119,50 @@ def _five_minute_empty_plan(db,job,inputs,now,policy):
    origin='Complete paired official GETTEX tape; exact full native5m/15m parent windows prove this5m absence; no prices replaced or synthetic observations')
 
 
+def _reviewed_positive_price_extreme(db,job,inputs,now,policy):
+ """A current visual5m discrepancy plus one fully confirmed interior price.
+
+ The quantity was already counted. Restore only an omitted positive trade's
+ H/L within one complete unchanged native parent. Never use TV prices as data.
+ """
+ from cp_controls import read,digest
+ from cp_reconciliation import SOURCE_POLICY,_observation_current
+ from history_service import parent_provenance_key
+ obs=job.get('observation') or {};meta=job['identity'];sp=read(db,SOURCE_POLICY,{})
+ if not (job['tf']=='5m' and job['first']==job['last'] and len(inputs['rows'])==1
+     and obs.get('result')=='DIFFERENT' and _observation_current(job,inputs)
+     and sp.get('approved') is True and sp.get('version')==1 and sp.get('scope')=='registered_stocks' and sp.get('exclusive_venue')=='GETTEX'):return None
+ a=pd.Timestamp(job['first']).floor('15min');end=a+pd.Timedelta(minutes=15)
+ try:
+  source=_official_window(db,job['isin'],str(a),str(end),now)
+  if len(source['trades'])>5000:return None
+  native={base:_native(db,job['isin'],meta,base,str(a),str(end)) for base in ('5m','15m')}
+  if any([r[0] for r in native[b]]!=[r[0] for r in source['rows'][b]] for b in native) or len(native['15m'])!=1:return None
+  if _aggregate(native['5m'])!=list(native['15m'][0][1:]):return None
+  changed=False
+  for original,confirmed in zip(native['5m'],source['rows']['5m']):
+   if original==confirmed:continue
+   if (original[0]!=job['first'] or original[1]!=confirmed[1] or original[4:]!=confirmed[4:]
+       or confirmed[2]<original[2] or confirmed[3]>original[3]):return None
+   ticks=[t for t in source['trades'] if pd.Timestamp(original[0])<=pd.Timestamp(t[0])<pd.Timestamp(original[0])+pd.Timedelta(minutes=5)]
+   if any(t[2]<=0 for t in ticks):return None
+   omitted=[t for t in ticks if not original[3]<=t[1]<=original[2]]
+   kept=[t[1] for t in ticks if original[3]<=t[1]<=original[2]]
+   if (len(omitted)!=1 or not kept or [kept[0],max(kept),min(kept),kept[-1]]!=list(original[1:5])
+       or sum(t[2] for t in ticks)!=original[5]):return None
+   changed=True
+  if not changed:return None
+  old=native['15m'][0];new=source['rows']['15m'][0]
+  if old[1]!=new[1] or old[4:]!=new[4:]:return None
+  _protect_visual_references(db,job,inputs,dict(first=str(a),end=str(end),source=source))
+  lineage={base:{r[0]:read(db,parent_provenance_key(job['isin'],meta,base),{}).get(r[0]) for r in rows} for base,rows in native.items()}
+  return dict(version=RETIME_VERSION,mode='VERIFIED_NATIVE_POSITIVE_PRICE_EXTREME',reviewed_tf='5m',isin=job['isin'],identity=meta,
+    first=str(a),end=str(end),job_id=job['id'],policy_digest=digest(policy),source_policy_digest=digest(sp),input_fingerprint=inputs['fingerprint'],
+    before=native,source=source,source_digest=digest(source),created_at=now.isoformat(),lineage_before=lineage,
+    origin='Current5m visual discrepancy; complete paired official tape confirms one omitted positive interior price; exact O/C/V, all native timestamps and parent-child aggregation; original values retained')
+ except (KeyError,TypeError,IndexError):return None
+
+
 def _five_minute_partition_plan(db,job,inputs,now,policy):
  """Reuse the unique conserved native/tape partition, not a guessed5m shift."""
  from cp_controls import read,digest
@@ -458,6 +502,8 @@ def retime_plan(db,job,inputs,now):
  if (job['tf'] not in ('5m','15m') or meta['source']!='gettex_chart' or meta['venue']!='GETTEX'
      or meta['currency']!='EUR' or meta['timezone']!='Europe/Berlin'):return None
  if job['tf']=='5m':
+  extreme=_reviewed_positive_price_extreme(db,job,inputs,now,policy)
+  if extreme:return extreme
   observation=job.get('observation') or {}
   if observation.get('result') in (None,'ABSENT'):
    empty=_five_minute_empty_plan(db,job,inputs,now,policy)
