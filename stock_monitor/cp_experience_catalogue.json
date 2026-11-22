@@ -2164,6 +2164,35 @@
       ],
       "automatic_action": "Existing verified conserved-window CP writer and normal reassessment",
       "manual_action": "Current bounded DIFFERENT visual evidence if unavailable; never a direct Work candle write"
+    },
+    {
+      "id": "current_fifteen_minute_difference_due_lane",
+      "title": "Зависшие текущие расхождения соседних 15m-свечей",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "SOURCE_DISCREPANCY",
+        "GAP"
+      ],
+      "status": "Normal TEST CP22Nov23:31:11CET Apple20Oct22:30 and23Oct18:15;23:31:52 NVIDIA21Oct13:45. All RESOLVED_NATIVE by23:33:39 and current receipts verified. Work0 direct candle writes.",
+      "steps": [
+        "Select an existing due single15m current DIFFERENT request in AWAITING_SOURCE/AWAITING_USER for one versioned pass on the existing serial eight-job native route. Preserve future next_check and skip completed/handled requests.",
+        "Keep the actual conflicting current neighbour review guard. Process that neighbour's own diagnosis instead of suppressing it to repair a gap.",
+        "For a current DIFFERENT only, include a75minute candidate window with unchanged9native-bar/5000event/20000attempt and45minute maximum native delay bounds. Other observations retain the prior window widths.",
+        "Require complete paired primary GETTEX publications, unique event-to-native partition, exact native parent aggregation, full-window OHLCV conservation, current identity/policy/source/native/visual guards immediately before publication, original lineage and ordinary DQ/CORE reassessment."
+      ],
+      "evidence": [
+        "test_cp_sampled_price_partition.py",
+        "test_cp_short_review_queue.py",
+        "test_cp_five_minute_partition.py"
+      ],
+      "limits": [
+        "Exact proposed public commit3c36d64:6tests PASS7.015s including53/200due/future/completed cases. No TV price import, permission or expiry renewal, new feed worker or trade."
+      ],
+      "automatic_action": "One bounded existing-queue proof and guarded source repair; ordinary dependent reassessment",
+      "manual_action": "A new visual diagnosis only when no current suitable evidence exists; missing independent source proof remains blocked"
     }
   ],
   "sources": [
