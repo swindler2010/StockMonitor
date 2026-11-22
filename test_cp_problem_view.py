@@ -58,6 +58,13 @@ class ProblemEvidenceTests(unittest.TestCase):
         self.assertEqual(store.setting(key),report);self.assertIsNone(store.setting('cp_manual_risk:'+isin))
         with store.connect() as db:
             self.assertEqual(before,{t:db.execute('SELECT * FROM '+t+' ORDER BY rowid').fetchall() for t in before})
+        # Independent native proof must not erase a newer, current visual
+        # disagreement. Both facts remain reviewable; the chart is not fixed.
+        spec=rv._spec(isin,meta,'15m',first,first);job_key=rv.key(spec);saved_job=store.setting(job_key)
+        store.set_setting(job_key,{**saved_job,'observation':dict(result='PRESENT'),
+                                  'source_comparison':dict(observation_current=True,presence_match=False)})
+        self.assertEqual((read(path,isin)['active_count'],read(path,isin)['native_count']),(1,0))
+        store.set_setting(job_key,saved_job)
         store.set_setting(rw.RETIME_POLICY,{**policy,'approved':False})
         self.assertEqual((read(path,isin)['active_count'],read(path,isin,native_only=True)['total']),(1,0))
         store.set_setting(rw.RETIME_POLICY,policy)

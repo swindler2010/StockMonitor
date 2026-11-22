@@ -48,6 +48,9 @@ def native_empty_resolution(db,problem,jobs):
         if (not same_problem(problem,job) or job.get('status')!='RESOLVED_NATIVE'
                 or (job.get('finding') or {}).get('state')!='NO_TRADES'
                 or (job.get('official_timebase_repair') or {}).get('state')!='APPLIED'):continue
+        if ((job.get('observation') or {}).get('result') in ('PRESENT','ZERO_VOLUME','DIFFERENT')
+                and (job.get('source_comparison') or {}).get('observation_current') is True):
+            continue  # Keep a current conflicting TV fact visible for review.
         from cp_reconciliation import _spec
         from cp_controls import _official_empty_problem_current
         from revision_watcher import RETIME_PREFIX,RETIME_POLICY
