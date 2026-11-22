@@ -27,7 +27,7 @@
         "Readonly Windows TEST reproduction: Apple 10.11.2026 22:45 and Broadcom 16.11.2026 22:45 had UNCONFIRMED while the existing official-empty validator returned true."
       ],
       "limits": "Только отображение и повторная проверка существующего подтверждения. Нет новых свечей, обхода freshness/торговых защит или разрешения по одному статусу очереди. Весь запрос всех акций остаётся IN_PROGRESS.",
-      "status": "7 affected UI scenarios PASS /2.295s; Windows verification pending"
+      "status": "7 affected scenarios PASS /2.295s; normal Windows restart and Siemens 4 confirmed intervals/details verified; 8 protected hashes unchanged; overall task IN_PROGRESS"
     },
     {
       "id": "current_tv_acceptance_separate_from_active_errors",
