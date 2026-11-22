@@ -570,6 +570,33 @@ def _problem_in_dependencies(problem,series):
     except (ValueError,KeyError,TypeError):return True
 
 
+def _official_empty_problem_current(db,problem,proof):
+    if (problem['kind']!='archive' or problem['tf'] not in ('5m','15m')
+            or problem['state'] not in ('GAP','SOURCE_GAP','UNCONFIRMED')
+            or not problem.get('range') or problem['range'][0]!=problem['range'][1]):
+        return False
+    import pandas as pd
+    from cp_reconciliation import _spec
+    from revision_watcher import RETIME_POLICY, RETIME_PREFIX, retime_current
+    try:
+        job=_spec(problem['isin'],problem['identity'],problem['tf'],*problem['range'])
+        receipt_key=RETIME_PREFIX+problem['isin']+':'+job['id']
+        dependencies={'setting:'+receipt_key,'setting:'+RETIME_POLICY,
+                      'setting:interval_evidence:'+problem['isin']}
+        if problem['tf']=='5m':dependencies.add('setting:cp_gettex_source_policy')
+        if not dependencies<=proof.get('revisions',{}).keys():return False
+        receipt=read(db,receipt_key,{})
+        first=pd.Timestamp(problem['range'][0])
+        return (receipt.get('state')=='APPLIED' and receipt.get('mode')=='VERIFIED_NATIVE_EMPTY'
+            and receipt['isin']==problem['isin'] and receipt['identity']==problem['identity']
+            and receipt['job_id']==job['id'] and pd.Timestamp(receipt['empty_first'])==first
+            and receipt.get('reviewed_tf','15m')==problem['tf']
+            and pd.Timestamp(receipt['empty_end'])==first+pd.Timedelta(minutes=5 if problem['tf']=='5m' else 15)
+            and retime_current(db,receipt))
+    except (KeyError,TypeError,ValueError):
+        return False
+
+
 def manual_gate(db,isin,identity,entry_tf=None,dependency_proof=None):
     """Known historical risk only; execution must still validate the actual quote."""
     from paper_account import registered_instrument,ACCOUNT
@@ -606,6 +633,11 @@ def manual_gate(db,isin,identity,entry_tf=None,dependency_proof=None):
     current=[p for p in problems(db,isin) if p['kind']=='archive' and
              ((p['identity']==identity and (required is None or _problem_in_dependencies(p,own)))
               or not all(p['identity'].get(k) for k in IDENTITY))]
+    if dependency_proof is not None:
+        # The archive report can lag an independently proven empty slot.
+        # Recheck the exact repair and require its revision in this proof.
+        current=[p for p in current if p['id'] in accepted or
+                 not _official_empty_problem_current(db,p,dependency_proof)]
     if any(p['id'] not in accepted for p in current):raise ValueError('PAPER_MANUAL_NEW_OR_UNACCEPTED_PROBLEM')
     actual_only=all(accepted[p['id']].get('evidence',{}).get('price_model')==TV_PRICE_MODEL for p in current)
     result=dict(mode='MANUAL_RISK_ACCEPTED',isin=isin,identity=identity,account=ACCOUNT,

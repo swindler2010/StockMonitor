@@ -13,6 +13,17 @@ class FeedContext(StockMonitor):
         self.http_cache={};self.http_lock=threading.Lock()
 
     def calculate(self,info):
+        if info.get('_native_empty_only'):
+            # Cached evidence only, on the owned serial feed process. Do not
+            # spend this short batch on network, archives or CORE calculation.
+            from cp_reconciliation import turn
+            result=turn(self.store,info,native_empty_only=True)
+            if result.get('analysis_requested_at'):
+                from cp_assessment import request
+                request(self.store,info['isin'])
+            from candle_schedule import FRESH_ROTATION,history_finished
+            if self.store.setting(FRESH_ROTATION,{}).get('consecutive',0):history_finished(self.store)
+            return {'errors':[],'cp_native_empty':result}
         from eur_listings import OWNER_HISTORY_POLICY,owner_history_info
         info=owner_history_info(info,self.store.setting(OWNER_HISTORY_POLICY,{}))
         local={}

@@ -524,8 +524,8 @@ def _queue_repaired_scopes(db,receipt_key,receipt,clock,limit=16):
     if receipt.get('mode')=='VERIFIED_NATIVE_EMPTY':
         import pandas as pd
         target=read(db,PREFIX+receipt['isin']+':'+receipt['job_id'],{})
-        if target.get('tf')=='15m':
-            changed.setdefault('15m',set()).update(str(t) for t in pd.date_range(target['first'],target['end'],freq='15min',inclusive='left'))
+        if target.get('tf') in ('5m','15m'):
+            changed.setdefault(target['tf'],set()).update(str(t) for t in pd.date_range(target['first'],target['end'],freq=target['tf'].replace('m','min'),inclusive='left'))
     if not any(changed.values()):return dict(queued=[],complete=True)
     prefix=PREFIX+receipt['isin']+':'
     # Projection is bounded to this exact listing and the repaired window.
@@ -580,18 +580,54 @@ def _resume_repaired_scopes(db,isin,clock):
         write(db,PROGRESS+isin,p)
 
 
-def turn(store, info, now=None):
+NATIVE_EMPTY_ALGORITHM=4
+NATIVE_EMPTY_LIMIT=8
+
+
+def _native_empty_pending(db,isin,limit):
+    prefix=PREFIX+isin+':'
+    return db.execute("""SELECT key,value FROM settings WHERE key>=? AND key<?
+      AND json_extract(value,'$.tf')='5m'
+      AND json_extract(value,'$.first')=json_extract(value,'$.last')
+      AND json_extract(value,'$.identity.source')='gettex_chart'
+      AND json_extract(value,'$.identity.venue')='GETTEX'
+      AND json_extract(value,'$.identity.currency')='EUR'
+      AND json_extract(value,'$.finding.state')='SOURCE_TIMEBASE_UNCONFIRMED'
+      AND json_extract(value,'$.status') IN ('AWAITING_USER','AWAITING_SOURCE')
+      AND COALESCE(json_extract(value,'$.native_empty_algorithm'),0)<?
+      ORDER BY json_extract(value,'$.first') DESC,key LIMIT ?""",
+      (prefix,prefix+'\uffff',NATIVE_EMPTY_ALGORITHM,limit)).fetchall()
+
+
+def native_empty_batches(db,infos,limit=8):
+    """Rotate saved 5m evidence on the existing writer, without any download."""
+    from revision_watcher import RETIME_POLICY,RETIME_VERSION
+    policy=read(db,RETIME_POLICY,{});source=read(db,SOURCE_POLICY,{})
+    if (policy.get('approved') is not True or policy.get('version')!=RETIME_VERSION
+        or source.get('approved') is not True or source.get('version')!=1
+        or source.get('scope')!='registered_stocks' or source.get('exclusive_venue')!='GETTEX'):return []
+    candidates=[]
+    for info in infos:
+        if info.get('kind')=='benchmark':continue
+        if _native_empty_pending(db,info['isin'],1):
+            candidates.append((read(db,PROGRESS+info['isin'],{}).get('native_empty_batch_at',''),info))
+    return [{**i,'_native_empty_only':True} for _,i in sorted(candidates,key=lambda x:(x[0],x[1]['isin']))[:limit]]
+
+
+def turn(store, info, now=None, native_empty_only=False):
     """At most four recovery events and four checks per existing feed turn."""
     import pandas as pd
     if info.get('kind')=='benchmark':return {'state':'NOT_APPLICABLE'}
     clock=pd.Timestamp(now or datetime.now(timezone.utc));isin=info['isin'];created=checked=0;segments=0
     from gettex_history import attach_known_interruptions
-    closure_updated=attach_known_interruptions(info,store,clock)
+    closure_updated=False if native_empty_only else attach_known_interruptions(info,store,clock)
     with store.connect() as db:
-        db.execute('BEGIN IMMEDIATE');_resume_repaired_scopes(db,isin,clock);progress=read(db,PROGRESS+isin,{})
+        db.execute('BEGIN IMMEDIATE')
+        if not native_empty_only:_resume_repaired_scopes(db,isin,clock)
+        progress=read(db,PROGRESS+isin,{})
         exists=db.execute("SELECT 1 FROM sqlite_master WHERE name='cp_recovery_experience'").fetchone()
         events=db.execute('SELECT rowid,event_id,identity,base_tf,method,outcome,first_at,last_at,reason FROM cp_recovery_experience WHERE isin=? AND rowid>? ORDER BY rowid LIMIT ?',
-                          (isin,progress.get('cursor',0),INGEST_LIMIT)).fetchall() if exists else []
+                          (isin,progress.get('cursor',0),INGEST_LIMIT)).fetchall() if exists and not native_empty_only else []
         for rowid,event,raw,tf,method,outcome,first,last,raw_reason in events:
             try:
                 reason=json.loads(raw_reason);meta=json.loads(raw)
@@ -616,27 +652,34 @@ def turn(store, info, now=None):
             except (ValueError,TypeError,KeyError) as error:
                 progress['cursor']=rowid;progress.pop('next_range_first',None)
                 progress['last_ineligible_event']={'event_id':event,'reason':str(error),'at':clock.isoformat()}
-        seeded=_seed_official_empty_checks(db,info,clock,progress,max(0,INGEST_LIMIT-segments))
+        if native_empty_only:
+            seeded=[]
+            for _,raw in _native_empty_pending(db,isin,NATIVE_EMPTY_LIMIT):
+                job=json.loads(raw);old=dict(job)
+                job.update(native_empty_algorithm=NATIVE_EMPTY_ALGORITHM,status='QUEUED',next_check=clock.isoformat())
+                _save_job(db,job,old);seeded.append((key(job),json.dumps(job,ensure_ascii=False)))
+            progress['native_empty_batch_at']=clock.isoformat()
+        else:seeded=_seed_official_empty_checks(db,info,clock,progress,max(0,INGEST_LIMIT-segments))
         # Rotate a bounded page. New short-TF jobs cannot monopolize checks.
         cursor=progress.get('scan_cursor','');pattern=PREFIX+isin+':%'
-        page=db.execute('SELECT key,value FROM settings WHERE key LIKE ? AND key>? ORDER BY key LIMIT ?', (pattern,cursor,SCAN_LIMIT)).fetchall()
-        if not page:page=db.execute('SELECT key,value FROM settings WHERE key LIKE ? ORDER BY key LIMIT ?', (pattern,SCAN_LIMIT)).fetchall()
+        page=seeded if native_empty_only else db.execute('SELECT key,value FROM settings WHERE key LIKE ? AND key>? ORDER BY key LIMIT ?', (pattern,cursor,SCAN_LIMIT)).fetchall()
+        if not page and not native_empty_only:page=db.execute('SELECT key,value FROM settings WHERE key LIKE ? ORDER BY key LIMIT ?', (pattern,SCAN_LIMIT)).fetchall()
         # Explicit reviews must reach their reserved slots even outside this
         # rotating page. Keep ordinary progress independent and the same limit.
         explicit=db.execute("""SELECT key,value FROM settings WHERE key LIKE ?
             AND json_extract(value,'$.status')='RECHECK_QUEUED'
             AND julianday(COALESCE(json_extract(value,'$.next_check'),json_extract(value,'$.created_at')))<=julianday(?)
             ORDER BY COALESCE(json_extract(value,'$.checked_at'),''),json_extract(value,'$.created_at'),key LIMIT 2""",
-            (pattern,clock.isoformat())).fetchall()
+            (pattern,clock.isoformat())).fetchall() if not native_empty_only else []
         jobs=[json.loads(v) for v in dict(page+seeded+explicit).values()]
         due=sorted((j for j in jobs if closure_updated or j.get('fingerprint_version',1)<FINGERPRINT_VERSION or pd.Timestamp(j.get('next_check',j['created_at']))<=clock),key=lambda j:(j.get('checked_at',''),j['created_at'],j['id']))
         # Reserve two slots for explicit observations, two for ordinary work.
         manual=[j for j in due if j['status']=='RECHECK_QUEUED'][:2]
         ordinary=[j for j in due if j['status']!='RECHECK_QUEUED']
         remaining=[j for j in due if j not in manual and j not in ordinary]
-        due=(manual+ordinary+remaining)[:CHECK_LIMIT]
+        due=(manual+ordinary+remaining)[:NATIVE_EMPTY_LIMIT if native_empty_only else CHECK_LIMIT]
         progress['counts']=read(db,PROGRESS+isin,{}).get('counts',{})
-        if page:progress['scan_cursor']=page[-1][0]
+        if page and not native_empty_only:progress['scan_cursor']=page[-1][0]
         progress.update(last_ingested_at=clock.isoformat(),created_total=progress.get('created_total',0)+created)
         if closure_updated:progress['analysis_requested_at']=clock.isoformat()
         write(db,PROGRESS+isin,progress)

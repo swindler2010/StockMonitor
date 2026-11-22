@@ -420,13 +420,19 @@ class Desktop014:
             self._cp_observation_requested_at=time.time()
             self._cp_fresh_request=dict(plan.get('fresh') or {})
             self._cp_fresh_requested_at=time.time()
+            reserved={k:v for k,v in getattr(self,'_cp_native_empty_requests',{}).items() if 0<=time.time()-v<90}
+            for info in plan.get('native_empty',[]):reserved[info['isin']]=time.time()
+            self._cp_native_empty_requests=reserved
             if plan.get('fresh'):
                 self.start_feed(plan['fresh'])
                 self.dispatcher.prioritize_feed('feed:'+plan['fresh']['isin'],1.1 if plan['fresh'].get('_cp_position') else
                     1.2 if plan['fresh'].get('_cp_focus',{}).get('priority_reason')=='TRADE_CONTEXT_MAINTENANCE' else 1.3)
             if plan.get('priority'):
                 self.start_feed(plan['priority'])
-                self.dispatcher.prioritize_feed('feed:'+plan['priority']['isin'])
+                self.dispatcher.prioritize_feed('feed:'+plan['priority']['isin'],1.4)
+            for info in plan.get('native_empty',[]):
+                self.start_feed(info)
+                self.dispatcher.prioritize_feed('feed:'+info['isin'],1.5)
             for info in plan.get('review',[]):self.start_feed(info)
             for info in plan.get('eligibility',[]):self.start_feed({**info,'_eligibility_only':True})
             for info,reason in plan['feeds']:self.start_feed(info)
@@ -477,6 +483,8 @@ class Desktop014:
                 captured=dict(info)
                 fresh=dict(getattr(self,'_cp_fresh_request',{}))
                 review=dict(getattr(self,'_cp_observation_request',{}))
+                native_at=getattr(self,'_cp_native_empty_requests',{}).get(info['isin'],0)
+                captured.pop('_native_empty_only',None)
                 if (review.get('isin')==info['isin'] and review.get('job_id')
                         and 0<=time.time()-getattr(self,'_cp_observation_requested_at',0)<90):
                     # The planner reserved this serial turn for saved evidence.
@@ -486,6 +494,11 @@ class Desktop014:
                     captured.pop('_gettex_poll_only',None)
                     captured.pop('_eligibility_only',None)
                     captured['_review_only']=True
+                elif (0<=time.time()-native_at<90 and not (fresh.get('isin')==info['isin']
+                        and 0<=time.time()-getattr(self,'_cp_fresh_requested_at',0)<90)):
+                    for flag in ('_gettex_poll_only','_eligibility_only','_review_only'):captured.pop(flag,None)
+                    captured['_native_empty_only']=True
+                    self._cp_native_empty_requests.pop(info['isin'],None)
                 elif fresh.get('isin')==info['isin'] and 0<=time.time()-getattr(self,'_cp_fresh_requested_at',0)<90:
                     # Upgrade the already queued same-ISIN job; no second writer
                     # or cancellation. Archive maintenance remains due afterwards.
@@ -499,7 +512,8 @@ class Desktop014:
                 info=captured
                 self._cp_active_feed=dict(isin=info['isin'],name=info.get('name',info['isin']),
                     timeframe=info.get('_cp_focus',{}).get('timeframe'),
-                    phase=('Переоценка исторических разрешений' if info.get('_review_only') else
+                    phase=('Проверка сохранённых пустых интервалов 5m' if info.get('_native_empty_only') else
+                           'Переоценка исторических разрешений' if info.get('_review_only') else
                            'Пересчёт аналитического допуска' if info.get('_eligibility_only') else
                            'Свежие свечи и оценка позиции' if info.get('_cp_position') else
                            'Данные для торгового допуска' if info.get('_cp_focus',{}).get('priority_reason')=='TRADE_CONTEXT_MAINTENANCE' else
@@ -642,6 +656,10 @@ class Desktop014:
         return frame
 
     def feed_done(self,info,errors):
+        if info.get('_native_empty_only'):
+            self.feed_active.discard(info['isin'])
+            if errors:self._write_log('CandlePilot empty5m: '+'; '.join(errors))
+            return
         from freshness_runtime import feed_completed
         feed_completed(self,info)
         if info.get('_eligibility_only'):

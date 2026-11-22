@@ -456,6 +456,9 @@ def attach_parent_provenance(store,frame,isin,base):
                 store.read_cache.depend('instrument:'+isin)
                 from gettex_chart import state_key
                 store.read_cache.depend('setting:'+state_key(isin,'15m'))
+                if receipt.get('reviewed_tf')=='5m':
+                    store.read_cache.depend('setting:'+state_key(isin,'5m'))
+                    store.read_cache.depend('setting:cp_gettex_source_policy')
                 for tf in ('5m','15m'):store.read_cache.depend('market:'+isin+':'+tf)
                 with store.connect() as db:
                     view=getattr(store,'_lineage_read_view',None)

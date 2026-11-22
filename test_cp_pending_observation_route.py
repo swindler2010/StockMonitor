@@ -24,4 +24,20 @@ class PendingObservationRoute(unittest.TestCase):
      self.assertTrue(captured[0].get('_gettex_poll_only'));self.assertFalse(captured[0].get('_review_only'))
     self.assertEqual(ctx._cp_active_feed,{});self.assertEqual(ctx.events.qsize(),1)
 
+ def test_native_batch_uses_same_key_but_yields_to_live_price_and_explicit_review(self):
+  for kind in ('native','stale','other','fresh','review'):
+   with self.subTest(kind=kind):
+    captured=[];original={'isin':'A','name':'Fixture','_gettex_poll_only':True}
+    ctx=SimpleNamespace(feed_slots=nullcontext(),closing=False,_cp_focus={},
+     _cp_native_empty_requests={'B' if kind=='other' else 'A':time.time()-(91 if kind=='stale' else 0)},
+     _cp_fresh_request={'isin':'A','_gettex_poll_only':True} if kind=='fresh' else {},_cp_fresh_requested_at=time.time(),
+     _cp_observation_request={'isin':'A','job_id':'owner'} if kind=='review' else {},_cp_observation_requested_at=time.time(),
+     compute_feed_update=SimpleNamespace(calculate=Mock(side_effect=lambda k,args:(captured.append(args['info']) or {'errors':[]}))),
+     dispatcher=SimpleNamespace(sqlite_busy=Mock()),events=queue.Queue(),feed_done=Mock())
+    Desktop014._gettex_worker(ctx,original)
+    self.assertEqual(len(captured),1)
+    self.assertEqual(bool(captured[0].get('_native_empty_only')),kind=='native')
+    self.assertEqual(bool(captured[0].get('_review_only')),kind=='review')
+    self.assertEqual(bool(captured[0].get('_gettex_poll_only')),kind in ('stale','other','fresh'))
+
 if __name__=='__main__':unittest.main()

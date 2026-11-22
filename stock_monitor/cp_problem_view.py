@@ -40,7 +40,7 @@ def native_empty_resolution(db,problem,jobs):
     map is captured from that transaction for the validator; it is not an
     analytical dependency proof or a permission to execute a paper order.
     """
-    if (problem.get('kind')!='archive' or problem.get('tf')!='15m'
+    if (problem.get('kind')!='archive' or problem.get('tf') not in ('5m','15m')
             or problem.get('state') not in ('GAP','SOURCE_GAP','UNCONFIRMED')
             or not problem.get('range') or len(problem['range'])!=2
             or problem['range'][0]!=problem['range'][1]):return None
@@ -55,13 +55,14 @@ def native_empty_resolution(db,problem,jobs):
         from cp_controls import _official_empty_problem_current
         from revision_watcher import RETIME_PREFIX,RETIME_POLICY
         try:
-            spec=_spec(problem['isin'],problem['identity'],'15m',*problem['range'])
+            spec=_spec(problem['isin'],problem['identity'],problem['tf'],*problem['range'])
             receipt=RETIME_PREFIX+problem['isin']+':'+spec['id']
             scopes=['setting:'+receipt,'setting:'+RETIME_POLICY,'setting:interval_evidence:'+problem['isin']]
-            revisions={k:r for k,r in db.execute('SELECT scope,revision FROM input_revisions WHERE scope IN (?,?,?)',scopes)}
+            if problem['tf']=='5m':scopes.append('setting:cp_gettex_source_policy')
+            revisions={k:r for k,r in db.execute('SELECT scope,revision FROM input_revisions WHERE scope IN ('+','.join('?' for _ in scopes)+')',scopes)}
             if not _official_empty_problem_current(db,problem,dict(revisions=revisions)):continue
             return dict(state='CONFIRMED_NO_TRADES',current=True,isin=problem['isin'],identity=problem['identity'],
-                        tf='15m',range=problem['range'],job_id=spec['id'],receipt_key=receipt,
+                        tf=problem['tf'],range=problem['range'],job_id=spec['id'],receipt_key=receipt,
                         checked_at=job.get('checked_at'),revisions=revisions)
         except (ValueError,KeyError,TypeError,sqlite3.OperationalError):continue
     return None
@@ -71,7 +72,7 @@ def confirmed_native_absence(problem):
     proof=problem.get('native_resolution') or {}
     return bool(proof.get('current') is True and proof.get('state')=='CONFIRMED_NO_TRADES'
                 and proof.get('isin')==problem.get('isin') and proof.get('identity')==problem.get('identity')
-                and proof.get('tf')==problem.get('tf')=='15m' and proof.get('range')==problem.get('range')
+                and proof.get('tf')==problem.get('tf') and problem.get('tf') in ('5m','15m') and proof.get('range')==problem.get('range')
                 and problem.get('kind')=='archive' and problem.get('state') in ('GAP','SOURCE_GAP','UNCONFIRMED')
                 and proof.get('receipt_key') and proof.get('job_id'))
 

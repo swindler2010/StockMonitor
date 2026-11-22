@@ -81,6 +81,36 @@ def _official_window(db,isin,first,end,now,allow_zero_rows=False):
  return dict(rows=result,trades=trades,proof=scoped)
 
 
+def _five_minute_empty_plan(db,job,inputs,now,policy):
+ """Prove an empty5m slot using complete exact5m AND15m native windows."""
+ from cp_controls import read,digest
+ from cp_reconciliation import SOURCE_POLICY
+ import data_quality as dq
+ from history_service import parent_provenance_key
+ sp=read(db,SOURCE_POLICY,{})
+ if not (sp.get('approved') is True and sp.get('version')==1 and sp.get('scope')=='registered_stocks' and sp.get('exclusive_venue')=='GETTEX'):return None
+ a=pd.Timestamp(job['first']);end=a+pd.Timedelta(minutes=5);before=inputs['neighbors']['before'];after=inputs['neighbors']['after']
+ if (job['last']!=str(a) or inputs['rows'] or not before or not after
+     or pd.Timestamp(before[0])!=a-pd.Timedelta(minutes=5) or pd.Timestamp(after[0])!=end):return None
+ first=pd.Timestamp(before[0]).floor('15min');last=(pd.Timestamp(after[0])+pd.Timedelta(minutes=5)).ceil('15min')
+ if first.normalize()!=last.normalize() or last-first>pd.Timedelta(minutes=45):return None
+ authority={**inputs['proof'].get('identity',{}),'absence_evidence':inputs['proof']}
+ if not dq.no_trades_proof(authority,a,end,now):return None
+ if job.get('observation') and job['observation'].get('result')!='ABSENT':raise ValueError('RETIME_VISUAL_REFERENCE_CONFLICT_OR_CHANGED')
+ source=_official_window(db,job['isin'],str(first),str(last),now,allow_zero_rows=True)
+ native={base:_native(db,job['isin'],job['identity'],base,str(first),str(last)) for base in ('5m','15m')}
+ if any(native[b]!=source['rows'][b] for b in native):return None
+ lineage={}
+ for b,rows in native.items():
+  saved=read(db,parent_provenance_key(job['isin'],job['identity'],b),{})
+  lineage[b]={r[0]:saved.get(r[0]) for r in rows}
+ return dict(version=RETIME_VERSION,mode='VERIFIED_NATIVE_EMPTY',reviewed_tf='5m',isin=job['isin'],identity=job['identity'],
+   first=str(first),end=str(last),empty_first=str(a),empty_end=str(end),job_id=job['id'],policy_digest=digest(policy),source_policy_digest=digest(sp),
+   input_fingerprint=inputs['fingerprint'],before=native,source=source,source_digest=digest(source),created_at=now.isoformat(),
+   zero_observations_corroborated=True,lineage_before=lineage,
+   origin='Complete paired official GETTEX tape; exact full native5m/15m parent windows prove this5m absence; no prices replaced or synthetic observations')
+
+
 def empty_native_span(job,inputs):
  """Exact two-sided hole, or the final slot at a verified session boundary."""
  from timeframes import schedule
@@ -323,8 +353,9 @@ def retime_plan(db,job,inputs,now):
  policy=read(db,RETIME_POLICY,{})
  if policy.get('version')!=RETIME_VERSION or policy.get('approved') is not True:return None
  meta=job['identity'];a=pd.Timestamp(job['first']);after=inputs['neighbors']['after']
- if (job['tf']!='15m' or meta['source']!='gettex_chart' or meta['venue']!='GETTEX'
+ if (job['tf'] not in ('5m','15m') or meta['source']!='gettex_chart' or meta['venue']!='GETTEX'
      or meta['currency']!='EUR' or meta['timezone']!='Europe/Berlin'):return None
+ if job['tf']=='5m':return _five_minute_empty_plan(db,job,inputs,now,policy)
  observation=job.get('observation')
  if inputs['rows']:
   if (len(inputs['rows'])==1 and job['last']==str(a) and observation
@@ -494,11 +525,12 @@ def retime_current(db,receipt,now=None):
  try:
   policy=read(db,RETIME_POLICY,{})
   if policy.get('approved') is not True or digest(policy)!=receipt['policy_digest']:return False
-  if receipt.get('mode') in ('VERIFIED_NATIVE_CLOSING_TICK','VERIFIED_PRICE_CLOSING_TICK_PARTITION','VERIFIED_NATIVE_PRICE_SAMPLES'):
+  if receipt.get('mode') in ('VERIFIED_NATIVE_CLOSING_TICK','VERIFIED_PRICE_CLOSING_TICK_PARTITION','VERIFIED_NATIVE_PRICE_SAMPLES') or receipt.get('reviewed_tf')=='5m':
    from cp_reconciliation import SOURCE_POLICY
    if digest(read(db,SOURCE_POLICY,{}))!=receipt.get('source_policy_digest'):return False
   row=db.execute('SELECT payload FROM instruments WHERE isin=?',(receipt['isin'],)).fetchone()
   if not row or not stored_identity(db,json.loads(row[0]),receipt['identity'],'15m'):return False
+  if receipt.get('reviewed_tf')=='5m' and not stored_identity(db,json.loads(row[0]),receipt['identity'],'5m'):return False
   source=_official_window(db,receipt['isin'],receipt['first'],receipt['end'],pd.Timestamp(now or pd.Timestamp.now(tz='UTC')),
    allow_zero_rows=receipt.get('mode') in ('VERIFIED_NATIVE_EMPTY','VERIFIED_PRICE_OBSERVATION_TIMEBASE','VERIFIED_PRICE_CLOSING_TICK_PARTITION') and receipt.get('zero_observations_corroborated') is True)
   if not receipt_source_current(source,receipt):return False
