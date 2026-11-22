@@ -608,6 +608,10 @@ def _native_empty_pending(db,isin,limit):
           AND json_extract(value,'$.observation.result')='DIFFERENT'
           AND julianday(COALESCE(json_extract(value,'$.next_check'),json_extract(value,'$.created_at')))<=julianday('now')
           AND COALESCE(json_extract(value,'$.native_empty_algorithm'),0)<12)
+        OR (json_extract(value,'$.tf')='5m' AND json_extract(value,'$.observation') IS NULL
+          AND json_extract(value,'$.finding.state') IN ('SOURCE_TIMEBASE_UNCONFIRMED','GAP')
+          AND julianday(COALESCE(json_extract(value,'$.next_check'),json_extract(value,'$.created_at')))<=julianday('now')
+          AND COALESCE(json_extract(value,'$.automatic_zero_algorithm'),0)<1)
         OR (json_extract(value,'$.tf')='15m' AND json_extract(value,'$.first')=json_extract(value,'$.last')
           AND json_extract(value,'$.finding.state')='SOURCE_DISCREPANCY'
           AND json_extract(value,'$.observation.result')='DIFFERENT'
@@ -675,6 +679,7 @@ def turn(store, info, now=None, native_empty_only=False):
             for _,raw in _native_empty_pending(db,isin,NATIVE_EMPTY_LIMIT):
                 job=json.loads(raw);old=dict(job)
                 job.update(native_empty_algorithm=12 if job['tf']=='5m' and (job.get('observation') or {}).get('result') in ('PRESENT','DIFFERENT') else NATIVE_EMPTY_ALGORITHM,positive_price_algorithm=1,current_difference_algorithm=1,status='RECHECK_QUEUED' if job['status']=='RECHECK_QUEUED' else 'QUEUED',next_check=clock.isoformat())
+                if job['tf']=='5m' and not job.get('observation'):job['automatic_zero_algorithm']=1
                 _save_job(db,job,old);seeded.append((key(job),json.dumps(job,ensure_ascii=False)))
             progress['native_empty_batch_at']=clock.isoformat()
         else:seeded=_seed_official_empty_checks(db,info,clock,progress,max(0,INGEST_LIMIT-segments))

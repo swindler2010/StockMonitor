@@ -195,6 +195,70 @@ def _five_minute_partition_plan(db,job,inputs,now,policy):
    origin=plan['origin']+'; full current5m review and other current visual references protected')
 
 
+def _automatic_zero_plan(db,job,inputs,now,policy):
+ """An exact, independently proved <=5m zero-price timestamp convention.
+
+ No external observation is claimed. All positive candles stay identical;
+ existing flat zero observations map bijectively to the complete tape.
+ """
+ from cp_controls import read,digest
+ from cp_reconciliation import SOURCE_POLICY
+ from history_service import parent_provenance_key
+ sp=read(db,SOURCE_POLICY,{})
+ if not (job['tf']=='5m' and not job.get('observation') and not inputs['rows']
+     and sp.get('approved') is True and sp.get('version')==1 and sp.get('scope')=='registered_stocks' and sp.get('exclusive_venue')=='GETTEX'):return None
+ a=pd.Timestamp(job['first']).floor('15min');meta=job['identity']
+ from eur_listings import stored_identity
+ if not all(stored_identity(db,inputs['info'],meta,b) for b in ('5m','15m')):return None
+ for width in (30,45,60):
+  for offset in range(0,width,15):
+   left=a-pd.Timedelta(minutes=offset);end=left+pd.Timedelta(minutes=width)
+   if left.normalize()!=end.normalize() or not left<=pd.Timestamp(job['first'])<pd.Timestamp(job['end'])<=end:continue
+   try:
+    source=_official_window(db,job['isin'],str(left),str(end),now,allow_zero_rows=True)
+    native={b:_native(db,job['isin'],meta,b,str(left),str(end)) for b in ('5m','15m')}
+    if any(not native[b] or _aggregate(native[b])!=_aggregate(source['rows'][b]) for b in native):continue
+    if not 1<=len(native['5m'])<=9 or len(source['trades'])>5000:continue
+    if {str(pd.Timestamp(r[0]).floor('15min')) for r in native['5m']}!={r[0] for r in native['15m']}:continue
+    if any(_aggregate([r for r in native['5m'] if pd.Timestamp(p[0])<=pd.Timestamp(r[0])<pd.Timestamp(p[0])+pd.Timedelta(minutes=15)])!=list(p[1:]) for p in native['15m']):continue
+    if [r for r in native['5m'] if r[5]>0]!=[r for r in source['rows']['5m'] if r[5]>0]:continue
+    old=[r for r in native['5m'] if r[5]==0];actual=[r for r in source['rows']['5m'] if r[5]==0]
+    if not old or len(old)!=len(actual) or any(len(set(r[1:5]))!=1 for r in old+actual):continue
+    used=set();mapping={}
+    for row in old:
+     if row in actual:used.add(row[0]);mapping[row[0]]=row[0]
+    valid=True
+    for row in old:
+     if row[0] in mapping:continue
+     matches=[r for r in actual if r[0] not in used and r[1:]==row[1:] and pd.Timedelta(0)<=pd.Timestamp(row[0])-pd.Timestamp(r[0])<=pd.Timedelta(minutes=5)]
+     if len(matches)!=1:valid=False;break
+     used.add(matches[0][0]);mapping[row[0]]=matches[0][0]
+    if not valid or len(used)!=len(actual) or not any(k!=v for k,v in mapping.items()):continue
+    partition=_trade_partition(native['5m'],source['trades'],max_delay=5)
+    if partition is None:continue
+    stamps={b:{r[0] for r in source['rows'][b]} for b in native};moves=[]
+    for row in native['5m']:
+     if row[0] not in stamps['5m']:moves.append(dict(base_tf='5m',old_at=row[0],new_at=mapping[row[0]],ohlcv=list(row[1:]),binding='unique existing flat zero observation shifted at most5minutes; all positive candles unchanged'))
+    for row in native['15m']:
+     if row[0] in stamps['15m']:continue
+     children=[r for r in native['5m'] if pd.Timestamp(row[0])<=pd.Timestamp(r[0])<pd.Timestamp(row[0])+pd.Timedelta(minutes=15)]
+     targets={str(pd.Timestamp(mapping[r[0]]).floor('15min')) for r in children if r[0] in mapping}
+     if row[5]!=0 or len(set(row[1:5]))!=1 or len(children)!=sum(r[0] in mapping for r in children) or not targets<=stamps['15m'] or not targets:valid=False;break
+     moves.append(dict(base_tf='15m',old_at=row[0],new_at=min(targets),ohlcv=list(row[1:]),binding='exact original zero parent recomposed only from its bijectively matched zero children',recomposed_into=sorted(targets)))
+    if not valid:continue
+    plan=dict(first=str(left),end=str(end),source=source)
+    _protect_visual_references(db,job,inputs,plan)
+    lineage={b:{r[0]:read(db,parent_provenance_key(job['isin'],meta,b),{}).get(r[0]) for r in rows} for b,rows in native.items()}
+    return dict(version=RETIME_VERSION,mode='VERIFIED_NATIVE_TRADE_PARTITION',reviewed_tf='5m',isin=job['isin'],identity=meta,
+      first=str(left),end=str(end),job_id=job['id'],policy_digest=digest(policy),source_policy_digest=digest(sp),
+      input_fingerprint=inputs['fingerprint'],before=native,source=source,source_digest=digest(source),created_at=now.isoformat(),
+      native_trade_partition=partition,relocations=moves,lineage_before=lineage,zero_observations_corroborated=True,
+      automatic_zero_timebase=True,automatic_zero_version=1,zero_timestamp_mapping=mapping,
+      origin='Complete paired primary GETTEX proof; unique full event partition and bijective existing flat zero observations delayed<=5minutes; every positive5m candle unchanged, exact original parents and conserved whole5m/15mOHLCV; no TV observation claimed')
+   except (ValueError,KeyError,TypeError):continue
+ return None
+
+
 def _partition_co_reviews(db,job,inputs,plan):
  """Bind disjoint current DIFFERENT diagnoses to one fully proved partition.
 
@@ -695,6 +759,8 @@ def retime_plan(db,job,inputs,now):
  if (job['tf'] not in ('5m','15m') or meta['source']!='gettex_chart' or meta['venue']!='GETTEX'
      or meta['currency']!='EUR' or meta['timezone']!='Europe/Berlin'):return None
  if job['tf']=='5m':
+  automatic=_automatic_zero_plan(db,job,inputs,now,policy)
+  if automatic:return automatic
   extreme=_reviewed_positive_price_extreme(db,job,inputs,now,policy)
   if extreme:return extreme
   observation=job.get('observation') or {}

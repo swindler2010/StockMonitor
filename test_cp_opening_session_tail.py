@@ -33,7 +33,7 @@ class OpeningSessionTail(unittest.TestCase):
     d.executemany('INSERT INTO series VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',[(isin,*[m[k] for k in rw.IDENTITY[:4]],base,*r) for r in native[base]])
     d.executemany('INSERT INTO candles VALUES (?,?,?,?,?,?,?,?,?)',[(isin,'gettex',base,*r) for r in official[base]])
    d.executemany('INSERT INTO trades VALUES (?,?,?,?)',[(isin,*r) for r in ticks]);job,_=rv._enqueue(d,rv._spec(isin,m,'5m',review,last),dict(kind='fixture'),now);i=rv._input(d,job);old=dict(job);job.update(input_fingerprint=i['fingerprint'],fingerprint_version=rv.FINGERPRINT_VERSION);rv._save_job(d,job,old)
-  rv.observe(s,job['id'],isin,rv.digest(s.setting(rv.key(job))),result,'GETTEX:FIX',True)
+  if result is not None:rv.observe(s,job['id'],isin,rv.digest(s.setting(rv.key(job))),result,'GETTEX:FIX',True)
   return s,info,m,s.setting(rv.key(job)),native,official,proof,now
 
  @staticmethod
