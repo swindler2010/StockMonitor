@@ -43,7 +43,7 @@ def native_empty_resolution(db,problem,jobs):
     if (problem.get('kind')!='archive' or problem.get('tf') not in ('5m','15m')
             or problem.get('state') not in ('GAP','SOURCE_GAP','UNCONFIRMED')
             or not problem.get('range') or len(problem['range'])!=2
-            or problem['range'][0]!=problem['range'][1]):return None
+            or (problem['tf']=='15m' and problem['range'][0]!=problem['range'][1])):return None
     for job in jobs:
         if (not same_problem(problem,job) or job.get('status')!='RESOLVED_NATIVE'
                 or (job.get('finding') or {}).get('state')!='NO_TRADES'

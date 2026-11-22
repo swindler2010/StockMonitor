@@ -580,7 +580,7 @@ def _resume_repaired_scopes(db,isin,clock):
         write(db,PROGRESS+isin,p)
 
 
-NATIVE_EMPTY_ALGORITHM=4
+NATIVE_EMPTY_ALGORITHM=5
 NATIVE_EMPTY_LIMIT=8
 
 
@@ -588,11 +588,12 @@ def _native_empty_pending(db,isin,limit):
     prefix=PREFIX+isin+':'
     return db.execute("""SELECT key,value FROM settings WHERE key>=? AND key<?
       AND json_extract(value,'$.tf')='5m'
-      AND json_extract(value,'$.first')=json_extract(value,'$.last')
+      AND julianday(json_extract(value,'$.last'))>=julianday(json_extract(value,'$.first'))
+      AND julianday(json_extract(value,'$.last'))-julianday(json_extract(value,'$.first'))<15.0/1440
       AND json_extract(value,'$.identity.source')='gettex_chart'
       AND json_extract(value,'$.identity.venue')='GETTEX'
       AND json_extract(value,'$.identity.currency')='EUR'
-      AND json_extract(value,'$.finding.state')='SOURCE_TIMEBASE_UNCONFIRMED'
+      AND json_extract(value,'$.finding.state') IN ('SOURCE_TIMEBASE_UNCONFIRMED','GAP')
       AND json_extract(value,'$.status') IN ('AWAITING_USER','AWAITING_SOURCE')
       AND COALESCE(json_extract(value,'$.native_empty_algorithm'),0)<?
       ORDER BY json_extract(value,'$.first') DESC,key LIMIT ?""",
@@ -708,11 +709,13 @@ def turn(store, info, now=None, native_empty_only=False):
                 old=dict(current)
                 if correction:
                     current['official_timebase_repair']=publish_retime(db,current,inputs,correction,clock)
-                    if correction.get('mode')=='VERIFIED_NATIVE_EMPTY':
+                    if (correction.get('mode')=='VERIFIED_NATIVE_EMPTY'
+                            or correction.get('reviewed_tf')=='5m' and correction.get('mode')=='VERIFIED_NATIVE_TRADE_PARTITION'):
                         # No rows changed: finish the proof on this same writer
                         # transaction instead of adding a second queued pass.
                         inputs=_input(db,current);result=_classify(current,inputs,clock)
-                        if result['state']!='NO_TRADES':raise ValueError('RETIME_EMPTY_PUBLICATION_RECHECK_FAILED')
+                        allowed=('NO_TRADES',) if correction.get('mode')=='VERIFIED_NATIVE_EMPTY' else ('NO_TRADES','NATIVE_ROWS_CONFIRMED')
+                        if result['state'] not in allowed:raise ValueError('RETIME_EMPTY_PUBLICATION_RECHECK_FAILED')
                     else:
                         current.update(status='RECHECK_QUEUED',next_check=clock.isoformat(),checked_at=clock.isoformat())
                         _save_job(db,current,old);checked+=1

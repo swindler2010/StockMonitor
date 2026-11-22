@@ -65,6 +65,19 @@ class FiveMinuteEmpty(unittest.TestCase):
    self.assertIsNone(s.setting('cp_manual_risk:'+isin));s.read_cache.close();s=FlatStore(path)
    with s.connect() as d:
     self.assertTrue(rw.retime_current(d,receipt));self.assertEqual(rv.native_empty_batches(d,[info]),[])
+   # A complete matching parent also proves internal holes without immediate
+   #5m neighbours. Test both one slot and a bounded multi-slot empty scope.
+   for a,b in [('2026-11-13 21:05:00','2026-11-13 21:05:00'),('2026-11-13 21:00:00','2026-11-13 21:05:00')]:
+    with self.subTest(scope=[a,b]):
+     with s.connect() as d:
+      child,_=rv._enqueue(d,rv._spec(isin,m,'5m',a,b),{'kind':'fixture_parent_anchor'},now);original=dict(child)
+      child.update(status='AWAITING_SOURCE',finding=rv._classify(child,rv._input(d,child),now));rv._save_job(d,child,original)
+     with patch('gettex_history.attach_known_interruptions',side_effect=AssertionError('No network')):rv.turn(s,info,now,native_empty_only=True)
+     self.assertEqual(s.setting(rv.key(child))['status'],'RESOLVED_NATIVE')
+     problem=dict(isin=isin,identity=m,tf='5m',kind='archive',state='UNCONFIRMED',range=[a,b])
+     with s.connect() as d:
+      result=native_empty_resolution(d,problem,[s.setting(rv.key(child))]);self.assertIsNotNone(result)
+      self.assertTrue(confirmed_native_absence({**problem,'native_resolution':result}))
   finally:
    s.read_cache.close()
    for suffix in ('','-wal','-shm'):Path(str(path)+suffix).unlink(missing_ok=True)

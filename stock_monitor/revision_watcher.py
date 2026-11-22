@@ -89,17 +89,25 @@ def _five_minute_empty_plan(db,job,inputs,now,policy):
  from history_service import parent_provenance_key
  sp=read(db,SOURCE_POLICY,{})
  if not (sp.get('approved') is True and sp.get('version')==1 and sp.get('scope')=='registered_stocks' and sp.get('exclusive_venue')=='GETTEX'):return None
- a=pd.Timestamp(job['first']);end=a+pd.Timedelta(minutes=5);before=inputs['neighbors']['before'];after=inputs['neighbors']['after']
- if (job['last']!=str(a) or inputs['rows'] or not before or not after
-     or pd.Timestamp(before[0])!=a-pd.Timedelta(minutes=5) or pd.Timestamp(after[0])!=end):return None
- first=pd.Timestamp(before[0]).floor('15min');last=(pd.Timestamp(after[0])+pd.Timedelta(minutes=5)).ceil('15min')
- if first.normalize()!=last.normalize() or last-first>pd.Timedelta(minutes=45):return None
+ a=pd.Timestamp(job['first']);end=pd.Timestamp(job['end']);before=inputs['neighbors']['before'];after=inputs['neighbors']['after']
+ if inputs['rows'] or not pd.Timedelta(0)<end-a<=pd.Timedelta(minutes=15):return None
  authority={**inputs['proof'].get('identity',{}),'absence_evidence':inputs['proof']}
  if not dq.no_trades_proof(authority,a,end,now):return None
  if job.get('observation') and job['observation'].get('result')!='ABSENT':raise ValueError('RETIME_VISUAL_REFERENCE_CONFLICT_OR_CHANGED')
- source=_official_window(db,job['isin'],str(first),str(last),now,allow_zero_rows=True)
- native={base:_native(db,job['isin'],job['identity'],base,str(first),str(last)) for base in ('5m','15m')}
- if any(native[b]!=source['rows'][b] for b in native):return None
+ lo=a.floor('15min');hi=end.ceil('15min');windows=[]
+ if before and after and pd.Timestamp(before[0])==a-pd.Timedelta(minutes=5) and pd.Timestamp(after[0])==end:
+  windows.append((pd.Timestamp(before[0]).floor('15min'),(pd.Timestamp(after[0])+pd.Timedelta(minutes=5)).ceil('15min')))
+ windows.extend(((lo,hi),(lo-pd.Timedelta(minutes=15),hi),(lo,hi+pd.Timedelta(minutes=15))))
+ found=False
+ for first,last in dict.fromkeys(windows):
+  if first.normalize()!=last.normalize() or last-first>pd.Timedelta(minutes=45):continue
+  try:
+   source=_official_window(db,job['isin'],str(first),str(last),now,allow_zero_rows=True)
+   native={base:_native(db,job['isin'],job['identity'],base,str(first),str(last)) for base in ('5m','15m')}
+   if any(native[b]!=source['rows'][b] for b in native):continue
+   found=True;break
+  except (ValueError,KeyError,TypeError):continue
+ if not found:return None
  lineage={}
  for b,rows in native.items():
   saved=read(db,parent_provenance_key(job['isin'],job['identity'],b),{})
@@ -109,6 +117,35 @@ def _five_minute_empty_plan(db,job,inputs,now,policy):
    input_fingerprint=inputs['fingerprint'],before=native,source=source,source_digest=digest(source),created_at=now.isoformat(),
    zero_observations_corroborated=True,lineage_before=lineage,
    origin='Complete paired official GETTEX tape; exact full native5m/15m parent windows prove this5m absence; no prices replaced or synthetic observations')
+
+
+def _five_minute_partition_plan(db,job,inputs,now,policy):
+ """Reuse the unique conserved native/tape partition, not a guessed5m shift."""
+ from cp_controls import read,digest
+ from cp_reconciliation import SOURCE_POLICY,_observation_current
+ from history_service import parent_provenance_key
+ sp=read(db,SOURCE_POLICY,{})
+ if not (sp.get('approved') is True and sp.get('version')==1 and sp.get('scope')=='registered_stocks' and sp.get('exclusive_venue')=='GETTEX'):return None
+ a=pd.Timestamp(job['first']);end=pd.Timestamp(job['end']);obs=job.get('observation')
+ if inputs['rows'] or not pd.Timedelta(0)<end-a<=pd.Timedelta(minutes=15) or a.floor('15min')!=pd.Timestamp(job['last']).floor('15min'):return None
+ if obs and (obs.get('result') not in ('ABSENT','PRESENT','DIFFERENT') or not _observation_current(job,inputs)):return None
+ plan=_reviewed_partition_plan(db,{**job,'first':str(a.floor('15min'))},inputs,now,policy)
+ if not plan:
+  if obs and obs['result']=='PRESENT':
+   import data_quality as dq
+   authority={**inputs['proof'].get('identity',{}),'absence_evidence':inputs['proof']}
+   if dq.no_trades_proof(authority,a,end,now):raise ValueError('RETIME_VISUAL_REFERENCE_CONFLICT_OR_CHANGED')
+  return None
+ if not (pd.Timestamp(plan['first'])<=a<end<=pd.Timestamp(plan['end'])):return None
+ present=any(a<=pd.Timestamp(r[0])<end for r in plan['source']['rows']['5m'])
+ if obs and ((obs['result']=='ABSENT' and present) or (obs['result']=='PRESENT' and not present)):
+  raise ValueError('RETIME_VISUAL_REFERENCE_CONFLICT_OR_CHANGED')
+ lineage={}
+ for base,rows in plan['before'].items():
+  saved=read(db,parent_provenance_key(job['isin'],job['identity'],base),{})
+  lineage[base]={r[0]:saved.get(r[0]) for r in rows}
+ return dict(plan,reviewed_tf='5m',source_policy_digest=digest(sp),lineage_before=lineage,
+   origin='Approved official GETTEX source; complete paired tape uniquely reproduces every original native5m value in order, exact native parents, conserved full5m/15m window, bounded delay; conflicting current TV presence rejected')
 
 
 def empty_native_span(job,inputs):
@@ -355,7 +392,12 @@ def retime_plan(db,job,inputs,now):
  meta=job['identity'];a=pd.Timestamp(job['first']);after=inputs['neighbors']['after']
  if (job['tf'] not in ('5m','15m') or meta['source']!='gettex_chart' or meta['venue']!='GETTEX'
      or meta['currency']!='EUR' or meta['timezone']!='Europe/Berlin'):return None
- if job['tf']=='5m':return _five_minute_empty_plan(db,job,inputs,now,policy)
+ if job['tf']=='5m':
+  observation=job.get('observation') or {}
+  if observation.get('result') in (None,'ABSENT'):
+   empty=_five_minute_empty_plan(db,job,inputs,now,policy)
+   if empty:return empty
+  return _five_minute_partition_plan(db,job,inputs,now,policy)
  observation=job.get('observation')
  if inputs['rows']:
   if (len(inputs['rows'])==1 and job['last']==str(a) and observation

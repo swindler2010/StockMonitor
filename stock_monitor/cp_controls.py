@@ -400,12 +400,13 @@ def _reviewed_market_tail_current(db,isin,entry,token,current):
         market='market:'+isin+':'+p['tf']
         required={'instrument:'+isin,market,'setting:'+p['report_key'],
                   'setting:gettex_chart:'+isin+':'+p['tf']}
-        if (p['isin']!=isin or p['kind']!='archive' or p['tf']!='15m'
+        if (p['isin']!=isin or p['kind']!='archive' or p['tf'] not in ('5m','15m')
                 or meta.get('source')!='gettex_chart' or meta.get('venue')!='GETTEX'
                 or meta.get('currency')!='EUR' or not required<=set(token)
                 or {k for k in token if token[k]!=current[k]}!={market}
                 or not isinstance(token[market],int) or current[market]<=token[market]):return False
         if entry['actor']==REVIEWED_ACTOR:
+            if p['tf']!='15m':return False # Existing scoped price-risk policy is 15m only.
             if 'setting:'+REVIEWED_PREFIX+isin not in token:return False
             return _reviewed_binding(db,read_instrument(db,isin),p)==e['native_binding']
         if entry['actor']!=TV_ACTOR or e.get('native_binding_version')!=2:return False
@@ -573,7 +574,7 @@ def _problem_in_dependencies(problem,series):
 def _official_empty_problem_current(db,problem,proof):
     if (problem['kind']!='archive' or problem['tf'] not in ('5m','15m')
             or problem['state'] not in ('GAP','SOURCE_GAP','UNCONFIRMED')
-            or not problem.get('range') or problem['range'][0]!=problem['range'][1]):
+            or not problem.get('range') or (problem['tf']=='15m' and problem['range'][0]!=problem['range'][1])):
         return False
     import pandas as pd
     from cp_reconciliation import _spec
@@ -591,7 +592,7 @@ def _official_empty_problem_current(db,problem,proof):
             and receipt['isin']==problem['isin'] and receipt['identity']==problem['identity']
             and receipt['job_id']==job['id'] and pd.Timestamp(receipt['empty_first'])==first
             and receipt.get('reviewed_tf','15m')==problem['tf']
-            and pd.Timestamp(receipt['empty_end'])==first+pd.Timedelta(minutes=5 if problem['tf']=='5m' else 15)
+            and pd.Timestamp(receipt['empty_end'])==pd.Timestamp(problem['range'][1])+pd.Timedelta(minutes=5 if problem['tf']=='5m' else 15)
             and retime_current(db,receipt))
     except (KeyError,TypeError,ValueError):
         return False

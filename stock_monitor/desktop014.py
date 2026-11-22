@@ -512,7 +512,7 @@ class Desktop014:
                 info=captured
                 self._cp_active_feed=dict(isin=info['isin'],name=info.get('name',info['isin']),
                     timeframe=info.get('_cp_focus',{}).get('timeframe'),
-                    phase=('Проверка сохранённых пустых интервалов 5m' if info.get('_native_empty_only') else
+                    phase=('Сверка сохранённых интервалов 5m' if info.get('_native_empty_only') else
                            'Переоценка исторических разрешений' if info.get('_review_only') else
                            'Пересчёт аналитического допуска' if info.get('_eligibility_only') else
                            'Свежие свечи и оценка позиции' if info.get('_cp_position') else
