@@ -2075,6 +2075,64 @@
       ],
       "automatic_action": "Existing serial CP short source/reconciliation batch",
       "manual_action": "Current visual review only when evidence is unavailable"
+    },
+    {
+      "id": "short_due_review_uses_existing_native_batch",
+      "title": "Новая сверка и повтор после ремонта не ждут полного обхода истории",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "QUEUED",
+        "RECHECK_QUEUED"
+      ],
+      "status": "TEST normal queue verified22Nov22:14:18CET. JNJ13Nov14:45 5m reached source check and retained AWAITING_SOURCE / RETIME_INCOMPLETE_PUBLICATION. Queue fixed, data not declared repaired.",
+      "steps": [
+        "Select due queued/recheck GETTEX/EUR5m/15m scopes up to30minutes with an existing observation or prior native algorithm in the existing serial native batch.",
+        "Prioritize explicit review, then queued follow-up, then bounded algorithm retry. Preserve RECHECK_QUEUED when seeding and keep the shared8-job bound.",
+        "Do not select future source deadlines or completed jobs; do not renew the review or source cooldown. Finish existing owner policy and dependent assessment persistence.",
+        "Revalidate approved source policy, exact identity, source/native inputs and current visual facts immediately before any write. Persist a precise waiting reason if confirmation remains insufficient."
+      ],
+      "evidence": [
+        "test_cp_short_review_queue.py",
+        "test_cp_five_minute_empty.py"
+      ],
+      "limits": [
+        "53/200 isolated jobs verified. No new thread, global replay, market-data import, DQ/freshness bypass or promise that every source wait is eliminated."
+      ],
+      "automatic_action": "Existing CP serial short native batch",
+      "manual_action": "Only genuinely missing visual/source evidence"
+    },
+    {
+      "id": "official_zero_parent_unique_child_recomposition",
+      "title": "Родитель без объёма перенесён вместе с доказанными событиями младших свечей",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "GAP",
+        "SOURCE_TIMEBASE_UNCONFIRMED"
+      ],
+      "status": "Normal TEST CP queue22Nov22:24:59CET, Nordex28Oct13:50-14:00 5m RESOLVED_NATIVE; current receipt verified. CP1added,1changed,3relocated physical rows; Work0 direct candle writes.",
+      "steps": [
+        "Require current fingerprint-bound PRESENT/DIFFERENT review and complete paired primary GETTEX publication. Candidate window must cover the whole reviewed interval.",
+        "Every native5m observation must have a unique exact ordered source-event partition; native15m parents must exactly aggregate their native children, with conserved full-window OHLCV and bounded45minute delay.",
+        "A disappearing flat zero-volume15m parent may be recomposed only from its uniquely mapped zero-quantity child events at the exact same price into actual existing source parents. Preserve original values, child-event ranges, target parents and lineage.",
+        "Keep the stricter exact unique relocation rule for positive-volume disappearing parents. Reject conflicting current TV facts or changed source/native/policy inputs before publication.",
+        "Run one bounded versioned retry through the existing serial writer, queue normal DQ/CORE reassessment, and leave completed jobs untouched."
+      ],
+      "evidence": [
+        "test_cp_zero_parent_composition.py",
+        "test_cp_five_minute_partition.py",
+        "test_cp_short_review_queue.py"
+      ],
+      "limits": [
+        "No arbitrary positive-parent merge, invented empty candle, quantity, TV price import or blanket historical/trading grant. Ambiguous partitions, incomplete publication and conflicting current evidence remain blocked."
+      ],
+      "automatic_action": "Existing source-confirmed conserved-window CP writer",
+      "manual_action": "Current specific visual observation if none is available"
     }
   ],
   "sources": [
