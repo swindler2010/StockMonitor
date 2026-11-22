@@ -5060,5 +5060,21 @@
   "Подтверждённых интервалов GETTEX пока нет": {
     "en": "No confirmed GETTEX intervals yet",
     "de": "Noch keine bestätigten GETTEX-Intervalle"
+  },
+  "Проверено GETTEX": {
+    "en": "Verified by GETTEX",
+    "de": "Durch GETTEX bestätigt"
+  },
+  "Текущие свечи и пустые интервалы подтверждены полным источником GETTEX": {
+    "en": "Current candles and empty intervals are confirmed by the complete GETTEX source",
+    "de": "Aktuelle Kerzen und leere Intervalle sind durch die vollständige GETTEX-Quelle bestätigt"
+  },
+  "Текущий участок подтверждён полным источником GETTEX; исходные значения сохранены": {
+    "en": "The current range is confirmed by the complete GETTEX source; original values are retained",
+    "de": "Der aktuelle Abschnitt ist durch die vollständige GETTEX-Quelle bestätigt; ursprüngliche Werte bleiben erhalten"
+  },
+  "Участок подтверждён GETTEX": {
+    "en": "Range confirmed by GETTEX",
+    "de": "Abschnitt durch GETTEX bestätigt"
   }
 }

@@ -144,8 +144,49 @@ def _five_minute_partition_plan(db,job,inputs,now,policy):
  for base,rows in plan['before'].items():
   saved=read(db,parent_provenance_key(job['isin'],job['identity'],base),{})
   lineage[base]={r[0]:saved.get(r[0]) for r in rows}
+ _protect_visual_references(db,job,inputs,plan)
  return dict(plan,reviewed_tf='5m',source_policy_digest=digest(sp),lineage_before=lineage,
    origin='Approved official GETTEX source; complete paired tape uniquely reproduces every original native5m value in order, exact native parents, conserved full5m/15m window, bounded delay; conflicting current TV presence rejected')
+
+
+def _protect_visual_references(db,job,inputs,plan):
+ """Never retime a different current TV-confirmed scope or its bound context."""
+ from cp_reconciliation import PREFIX,_input,_observation_current
+ meta=job['identity'];prefix=PREFIX+job['isin']+':'
+ rows=db.execute("""SELECT value FROM settings WHERE key>=? AND key<?
+   AND json_extract(value,'$.observation.result') IN ('ABSENT','PRESENT','DIFFERENT','ZERO_VOLUME')
+   AND json_extract(value,'$.tf') IN ('5m','15m')
+   AND json_extract(value,'$.identity.source')=? AND json_extract(value,'$.identity.symbol')=?
+   AND json_extract(value,'$.identity.venue')=? AND json_extract(value,'$.identity.currency')=?
+   AND json_extract(value,'$.identity.timezone')=?
+   AND ((json_extract(value,'$.first')<? AND json_extract(value,'$.end')>?)
+     OR (json_extract(value,'$.native_neighbors.before[0]')>=? AND json_extract(value,'$.native_neighbors.before[0]')<?)
+     OR (json_extract(value,'$.native_neighbors.after[0]')>=? AND json_extract(value,'$.native_neighbors.after[0]')<?)) LIMIT 33""",
+   (prefix,prefix+'\uffff',*[meta[k] for k in ('source','symbol','venue','currency','timezone')],plan['end'],plan['first'],plan['first'],plan['end'],plan['first'],plan['end'])).fetchall()
+ if len(rows)>32:raise ValueError('RETIME_VISUAL_REFERENCE_WINDOW_TOO_DENSE')
+ own=job.get('observation') or {};own_at=pd.Timestamp(own['at']) if own.get('at') else None
+ for raw, in rows:
+  review=json.loads(raw)
+  if review['id']==job['id']:continue
+  checked=_input(db,review)
+  if not _observation_current(review,checked):continue
+  obs=review['observation'];base=review['tf'];canonical=plan['source']['rows'][base]
+  present=any(review['first']<=r[0]<review['end'] for r in canonical)
+  covered=plan['first']<=review['first'] and review['end']<=plan['end']
+  if (obs['result']=='ABSENT' and present
+      or obs['result']=='PRESENT' and covered and not present
+      or obs['result']=='ZERO_VOLUME' and any(review['first']<=r[0]<review['end'] and r[5]>0 for r in canonical)
+      or obs['result']=='DIFFERENT'):
+   raise ValueError('RETIME_OTHER_CURRENT_TV_REFERENCE_CONFLICT')
+  if obs['result']!='ABSENT':continue
+  # An absence review binds its surrounding native context. A newer exact
+  # DIFFERENT diagnosis can supersede that context, never its absence fact.
+  newer=own.get('result')=='DIFFERENT' and own_at is not None and obs.get('at') and own_at>pd.Timestamp(obs['at'])
+  if newer:continue
+  expected={r[0]:list(r[1:]) for r in canonical}
+  for old in checked['neighbors'].values():
+   if old and plan['first']<=old[0]<plan['end'] and expected.get(old[0])!=list(old[1:]):
+    raise ValueError('RETIME_CURRENT_TV_BOUND_CONTEXT_CHANGED')
 
 
 def empty_native_span(job,inputs):
@@ -620,7 +661,7 @@ def publish_retime(db,job,inputs,plan,now):
  write(db,key,{**plan,'state':'APPLIED','added':added,'changed':changed,'relocated':relocated})
  from cp_reconciliation import _queue_repaired_scopes
  _queue_repaired_scopes(db,key,plan,now)
- progress=read(db,PROGRESS+isin,{});progress['analysis_requested_at']=now.isoformat();write(db,PROGRESS+isin,progress)
+ progress=read(db,PROGRESS+isin,{});progress['analysis_requested_at']=now.isoformat();progress['native_source_published_at']=now.isoformat();write(db,PROGRESS+isin,progress)
  return dict(state='APPLIED',receipt_key=key,added=added,changed=changed,relocated=relocated,first=plan['first'],end=plan['end'])
 
 

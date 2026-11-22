@@ -18,12 +18,19 @@ class FeedContext(StockMonitor):
             # spend this short batch on network, archives or CORE calculation.
             from cp_reconciliation import turn
             result=turn(self.store,info,native_empty_only=True)
-            if result.get('analysis_requested_at'):
+            reviewed={}
+            if result.get('observations_checked'):
+                # The short route must finish the EXISTING owner policy too.
+                # A checked visual observation must not wait for a long full
+                # history turn to publish its metadata-only acceptance.
+                from cp_controls import tv_risk_turn
+                reviewed=tv_risk_turn(self.store,info)
+            if result.get('analysis_requested_at') or reviewed.get('analysis_requested_at'):
                 from cp_assessment import request
                 request(self.store,info['isin'])
             from candle_schedule import FRESH_ROTATION,history_finished
             if self.store.setting(FRESH_ROTATION,{}).get('consecutive',0):history_finished(self.store)
-            return {'errors':[],'cp_native_empty':result}
+            return {'errors':[],'cp_native_empty':result,**({'cp_tv_risk':reviewed} if reviewed else {})}
         from eur_listings import OWNER_HISTORY_POLICY,owner_history_info
         info=owner_history_info(info,self.store.setting(OWNER_HISTORY_POLICY,{}))
         local={}

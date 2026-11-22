@@ -68,6 +68,65 @@ def native_empty_resolution(db,problem,jobs):
     return None
 
 
+def native_source_resolution(db,problem,jobs,memo):
+    """A current complete primary-source window supersedes a stale gap label.
+
+    Validate actual native rows on both TF, not a terminal job status,
+    inferred TV absence or a trading grant. Bound the view to eight receipts.
+    """
+    import pandas as pd
+    from revision_watcher import RETIME_PREFIX,retime_current
+    from cp_reconciliation import _input,_observation_current
+    meta=problem.get('identity') or {};span=problem.get('range');tf=problem.get('tf')
+    if (problem.get('kind')!='archive' or tf not in ('5m','15m') or not span or len(span)!=2
+            or problem.get('state') not in ('GAP','SOURCE_GAP','UNCONFIRMED')):return None
+    try:
+        a,b=map(pd.Timestamp,span);end=b+pd.Timedelta(minutes=5 if tf=='5m' else 15)
+        if a.tzinfo or b.tzinfo or not pd.Timedelta(0)<end-a<=pd.Timedelta(minutes=45):return None
+        prefix=RETIME_PREFIX+problem['isin']+':'
+        receipts=db.execute("""SELECT key,value FROM settings WHERE key>=? AND key<?
+          AND json_extract(value,'$.state')='APPLIED'
+          AND json_extract(value,'$.mode') IN ('VERIFIED_NATIVE_EMPTY','VERIFIED_NATIVE_TRADE_PARTITION')
+          AND json_extract(value,'$.first')<=? AND json_extract(value,'$.end')>=?
+          AND json_extract(value,'$.identity.source')=? AND json_extract(value,'$.identity.symbol')=?
+          AND json_extract(value,'$.identity.venue')=? AND json_extract(value,'$.identity.currency')=?
+          AND json_extract(value,'$.identity.timezone')=? ORDER BY key LIMIT 8""",
+          (prefix,prefix+'\uffff',str(a),str(end),*[meta[k] for k in ('source','symbol','venue','currency','timezone')])).fetchall()
+        for key,raw in receipts:
+            receipt=json.loads(raw)
+            if key not in memo:memo[key]=retime_current(db,receipt)
+            if not memo[key]:continue
+            conflict=False
+            for job in jobs:
+                result=job.get('observation',{}).get('result')
+                if result not in ('ABSENT','DIFFERENT','PRESENT','ZERO_VOLUME'):continue
+                rows=[r for r in receipt['source']['rows'][tf] if pd.Timestamp(job['first'])<=pd.Timestamp(r[0])<pd.Timestamp(job['end'])]
+                disputed=(result=='DIFFERENT' or result=='ABSENT' and bool(rows)
+                    or result=='PRESENT' and not rows or result=='ZERO_VOLUME' and any(r[5]>0 for r in rows))
+                if not disputed:continue
+                binding=('review',job['id'])
+                if binding not in memo:memo[binding]=(job.get('source_comparison',{}).get('observation_current') is True or _observation_current(job,_input(db,job)))
+                if memo[binding]:conflict=True;break
+            if conflict:continue
+            return dict(state='CONFIRMED_NATIVE_REPAIR',current=True,isin=problem['isin'],identity=meta,
+                tf=tf,range=span,job_id=receipt['job_id'],receipt_key=key,checked_at=receipt['created_at'],
+                basis='Complete paired official source and current exact native5m/15m window; no DQ or trading grant rewrite')
+    except (ValueError,KeyError,TypeError,sqlite3.OperationalError):return None
+    return None
+
+
+def confirmed_native_repair(problem):
+    proof=problem.get('native_resolution') or {}
+    return bool(proof.get('state')=='CONFIRMED_NATIVE_REPAIR' and proof.get('current') is True
+        and proof.get('isin')==problem.get('isin') and proof.get('identity')==problem.get('identity')
+        and proof.get('tf')==problem.get('tf') and problem.get('tf') in ('5m','15m')
+        and proof.get('range')==problem.get('range') and proof.get('receipt_key') and proof.get('job_id'))
+
+
+def confirmed_native_resolution(problem):
+    return confirmed_native_absence(problem) or confirmed_native_repair(problem)
+
+
 def confirmed_native_absence(problem):
     proof=problem.get('native_resolution') or {}
     return bool(proof.get('current') is True and proof.get('state')=='CONFIRMED_NO_TRADES'
@@ -78,6 +137,9 @@ def confirmed_native_absence(problem):
 
 
 def repair_capability(problem,job):
+    if confirmed_native_repair(problem):
+        return dict(check=False,known=True,color='Green',label='Проверено GETTEX',
+                    reason='Текущие свечи и пустые интервалы подтверждены полным источником GETTEX')
     if confirmed_native_absence(problem):
         return dict(check=False,known=True,color='Green',label='Подтверждено GETTEX',
                     reason='Отсутствие сделок подтверждено GETTEX; свечи не создавались')
@@ -143,14 +205,14 @@ def tv_result(problem,jobs):
 
 def present(problem,jobs):
     state=problem.get('state','UNKNOWN');accepted=problem.get('accepted') is True
-    tv_accepted=accepted_tv_absence(problem);native=confirmed_native_absence(problem)
+    tv_accepted=accepted_tv_absence(problem);native=confirmed_native_resolution(problem);restored=confirmed_native_repair(problem)
     severity='Информация' if native else 'Низкая' if accepted else 'Высокая' if state in ('INVALID','ANALYSIS_BLOCKED') else 'Информация' if state=='SOURCE_LIMITED' else 'Средняя'
     influence='Подтверждение источника' if native else 'Исторический риск принят' if accepted else 'Требуется проверка анализа' if problem.get('kind')=='context' else 'Диагностика архива'
     tv,job=tv_result(problem,jobs);repair=problem.get('repair') or {};review=problem.get('historical_review') or {}
     reason=repair.get('reason') or review.get('reason') or ((job or {}).get('finding') or {}).get('reason')
-    next_step=('Отсутствие сделок подтверждено GETTEX; свечи не создавались' if native else 'Пропуск сверён с TV и принят; реальные свечи не изменены' if tv_accepted else reason or ('Ожидание штатного восстановления' if repair.get('state') in ('QUEUED','RUNNING') else 'Нет сохранённого задания восстановления'))
+    next_step=('Текущий участок подтверждён полным источником GETTEX; исходные значения сохранены' if restored else 'Отсутствие сделок подтверждено GETTEX; свечи не создавались' if native else 'Пропуск сверён с TV и принят; реальные свечи не изменены' if tv_accepted else reason or ('Ожидание штатного восстановления' if repair.get('state') in ('QUEUED','RUNNING') else 'Нет сохранённого задания восстановления'))
     return dict(problem=problem,action=repair_capability(problem,job),tf=problem.get('tf','—'),span=' — '.join(str(v) for v in problem.get('range') or []) or '—',
-                title='Отсутствие сделок подтверждено GETTEX' if native else 'Пропуск сверён с TV и принят' if tv_accepted else STATES.get(state,state),severity=severity,tv='Совпало отсутствие свечей; принято' if tv_accepted else tv,influence=influence,next=next_step,
+                title='Участок подтверждён GETTEX' if restored else 'Отсутствие сделок подтверждено GETTEX' if native else 'Пропуск сверён с TV и принят' if tv_accepted else STATES.get(state,state),severity=severity,tv='Совпало отсутствие свечей; принято' if tv_accepted else tv,influence=influence,next=next_step,
                 source=' / '.join(str((problem.get('identity') or {}).get(k) or '—') for k in ('source','venue','currency')),
                 last=repair.get('finished_at') or repair.get('checked_at') or (job or {}).get('checked_at') or '—',
                 next_retry=None if tv_accepted or native else repair.get('next_retry') or review.get('next_retry'),job=job,work=tr('Подтверждено GETTEX') if native else tr('Сверка принята') if tv_accepted else repair_progress(repair))
@@ -175,7 +237,17 @@ def read_requests(path,isin):
     from cp_controls import read
     with closing(sqlite3.connect(Path(path).resolve().as_uri()+'?mode=ro',uri=True)) as db:
         db.execute('PRAGMA query_only=ON')
-        return read(db,'cp_repair_requests:'+isin,{})
+        result=read(db,'cp_repair_requests:'+isin,{})
+        scopes=['instrument:'+isin,'market:'+isin+':5m','market:'+isin+':15m',
+            'setting:cp_manual_risk:'+isin,'setting:interval_evidence:'+isin,
+            'setting:cp_official_timebase_policy','setting:cp_gettex_source_policy',
+            'setting:gettex_chart:'+isin+':5m','setting:gettex_chart:'+isin+':15m']
+        revisions=dict(db.execute('SELECT scope,revision FROM input_revisions WHERE scope IN ('+','.join('?' for _ in scopes)+')',scopes))
+        namespaces=[]
+        for prefix in ('setting:cp_official_timebase_revision:'+isin+':','setting:cp_reconciliation_job:'+isin+':'):
+            namespaces.append(db.execute('SELECT count(*),coalesce(sum(revision),0) FROM input_revisions WHERE scope>=? AND scope<?',(prefix,prefix+'\uffff')).fetchone())
+        result['__evidence_clock']=[read(db,'cp_reconciliation_progress:'+isin,{}).get('native_source_published_at'),revisions,namespaces]
+        return result
 
 
 def receipt_clock(receipt):
@@ -227,19 +299,24 @@ def read(path,isin,page=0,include_old=False,now=None,accepted_only=False,native_
             return problem.get('kind')=='archive' and all(meta.get(k) for k in ('source','venue','currency')) and not venue_allowed(info,meta)
         archived_count=sum(old_archive(p) or other_archive(p) for p in problems)
         visible=problems if include_old else [p for p in problems if not (old_archive(p) or other_archive(p))]
+        source_memo={}
         def with_native_resolution(p):
-            proof=native_empty_resolution(db,p,indexed.get(binding(p.get('isin'),p.get('tf'),p.get('identity') or {},p.get('range')),[]))
+            related=indexed.get(binding(p.get('isin'),p.get('tf'),p.get('identity') or {},p.get('range')),[])
+            overlaps=[j for j in jobs if j.get('observation',{}).get('result') in ('ABSENT','DIFFERENT','PRESENT','ZERO_VOLUME')
+                and j.get('tf')==p.get('tf') and j.get('identity')==p.get('identity') and p.get('range')
+                and j['first']<=p['range'][1] and j['last']>=p['range'][0]]
+            proof=(None if overlaps else native_empty_resolution(db,p,related)) or native_source_resolution(db,p,overlaps,source_memo)
             return dict(p,native_resolution=proof) if proof else p
         visible=[with_native_resolution(p) for p in visible]
         # Keep current, revision-checked acceptances in the shared persisted CP
         # registry, but do not present them as active errors. Revoked/changed
         # scopes return here automatically; no DQ record or evidence is deleted.
-        native_count=sum(confirmed_native_absence(p) for p in visible)
-        accepted_count=sum(accepted_tv_absence(p) and not confirmed_native_absence(p) for p in visible)
+        native_count=sum(confirmed_native_resolution(p) for p in visible)
+        accepted_count=sum(accepted_tv_absence(p) and not confirmed_native_resolution(p) for p in visible)
         active_count=len(visible)-accepted_count-native_count
-        visible=[p for p in visible if (confirmed_native_absence(p) if native_only else
-                 accepted_tv_absence(p) and not confirmed_native_absence(p) if accepted_only else
-                 not (accepted_tv_absence(p) or confirmed_native_absence(p)))]
+        visible=[p for p in visible if (confirmed_native_resolution(p) if native_only else
+                 accepted_tv_absence(p) and not confirmed_native_resolution(p) if accepted_only else
+                 not (accepted_tv_absence(p) or confirmed_native_resolution(p)))]
         rows=[present(p,indexed.get(binding(p.get('isin'),p.get('tf'),p.get('identity') or {},p.get('range')),[])) for p in visible]
     order={'Высокая':0,'Средняя':1,'Низкая':2,'Информация':3}
     def scope(row):
@@ -403,7 +480,10 @@ class Dialog:
         def done(value):
             self.watch_busy=False
             if self.closed:return
-            if generation==self.generation and self.apply_receipts(value):self.refresh()
+            if generation==self.generation:
+                clock=value.pop('__evidence_clock',None);changed=clock!=getattr(self,'evidence_clock',None)
+                self.evidence_clock=clock
+                if self.apply_receipts(value) or changed:self.refresh()
             self.schedule_watch()
         def failed(error):
             self.watch_busy=False

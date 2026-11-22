@@ -33,6 +33,15 @@ class FiveMinutePartition(unittest.TestCase):
     d.executemany('INSERT INTO trades VALUES (?,?,?,?)',[(isin,*r) for r in ticks]);job,_=rv._enqueue(d,rv._spec(isin,m,'5m',a,last),{'kind':'fixture'},now);inputs=rv._input(d,job)
     old=dict(job);job.update(input_fingerprint=inputs['fingerprint'],fingerprint_version=rv.FINGERPRINT_VERSION,finding=rv._classify(job,inputs,now),status='AWAITING_SOURCE');rv._save_job(d,job,old);d.commit()
     plan=rw.retime_plan(d,job,inputs,now);self.assertIsNotNone(plan);self.assertEqual(plan['reviewed_tf'],'5m');self.assertEqual(plan['mode'],'VERIFIED_NATIVE_TRADE_PARTITION');self.assertEqual(plan['relocations'][0]['new_at'],last)
+    protected,_=rv._enqueue(d,rv._spec(isin,m,'5m',a,a),{'kind':'different_visual_scope'},now)
+    bound=rv._input(d,protected);protected.update(native_neighbors=bound['neighbors'],observation=dict(result='ABSENT',at=(now-pd.Timedelta(seconds=1)).isoformat(),input_fingerprint=bound['fingerprint'],fingerprint_version=rv.FINGERPRINT_VERSION));rv.write(d,rv.key(protected),protected)
+    with self.assertRaisesRegex(ValueError,'TV_BOUND_CONTEXT_CHANGED'):rw.retime_plan(d,job,inputs,now)
+    diagnosed={**job,'observation':dict(result='DIFFERENT',at=now.isoformat(),input_fingerprint=inputs['fingerprint'],fingerprint_version=rv.FINGERPRINT_VERSION)}
+    self.assertIsNotNone(rw.retime_plan(d,diagnosed,inputs,now))
+    other,_=rv._enqueue(d,rv._spec(isin,m,'5m',last,last),{'kind':'contradicting_visual_scope'},now);ob=rv._input(d,other)
+    other.update(observation=dict(result='ABSENT',at=now.isoformat(),input_fingerprint=ob['fingerprint'],fingerprint_version=rv.FINGERPRINT_VERSION));rv.write(d,rv.key(other),other)
+    with self.assertRaisesRegex(ValueError,'OTHER_CURRENT_TV_REFERENCE_CONFLICT'):rw.retime_plan(d,diagnosed,inputs,now)
+    d.rollback()
     conflict={**job,'observation':dict(result='ABSENT',identity_confirmed=True,tv_symbol='GETTEX:FIX',at=now.isoformat(),input_fingerprint=inputs['fingerprint'],fingerprint_version=rv.FINGERPRINT_VERSION)}
     with self.assertRaisesRegex(ValueError,'VISUAL_REFERENCE_CONFLICT'):rw.retime_plan(d,conflict,inputs,now)
     d.execute("UPDATE series SET volume=volume+1 WHERE base_tf='15m'")
@@ -49,9 +58,52 @@ class FiveMinutePartition(unittest.TestCase):
     for base in native:self.assertEqual(rw._native(d,isin,m,base,first,end),official[base])
     self.assertTrue(rw.retime_current(d,receipt));self.assertEqual(rv._classify(job,rv._input(d,job),now)['state'],'NATIVE_ROWS_CONFIRMED')
     self.assertGreater(d.execute('select count(*) from candle_revision_history').fetchone()[0],0)
+    # A different mixed gap must reuse only the fully validated primary
+    # window. A stale raw DQ label must not hide the real restoration.
+    mixed=rv._spec(isin,m,'5m',a,'2026-11-13 16:30:00')
+    self.assertEqual(rv._classify(mixed,rv._input(d,mixed),now)['state'],'NATIVE_ROWS_CONFIRMED')
+    from cp_problem_view import native_source_resolution,confirmed_native_repair,present
+    problem=dict(isin=isin,identity=m,tf='5m',kind='archive',state='UNCONFIRMED',range=[a,'2026-11-13 16:30:00'])
+    resolution=native_source_resolution(d,problem,[],{});self.assertIsNotNone(resolution)
+    verified={**problem,'native_resolution':resolution};self.assertTrue(confirmed_native_repair(verified));self.assertFalse(present(verified,[])['action']['check'])
+    # A current contradictory review, partial broader range, changed native
+    # candle or revoked proof cannot be converted into a completed problem.
+    current=rv._input(d,mixed);dispute={**mixed,'observation':dict(result='DIFFERENT',input_fingerprint=current['fingerprint'],fingerprint_version=rv.FINGERPRINT_VERSION)}
+    self.assertIsNone(native_source_resolution(d,problem,[dispute],{}))
+    absent=rv._spec(isin,m,'5m',last,last);binding=rv._input(d,absent)
+    absent['observation']=dict(result='ABSENT',input_fingerprint=binding['fingerprint'],fingerprint_version=rv.FINGERPRINT_VERSION)
+    self.assertIsNone(native_source_resolution(d,problem,[absent],{}))
+    broader={**problem,'range':[a,'2026-11-13 16:45:00']};self.assertIsNone(native_source_resolution(d,broader,[],{}))
+    d.execute("UPDATE series SET high=high+1 WHERE base_tf='5m' AND ts='2026-11-13 16:35:00'")
+    self.assertIsNone(native_source_resolution(d,problem,[],{}));self.assertNotEqual(rv._classify(mixed,rv._input(d,mixed),now)['state'],'NATIVE_ROWS_CONFIRMED');d.rollback()
    self.assertIsNone(s.setting('cp_manual_risk:'+isin))
   finally:
    s.read_cache.close()
    for suffix in ('','-wal','-shm'):Path(str(path)+suffix).unlink(missing_ok=True)
+
+ def test_open_problem_list_refreshes_on_new_evidence_not_unchanged_poll(self):
+  from types import SimpleNamespace
+  from unittest.mock import Mock
+  from cp_problem_view import Dialog
+  def run(work,done,*args,**kwargs):done(work());return True
+  ctx=SimpleNamespace(win=Mock(),watch_timer=None,closed=False,watch_busy=False,generation=0,
+   choice=SimpleNamespace(current=lambda:0),infos=[{'isin':'A'}],
+   app=SimpleNamespace(store=SimpleNamespace(path='fixture'),job=run),apply_receipts=Mock(return_value=False),refresh=Mock(),schedule_watch=Mock())
+  with patch('cp_problem_view.read_requests',side_effect=[{'__evidence_clock':['proof1',1]},{'__evidence_clock':['proof1',1]},{'__evidence_clock':['proof2',1]}]):
+   Dialog.watch(ctx);self.assertEqual(ctx.refresh.call_count,1)
+   Dialog.watch(ctx);self.assertEqual(ctx.refresh.call_count,1)
+   Dialog.watch(ctx);self.assertEqual(ctx.refresh.call_count,2)
+  self.assertEqual(ctx.apply_receipts.call_args.args[0],{})
+
+ def test_short_source_turn_finishes_checked_visual_policy_without_provider_or_core(self):
+  from types import SimpleNamespace
+  from unittest.mock import Mock
+  from feed_worker import FeedContext
+  ctx=SimpleNamespace(store=SimpleNamespace(setting=Mock(return_value={})),_calculate=Mock(side_effect=AssertionError('No provider/CORE')))
+  info=dict(isin='A',_native_empty_only=True)
+  with patch('cp_reconciliation.turn',return_value={'observations_checked':1}),patch('cp_controls.tv_risk_turn',return_value={'analysis_requested_at':'current'}) as review,patch('cp_assessment.request') as request:
+   result=FeedContext.calculate(ctx,info)
+   review.assert_called_once_with(ctx.store,info);request.assert_called_once_with(ctx.store,'A');self.assertIn('cp_tv_risk',result)
+   ctx._calculate.assert_not_called()
 
 if __name__=='__main__':unittest.main()

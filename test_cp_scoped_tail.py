@@ -42,7 +42,15 @@ class ScopedTail(unittest.TestCase):
        candidate=copy.deepcopy(grant)
        if strict not in scopes:candidate['accepted']['p']['input_revisions'][strict]=1
        else:db.execute('UPDATE input_revisions SET revision=2 WHERE scope=?',(strict,))
-       self.assertFalse(cp.effective_accepted(db,isin,candidate))
+       if actor==cp.TV_ACTOR and strict=='setting:'+rv.key(job):
+        # Queue counts/timestamps change the setting revision, not the
+        # frozen visual evidence, native inputs or original permission.
+        self.assertEqual(set(cp.effective_accepted(db,isin,candidate)),{'p'})
+        service=copy.deepcopy(job);service['checked_at']='2026-11-22T12:00Z';cp.write(db,rv.key(job),service)
+        self.assertEqual(set(cp.effective_accepted(db,isin,candidate)),{'p'})
+        service['observation']['result']='PRESENT';cp.write(db,rv.key(job),service)
+        self.assertFalse(cp.effective_accepted(db,isin,candidate));cp.write(db,rv.key(job),job)
+       else:self.assertFalse(cp.effective_accepted(db,isin,candidate))
        if strict in scopes:db.execute('UPDATE input_revisions SET revision=1 WHERE scope=?',(strict,))
      db.execute('UPDATE series SET high=102 WHERE ts=?',(right,))
      self.assertFalse(cp.effective_accepted(db,isin,grant))

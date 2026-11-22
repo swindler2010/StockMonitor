@@ -168,12 +168,12 @@ def _input(db, job):
         result['official_retiming_empty']=[dict(first=correction['first'],end=correction['end'],
             authority={**proof['identity'],'absence_evidence':{**correction['source']['proof'],'checked_at':proof['checked_at']}})]
     # A mixed range can contain both real rows and a separately confirmed empty
-    # child. Reuse only current exact-source 15m receipts; the full native/source
-    # window is still revalidated. Never transfer an empty proof across feeds/TF.
-    if tf=='15m' and rows and len(rows)<int((pd.Timestamp(job['last'])-pd.Timestamp(job['first']))/pd.Timedelta(minutes=15))+1:
+    # child. Current primary-source receipts validate BOTH native5m/15m
+    # windows. Visual observations alone never transfer between feeds/TF.
+    if tf in ('5m','15m') and rows and len(rows)<int((pd.Timestamp(job['last'])-pd.Timestamp(job['first']))/pd.Timedelta(minutes=5 if tf=='5m' else 15))+1:
         prefix=RETIME_PREFIX+isin+':'
         siblings=db.execute("""SELECT value FROM settings WHERE key>=? AND key<? AND key<>?
-          AND json_extract(value,'$.state')='APPLIED' AND json_extract(value,'$.mode')='VERIFIED_NATIVE_EMPTY'
+          AND json_extract(value,'$.state')='APPLIED' AND json_extract(value,'$.mode') IN ('VERIFIED_NATIVE_EMPTY','VERIFIED_NATIVE_TRADE_PARTITION')
           AND json_extract(value,'$.first')<? AND json_extract(value,'$.end')>?
           AND json_extract(value,'$.identity.source')=? AND json_extract(value,'$.identity.symbol')=?
           AND json_extract(value,'$.identity.venue')=? AND json_extract(value,'$.identity.currency')=?
@@ -580,7 +580,7 @@ def _resume_repaired_scopes(db,isin,clock):
         write(db,PROGRESS+isin,p)
 
 
-NATIVE_EMPTY_ALGORITHM=5
+NATIVE_EMPTY_ALGORITHM=6
 NATIVE_EMPTY_LIMIT=8
 
 
@@ -593,7 +593,7 @@ def _native_empty_pending(db,isin,limit):
       AND json_extract(value,'$.identity.source')='gettex_chart'
       AND json_extract(value,'$.identity.venue')='GETTEX'
       AND json_extract(value,'$.identity.currency')='EUR'
-      AND json_extract(value,'$.finding.state') IN ('SOURCE_TIMEBASE_UNCONFIRMED','GAP')
+      AND json_extract(value,'$.finding.state') IN ('SOURCE_TIMEBASE_UNCONFIRMED','GAP','NATIVE_ROWS_PRESENT')
       AND json_extract(value,'$.status') IN ('AWAITING_USER','AWAITING_SOURCE')
       AND COALESCE(json_extract(value,'$.native_empty_algorithm'),0)<?
       ORDER BY json_extract(value,'$.first') DESC,key LIMIT ?""",
@@ -762,7 +762,8 @@ def turn(store, info, now=None, native_empty_only=False):
         requested=progress.get('analysis_requested_at') if not progress.get('counts',{}).get('RECHECK_QUEUED',0) else None
         write(db,PROGRESS+isin,progress)
     return dict(state='PROCESSED' if created or checked else 'IDLE',created=created,checked=checked,
-                mode='ASSISTED_ONLY',analysis_requested_at=requested)
+                mode='ASSISTED_ONLY',analysis_requested_at=requested,
+                observations_checked=sum(bool(j.get('observation')) for j in due))
 
 
 def review_binding(job):
@@ -815,7 +816,7 @@ def _record_observation(db,job,inputs,result,symbol,note,files,at):
         actor='human_assisted',note=note,evidence=files,input_fingerprint=inputs['fingerprint'],
         fingerprint_version=FINGERPRINT_VERSION,evidence_checked_at=inputs['proof'].get('checked_at'),
         use='diagnostic only; no market-data import')
-    job.update(status='RECHECK_QUEUED',next_check=at)
+    job.update(status='RECHECK_QUEUED',next_check=at,native_rows=inputs['rows'],native_neighbors=inputs['neighbors'])
     _save_job(db,job,old)
     progress=read(db,PROGRESS+job['isin'],{})
     progress['analysis_requested_at']=at

@@ -389,7 +389,7 @@ def _revisions(db,scopes):
 
 
 def _reviewed_market_tail_current(db,isin,entry,token,current):
-    """Revalidate an issued exact gap receipt after ONLY its market clock moved.
+    """Revalidate a frozen gap after market-tail or review-service clock changes.
 
     New bars outside the reviewed neighbourhood are not a changed permission.
     Every policy, DQ, listing, observation and unknown scope remains strict.
@@ -402,10 +402,10 @@ def _reviewed_market_tail_current(db,isin,entry,token,current):
                   'setting:gettex_chart:'+isin+':'+p['tf']}
         if (p['isin']!=isin or p['kind']!='archive' or p['tf'] not in ('5m','15m')
                 or meta.get('source')!='gettex_chart' or meta.get('venue')!='GETTEX'
-                or meta.get('currency')!='EUR' or not required<=set(token)
-                or {k for k in token if token[k]!=current[k]}!={market}
-                or not isinstance(token[market],int) or current[market]<=token[market]):return False
+                or meta.get('currency')!='EUR' or not required<=set(token)):return False
+        changed={k for k in token if token[k]!=current[k]}
         if entry['actor']==REVIEWED_ACTOR:
+            if changed!={market} or not isinstance(token[market],int) or current[market]<=token[market]:return False
             if p['tf']!='15m':return False # Existing scoped price-risk policy is 15m only.
             if 'setting:'+REVIEWED_PREFIX+isin not in token:return False
             return _reviewed_binding(db,read_instrument(db,isin),p)==e['native_binding']
@@ -415,6 +415,9 @@ def _reviewed_market_tail_current(db,isin,entry,token,current):
         jobs=e.get('job_ids',[])
         if len(jobs)!=1:return False
         job_key=rv.PREFIX+isin+':'+jobs[0]
+        allowed={market,'setting:'+job_key}
+        if (not changed or not changed<=allowed
+                or any(not isinstance(token[k],int) or current[k]<=token[k] for k in changed)):return False
         if not {'setting:'+TV_POLICY,'setting:'+job_key,'setting:interval_evidence:'+isin,
                 'setting:history_identity:'+isin}<=set(token):return False
         job=read(db,job_key,{})
