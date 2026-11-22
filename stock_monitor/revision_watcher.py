@@ -127,7 +127,7 @@ def _five_minute_partition_plan(db,job,inputs,now,policy):
  sp=read(db,SOURCE_POLICY,{})
  if not (sp.get('approved') is True and sp.get('version')==1 and sp.get('scope')=='registered_stocks' and sp.get('exclusive_venue')=='GETTEX'):return None
  a=pd.Timestamp(job['first']);end=pd.Timestamp(job['end']);obs=job.get('observation')
- if inputs['rows'] or not pd.Timedelta(0)<end-a<=pd.Timedelta(minutes=15) or a.floor('15min')!=pd.Timestamp(job['last']).floor('15min'):return None
+ if inputs['rows'] or not pd.Timedelta(0)<end-a<=pd.Timedelta(minutes=30):return None
  if obs and (obs.get('result') not in ('ABSENT','PRESENT','DIFFERENT') or not _observation_current(job,inputs)):return None
  plan=_reviewed_partition_plan(db,{**job,'first':str(a.floor('15min'))},inputs,now,policy)
  if not plan:
@@ -233,10 +233,11 @@ def _reviewed_partition_plan(db,job,inputs,now,policy):
  """A real timestamp redistribution, proved by every original native value."""
  from cp_controls import digest
  a=pd.Timestamp(job['first']);meta=job['identity']
- for left,end in ((a,a+pd.Timedelta(minutes=30)),(a-pd.Timedelta(minutes=15),a+pd.Timedelta(minutes=15))):
+ windows=[(a-pd.Timedelta(minutes=offset),a+pd.Timedelta(minutes=width-offset)) for width in (30,45,60) for offset in range(0,width,15)]
+ for left,end in windows:
   if left.normalize()!=end.normalize():continue
   try:
-   source=_official_window(db,job['isin'],str(left),str(end),now)
+   source=_official_window(db,job['isin'],str(left),str(end),now,allow_zero_rows=True)
    native={base:_native(db,job['isin'],meta,base,str(left),str(end)) for base in ('5m','15m')}
    if any(not native[base] or _aggregate(native[base])!=_aggregate(source['rows'][base]) for base in native):continue
    if [r[0] for r in native['15m']]!=[r[0] for r in source['rows']['15m']]:continue
@@ -254,7 +255,7 @@ def _reviewed_partition_plan(db,job,inputs,now,policy):
    return dict(version=RETIME_VERSION,mode='VERIFIED_NATIVE_TRADE_PARTITION',isin=job['isin'],identity=meta,
      first=str(left),end=str(end),job_id=job['id'],policy_digest=digest(policy),input_fingerprint=inputs['fingerprint'],
      before=native,source=source,source_digest=digest(source),created_at=now.isoformat(),relocations=moves,
-     native_trade_partition=partition,origin='Current visual discrepancy; complete official tape uniquely reproduces all original OHLCV with bounded native timestamp delay; conserved 5m/15m window')
+     native_trade_partition=partition,zero_observations_corroborated=True,origin='Current visual discrepancy; complete official tape uniquely reproduces all original OHLCV with bounded native timestamp delay; conserved 5m/15m window')
   except (ValueError,KeyError,TypeError):continue
  return None
 
@@ -615,7 +616,7 @@ def retime_current(db,receipt,now=None):
   if not row or not stored_identity(db,json.loads(row[0]),receipt['identity'],'15m'):return False
   if receipt.get('reviewed_tf')=='5m' and not stored_identity(db,json.loads(row[0]),receipt['identity'],'5m'):return False
   source=_official_window(db,receipt['isin'],receipt['first'],receipt['end'],pd.Timestamp(now or pd.Timestamp.now(tz='UTC')),
-   allow_zero_rows=receipt.get('mode') in ('VERIFIED_NATIVE_EMPTY','VERIFIED_PRICE_OBSERVATION_TIMEBASE','VERIFIED_PRICE_CLOSING_TICK_PARTITION') and receipt.get('zero_observations_corroborated') is True)
+   allow_zero_rows=receipt.get('mode') in ('VERIFIED_NATIVE_EMPTY','VERIFIED_NATIVE_TRADE_PARTITION','VERIFIED_PRICE_OBSERVATION_TIMEBASE','VERIFIED_PRICE_CLOSING_TICK_PARTITION') and receipt.get('zero_observations_corroborated') is True)
   if not receipt_source_current(source,receipt):return False
   return all(digest(_native(db,receipt['isin'],receipt['identity'],base,receipt['first'],receipt['end']))==digest(rows)
              for base,rows in source['rows'].items())

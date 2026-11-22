@@ -580,7 +580,7 @@ def _resume_repaired_scopes(db,isin,clock):
         write(db,PROGRESS+isin,p)
 
 
-NATIVE_EMPTY_ALGORITHM=6
+NATIVE_EMPTY_ALGORITHM=7
 NATIVE_EMPTY_LIMIT=8
 
 
@@ -589,7 +589,7 @@ def _native_empty_pending(db,isin,limit):
     return db.execute("""SELECT key,value FROM settings WHERE key>=? AND key<?
       AND json_extract(value,'$.tf')='5m'
       AND julianday(json_extract(value,'$.last'))>=julianday(json_extract(value,'$.first'))
-      AND julianday(json_extract(value,'$.last'))-julianday(json_extract(value,'$.first'))<15.0/1440
+      AND julianday(json_extract(value,'$.last'))-julianday(json_extract(value,'$.first'))<30.0/1440
       AND json_extract(value,'$.identity.source')='gettex_chart'
       AND json_extract(value,'$.identity.venue')='GETTEX'
       AND json_extract(value,'$.identity.currency')='EUR'
