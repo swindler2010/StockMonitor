@@ -4,6 +4,31 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "native_repairs_requeue_only_affected_scopes",
+      "title": "После подтверждённого ремонта связанные проверки не ждут старого срока",
+      "sources": [
+        "revision_watcher.publish_retime",
+        "cp_reconciliation._queue_repaired_scopes",
+        "cp_reconciliation._resume_repaired_scopes"
+      ],
+      "states": [
+        "APPLIED",
+        "RECHECK_QUEUED"
+      ],
+      "steps": [
+        "После штатной записи сравнить исходные и подтверждённые строки внутри точного listing/ISIN/TF. Повторно поставить только пересекающиеся задания и ABSENT-задания, у которых изменилась сохранённая соседняя свеча.",
+        "Не менять первоначальный TV fingerprint, исходные наблюдения, native retry и cooldown поставщика. Следующий существующий ход заново проверяет данные/identity/качество и допустимость подтверждения.",
+        "Ограничить один вызов16заданиями. Для уже опубликованных двух новых видов ремонта восстанавливать follow-up по не более2актуальным receipt за ход; старые DONE-аудиты не повторять.",
+        "Одна и та же квитанция не должна бесконечно обновлять next_check. Сохранять отметку причины и идемпотентность; неподтверждённые соседние интервалы остаются заблокированными после честной проверки."
+      ],
+      "evidence": [
+        "test_cp_native_closing_tick.ClosingTick.test_current_review_and_complete_tape_repair_only_exact_closing_tick",
+        "test_cp_delayed_closing_tick.DelayedClosing.test_complete_tape_unique_native_prefix_and_review_restore_price_and_close"
+      ],
+      "limits": "Только очередь текущих локальных зависимостей после доказанного изменения native. Не загрузка, не изменение разрешений и не повторная ручная сверка TV. Никакого второго writer или обхода TTL/DQ/freshness.",
+      "status": "Regression reproduced old future wait; updated closing case2variants plus composite PASS3.350s, added follow-up idempotence PASS2.462s. Windows ordinary follow-up pending."
+    },
+    {
       "id": "delayed_zero_price_and_missing_final_tick",
       "title": "Нулевая цена с задержкой и ровно одна пропущенная последняя запись",
       "sources": [
@@ -27,7 +52,7 @@
         "test_cp_price_observation"
       ],
       "limits": "Не произвольная замена всех данных. Только полностью объяснённое уникальное временное перераспределение существующей цены и одна последняя запись из подтверждённого GETTEX. Нет новых торговых разрешений/изменения счёта. При изменении входов, недостаточных парных файлах или отзыве политики — отказ.",
-      "status": "New composite scenario failed RETIME_NOT_CONSERVED before fix; new plus2affected scenarios PASS4.314s. Real Palantir22Oct19:30–20:00 exact preflight matched; Windows publication pending."
+      "status": "Installed Windows TEST: ordinary CP applied22Oct19:30–20:00;3 physical rows added,3 changed,0 relocated.15m zero price176.82/V0 and19:45 close175.98/V219 match official and TV; current proof true. Account/fills/global settings/positions/drawings/levels unchanged.23 previously empty per-card indicator dictionaries became DEFAULT_IND during normal save; configured dictionaries unchanged. Follow-up queued normally; full all-stock task IN_PROGRESS."
     },
     {
       "id": "saved_observation_survives_deduplicated_fresh_feed",

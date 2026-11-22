@@ -477,6 +477,66 @@ def _seed_official_empty_checks(db,info,clock,progress,limit):
     return queued
 
 
+def _queue_repaired_scopes(db,receipt_key,receipt,clock,limit=16):
+    """Local input change, not a provider retry or a refreshed TV observation."""
+    changed={}
+    for base,rows in receipt['source']['rows'].items():
+        old={r[0]:list(r[1:]) for r in receipt['before'][base]}
+        changed[base]={r[0] for r in rows if old.get(r[0])!=list(r[1:])}
+        changed[base].update(m['old_at'] for m in receipt.get('relocations',[]) if m['base_tf']==base)
+    if not any(changed.values()):return dict(queued=[],complete=True)
+    prefix=PREFIX+receipt['isin']+':'
+    # Projection is bounded to this exact listing and the repaired window.
+    candidates=db.execute("""SELECT key,value FROM settings WHERE key>=? AND key<?
+      AND json_extract(value,'$.status') IN ('AWAITING_SOURCE','AWAITING_USER','RESOLVED_NATIVE')
+      AND COALESCE(json_extract(value,'$.recheck_due_to_native_repair.receipt_key'),'')<>?
+      AND json_extract(value,'$.identity.source')=? AND json_extract(value,'$.identity.symbol')=?
+      AND json_extract(value,'$.identity.venue')=? AND json_extract(value,'$.identity.currency')=?
+      AND json_extract(value,'$.identity.timezone')=?
+      AND ((json_extract(value,'$.first')<? AND json_extract(value,'$.end')>?)
+       OR (json_extract(value,'$.observation.result')='ABSENT' AND
+        ((json_extract(value,'$.native_neighbors.before[0]')>=? AND json_extract(value,'$.native_neighbors.before[0]')<?)
+         OR (json_extract(value,'$.native_neighbors.after[0]')>=? AND json_extract(value,'$.native_neighbors.after[0]')<?))))
+      ORDER BY key LIMIT ?""",(prefix,prefix+'\uffff',receipt_key,*[receipt['identity'][k] for k in ('source','symbol','venue','currency','timezone')],
+        receipt['end'],receipt['first'],receipt['first'],receipt['end'],receipt['first'],receipt['end'],limit+1)).fetchall()
+    queued=[]
+    for _,raw in candidates[:limit]:
+        job=json.loads(raw)
+        if job['id']==receipt['job_id']:continue
+        slots=changed.get(job['tf'],set());obs=job.get('observation') or {}
+        direct=any(job['first']<=at<job['end'] for at in slots)
+        neighbours=job.get('native_neighbors') or {}
+        adjacent=(obs.get('result')=='ABSENT' and any((neighbours.get(k) or [None])[0] in slots for k in ('before','after')))
+        if not (direct or adjacent):continue
+        old=dict(job);job.update(status='RECHECK_QUEUED' if obs else 'QUEUED',next_check=clock.isoformat(),
+            recheck_due_to_native_repair=dict(receipt_key=receipt_key,at=clock.isoformat(),reason='CURRENT_NATIVE_INPUT_CHANGED'))
+        # Preserve the original visual binding and source cooldown. The next
+        # ordinary turn must classify the newly changed inputs independently.
+        _save_job(db,job,old);queued.append(job['id'])
+    return dict(queued=queued,complete=len(candidates)<=limit)
+
+
+def _resume_repaired_scopes(db,isin,clock):
+    """Backfill pending follow-ups for the two newly deployed repair modes."""
+    from revision_watcher import RETIME_PREFIX,retime_current
+    p=read(db,PROGRESS+isin,{});seen=list(p.get('native_repair_rechecks_seen',[]));prefix=RETIME_PREFIX+isin+':'
+    rows=db.execute("""SELECT key,value FROM settings WHERE key>=? AND key<?
+      AND json_extract(value,'$.state')='APPLIED'
+      AND json_extract(value,'$.mode') IN ('VERIFIED_NATIVE_CLOSING_TICK','VERIFIED_PRICE_CLOSING_TICK_PARTITION')
+      ORDER BY json_extract(value,'$.created_at') DESC LIMIT 8""",(prefix,prefix+'\uffff')).fetchall()
+    count=0
+    for key,raw in rows:
+        if key in seen:continue
+        if count>=2:break
+        receipt=json.loads(raw)
+        if not retime_current(db,receipt,clock):continue
+        result=_queue_repaired_scopes(db,key,receipt,clock);count+=1
+        if result['complete']:seen.append(key)
+        p=read(db,PROGRESS+isin,{})
+        p.update(native_repair_rechecks_seen=seen[-64:],last_native_repair_rechecks=dict(receipt_key=key,at=clock.isoformat(),**result))
+        write(db,PROGRESS+isin,p)
+
+
 def turn(store, info, now=None):
     """At most four recovery events and four checks per existing feed turn."""
     import pandas as pd
@@ -485,7 +545,7 @@ def turn(store, info, now=None):
     from gettex_history import attach_known_interruptions
     closure_updated=attach_known_interruptions(info,store,clock)
     with store.connect() as db:
-        db.execute('BEGIN IMMEDIATE');progress=read(db,PROGRESS+isin,{})
+        db.execute('BEGIN IMMEDIATE');_resume_repaired_scopes(db,isin,clock);progress=read(db,PROGRESS+isin,{})
         exists=db.execute("SELECT 1 FROM sqlite_master WHERE name='cp_recovery_experience'").fetchone()
         events=db.execute('SELECT rowid,event_id,identity,base_tf,method,outcome,first_at,last_at,reason FROM cp_recovery_experience WHERE isin=? AND rowid>? ORDER BY rowid LIMIT ?',
                           (isin,progress.get('cursor',0),INGEST_LIMIT)).fetchall() if exists else []

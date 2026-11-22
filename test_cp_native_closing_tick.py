@@ -38,6 +38,13 @@ class ClosingTick(unittest.TestCase):
      rv.observe(s,j['id'],isin,rv.digest(s.setting(rv.key(j))),'DIFFERENT','GETTEX:PTX',True)
      j=s.setting(rv.key(j))
      with s.connect() as d:
+      neighbour,_=rv._enqueue(d,rv._spec(isin,meta,'15m','2026-11-13 11:15:00','2026-11-13 11:15:00'),{'kind':'existing_gap'},now)
+      old=dict(neighbour);bound=rv._input(d,neighbour)
+      neighbour.update(status='AWAITING_SOURCE',next_check=(now+pd.Timedelta(hours=1)).isoformat(),
+        native_rows=[],native_neighbors=bound['neighbors'],input_fingerprint=bound['fingerprint'],
+        observation=dict(result='ABSENT',tv_symbol='GETTEX:PTX',identity_confirmed=True,at=now.isoformat(),input_fingerprint=bound['fingerprint']))
+      rv._save_job(d,neighbour,old)
+     with s.connect() as d:
       n=rv._input(d,j);plan=rw.retime_plan(d,j,n,now)
       self.assertIsNotNone(plan);self.assertEqual(plan['mode'],'VERIFIED_NATIVE_CLOSING_TICK')
       d.execute("UPDATE series SET volume=volume+0.1 WHERE base_tf='5m' AND ts=?",(at,))
@@ -58,8 +65,14 @@ class ClosingTick(unittest.TestCase):
      with patch('gettex_history.attach_known_interruptions',return_value=False):rv.turn(s,info,pd.Timestamp.now(tz='UTC'))
      receipt=s.setting(rw.RETIME_PREFIX+isin+':'+j['id']);self.assertIsNotNone(receipt)
      self.assertEqual((receipt['added'],receipt['changed'],receipt['relocated']),(0,2,0))
+     followup=s.setting(rv.key(neighbour));self.assertEqual(followup['status'],'RECHECK_QUEUED')
+     self.assertEqual(followup['observation'],neighbour['observation'])
+     self.assertLessEqual(pd.Timestamp(followup['next_check']),pd.Timestamp.now(tz='UTC'))
      with patch('gettex_history.attach_known_interruptions',return_value=False):rv.turn(s,info,pd.Timestamp.now(tz='UTC'))
      self.assertEqual(s.setting(rv.key(j))['status'],'RESOLVED_NATIVE')
+     waiting=s.setting(rv.key(neighbour));self.assertNotEqual(waiting['status'],'RECHECK_QUEUED')
+     with patch('gettex_history.attach_known_interruptions',return_value=False):rv.turn(s,info,pd.Timestamp.now(tz='UTC'))
+     self.assertEqual(s.setting(rv.key(neighbour))['next_check'],waiting['next_check'])
      with s.connect() as d:
       for b in source:self.assertEqual(rw._native(d,isin,meta,b,at,end),source[b])
       self.assertEqual(d.execute('select count(*) from candle_revision_history').fetchone()[0],2)

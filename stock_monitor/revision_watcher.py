@@ -502,6 +502,8 @@ def publish_retime(db,job,inputs,plan,now):
    added+=int(old is None and at not in {r['new_at'] for r in moves});changed+=int(old is not None)
   write(db,lineage_key,lineage)
  write(db,key,{**plan,'state':'APPLIED','added':added,'changed':changed,'relocated':relocated})
+ from cp_reconciliation import _queue_repaired_scopes
+ _queue_repaired_scopes(db,key,plan,now)
  progress=read(db,PROGRESS+isin,{});progress['analysis_requested_at']=now.isoformat();write(db,PROGRESS+isin,progress)
  return dict(state='APPLIED',receipt_key=key,added=added,changed=changed,relocated=relocated,first=plan['first'],end=plan['end'])
 
