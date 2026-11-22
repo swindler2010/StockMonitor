@@ -4,6 +4,32 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "official_exact_missing_closing_tick",
+      "title": "Восстановление ровно одной пропущенной последней записи GETTEX",
+      "sources": [
+        "revision_watcher._reviewed_closing_tick",
+        "revision_watcher.retime_plan",
+        "revision_watcher.publish_retime",
+        "cp_reconciliation.turn"
+      ],
+      "states": [
+        "SOURCE_DISCREPANCY",
+        "VERIFIED_NATIVE_CLOSING_TICK"
+      ],
+      "steps": [
+        "Только текущая точная сверка DIFFERENT для одной закрытой GETTEX/EUR 15m-свечи при действующих разрешениях официального источника и штатных исправлений.",
+        "Полные парные публикации и реальные GETTEX-сделки должны точно воспроизводить существующие 5m и 15m OHLCV после удаления лишь последней записи. Последняя запись остаётся в том же 5m-слоте; наборы временных отметок не меняются.",
+        "Восстанавливать значения только из независимо проверенного официального архива, не из текста или изображения TV. Количество последней записи может быть положительным или нулевым; нулевая запись не создаёт оборот и не доказывает NO_TRADES.",
+        "Повторить существующую проверку всех входов и обеих политик непосредственно перед публикацией; сохранить старые OHLCV, происхождение и обычную переоценку DQ/CORE. Любое другое расхождение не подпадает под этот узкий маршрут."
+      ],
+      "evidence": [
+        "test_cp_native_closing_tick.ClosingTick.test_current_review_and_complete_tape_repair_only_exact_closing_tick",
+        "test_cp_native_extrema.NativeExtrema.test_only_current_isolated_positive_trade_extreme_is_repaired_by_cp"
+      ],
+      "limits": "Не произвольная замена поставщика или OHLCV; без участия Work при конкретном повторе с уже сохранённым актуальным DIFFERENT и полными данными. Desktop самостоятельно не управляется. Не меняет счёт, торговые разрешения, DQ/freshness/risk проверки. Утрата исходных сведений либо разрешения оставляет блокировку.",
+      "status": "New scenario with positive/zero closing tick PASS /2.168s, affected extrema scenario PASS. Two real Palantir preflight plans:23Oct17:30 and16Nov12:00; normal Windows queue verification pending."
+    },
+    {
       "id": "official_empty_confirmation_supersedes_stale_archive_diagnostic",
       "title": "Подтверждённый GETTEX-пропуск не возвращается в активные ошибки старого DQ",
       "sources": [

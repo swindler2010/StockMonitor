@@ -194,6 +194,39 @@ def _reviewed_positive_extreme(db,job,inputs,now,policy):
  except (ValueError,KeyError,TypeError,IndexError):return None
 
 
+def _reviewed_closing_tick(db,job,inputs,now,policy):
+ """Recover one omitted final published price/quantity, never arbitrary values.
+
+ A current visual discrepancy is only the trigger. The full official tape,
+ paired publication coverage and both native TF must prove that precisely the
+ LAST tick is missing. Every preceding tick, timestamp and OHLCV stays exact.
+ """
+ from cp_controls import read,digest
+ from cp_reconciliation import SOURCE_POLICY
+ source_policy=read(db,SOURCE_POLICY,{})
+ if not (source_policy.get('approved') is True and source_policy.get('version')==1
+     and source_policy.get('scope')=='registered_stocks'
+     and source_policy.get('exclusive_venue')=='GETTEX'):return None
+ a=pd.Timestamp(job['first']);end=a+pd.Timedelta(minutes=15);meta=job['identity']
+ try:
+  source=_official_window(db,job['isin'],str(a),str(end),now)
+  ticks=source['trades']
+  if len(ticks)<2 or pd.Timestamp(ticks[-1][0]).floor('5min')!=pd.Timestamp(ticks[-2][0]).floor('5min'):return None
+  native={base:_native(db,job['isin'],meta,base,str(a),str(end)) for base in ('5m','15m')}
+  raw=pd.DataFrame(ticks[:-1],columns=['ts','price','volume']);raw.index=pd.to_datetime(raw.pop('ts'),format='mixed')
+  for base,old in native.items():
+   expected=[(str(t),float(g.price.iloc[0]),float(g.price.max()),float(g.price.min()),float(g.price.iloc[-1]),float(g.volume.sum()))
+     for t,g in raw.groupby(pd.Grouper(freq=base.replace('m','min'))) if not g.empty]
+   if old!=expected or [r[0] for r in old]!=[r[0] for r in source['rows'][base]]:return None
+  if native==source['rows']:return None
+  return dict(version=RETIME_VERSION,mode='VERIFIED_NATIVE_CLOSING_TICK',isin=job['isin'],identity=meta,
+    first=str(a),end=str(end),job_id=job['id'],policy_digest=digest(policy),source_policy_digest=digest(source_policy),
+    input_fingerprint=inputs['fingerprint'],before=native,source=source,source_digest=digest(source),
+    created_at=now.isoformat(),recovered_closing_tick=ticks[-1],
+    origin='Current visual discrepancy; complete paired official GETTEX tape exactly reproduces every native 5m/15m value when only its final published tick is excluded; original values retained')
+ except (ValueError,KeyError,TypeError,IndexError):return None
+
+
 def retime_plan(db,job,inputs,now):
  """Bounded verified same-session repairs, retaining original native OHLCV."""
  from cp_controls import read,digest
@@ -212,6 +245,8 @@ def retime_plan(db,job,inputs,now):
    if partition:return partition
    opening=_reviewed_positive_extreme(db,job,inputs,now,policy)
    if opening:return opening
+   closing=_reviewed_closing_tick(db,job,inputs,now,policy)
+   if closing:return closing
   # An explicitly reviewed existing candle can omit a real traded extreme.
   # Keep this narrower than a general provider overwrite: identical timestamps,
   # open/close/volume, unchanged neighbour and conserved complete parent window.
@@ -366,6 +401,9 @@ def retime_current(db,receipt,now=None):
  try:
   policy=read(db,RETIME_POLICY,{})
   if policy.get('approved') is not True or digest(policy)!=receipt['policy_digest']:return False
+  if receipt.get('mode')=='VERIFIED_NATIVE_CLOSING_TICK':
+   from cp_reconciliation import SOURCE_POLICY
+   if digest(read(db,SOURCE_POLICY,{}))!=receipt.get('source_policy_digest'):return False
   row=db.execute('SELECT payload FROM instruments WHERE isin=?',(receipt['isin'],)).fetchone()
   if not row or not stored_identity(db,json.loads(row[0]),receipt['identity'],'15m'):return False
   source=_official_window(db,receipt['isin'],receipt['first'],receipt['end'],pd.Timestamp(now or pd.Timestamp.now(tz='UTC')),
