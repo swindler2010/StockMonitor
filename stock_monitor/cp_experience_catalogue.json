@@ -27,7 +27,7 @@
         "test_cp_problem_view.ProblemEvidenceTests.test_current_tv_acceptance_supersedes_waiting_receipt_without_changing_dq"
       ],
       "limits": "Только отображение действующего подтверждения. Не NO_TRADES, не изменение DQ/OHLCV или торговых допусков; расхождение объёмов и неподтверждённая история остаются отдельными проблемами.",
-      "status": "Targeted tests PASS; Windows verification pending"
+      "status": "3 targeted scenarios PASS /1.324s; Windows normal restart: active/accepted views and persistent Meta reviews verified; all-stock review remains IN_PROGRESS"
     },
     {
       "id": "source_files_missing_is_not_absent_trades",
