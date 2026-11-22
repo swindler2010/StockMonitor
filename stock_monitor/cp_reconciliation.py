@@ -173,7 +173,7 @@ def _input(db, job):
     if tf in ('5m','15m') and rows and len(rows)<int((pd.Timestamp(job['last'])-pd.Timestamp(job['first']))/pd.Timedelta(minutes=5 if tf=='5m' else 15))+1:
         prefix=RETIME_PREFIX+isin+':'
         siblings=db.execute("""SELECT value FROM settings WHERE key>=? AND key<? AND key<>?
-          AND json_extract(value,'$.state')='APPLIED' AND json_extract(value,'$.mode') IN ('VERIFIED_NATIVE_EMPTY','VERIFIED_NATIVE_TRADE_PARTITION','VERIFIED_NATIVE_SESSION_TAIL','VERIFIED_NATIVE_POSITIVE_PRICE_EXTREME')
+          AND json_extract(value,'$.state')='APPLIED' AND json_extract(value,'$.mode') IN ('VERIFIED_NATIVE_EMPTY','VERIFIED_NATIVE_TRADE_PARTITION','VERIFIED_NATIVE_SESSION_TAIL','VERIFIED_NATIVE_POSITIVE_PRICE_EXTREME','VERIFIED_PRIMARY_WINDOW')
           AND json_extract(value,'$.first')<? AND json_extract(value,'$.end')>?
           AND json_extract(value,'$.identity.source')=? AND json_extract(value,'$.identity.symbol')=?
           AND json_extract(value,'$.identity.venue')=? AND json_extract(value,'$.identity.currency')=?
@@ -910,6 +910,47 @@ def observe(store, job_id, isin, expected_digest, result, tv_symbol, confirmed, 
         if job.get('input_fingerprint')!=inputs['fingerprint']:raise ValueError('REVIEW_INPUT_CHANGED')
         _record_observation(db,job,inputs,result,tv_symbol,note,files,datetime.now(timezone.utc).isoformat())
     return {'state':'RECHECK_QUEUED','id':job_id,'grants_changed':False,'candles_written':0}
+
+
+def confirm_primary_window(store,spec,native_reference,tv_symbol,screenshots,matched_fields,confirmed=False,note=''):
+    """Record exact manual agreement with one captured independent parent.
+
+    Metadata only. No caller-supplied OHLCV, candle write or trading grant.
+    The existing feed writer must independently revalidate the complete tape.
+    """
+    import pandas as pd
+    from revision_watcher import _official_window,_native,IDENTITY,RETIME_POLICY,RETIME_VERSION
+    from eur_listings import stored_identity
+    fields=['timestamp','open','high','low','close','volume']
+    if confirmed is not True or matched_fields!=fields or len(note)>1500:raise ValueError('EXACT_PRIMARY_PARENT_CONFIRMATION_REQUIRED')
+    review_url(tv_symbol)
+    spec=_spec(spec['isin'],spec['identity'],spec['tf'],spec['first'],spec['last'])
+    if spec['tf']!='15m' or spec['first']!=spec['last'] or spec['identity'].get('source')!='gettex_chart' or spec['identity'].get('venue')!='GETTEX' or spec['identity'].get('currency')!='EUR':raise ValueError('SINGLE_GETTEX_EUR_PARENT_REQUIRED')
+    path=Path(native_reference).resolve()
+    if not path.is_file() or path.suffix.lower()!='.json' or path.stat().st_size>10_000_000:raise ValueError('NATIVE_DIAGNOSTIC_REFERENCE_REQUIRED')
+    packet=json.loads(path.read_text(encoding='utf-8'));records=packet.get('records',[])
+    if len(records)!=1 or records[0].get('spec')!=spec:raise ValueError('NATIVE_REFERENCE_SCOPE_REQUIRED')
+    frozen=records[0]['native']
+    if (_fingerprint(frozen)!=frozen.get('fingerprint') or digest(packet.get('native_window'))!=packet.get('native_window_digest')
+            or digest(packet.get('source'))!=packet.get('source_digest')):raise ValueError('PRIMARY_REFERENCE_INVALID')
+    files=_evidence_files(screenshots)
+    if not files:raise ValueError('EXACT_PRIMARY_PARENT_SCREENSHOT_REQUIRED')
+    now=pd.Timestamp.now(tz='UTC')
+    with store.connect() as db:
+        db.execute('BEGIN IMMEDIATE');inputs=_input(db,spec);sp=read(db,SOURCE_POLICY,{});policy=read(db,RETIME_POLICY,{})
+        if not (sp.get('approved') is True and sp.get('version')==1 and sp.get('scope')=='registered_stocks' and sp.get('exclusive_venue')=='GETTEX' and policy.get('approved') is True and policy.get('version')==RETIME_VERSION):raise ValueError('PRIMARY_SOURCE_POLICY_REQUIRED')
+        native={b:_native(db,spec['isin'],spec['identity'],b,spec['first'],spec['end']) for b in ('5m','15m')}
+        if not stored_identity(db,inputs['info'],spec['identity'],'5m'):raise ValueError('PRIMARY_CHILD_IDENTITY_UNCONFIRMED')
+        if inputs['fingerprint']!=frozen['fingerprint'] or digest(native)!=packet['native_window_digest']:raise ValueError('PRIMARY_NATIVE_INPUT_CHANGED')
+        source=_official_window(db,spec['isin'],spec['first'],spec['end'],now,allow_zero_rows=True)
+        if digest(source)!=packet['source_digest']:raise ValueError('PRIMARY_SOURCE_INPUT_CHANGED')
+        job,_=_enqueue(db,spec,dict(kind='exact_primary_parent_visual_confirmation',native_reference=str(path)),now)
+        _record_observation(db,job,inputs,'DIFFERENT',tv_symbol,note,files,now.isoformat())
+        prior=dict(job);job['observation']={**job['observation'],'primary_window_confirmation':dict(version=1,first=spec['first'],end=spec['end'],matched_fields=fields,
+            source_digest=packet['source_digest'],native_window_digest=packet['native_window_digest'],native_input_fingerprint=inputs['fingerprint'],
+            meaning='Exact manual closed15m TV parent matches independently captured complete GETTEX source; no TV values imported')}
+        _save_job(db,job,prior)
+    return dict(state='RECHECK_QUEUED',id=spec['id'],candles_written=0,grants_changed=False)
 
 
 def register_prior_review(store, spec, native_reference, result, tv_symbol, screenshots, note=''):

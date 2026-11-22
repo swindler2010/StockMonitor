@@ -86,7 +86,7 @@ def native_source_resolution(db,problem,jobs,memo):
         prefix=RETIME_PREFIX+problem['isin']+':'
         receipts=db.execute("""SELECT key,value FROM settings WHERE key>=? AND key<?
           AND json_extract(value,'$.state')='APPLIED'
-          AND json_extract(value,'$.mode') IN ('VERIFIED_NATIVE_EMPTY','VERIFIED_NATIVE_TRADE_PARTITION','VERIFIED_NATIVE_SESSION_TAIL','VERIFIED_NATIVE_POSITIVE_PRICE_EXTREME')
+          AND json_extract(value,'$.mode') IN ('VERIFIED_NATIVE_EMPTY','VERIFIED_NATIVE_TRADE_PARTITION','VERIFIED_NATIVE_SESSION_TAIL','VERIFIED_NATIVE_POSITIVE_PRICE_EXTREME','VERIFIED_PRIMARY_WINDOW')
           AND json_extract(value,'$.first')<=? AND json_extract(value,'$.end')>=?
           AND json_extract(value,'$.identity.source')=? AND json_extract(value,'$.identity.symbol')=?
           AND json_extract(value,'$.identity.venue')=? AND json_extract(value,'$.identity.currency')=?

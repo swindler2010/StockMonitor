@@ -748,6 +748,42 @@ def _reviewed_price_closing_partition(db,job,inputs,native,source,now,policy):
    origin='Current zero-price review; complete paired official GETTEX tape uniquely reproduces all native children and parents except its final positive tick, including bounded delayed existing zero prices; original values retained')
 
 
+def _primary_window_plan(db,job,inputs,now,policy):
+ """Recover one exact primary parent corroborated by a bound manual review.
+
+ Missing native quantities are explicit here; no conservation claim or TV
+ price import. Every written value comes from the complete primary tape.
+ """
+ from cp_controls import read,digest
+ from cp_reconciliation import SOURCE_POLICY,_observation_current
+ from history_service import parent_provenance_key
+ from pathlib import Path
+ from eur_listings import stored_identity
+ obs=job.get('observation') or {};confirmation=obs.get('primary_window_confirmation') or {};sp=read(db,SOURCE_POLICY,{})
+ if not (job['tf']=='15m' and job['first']==job['last'] and obs.get('result')=='DIFFERENT' and _observation_current(job,inputs)
+     and confirmation.get('version')==1 and confirmation.get('first')==job['first'] and confirmation.get('end')==job['end']
+     and confirmation.get('matched_fields')==['timestamp','open','high','low','close','volume']
+     and confirmation.get('native_input_fingerprint')==inputs['fingerprint']
+     and sp.get('approved') is True and sp.get('version')==1 and sp.get('scope')=='registered_stocks' and sp.get('exclusive_venue')=='GETTEX'):return None
+ if not stored_identity(db,inputs['info'],job['identity'],'5m'):return None
+ native={b:_native(db,job['isin'],job['identity'],b,job['first'],job['end']) for b in ('5m','15m')}
+ if digest(native)!=confirmation.get('native_window_digest') or not 1<=len(native['5m'])<=3 or len(native['15m'])!=1:return None
+ if _aggregate(native['5m'])!=list(native['15m'][0][1:]):return None
+ source=_official_window(db,job['isin'],job['first'],job['end'],now,allow_zero_rows=True)
+ if digest(source)!=confirmation.get('source_digest') or len(source['rows']['15m'])!=1 or source['rows']['15m'][0][5]<=0 or native==source['rows']:return None
+ for file in obs.get('evidence',[]):
+  path=Path(file['path'])
+  if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest()!=file['sha256']:return None
+ if not obs.get('evidence'):return None
+ _protect_visual_references(db,job,inputs,dict(first=job['first'],end=job['end'],source=source))
+ lineage={b:{r[0]:read(db,parent_provenance_key(job['isin'],job['identity'],b),{}).get(r[0]) for r in rows} for b,rows in native.items()}
+ superseded=[dict(base_tf=b,old_at=r[0],new_at=None,ohlcv=list(r[1:]),superseded=True,binding='Exact complete primary parent corroborated against TV; this old slot is independently confirmed empty, original preserved') for b,rows in native.items() for r in rows if r[0] not in {x[0] for x in source['rows'][b]}]
+ return dict(version=RETIME_VERSION,mode='VERIFIED_PRIMARY_WINDOW',reviewed_tf='15m',isin=job['isin'],identity=job['identity'],first=job['first'],end=job['end'],
+   job_id=job['id'],policy_digest=digest(policy),source_policy_digest=digest(sp),input_fingerprint=inputs['fingerprint'],before=native,source=source,
+   source_digest=digest(source),created_at=now.isoformat(),lineage_before=lineage,zero_observations_corroborated=True,relocations=superseded,
+   primary_window_confirmation=confirmation,origin='One exact closed15m TV parent independently corroborates complete paired primary GETTEX tape; source values only, superseded native values and lineage retained; no conservation or trading grant claimed')
+
+
 def retime_plan(db,job,inputs,now):
  """Bounded verified same-session repairs, retaining original native OHLCV."""
  from cp_controls import read,digest
@@ -758,6 +794,8 @@ def retime_plan(db,job,inputs,now):
  meta=job['identity'];a=pd.Timestamp(job['first']);after=inputs['neighbors']['after']
  if (job['tf'] not in ('5m','15m') or meta['source']!='gettex_chart' or meta['venue']!='GETTEX'
      or meta['currency']!='EUR' or meta['timezone']!='Europe/Berlin'):return None
+ if (job.get('observation') or {}).get('primary_window_confirmation'):
+  return _primary_window_plan(db,job,inputs,now,policy)
  if job['tf']=='5m':
   automatic=_automatic_zero_plan(db,job,inputs,now,policy)
   if automatic:return automatic
@@ -944,14 +982,14 @@ def retime_current(db,receipt,now=None):
  try:
   policy=read(db,RETIME_POLICY,{})
   if policy.get('approved') is not True or digest(policy)!=receipt['policy_digest']:return False
-  if receipt.get('mode') in ('VERIFIED_NATIVE_CLOSING_TICK','VERIFIED_PRICE_CLOSING_TICK_PARTITION','VERIFIED_NATIVE_PRICE_SAMPLES') or receipt.get('reviewed_tf')=='5m' or receipt.get('reviewed_window_partition'):
+  if receipt.get('mode') in ('VERIFIED_NATIVE_CLOSING_TICK','VERIFIED_PRICE_CLOSING_TICK_PARTITION','VERIFIED_NATIVE_PRICE_SAMPLES','VERIFIED_PRIMARY_WINDOW') or receipt.get('reviewed_tf')=='5m' or receipt.get('reviewed_window_partition'):
    from cp_reconciliation import SOURCE_POLICY
    if digest(read(db,SOURCE_POLICY,{}))!=receipt.get('source_policy_digest'):return False
   row=db.execute('SELECT payload FROM instruments WHERE isin=?',(receipt['isin'],)).fetchone()
   if not row or not stored_identity(db,json.loads(row[0]),receipt['identity'],'15m'):return False
-  if receipt.get('reviewed_tf')=='5m' and not stored_identity(db,json.loads(row[0]),receipt['identity'],'5m'):return False
+  if (receipt.get('reviewed_tf')=='5m' or receipt.get('mode')=='VERIFIED_PRIMARY_WINDOW') and not stored_identity(db,json.loads(row[0]),receipt['identity'],'5m'):return False
   source=_official_window(db,receipt['isin'],receipt['first'],receipt['end'],pd.Timestamp(now or pd.Timestamp.now(tz='UTC')),
-   allow_zero_rows=receipt.get('mode') in ('VERIFIED_NATIVE_EMPTY','VERIFIED_NATIVE_TRADE_PARTITION','VERIFIED_NATIVE_SESSION_TAIL','VERIFIED_PRICE_OBSERVATION_TIMEBASE','VERIFIED_PRICE_CLOSING_TICK_PARTITION') and receipt.get('zero_observations_corroborated') is True)
+   allow_zero_rows=receipt.get('mode') in ('VERIFIED_NATIVE_EMPTY','VERIFIED_NATIVE_TRADE_PARTITION','VERIFIED_NATIVE_SESSION_TAIL','VERIFIED_PRIMARY_WINDOW','VERIFIED_PRICE_OBSERVATION_TIMEBASE','VERIFIED_PRICE_CLOSING_TICK_PARTITION') and receipt.get('zero_observations_corroborated') is True)
   if not receipt_source_current(source,receipt):return False
   return all(digest(_native(db,receipt['isin'],receipt['identity'],base,receipt['first'],receipt['end']))==digest(rows)
              for base,rows in source['rows'].items())
@@ -967,7 +1005,7 @@ def publish_retime(db,job,inputs,plan,now):
  if digest(current)!=digest(plan):raise ValueError('RETIME_INPUT_CHANGED')
  key=RETIME_PREFIX+job['isin']+':'+job['id']
  if read(db,key,{}):raise ValueError('RETIME_RECEIPT_ALREADY_EXISTS')
- added=changed=relocated=0;meta=job['identity'];isin=job['isin']
+ added=changed=relocated=superseded=0;meta=job['identity'];isin=job['isin']
  for base,rows in plan['source']['rows'].items():
   lineage_key=parent_provenance_key(isin,meta,base);lineage=read(db,lineage_key,{})
   old_rows={r[0]:list(r[1:]) for r in plan['before'][base]}
@@ -980,7 +1018,9 @@ def publish_retime(db,job,inputs,plan,now):
    after=(db.execute('SELECT revision FROM input_revisions WHERE scope=?',(scope,)).fetchone() or [0])[0]
    db.execute('INSERT INTO candle_revision_history(detected_at,isin,identity,base_tf,ts,old_ohlcv,new_ohlcv,revision_before,revision_after) VALUES (?,?,?,?,?,?,?,?,?)',
     (now.isoformat(),isin,json.dumps(meta,sort_keys=True),base,at,json.dumps(dict(zip(FIELDS,old_rows[at]))),'{}',prior,after))
-   lineage.pop(at,None);relocated+=1
+   lineage.pop(at,None)
+   if move.get('superseded'):superseded+=1
+   else:relocated+=1
   for at,*values in rows:
    old=old_rows.get(at)
    # The entire corrected window retains lineage, even equal native rows.
@@ -994,11 +1034,11 @@ def publish_retime(db,job,inputs,plan,now):
     (now.isoformat(),isin,json.dumps(meta,sort_keys=True),base,at,json.dumps(dict(zip(FIELDS,old))) if old else '{}',json.dumps(dict(zip(FIELDS,values))),prior,after))
    added+=int(old is None and at not in {r['new_at'] for r in moves});changed+=int(old is not None)
   write(db,lineage_key,lineage)
- write(db,key,{**plan,'state':'APPLIED','added':added,'changed':changed,'relocated':relocated})
+ write(db,key,{**plan,'state':'APPLIED','added':added,'changed':changed,'relocated':relocated,'superseded':superseded})
  from cp_reconciliation import _queue_repaired_scopes
  _queue_repaired_scopes(db,key,plan,now)
  progress=read(db,PROGRESS+isin,{});progress['analysis_requested_at']=now.isoformat();progress['native_source_published_at']=now.isoformat();write(db,PROGRESS+isin,progress)
- return dict(state='APPLIED',receipt_key=key,added=added,changed=changed,relocated=relocated,first=plan['first'],end=plan['end'])
+ return dict(state='APPLIED',receipt_key=key,added=added,changed=changed,relocated=relocated,superseded=superseded,first=plan['first'],end=plan['end'])
 
 
 def retimed_rows(db,isin,meta,base):
