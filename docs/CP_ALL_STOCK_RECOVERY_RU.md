@@ -132,3 +132,95 @@ BLOCKED15m с полным5m-набором и отсутствующим род
 Данные/разрешения/бюджет запросов/прошлые квитанции не переписываются.
 Код установлен повторным обычным запуском; выбранный график Meta сохранён.
 
+
+
+## 22.11.2026 — визуальная сверка TV и реестр принятых интервалов (IN_PROGRESS)
+
+Общий запрос «все ошибки всех акций» не завершён. Реально открыты 59 карточек поиска GETTEX в установленном TradingView; по 58 акциям сохранены 66 новых адресных наблюдений. У Exxon проверка остановлена на identity: сохранён US30231G1022, в TV доступен преемник US30233Q1085 / 7DZ; взаимозаменять их без штатного перехода нельзя. Это не сверка всех дат/всех TF каждой акции.
+
+Снимок 22.11.2026 12:22:05 CET: ABSENT 51, ZERO_VOLUME 8, PRESENT 4, смешанные UNCONFIRMED 3. Последние три родительских диапазона разделены на шесть точных дочерних наблюдений, поэтому эти числа нельзя складывать как количество отдельных свечей. По новым наблюдениям очередь довела 16 записей до RESOLVED_NATIVE, 50 до AWAITING_SOURCE; оставшихся RECHECK_QUEUED на снимке нет. В сохранённой политике найдены ссылки на 35 новых наблюдений; это не 35 новых свечей и не общее торговое разрешение.
+
+Сам CandlePilot, без ручной правки OHLCV, применил независимое официальное подтверждение: General Motors 13.11 16:15→16:00, L’Oréal 13.11 18:15→18:00, Airbus 13.11 19:45→19:30 (Berlin). В каждой квитанции moved 2: по одной 5m и 15m записи. Итого 6 перемещённых временных меток в трёх случаях, added=0, changed=0; это не шесть новых исторических свечей. Сохранены original/before, официальная причина и ревизии. 13 прочих новых исходов RESOLVED_NATIVE подтверждены как пустые полными GETTEX-публикациями, а не самим отсутствием в TV.
+
+### Реестр и активные ошибки
+
+Исправлен общий дефект представления: действующая OWNER_ACCEPTED_TV_ABSENCE показывалась рядом со старой BLOCKED/WAITING квитанцией как неисправленная проблема. Теперь эффективное подтверждение по текущим ревизиям, identity, TF и точному диапазону выводится в «Принятые сверки TV», а не в активные ошибки. Запись по акции остаётся в общем SQLite-реестре CP с доказательствами и датой. Старый DQ не удаляется и не превращается в READY. При отзыве подтверждения/изменении значимых данных проблема возвращается в активный список. INVALID и обычный ручной риск этой маской не скрываются.
+
+Код f4481196f7f3ac2d030025007a1948bb532d1b79 в draft PR #21. Три адресных сценария PASS /1,324 с: старый отрицательный receipt против действующей сверки, исчезновение только из активного списка с сохранением реестра и повторное появление при отзыве, смена акции/закрытие окна против запоздалого ответа. Проверены исходные свечи, read-only режим и отсутствие записи из представления. ru/en/de строки добавлены; прежние общие тесты/аудиты не повторялись.
+
+Windows: обычные Save/Close/Restart, сохранён Meta/4H/6месяцев. В окне СР проверено раздельное отображение: Meta 1304 активных диапазона и 105 ранее и вновь принятых сверок TV; в принятом разделе — зелёная «Принято по TV», дата, источник, причина и исходный DQ. Кнопка не ставит уже принятый диапазон заново. Это диагностические диапазоны, не 1304 плохие свечи. Все 8 защищённых хешей счёта/исполнений/индикаторов/epoch/theme/выбора/рисунков совпали. MCP подтвердил TEST/Bridge running; health не выдаётся за DQ или торговую готовность, возраст снимка на проверке 277 с.
+
+### Подтверждённые ограничения
+
+- TV Basic показывает максимум 5000 баров: запрос NVIDIA 5m за 07.10 фактически упёрся в 12.10. Отсутствие доступа не записано как отсутствие свечи. Ограничение двух одновременных подключений также наблюдалось; Work2 не отключали и платный доступ не оформляли.
+- Для Adobe/Procter & Gamble 20.11 в 09:00 TV показывает реальные сделки, а соответствующий официальный файл MUND обрывается в 08:05:51 UTC. Штатное приобретение конкретного 08:15 файла получало HTTP404, next retry 22.11 14:17:14 CET. Cooldown не сброшен, пустой файл не принят за NO_TRADES.
+- Нулевая свеча TV не равна отсутствию свечи. Разница соседних OHLCV и округление экранного объёма не записаны как полное совпадение OHLCV. 6 серий AbbVie/Micron/Nike с EXCHANGE_NOTICE_CONFLICT остаются отдельными фактическими конфликтами.
+- Старые 5m, широкие исторические диапазоны, неразрешённая identity Exxon и положительные расхождения не закрыты этим проходом. У каждой акции остаётся IN_PROGRESS, не «полностью проверена».
+
+До изменения наблюдений создан SQLite backup с integrity_check=ok. Доказательства/скриншоты/нативные ссылки и scoped before/after хранятся в СМ-Архив; приватные SQLite, счёт, ключи и полные OHLCV не публикуются. Откат — только собственный патч cp_problem_view/UI translations/каталог, исходники before в СМ-Архив «CP TV accepted status ...»; не восстанавливать весь живой SQLite поверх новых feed/Work2 изменений. Старый вид может снова показать принятые диапазоны, но доказательства не теряются.
+
+### Охват новых наблюдений по общему списку акций
+
+Таблица показывает только новые наблюдения этого прохода, а не полноту исторической проверки. Числа «записано по политике» — ссылки в сохранённой политике; действительность каждого допуска повторно проверяет effective_accepted.
+
+| Акция | Новых наблюдений | Результаты TV | Штатная обработка | Записано по политике TV |
+|---|---:|---|---|---:|
+| Tesla | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| Alphabet Inc. | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| Broadcom Inc. | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| Infineon Technologies AG | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| Apple | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| Novartis AG | 1 | ZERO_VOLUME: 1 | AWAITING_SOURCE: 1 | 0 |
+| thyssenkrupp AG | 1 | ABSENT: 1 | RESOLVED_NATIVE: 1 | 0 |
+| Northern Star Resources Limited | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| Nordex SE | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| NVIDIA Corporation | 1 | PRESENT: 1 | AWAITING_SOURCE: 1 | 0 |
+| Space Exploration Technologies Corp. | 1 | PRESENT: 1 | AWAITING_SOURCE: 1 | 0 |
+| Novo Nordisk A/S | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| Walmart Inc. | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| Oracle Corporation | 1 | ABSENT: 1 | RESOLVED_NATIVE: 1 | 0 |
+| MICROSOFT CORP | 1 | ABSENT: 1 | RESOLVED_NATIVE: 1 | 0 |
+| SCHNEIDER ELECTRIC SE | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| BAYER AG-REG | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| SAP SE | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| DEUTSCHE BOERSE AG | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| HENSOLDT AG | 1 | ABSENT: 1 | RESOLVED_NATIVE: 1 | 0 |
+| Meta Platforms Inc. Class A | 3 | ABSENT: 3 | AWAITING_SOURCE: 3 | 3 |
+| Siemens AG | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| MICHELIN (CGDE) | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| GENERAL MOTORS CO | 3 | ABSENT: 1, UNCONFIRMED: 1, ZERO_VOLUME: 1 | AWAITING_SOURCE: 2, RESOLVED_NATIVE: 1 | 0 |
+| SWISS RE AG | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| CANCOM SE | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| CONTINENTAL AG | 1 | ZERO_VOLUME: 1 | AWAITING_SOURCE: 1 | 0 |
+| ASML HOLDING NV | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| RHEINMETALL AG | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| ALLIANZ SE-REG | 1 | ABSENT: 1 | RESOLVED_NATIVE: 1 | 0 |
+| SIEMENS ENERGY AG | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| AIRBUS SE | 3 | ABSENT: 1, UNCONFIRMED: 1, ZERO_VOLUME: 1 | AWAITING_SOURCE: 2, RESOLVED_NATIVE: 1 | 0 |
+| DEUTSCHE TELEKOM AG-REG | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| MUENCHENER RUECKVER AG-REG | 1 | ABSENT: 1 | RESOLVED_NATIVE: 1 | 0 |
+| DEUTSCHE BANK AG-REGISTERED | 1 | ABSENT: 1 | RESOLVED_NATIVE: 1 | 0 |
+| BASF SE | 1 | ABSENT: 1 | RESOLVED_NATIVE: 1 | 0 |
+| RWE AG | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| E.ON SE | 1 | ABSENT: 1 | RESOLVED_NATIVE: 1 | 0 |
+| MERCEDES-BENZ GROUP AG | 1 | ABSENT: 1 | RESOLVED_NATIVE: 1 | 0 |
+| ADVANCED MICRO DEVICES | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| PALANTIR TECHNOLOGIES INC-A | 1 | ABSENT: 1 | RESOLVED_NATIVE: 1 | 0 |
+| ADOBE INC | 1 | PRESENT: 1 | AWAITING_SOURCE: 1 | 0 |
+| SALESFORCE INC | 1 | ABSENT: 1 | RESOLVED_NATIVE: 1 | 0 |
+| LVMH MOET HENNESSY LOUIS VUI | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| L'OREAL | 3 | ABSENT: 1, UNCONFIRMED: 1, ZERO_VOLUME: 1 | AWAITING_SOURCE: 2, RESOLVED_NATIVE: 1 | 0 |
+| BAYERISCHE MOTOREN WERKE AG | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| DHL AG | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| NIKE INC -CL B | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| AMAZON.COM INC | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| Johnson & Johnson | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| Procter & Gamble | 1 | PRESENT: 1 | AWAITING_SOURCE: 1 | 0 |
+| Berkshire Hathaway B | 1 | ABSENT: 1 | RESOLVED_NATIVE: 1 | 0 |
+| Newmont | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| Exxon Mobil | 0 | ISIN не совпал с доступным листингом | identity blocked | 0 |
+| Duke Energy | 1 | ZERO_VOLUME: 1 | AWAITING_SOURCE: 1 | 0 |
+| Merck & Co. | 1 | ZERO_VOLUME: 1 | AWAITING_SOURCE: 1 | 0 |
+| AbbVie | 1 | ZERO_VOLUME: 1 | AWAITING_SOURCE: 1 | 0 |
+| MICRON TECHNOLOGY INC | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| COCA-COLA CO/THE | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
