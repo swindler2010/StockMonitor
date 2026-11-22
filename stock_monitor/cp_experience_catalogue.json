@@ -2193,6 +2193,67 @@
       ],
       "automatic_action": "One bounded existing-queue proof and guarded source repair; ordinary dependent reassessment",
       "manual_action": "A new visual diagnosis only when no current suitable evidence exists; missing independent source proof remains blocked"
+    },
+    {
+      "id": "official_unique_opening_price_burst_partition",
+      "title": "Пропущенная начальная цена при сохранённом объёме и сдвиге родителя",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "GAP",
+        "SOURCE_DISCREPANCY",
+        "SOURCE_TIMEBASE_UNCONFIRMED"
+      ],
+      "status": "Normal TEST CP23Nov00:07:17CET Novartis23Oct17:50-18:10 and17:40 5m RESOLVED_NATIVE. Current receipt verified;2added3changed3relocated physical5m/15m rows;Work0direct candle writes.",
+      "steps": [
+        "Require exact approved ISIN/GETTEX/EUR, complete paired primary files and current fingerprint-bound5m DIFFERENT evidence. Try existing exact and single-interior-price partitions first.",
+        "A unique complete ordered partition may omit only the price of one opening burst of1-3consecutive positive events at one identical price in the same5m source bin. Every quantity remains counted; all other native OHLC and closes must be reproduced. Max9native bars,5000events,20000attempts,45minute native delay; full-window5m/15mOHLCV conserved and original parents exact.",
+        "A positive disappearing15mparent can recompose into an existing source parent only with exactly one native child and its distinct mapped events reproducing that complete parent's exact OHLCV within15minutes. Retain event ranges, original values and lineage; never discard an unexplained positive parent.",
+        "Only in this fully proved opening-burst case, bind disjoint wholly covered current5m DIFFERENT diagnoses atomically to the same source plan. Each source interval must actually differ, original rows must match, and exact job/input digests are recomputed immediately before publication. Overlapping diagnoses, conflicting ABSENT/PRESENT/ZERO_VOLUME and changed bindings remain blocked.",
+        "Try a larger bounded candidate when a smaller window cannot contain the whole linked review. Apply through the existing CP writer, then queue dependent DQ/CORE and ordinary policy reassessment. No TV price import or forced grant."
+      ],
+      "evidence": [
+        "test_cp_opening_session_tail.py",
+        "test_cp_five_minute_partition.py",
+        "test_cp_short_review_queue.py"
+      ],
+      "limits": [
+        "Exact public19b0383:9targeted tests PASS9.358s including53/200. A different opening price, zero-quantity burst, altered parent, contradictory review or source change cannot use this rule."
+      ],
+      "automatic_action": "Version12bounded serial review pass and final guarded primary-source repair",
+      "manual_action": "Current suitable TV observation where independent source matching alone is insufficient; ASSISTED_ONLY rights unchanged"
+    },
+    {
+      "id": "official_unique_session_prefix_missing_tail",
+      "title": "Последняя часть сессии отсутствовала в старом ряду",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "GAP",
+        "SOURCE_TIMEBASE_UNCONFIRMED"
+      ],
+      "status": "Normal TEST CP22Nov23:49:45CET SAP20Oct22:25-22:30;23:56:15Micron20Oct22:25 RESOLVED_NATIVE. Both current receipts verified. SAP2added6changed;Micron1added9changed physical5m/15m rows. Work0direct candle writes.",
+      "steps": [
+        "Require a current exact5m PRESENT/DIFFERENT empty review in the last session hour, approved same-listing primary source and complete independently trade-built paired GETTEX files through the verified calendar close.",
+        "Use only30/45/60minute final-session windows. Two unchanged leading5mchildren before the review anchor the identity/timebase. Every original parent must aggregate all native children exactly and all old timestamps must remain represented.",
+        "A unique ordered complete source prefix must reproduce every original5mOHLCV and quantity within15minute delay. Only1-64positive final events within the last15minutes may remain as a new suffix. No missing original quantity, fabricated zero observation, interior omission or incomplete source is accepted.",
+        "Persist explicit VERIFIED_NATIVE_SESSION_TAIL provenance, the exact recovered events, original5m/15mvalues and lineage. This is missing source data recovery, not a false claim of full-window volume conservation. Recompute all input/source/policy/visual guards before writing and reassess dependent scopes normally.",
+        "Reuse the ordinary due-only version12short lane,8jobs; skip completed or handled requests and preserve future deadlines. No new feed threads, synthetic bars, account or trading permission changes."
+      ],
+      "evidence": [
+        "test_cp_opening_session_tail.py",
+        "test_cp_short_review_queue.py",
+        "test_cp_five_minute_partition.py"
+      ],
+      "limits": [
+        "Exact public19b0383:9tests PASS9.358s. Normal isolated writes/readback plus source/parent/volume/absence failures and53/200queue checked. Isolated explicit rollback restored exact originals and rejected changed inputs; no working-data rollback performed."
+      ],
+      "automatic_action": "Recover the independently published positive closing suffix with original lineage and ordinary reassessment",
+      "manual_action": "Current visual review if unavailable; missing complete source files or ambiguous mapping remains blocked"
     }
   ],
   "sources": [
