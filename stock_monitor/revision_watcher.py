@@ -284,7 +284,7 @@ def _reviewed_partition_plan(db,job,inputs,now,policy):
  reviewed=reviewed and sp.get('approved') is True and sp.get('version')==1 and sp.get('scope')=='registered_stocks' and sp.get('exclusive_venue')=='GETTEX'
  windows=[(a-pd.Timedelta(minutes=offset),a+pd.Timedelta(minutes=width-offset)) for width in (30,45,60) for offset in range(0,width,15)]
  for left,end in windows:
-  if left.normalize()!=end.normalize():continue
+  if left.normalize()!=end.normalize() or not (left<=pd.Timestamp(job.get('interval_start',job['first']))<pd.Timestamp(job['end'])<=end):continue
   try:
    source=_official_window(db,job['isin'],str(left),str(end),now,allow_zero_rows=True)
    native={base:_native(db,job['isin'],meta,base,str(left),str(end)) for base in ('5m','15m')}
@@ -303,7 +303,18 @@ def _reviewed_partition_plan(db,job,inputs,now,policy):
     for parent in native['15m']:
      if parent[0] in new_stamps:continue
      matches=[r for r in source['rows']['15m'] if r[0] not in old_stamps and list(r[1:])==list(parent[1:]) and pd.Timedelta(0)<=pd.Timestamp(parent[0])-pd.Timestamp(r[0])<=pd.Timedelta(minutes=45)]
-     if len(matches)!=1 or matches[0][0] in used:invalid=True;break
+     if len(matches)!=1 or matches[0][0] in used:
+      # A flat zero parent can be recomposed into an existing real parent
+      # only through its own distinct zero-quantity source events. Every
+      # original child/parent and the full tape were already conserved.
+      children=[(r,edge) for r,edge in zip(native['5m'],partition) if pd.Timestamp(parent[0])<=pd.Timestamp(r[0])<pd.Timestamp(parent[0])+pd.Timedelta(minutes=15)]
+      events=[(k,source['trades'][k]) for r,(start,stop) in children for k in range(start,stop)]
+      target={str(pd.Timestamp(t[0]).floor('15min')) for k,t in events}
+      if (parent[5]!=0 or len(set(parent[1:5]))!=1 or not events or len({k for k,t in events})!=len(events)
+          or any(t[1]!=parent[1] or t[2]!=0 for k,t in events) or not target<=new_stamps
+          or any(not pd.Timedelta(0)<=pd.Timestamp(parent[0])-pd.Timestamp(t)<=pd.Timedelta(minutes=45) for t in target)):
+       invalid=True;break
+      moves.append(dict(base_tf='15m',old_at=parent[0],new_at=min(target),ohlcv=list(parent[1:]),binding='unique zero-quantity child events recomposed in actual source parents',recomposed_into=sorted(target),child_event_ranges=[dict(old_at=r[0],start=edge[0],stop=edge[1]) for r,edge in children]));continue
      used.add(matches[0][0]);moves.append(dict(base_tf='15m',old_at=parent[0],new_at=matches[0][0],ohlcv=list(parent[1:]),binding='unique exact parent within full native trade partition'))
     if invalid:continue
    for row,(start,stop) in zip(native['5m'],partition):
