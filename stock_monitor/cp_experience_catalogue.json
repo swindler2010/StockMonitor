@@ -2133,6 +2133,37 @@
       ],
       "automatic_action": "Existing source-confirmed conserved-window CP writer",
       "manual_action": "Current specific visual observation if none is available"
+    },
+    {
+      "id": "official_unique_partition_one_sampled_interior_price",
+      "title": "Одна потерянная внутренняя цена при полном учтённом объёме и сдвиге времени",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "GAP",
+        "SOURCE_TIMEBASE_UNCONFIRMED"
+      ],
+      "status": "Normal TEST CP queue22Nov23:05:26CET: Alphabet21Oct13:25-13:50 5m RESOLVED_NATIVE, current receipt. CP4added,7changed,1relocated physical5m/15m rows. Work0 direct candle writes.",
+      "steps": [
+        "Require current fingerprint-bound DIFFERENT review and approved exact ISIN/GETTEX/EUR primary source. Existing complete paired publication, actual trade-built5m/15m candles and coverage checks are unchanged.",
+        "Try the existing exact event partition first. Only if it fails, allow exactly one independently published positive interior price to be omitted from native price sampling while every event quantity stays counted.",
+        "Require a unique ordered complete partition reproducing every original quantity, open, close and all other prices within45minute delay. Exactly one extreme price must explain the difference; opening/final prices, zero-quantity extremes, ambiguous partitions, multiple missing prices and changed quantities are rejected.",
+        "Native parents must exactly aggregate original children, the whole checked5m/15m window must conserve OHLCV, candidate must cover the full review. Retain before/lineage, exact sampled event and final source/native/policy/current-TV guards.",
+        "Use one bounded reviewed5m version11 pass on the existing serial CP lane. Completed jobs stay skipped. Persist dependent DQ/CORE reassessment without artificial warmup or trading grant."
+      ],
+      "evidence": [
+        "test_cp_sampled_price_partition.py",
+        "test_cp_zero_parent_composition.py",
+        "test_cp_short_review_queue.py",
+        "test_cp_five_minute_partition.py"
+      ],
+      "limits": [
+        "Four exact-public-commit tests PASS5.422s including53/200queue. No arbitrary source replacement, missing-volume invention, opening-price exception, positive-parent merge, TV price import or current-quote/risk bypass."
+      ],
+      "automatic_action": "Existing verified conserved-window CP writer and normal reassessment",
+      "manual_action": "Current bounded DIFFERENT visual evidence if unavailable; never a direct Work candle write"
     }
   ],
   "sources": [
