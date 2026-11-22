@@ -65,6 +65,8 @@ class FiveMinutePartition(unittest.TestCase):
     from cp_problem_view import native_source_resolution,confirmed_native_repair,present
     problem=dict(isin=isin,identity=m,tf='5m',kind='archive',state='UNCONFIRMED',range=[a,'2026-11-13 16:30:00'])
     resolution=native_source_resolution(d,problem,[],{});self.assertIsNotNone(resolution)
+    superseded={**mixed,'observation':dict(result='DIFFERENT',input_fingerprint=inputs['fingerprint'],fingerprint_version=rv.FINGERPRINT_VERSION),'source_comparison':dict(observation_current=True)}
+    self.assertIsNotNone(native_source_resolution(d,problem,[superseded],{}))
     verified={**problem,'native_resolution':resolution};self.assertTrue(confirmed_native_repair(verified));self.assertFalse(present(verified,[])['action']['check'])
     # A current contradictory review, partial broader range, changed native
     # candle or revoked proof cannot be converted into a completed problem.

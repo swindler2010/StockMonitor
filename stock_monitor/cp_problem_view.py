@@ -105,7 +105,12 @@ def native_source_resolution(db,problem,jobs,memo):
                     or result=='PRESENT' and not rows or result=='ZERO_VOLUME' and any(r[5]>0 for r in rows))
                 if not disputed:continue
                 binding=('review',job['id'])
-                if binding not in memo:memo[binding]=(job.get('source_comparison',{}).get('observation_current') is True or _observation_current(job,_input(db,job)))
+                if binding not in memo:
+                    # A saved 'current' flag predates the repair itself. When
+                    # the visual fingerprint is available, revalidate it now;
+                    # retain only unbound legacy disputes conservatively.
+                    memo[binding]=(_observation_current(job,_input(db,job)) if job.get('observation',{}).get('input_fingerprint')
+                        else job.get('source_comparison',{}).get('observation_current') is True)
                 if memo[binding]:conflict=True;break
             if conflict:continue
             return dict(state='CONFIRMED_NATIVE_REPAIR',current=True,isin=problem['isin'],identity=meta,
