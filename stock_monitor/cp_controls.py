@@ -1149,6 +1149,44 @@ def _automatic_repair_enabled(info,policy):
         and policy.get('exclusive_venue')=='GETTEX')
 
 
+def repair_children_fingerprint(db,job):
+    """Recovery-only binding: TV observation fingerprints remain unchanged.
+
+    New exact-window children can unblock a failed parent. Global market
+    revisions and service timestamps cannot reset a provider attempt budget.
+    This is a retry hint only; the existing writer validates every candidate.
+    """
+    import pandas as pd
+    from timeframes import MINUTES
+    from history_service import parent_provenance_key
+    from eur_listings import stored_identity
+    from cp_experience import recovery_policy_digest
+    isin=job['isin'];meta=job['identity'];base=job['tf']
+    begin=pd.Timestamp(job['first']);end=pd.Timestamp(job['end'])
+    row=db.execute('SELECT payload FROM instruments WHERE isin=?',(isin,)).fetchone()
+    if not row:return None
+    info=json.loads(row[0]);result=['repair-children-v1',recovery_policy_digest()]
+    def setting(key):return read(db,key,{}) or {}
+    for child in ('1m','5m','15m','1H'):
+        if MINUTES[child]>=(1440 if base=='1D' else MINUTES[base]):continue
+        if meta['source']=='gettex':
+            sql='SELECT ts,open,high,low,close,volume FROM candles WHERE isin=? AND source=? AND base_tf=?'
+            args=(isin,'gettex',child)
+        else:
+            sql='SELECT ts,open,high,low,close,volume FROM series WHERE isin=? AND source=? AND venue=? AND currency=? AND symbol=? AND base_tf=?'
+            args=(isin,meta['source'],meta['venue'],meta['currency'],meta['symbol'],child)
+        rows=db.execute(sql+' AND ts>=? AND ts<? ORDER BY ts LIMIT 2001',(*args,str(begin),str(end))).fetchall()
+        if len(rows)>2000:return None
+        q=setting('data_quality:'+isin+':'+meta['symbol']+':'+child)
+        overlaps=[r for r in q.get('ranges',[]) if pd.Timestamp(r[0])<end and pd.Timestamp(r[1])>=begin]
+        quality={'state':q.get('state'),'ranges':overlaps} if overlaps else (
+            {'state':q.get('state'),'issues':q.get('issues')} if not q.get('ranges') and q.get('state') in ('INVALID','SOURCE_UNAVAILABLE','RECOVERING','SOURCE_GAP') else None)
+        coverage=setting('history_coverage:'+isin+':'+meta['symbol']+':'+child)
+        lineage={k:v for k,v in setting(parent_provenance_key(isin,meta,child)).items() if begin<=pd.Timestamp(k)<end}
+        result.append([child,rows,quality,coverage.get('intraday_blockers'),lineage,bool(stored_identity(db,info,meta,child))])
+    return digest(result)
+
+
 def automatic_repair_turn(store,info,now=None):
     """Plan one bounded native repair from saved dependencies, never a permit.
 
@@ -1231,14 +1269,25 @@ def automatic_repair_turn(store,info,now=None):
                 inputs=_input(db,job)
             except (ValueError,TypeError,KeyError) as error:
                 result['reason']=str(error);continue
-            origin=dict(kind='AUTOMATIC_DEPENDENCY',version=1,fingerprint=inputs['fingerprint'])
+            children=repair_children_fingerprint(db,job)
+            if children is None:
+                result['reason']='RECOVERY_CHILD_WINDOW_LIMIT';continue
+            origin=dict(kind='AUTOMATIC_DEPENDENCY',version=1,fingerprint=inputs['fingerprint'],children_fingerprint=children)
             prior=requests.get(target,{})
+            old=prior.get('origin') or {}
+            # Legacy receipts have no historical child snapshot. Establish a
+            # baseline without requeuing or resetting their attempts/deadline.
+            if (old.get('kind')=='AUTOMATIC_DEPENDENCY' and old.get('fingerprint')==inputs['fingerprint']
+                    and 'children_fingerprint' not in old):
+                prior={**prior,'origin':{**old,'children_fingerprint':children}}
+                requests[target]=prior;write(db,'cp_repair_requests:'+isin,requests)
             if prior.get('origin')==origin:
                 deadline=prior.get('recheck_after')
                 if not deadline or clock<pd.Timestamp(deadline):continue
                 origin['retry_after']=deadline
             # retry_after records the last bounded retry epoch, not each poll.
-            elif (_automatic_request(prior) and prior['origin'].get('fingerprint')==origin['fingerprint']):
+            elif (_automatic_request(prior) and prior['origin'].get('fingerprint')==origin['fingerprint']
+                    and prior['origin'].get('children_fingerprint')==children):
                 deadline=prior.get('recheck_after')
                 if not deadline or clock<pd.Timestamp(deadline):continue
                 origin['retry_after']=deadline

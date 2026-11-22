@@ -4,6 +4,31 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "reopen_parent_repair_on_scoped_child_arrival",
+      "title": "Новые младшие свечи возобновляют terminal-восстановление родителя",
+      "sources": [
+        "cp_controls.repair_children_fingerprint",
+        "cp_controls.automatic_repair_turn",
+        "data_quality.repair"
+      ],
+      "states": [
+        "BLOCKED",
+        "UNCONFIRMED"
+      ],
+      "steps": [
+        "Сохранять отдельный отпечаток реально имеющихся младших свечей того же ISIN/source/venue/currency внутри точного окна родителя; не менять отпечаток визуальной сверки TV.",
+        "Учитывать существенные DQ/lineage/listing входы и версию валидаторов; чужие данные, другие даты и checked_at не являются основанием сброса попыток.",
+        "Старым terminal-квитанциям без детского отпечатка записать baseline без новой постановки, сброса attempts либо изменения weekly deadline.",
+        "При существенном изменении дочернего входа — одна штатная повторная оценка/восстановление; все финальные проверки writer, cooldown, identity, DQ и риск сохраняются."
+      ],
+      "evidence": [
+        "test_cp_child_requeue.py: reproduced CHECKED instead of QUEUED before fix",
+        "Local saved GETTEX 19.11.2026 08:00: complete 5m children recover missing 15m without HTTP in isolated SQLite"
+      ],
+      "limits": "Это разрешение повторной попытки, не разрешение свечи или сделки. Пустые ответы и неполные/чужие дети не являются подтверждением; рабочая история тестом не изменяется.",
+      "status": "3 new + 3 affected PASS locally; publication/runtime verification recorded in checkpoint"
+    },
+    {
       "id": "official_exact_five_minute_relocation",
       "title": "Точный перенос ошибочно датированной 5m свечи GETTEX",
       "sources": [
