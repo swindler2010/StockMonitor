@@ -4,6 +4,38 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "official_native_five_minute_empty",
+      "title": "Подтверждённые пустые 5m оставались в ожидании при поддержке только 15m",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "SOURCE_TIMEBASE_UNCONFIRMED"
+      ],
+      "status": "IMPLEMENTED; normal Windows serial CP batch, all registered stocks; exact acceptance in checkpoint",
+      "steps": [
+        "Approved current GETTEX/EUR listing and owner policies; only closed exact5m native gaps, complete paired official tape and explicit NO_TRADES.",
+        "Require exact entire native5m AND15m source windows, immediate real5m neighbours, same-day maximum45min; reject conflicting TV presence, partial files, changed policy/identity/native inputs.",
+        "Reuse transactional publisher with final proof/current-input check; zero added/changed OHLCV. Receipt carries reviewed_tf5m; UI and consumers validate exactTF, live source proof and revocations.",
+        "Existing planner rotates up to8 registered stocks, at most8 saved scopes per serial writer turn, no network/CORE/archive work. Fresh price and explicit owner reservations stay ahead.",
+        "Successful proof requests the existing assessment queue. Failed evidence remains unconfirmed, retries through existing mechanism; no blanket data-quality or trade permission change."
+      ],
+      "tests": [
+        "test_cp_five_minute_empty",
+        "test_cp_pending_observation_route",
+        "test_candle_schedule.Schedule.test_aged_feed_jobs_53",
+        "test_candle_schedule.Schedule.test_aged_feed_jobs_200",
+        "test_cp_official_timebase.OfficialTimebase.test_exact_empty_window_is_corroborated_without_replacing_native_bars"
+      ],
+      "limits": [
+        "Only exact proved scopes are closed; no claim every stock/history/TF was visually checked against TradingView.",
+        "Long holes, different5m/15m source windows, missing complete source coverage and current TV conflict remain explicit.",
+        "Resolved native absence adds no synthetic observations or indicator warmup."
+      ],
+      "implementation_commit": "fff70c2df25b4c3c50fc158e63a9bd70a7348bc2"
+    },
+    {
       "id": "official_native_price_sampling",
       "title": "Полный объём, но отдельные реальные цены не попали в родную свечу",
       "sources": [
