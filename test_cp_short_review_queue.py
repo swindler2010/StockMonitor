@@ -39,4 +39,26 @@ class ShortReviewQueue(unittest.TestCase):
      s.read_cache.close()
      for suffix in ('','-wal','-shm'):Path(str(path)+suffix).unlink(missing_ok=True)
 
+ def test_53_and_200_existing_fifteen_minute_differences_get_one_due_pass_preserving_future_deadlines(self):
+  root=Path(__file__).parent.parent.parent/'СМ-Архив'
+  for count in (53,200):
+   with self.subTest(count=count):
+    f=tempfile.NamedTemporaryFile(dir=root,prefix='CP current difference isolated ',suffix='.sqlite3',delete=False);path=Path(f.name);f.close();s=FlatStore(path)
+    try:
+     now=pd.Timestamp.now(tz='UTC');isin='US0378331005';meta=dict(source='gettex_chart',venue='GETTEX',currency='EUR',symbol='FIX.GTX',timezone='Europe/Berlin');info=dict(isin=isin,kind='stock')
+     s.set_setting(rw.RETIME_POLICY,dict(approved=True,version=rw.RETIME_VERSION));s.set_setting(rv.SOURCE_POLICY,dict(version=1,approved=True,scope='registered_stocks',exclusive_venue='GETTEX'))
+     with s.connect() as db:
+      for n in range(count):
+       stamp=str(pd.Timestamp('2026-11-13 07:30:00')+pd.Timedelta(minutes=15*n));j=rv._spec(isin,meta,'15m',stamp,stamp)
+       j.update(status='RESOLVED_NATIVE' if n%4==2 else 'AWAITING_SOURCE',created_at=(now-pd.Timedelta(days=2)).isoformat(),next_check=(now+pd.Timedelta(hours=1) if n%4==1 else now-pd.Timedelta(minutes=1)).isoformat(),native_empty_algorithm=99,positive_price_algorithm=1,current_difference_algorithm=1 if n%4==3 else 0,finding=dict(state='SOURCE_DISCREPANCY'),observation=dict(result='DIFFERENT',at=now.isoformat()));rv.write(db,rv.key(j),j)
+      before={key:rv.read(db,key) for key,_ in rv._native_empty_pending(db,isin,8)};self.assertEqual(len(before),8)
+      self.assertTrue(all(j['status']=='AWAITING_SOURCE' and j['current_difference_algorithm']==0 and pd.Timestamp(j['next_check'])<now for j in before.values()));self.assertEqual(rv.native_empty_batches(db,[info])[0]['isin'],isin)
+      for key,j in before.items():rv.write(db,key,{**j,'current_difference_algorithm':1})
+      after=rv._native_empty_pending(db,isin,8);self.assertFalse(set(before)&{key for key,_ in after})
+      for key,j in before.items():self.assertEqual(rv.read(db,key)['next_check'],j['next_check'])
+      self.assertEqual(db.execute('select count(*) from candles').fetchone()[0],0)
+    finally:
+     s.read_cache.close()
+     for suffix in ('','-wal','-shm'):Path(str(path)+suffix).unlink(missing_ok=True)
+
 if __name__=='__main__':unittest.main()

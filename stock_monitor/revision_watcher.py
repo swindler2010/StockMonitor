@@ -317,7 +317,8 @@ def _reviewed_partition_plan(db,job,inputs,now,policy):
  reviewed=bool(job['tf'] in ('5m','15m') and obs.get('result') in ('PRESENT','DIFFERENT') and _observation_current(job,inputs))
  sp=read(db,SOURCE_POLICY,{})
  reviewed=reviewed and sp.get('approved') is True and sp.get('version')==1 and sp.get('scope')=='registered_stocks' and sp.get('exclusive_venue')=='GETTEX'
- windows=[(a-pd.Timedelta(minutes=offset),a+pd.Timedelta(minutes=width-offset)) for width in (30,45,60) for offset in range(0,width,15)]
+ widths=(30,45,60,75) if reviewed and obs.get('result')=='DIFFERENT' else (30,45,60)
+ windows=[(a-pd.Timedelta(minutes=offset),a+pd.Timedelta(minutes=width-offset)) for width in widths for offset in range(0,width,15)]
  for left,end in windows:
   if left.normalize()!=end.normalize() or not (left<=pd.Timestamp(job.get('interval_start',job['first']))<pd.Timestamp(job['end'])<=end):continue
   try:
