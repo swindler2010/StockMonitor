@@ -10,7 +10,7 @@ from test_cp_tv_legacy_reference import FlatStore
 
 class NativePriceSampling(unittest.TestCase):
  def test_current_review_exact_positive_samples_and_conserved_quantities(self):
-  root=Path(__file__).parent.parent.parent/'��-�����'
+  root=Path(__file__).parent.parent.parent/'СМ-Архив'
   f=tempfile.NamedTemporaryFile(dir=root,prefix='CP price samples isolated ',suffix='.sqlite3',delete=False);path=Path(f.name);f.close();s=FlatStore(path)
   try:
    isin='DE0007236101';info=dict(isin=isin,name='Fixture',kind='stock',history_venue_lock='GETTEX');s.save_instrument(info);now=pd.Timestamp.now(tz='UTC')

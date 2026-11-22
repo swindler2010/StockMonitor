@@ -66,6 +66,8 @@ class OfficialTimebase(unittest.TestCase):
     with self.assertRaisesRegex(ValueError,'NOT_CONSERVED'):rw.retime_plan(db,job,rv._input(db,job),now)
     db.rollback()
    with store.connect() as db:
+    parent,_=rv._enqueue(db,rv._spec(isin,meta,'15m',first,'2026-11-13 21:30:00'),{'kind':'mixed_existing_range'},now)
+    prior=dict(parent);parent.update(status='AWAITING_SOURCE',input_fingerprint=rv._input(db,parent)['fingerprint'],next_check=(now+pd.Timedelta(hours=1)).isoformat());rv._save_job(db,parent,prior)
     seeded=rv._seed_official_empty_checks(db,info,now,{},4)
     self.assertEqual(len(seeded),1)
     self.assertEqual(rv.read(db,rv.key(job))['status'],'QUEUED')
@@ -74,12 +76,19 @@ class OfficialTimebase(unittest.TestCase):
    self.assertEqual((receipt['mode'],receipt['added'],receipt['changed']),('VERIFIED_NATIVE_EMPTY',0,0))
    self.assertEqual(store.setting(rv.key(job))['origin']['kind'],'saved_official_empty_evidence')
    self.assertEqual(store.setting(rv.key(job))['status'],'RESOLVED_NATIVE')
+   self.assertEqual(store.setting(rv.key(parent))['status'],'QUEUED')
    with store.connect() as db:
     progress={};self.assertEqual(rv._seed_official_empty_checks(db,info,now,progress,4),[])
    with store.connect() as db:
     self.assertEqual(db.execute('SELECT * FROM series ORDER BY base_tf,ts').fetchall(),saved)
     self.assertEqual(db.execute('SELECT COUNT(*) FROM candle_revision_history').fetchone()[0],0)
     self.assertEqual(rv._classify(job,rv._input(db,job),now)['state'],'NO_TRADES')
+    parent=rv._spec(isin,meta,'15m',first,'2026-11-13 21:30:00')
+    self.assertEqual(rv._classify(parent,rv._input(db,parent),now)['state'],'NATIVE_ROWS_CONFIRMED')
+    db.execute("UPDATE series SET volume=volume+1 WHERE base_tf='5m' AND ts=?",(rows[-1][0],))
+    self.assertFalse(rv._input(db,parent).get('official_retiming_empty'))
+    self.assertEqual(rv._classify(parent,rv._input(db,parent),now)['state'],'NATIVE_ROWS_PRESENT')
+    db.rollback()
     self.assertEqual(rw.retimed_rows(db,isin,meta,'15m'),{})
    frame=store.load_series(isin,'15m',**{k:meta[k] for k in ('source','symbol','venue','currency')})
    self.assertEqual(dq.audit(frame,'15m',meta,now,check_stale=False)['state'],'READY')

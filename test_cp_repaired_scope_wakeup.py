@@ -11,7 +11,7 @@ from test_cp_tv_legacy_reference import FlatStore
 
 class RepairedScopeWakeup(unittest.TestCase):
  def test_receipt_wakes_owned_lane_once_and_changed_proof_cannot_authorize_repair(self):
-  root=Path(__file__).parent.parent.parent/'��-�����';f=tempfile.NamedTemporaryFile(dir=root,prefix='CP repair wake isolated ',suffix='.sqlite3',delete=False);path=Path(f.name);f.close();s=FlatStore(path)
+  root=Path(__file__).parent.parent.parent/'СМ-Архив';f=tempfile.NamedTemporaryFile(dir=root,prefix='CP repair wake isolated ',suffix='.sqlite3',delete=False);path=Path(f.name);f.close();s=FlatStore(path)
   try:
    info=dict(isin='A',name='Fixture',kind='stock');s.save_instrument(info);now=pd.Timestamp.now(tz='UTC');key=rw.RETIME_PREFIX+'A:receipt'
    receipt=dict(isin='A',job_id='receipt',state='APPLIED',mode='VERIFIED_NATIVE_CLOSING_TICK',created_at=(now-pd.Timedelta(minutes=30)).isoformat())

@@ -20,6 +20,7 @@ INGEST_LIMIT = 4
 CHECK_LIMIT = 4
 SCAN_LIMIT = 64
 BATCH_LIMIT = 4
+REPAIR_RECHECK_VERSION = 2
 OBSERVATIONS = ('ABSENT', 'ZERO_VOLUME', 'PRESENT', 'DIFFERENT', 'UNCONFIRMED')
 SOURCE_POLICY = 'cp_gettex_source_policy'
 FAILURES = {'EMPTY_RESPONSE', 'INCOMPLETE_RESPONSE', 'INVALID_RESPONSE',
@@ -80,7 +81,8 @@ def due_observation(db, infos, now=None):
           ON p.key=? || json_extract(r.value,'$.isin')
           WHERE r.key>=? AND r.key<? AND json_extract(r.value,'$.state')='APPLIED'
           AND json_extract(r.value,'$.mode') IN ('VERIFIED_NATIVE_CLOSING_TICK','VERIFIED_PRICE_CLOSING_TICK_PARTITION','VERIFIED_NATIVE_PRICE_SAMPLES')
-          AND NOT EXISTS (SELECT 1 FROM json_each(COALESCE(json_extract(p.value,'$.native_repair_rechecks_seen'),'[]')) WHERE value=r.key)
+          AND (COALESCE(json_extract(p.value,'$.native_repair_rechecks_version'),0)<>2 OR NOT EXISTS
+            (SELECT 1 FROM json_each(COALESCE(json_extract(p.value,'$.native_repair_rechecks_seen'),'[]')) WHERE value=r.key))
           AND (json_extract(p.value,'$.last_turn') IS NULL OR julianday(json_extract(p.value,'$.last_turn'))<=julianday(?))
           ORDER BY json_extract(r.value,'$.created_at'),r.key LIMIT 8""",
           (PROGRESS,RETIME_PREFIX,RETIME_PREFIX+'\uffff',(clock-pd.Timedelta(minutes=5)).isoformat())).fetchall()
@@ -165,6 +167,24 @@ def _input(db, job):
     if correction and retime_current(db,correction):
         result['official_retiming_empty']=[dict(first=correction['first'],end=correction['end'],
             authority={**proof['identity'],'absence_evidence':{**correction['source']['proof'],'checked_at':proof['checked_at']}})]
+    # A mixed range can contain both real rows and a separately confirmed empty
+    # child. Reuse only current exact-source 15m receipts; the full native/source
+    # window is still revalidated. Never transfer an empty proof across feeds/TF.
+    if tf=='15m' and rows and len(rows)<int((pd.Timestamp(job['last'])-pd.Timestamp(job['first']))/pd.Timedelta(minutes=15))+1:
+        prefix=RETIME_PREFIX+isin+':'
+        siblings=db.execute("""SELECT value FROM settings WHERE key>=? AND key<? AND key<>?
+          AND json_extract(value,'$.state')='APPLIED' AND json_extract(value,'$.mode')='VERIFIED_NATIVE_EMPTY'
+          AND json_extract(value,'$.first')<? AND json_extract(value,'$.end')>?
+          AND json_extract(value,'$.identity.source')=? AND json_extract(value,'$.identity.symbol')=?
+          AND json_extract(value,'$.identity.venue')=? AND json_extract(value,'$.identity.currency')=?
+          AND json_extract(value,'$.identity.timezone')=? ORDER BY key LIMIT 8""",
+          (prefix,prefix+'\uffff',RETIME_PREFIX+isin+':'+job['id'],job['end'],job['first'],
+           *[meta[k] for k in ('source','symbol','venue','currency','timezone')])).fetchall()
+        for raw, in siblings:
+            sibling=json.loads(raw)
+            if retime_current(db,sibling):
+                result.setdefault('official_retiming_empty',[]).append(dict(first=sibling['first'],end=sibling['end'],
+                    authority={**proof['identity'],'absence_evidence':{**sibling['source']['proof'],'checked_at':proof['checked_at']}}))
     result['fingerprint']=_fingerprint(result)
     return result
 
@@ -501,12 +521,16 @@ def _queue_repaired_scopes(db,receipt_key,receipt,clock,limit=16):
         old={r[0]:list(r[1:]) for r in receipt['before'][base]}
         changed[base]={r[0] for r in rows if old.get(r[0])!=list(r[1:])}
         changed[base].update(m['old_at'] for m in receipt.get('relocations',[]) if m['base_tf']==base)
+    if receipt.get('mode')=='VERIFIED_NATIVE_EMPTY':
+        import pandas as pd
+        target=read(db,PREFIX+receipt['isin']+':'+receipt['job_id'],{})
+        if target.get('tf')=='15m':
+            changed.setdefault('15m',set()).update(str(t) for t in pd.date_range(target['first'],target['end'],freq='15min',inclusive='left'))
     if not any(changed.values()):return dict(queued=[],complete=True)
     prefix=PREFIX+receipt['isin']+':'
     # Projection is bounded to this exact listing and the repaired window.
     candidates=db.execute("""SELECT key,value FROM settings WHERE key>=? AND key<?
       AND json_extract(value,'$.status') IN ('AWAITING_SOURCE','AWAITING_USER','RESOLVED_NATIVE')
-      AND COALESCE(json_extract(value,'$.recheck_due_to_native_repair.receipt_key'),'')<>?
       AND json_extract(value,'$.identity.source')=? AND json_extract(value,'$.identity.symbol')=?
       AND json_extract(value,'$.identity.venue')=? AND json_extract(value,'$.identity.currency')=?
       AND json_extract(value,'$.identity.timezone')=?
@@ -514,7 +538,7 @@ def _queue_repaired_scopes(db,receipt_key,receipt,clock,limit=16):
        OR (json_extract(value,'$.observation.result')='ABSENT' AND
         ((json_extract(value,'$.native_neighbors.before[0]')>=? AND json_extract(value,'$.native_neighbors.before[0]')<?)
          OR (json_extract(value,'$.native_neighbors.after[0]')>=? AND json_extract(value,'$.native_neighbors.after[0]')<?))))
-      ORDER BY key LIMIT ?""",(prefix,prefix+'\uffff',receipt_key,*[receipt['identity'][k] for k in ('source','symbol','venue','currency','timezone')],
+      ORDER BY key LIMIT ?""",(prefix,prefix+'\uffff',*[receipt['identity'][k] for k in ('source','symbol','venue','currency','timezone')],
         receipt['end'],receipt['first'],receipt['first'],receipt['end'],receipt['first'],receipt['end'],limit+1)).fetchall()
     queued=[]
     for _,raw in candidates[:limit]:
@@ -525,8 +549,10 @@ def _queue_repaired_scopes(db,receipt_key,receipt,clock,limit=16):
         neighbours=job.get('native_neighbors') or {}
         adjacent=(obs.get('result')=='ABSENT' and any((neighbours.get(k) or [None])[0] in slots for k in ('before','after')))
         if not (direct or adjacent):continue
+        if _input(db,job)['fingerprint']==job.get('input_fingerprint'):continue
         old=dict(job);job.update(status='RECHECK_QUEUED' if obs else 'QUEUED',next_check=clock.isoformat(),
-            recheck_due_to_native_repair=dict(receipt_key=receipt_key,at=clock.isoformat(),reason='CURRENT_NATIVE_INPUT_CHANGED'))
+            recheck_due_to_native_repair=dict(receipt_key=receipt_key,at=clock.isoformat(),version=REPAIR_RECHECK_VERSION,
+                reason='LOCAL_EMPTY_PROOF_CONFIRMED' if receipt.get('mode')=='VERIFIED_NATIVE_EMPTY' else 'CURRENT_NATIVE_INPUT_CHANGED'))
         # Preserve the original visual binding and source cooldown. The next
         # ordinary turn must classify the newly changed inputs independently.
         _save_job(db,job,old);queued.append(job['id'])
@@ -536,7 +562,7 @@ def _queue_repaired_scopes(db,receipt_key,receipt,clock,limit=16):
 def _resume_repaired_scopes(db,isin,clock):
     """Backfill pending follow-ups for the two newly deployed repair modes."""
     from revision_watcher import RETIME_PREFIX,retime_current
-    p=read(db,PROGRESS+isin,{});seen=list(p.get('native_repair_rechecks_seen',[]));prefix=RETIME_PREFIX+isin+':'
+    p=read(db,PROGRESS+isin,{});seen=list(p.get('native_repair_rechecks_seen',[])) if p.get('native_repair_rechecks_version')==REPAIR_RECHECK_VERSION else [];prefix=RETIME_PREFIX+isin+':'
     rows=db.execute("""SELECT key,value FROM settings WHERE key>=? AND key<?
       AND json_extract(value,'$.state')='APPLIED'
       AND json_extract(value,'$.mode') IN ('VERIFIED_NATIVE_CLOSING_TICK','VERIFIED_PRICE_CLOSING_TICK_PARTITION','VERIFIED_NATIVE_PRICE_SAMPLES')
@@ -550,7 +576,7 @@ def _resume_repaired_scopes(db,isin,clock):
         else:result=dict(queued=[],complete=True,reason='REPAIR_PROOF_CHANGED')
         if result['complete']:seen.append(key)
         p=read(db,PROGRESS+isin,{})
-        p.update(native_repair_rechecks_seen=seen[-64:],last_native_repair_rechecks=dict(receipt_key=key,at=clock.isoformat(),**result))
+        p.update(native_repair_rechecks_version=REPAIR_RECHECK_VERSION,native_repair_rechecks_seen=seen[-64:],last_native_repair_rechecks=dict(receipt_key=key,at=clock.isoformat(),**result))
         write(db,PROGRESS+isin,p)
 
 
