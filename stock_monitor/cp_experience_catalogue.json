@@ -2016,6 +2016,65 @@
       ],
       "automatic_action": "Existing serial CandlePilot feed/reconciliation writer and current primary-source validators",
       "manual_action": "Visual TradingView comparison only where independent saved evidence is insufficient; direct candle writes by Work are not used."
+    },
+    {
+      "id": "official_positive_interior_price_extreme",
+      "title": "Пропущенная цена внутри свечи при уже учтённом объёме",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "SOURCE_DISCREPANCY"
+      ],
+      "status": "TEST normal CP queue verified22Nov21:28:16CET, SAP27Oct08:20 5m; one additional exact scope outside original145. Work0 direct candle writes; CP2 physical rows changed (child and parent),0added.",
+      "steps": [
+        "Require a current fingerprint-bound DIFFERENT5m review, exact listing/ISIN/GETTEX/EUR/timezone and approved source policy.",
+        "Use complete paired primary GETTEX tape for one15m parent. Every native/source timestamp, all sibling values, exact native parent-child aggregation and unchanged O/C/V must match.",
+        "Exactly one independently published positive-quantity interior price outside nativeH/L may be omitted; excluding its price must reproduce every original O/H/L/C while its quantity is already counted. Restore confirmed extrema only.",
+        "Reject changed source/native/policy inputs and conflicting current visual facts immediately before publication. Retain original values, source digests and lineage.",
+        "Use one bounded versioned pass on the existing serial worker, finish normal source resolution, persist dependent DQ/CORE requests. Do not wait for the full hourly retry or replay already completed jobs."
+      ],
+      "evidence": [
+        "test_cp_positive_price_extreme.py",
+        "test_cp_five_minute_empty.py",
+        "test_cp_problem_view.py"
+      ],
+      "limits": [
+        "No TV OHLCV import, invented volume, arbitrary supplier merge, unconditional trading grant, per-stock writer or background thread. Incomplete publication, ambiguous/multiple omitted prices and changed close/volume remain blocked."
+      ],
+      "automatic_action": "Existing bounded CandlePilot reconciliation/source writer",
+      "manual_action": "Current visual DIFFERENT observation where absent; no direct candle edit by Work"
+    },
+    {
+      "id": "official_reviewed_five_minute_parent_recovery",
+      "title": "Сверка5m использует полное доказательство восстановления родительского15m",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "GAP",
+        "SOURCE_TIMEBASE_UNCONFIRMED"
+      ],
+      "status": "Normal TEST CP queue verified22Nov21:42:22CET: DeutscheBoerse28Oct13:30-13:40 5m RESOLVED_NATIVE; CP1added,1changed,1relocated physical row. Work0 direct candle writes.",
+      "steps": [
+        "For a current bound PRESENT/DIFFERENT5m review use the same approved primary-source conserved-window rule as15m. Every old native child and parent must be reproduced uniquely by all real source events.",
+        "Require full paired GETTEX publication, exact native parent-child aggregation, full-window OHLCV conservation, unique exact relocation of any disappearing parent and final source/native/policy revalidation.",
+        "Allow the existing reviewed delay bound45minutes and retain all original values and lineage. An ABSENT review keeps the narrower rule; it cannot create present candles.",
+        "Propagate conflicting current visual facts or changed bound context as explicit refusal rather than silently swallowing those guards while looking for another window.",
+        "Use a one-time bounded reviewed5m rule version on the existing serial writer. Skip completed jobs and preserve ordinary priority, provider and CORE routes."
+      ],
+      "evidence": [
+        "test_cp_five_minute_partition.py",
+        "test_cp_five_minute_empty.py",
+        "test_cp_adaptive_recovery.py"
+      ],
+      "limits": [
+        "Visual comparison still assisted. No new source entitlement, fabricated bars, missing volume, relaxed current quote or trading permission. Ambiguous or non-conserved histories remain pending."
+      ],
+      "automatic_action": "Existing serial CP short source/reconciliation batch",
+      "manual_action": "Current visual review only when evidence is unavailable"
     }
   ],
   "sources": [
