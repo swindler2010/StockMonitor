@@ -171,9 +171,11 @@ def _five_minute_partition_plan(db,job,inputs,now,policy):
  sp=read(db,SOURCE_POLICY,{})
  if not (sp.get('approved') is True and sp.get('version')==1 and sp.get('scope')=='registered_stocks' and sp.get('exclusive_venue')=='GETTEX'):return None
  a=pd.Timestamp(job['first']);end=pd.Timestamp(job['end']);obs=job.get('observation')
- if inputs['rows'] or not pd.Timedelta(0)<end-a<=pd.Timedelta(minutes=30):return None
+ opening_review=bool(job['first']==job['last'] and len(inputs['rows'])==1 and obs and obs.get('result')=='DIFFERENT' and _observation_current(job,inputs))
+ if (inputs['rows'] and not opening_review) or not pd.Timedelta(0)<end-a<=pd.Timedelta(minutes=30):return None
  if obs and (obs.get('result') not in ('ABSENT','PRESENT','DIFFERENT') or not _observation_current(job,inputs)):return None
  plan=_reviewed_partition_plan(db,{**job,'first':str(a.floor('15min'))},inputs,now,policy)
+ if not plan:plan=_reviewed_session_tail_plan(db,job,inputs,now,policy)
  if not plan:
   if obs and obs['result']=='PRESENT':
    import data_quality as dq
@@ -190,7 +192,33 @@ def _five_minute_partition_plan(db,job,inputs,now,policy):
   lineage[base]={r[0]:saved.get(r[0]) for r in rows}
  _protect_visual_references(db,job,inputs,plan)
  return dict(plan,reviewed_tf='5m',source_policy_digest=digest(sp),lineage_before=lineage,
-   origin='Approved official GETTEX source; complete paired tape uniquely reproduces every original native5m value in order, exact native parents, conserved full5m/15m window, bounded delay; conflicting current TV presence rejected')
+   origin=plan['origin']+'; full current5m review and other current visual references protected')
+
+
+def _partition_co_reviews(db,job,inputs,plan):
+ """Bind disjoint current DIFFERENT diagnoses to one fully proved partition.
+
+ Only the opening-burst case uses this atomic co-reconciliation. It never
+ accepts conflicting ABSENT/PRESENT facts or an overlapping diagnosis.
+ """
+ from cp_reconciliation import PREFIX,_input,_observation_current
+ from cp_controls import digest
+ if not plan.get('sampled_positive_opening_burst') or (job.get('observation') or {}).get('result')!='DIFFERENT' or not _observation_current(job,inputs):return {}
+ prefix=PREFIX+job['isin']+':'
+ rows=db.execute("SELECT value FROM settings WHERE key>=? AND key<? AND json_extract(value,'$.observation.result')='DIFFERENT' AND json_extract(value,'$.first')>=? AND json_extract(value,'$.end')<=? LIMIT 9",(prefix,prefix+'\uffff',plan['first'],plan['end'])).fetchall()
+ if len(rows)>8:return {}
+ result={}
+ for raw, in rows:
+  review=json.loads(raw)
+  if review['id']==job['id'] or review.get('identity')!=job['identity'] or review.get('tf')!='5m':continue
+  if not (review['end']<=job['first'] or job['end']<=review['first']):continue
+  checked=_input(db,review)
+  if not _observation_current(review,checked) or not review['observation'].get('identity_confirmed'):continue
+  actual=[r for r in plan['source']['rows']['5m'] if review['first']<=r[0]<review['end']]
+  original=[r for r in plan['before']['5m'] if review['first']<=r[0]<review['end']]
+  if checked['rows']!=original or original==actual:continue
+  result[review['id']]=dict(job_digest=digest(review),input_fingerprint=checked['fingerprint'],first=review['first'],end=review['end'])
+ return result
 
 
 def _protect_visual_references(db,job,inputs,plan):
@@ -215,6 +243,10 @@ def _protect_visual_references(db,job,inputs,plan):
   checked=_input(db,review)
   if not _observation_current(review,checked):continue
   obs=review['observation'];base=review['tf'];canonical=plan['source']['rows'][base]
+  binding=plan.get('co_review_inputs',{}).get(review['id'])
+  if binding and obs['result']=='DIFFERENT':
+   from cp_controls import digest
+   if digest(review)==binding['job_digest'] and checked['fingerprint']==binding['input_fingerprint']:continue
   present=any(review['first']<=r[0]<review['end'] for r in canonical)
   covered=plan['first']<=review['first'] and review['end']<=plan['end']
   if (obs['result']=='ABSENT' and present
@@ -308,6 +340,98 @@ def _sampled_price_partition(native,trades,max_delay=45):
  return solutions[0] if len(solutions)==1 else None
 
 
+def _opening_price_partition(native,trades,max_delay=45):
+ """One short identical-price opening burst, with every quantity retained."""
+ if not native or len(native)>9 or len(trades)>5000:return None
+ solutions=[];attempts=0
+ def visit(i,j,parts,omitted):
+  nonlocal attempts
+  if len(solutions)>1:return
+  if i==len(native):
+   if j==len(trades) and omitted:solutions.append((parts,omitted))
+   return
+  row=native[i];at=pd.Timestamp(row[0]);volume=0.;prices=[]
+  for k in range(j,len(trades)):
+   attempts+=1
+   if attempts>20000:raise ValueError('RETIME_PARTITION_COMPLEXITY_LIMIT')
+   stamp,price,qty=trades[k];t=pd.Timestamp(stamp)
+   if not at-pd.Timedelta(minutes=max_delay)<=t<at+pd.Timedelta(minutes=5):break
+   volume+=qty;prices.append(price)
+   if volume>row[5]:break
+   if volume!=row[5]:continue
+   expected=list(row[1:5]);actual=[prices[0],max(prices),min(prices),prices[-1]]
+   if actual==expected:visit(i+1,k+1,parts+[(j,k+1)],omitted)
+   elif not omitted and not row[3]<=prices[0]<=row[2]:
+    # A bounded positive burst at one price, never a missing quantity or
+    # arbitrary trimming. Its end is uniquely the first different price.
+    count=next((n for n,p in enumerate(prices) if p!=prices[0]),len(prices))
+    if not 1<=count<=3 or count==len(prices):continue
+    burst=trades[j:j+count];kept=prices[count:]
+    if any(t[2]<=0 for t in burst) or len({pd.Timestamp(t[0]).floor('5min') for t in burst})!=1:continue
+    if [kept[0],max(kept),min(kept),kept[-1]]==expected:
+     visit(i+1,k+1,parts+[(j,k+1)],[dict(native_at=row[0],event_index=j+n,event=trades[j+n]) for n in range(count)])
+ visit(0,0,[],[])
+ return solutions[0] if len(solutions)==1 else None
+
+
+def _reviewed_session_tail_plan(db,job,inputs,now,policy):
+ """Recover a fully published session tail after a unique native prefix.
+
+ This is explicitly missing-source-data recovery, not conserved retiming.
+ Every old event/quantity must map first; only a positive final <=15m suffix
+ may be new. Two unchanged leading children and exact parents anchor it.
+ """
+ from cp_controls import read,digest
+ from cp_reconciliation import SOURCE_POLICY,_observation_current
+ from history_service import parent_provenance_key
+ from timeframes import schedule
+ sp=read(db,SOURCE_POLICY,{});obs=job.get('observation') or {};a=pd.Timestamp(job['first'])
+ if not (job['tf']=='5m' and not inputs['rows'] and obs.get('result') in ('PRESENT','DIFFERENT') and _observation_current(job,inputs)
+     and sp.get('approved') is True and sp.get('version')==1 and sp.get('scope')=='registered_stocks' and sp.get('exclusive_venue')=='GETTEX'):return None
+ sessions=schedule(job['identity'],a,a)
+ if len(sessions)!=1:return None
+ end=sessions.close.iloc[0].tz_convert(job['identity']['timezone']).tz_localize(None)
+ if not pd.Timedelta(0)<end-a<=pd.Timedelta(minutes=60):return None
+ for width in (30,45,60):
+  left=end-pd.Timedelta(minutes=width)
+  if not left<=a<pd.Timestamp(job['end'])<=end:continue
+  try:
+   source=_official_window(db,job['isin'],str(left),str(end),now,allow_zero_rows=True);ticks=source['trades']
+   native={b:_native(db,job['isin'],job['identity'],b,str(left),str(end)) for b in ('5m','15m')}
+   if not 2<=len(native['5m'])<=9 or not native['15m'] or len(ticks)>5000:continue
+   if {str(pd.Timestamp(r[0]).floor('15min')) for r in native['5m']}!={r[0] for r in native['15m']}:continue
+   if any(_aggregate([r for r in native['5m'] if pd.Timestamp(p[0])<=pd.Timestamp(r[0])<pd.Timestamp(p[0])+pd.Timedelta(minutes=15)])!=list(p[1:]) for p in native['15m']):continue
+   if not {r[0] for r in native['15m']}<={r[0] for r in source['rows']['15m']}:continue
+   anchored=0
+   actual={r[0]:r for r in source['rows']['5m']}
+   if not {r[0] for r in native['5m']}<=set(actual):continue
+   for row in native['5m']:
+    if row[0]>=job['first'] or actual.get(row[0])!=row:break
+    anchored+=1
+   if anchored<2:continue
+   volume=sum(r[5] for r in native['5m']);running=0.;cuts=[]
+   for k,tick in enumerate(ticks):
+    running+=tick[2]
+    if running==volume and 0<len(ticks)-k-1<=64 and all(t[2]>0 for t in ticks[k+1:]):cuts.append(k+1)
+    if running>volume:break
+   if len(cuts)!=1:continue
+   cut=cuts[0];tail=ticks[cut:]
+   if pd.Timestamp(tail[0][0])<end-pd.Timedelta(minutes=15):continue
+   partition=_trade_partition(native['5m'],ticks[:cut],max_delay=15)
+   if partition is None:continue
+   _protect_visual_references(db,job,inputs,dict(first=str(left),end=str(end),source=source))
+   lineage={b:{r[0]:read(db,parent_provenance_key(job['isin'],job['identity'],b),{}).get(r[0]) for r in rows} for b,rows in native.items()}
+   return dict(version=RETIME_VERSION,mode='VERIFIED_NATIVE_SESSION_TAIL',isin=job['isin'],identity=job['identity'],
+     first=str(left),end=str(end),job_id=job['id'],policy_digest=digest(policy),source_policy_digest=digest(sp),
+     input_fingerprint=inputs['fingerprint'],before=native,source=source,source_digest=digest(source),created_at=now.isoformat(),
+     native_trade_partition=partition,recovered_session_tail=tail,session_tail_version=1,lineage_before=lineage,
+     zero_observations_corroborated=True,origin='Current exact visual review; complete paired GETTEX final session files; two exact leading children, unique full native prefix within15m, exact original parents; only positive final15m source events recovered, original values retained')
+  except ValueError as error:
+   if str(error) in ('RETIME_OTHER_CURRENT_TV_REFERENCE_CONFLICT','RETIME_CURRENT_TV_BOUND_CONTEXT_CHANGED','RETIME_VISUAL_REFERENCE_WINDOW_TOO_DENSE'):raise
+  except (KeyError,TypeError,IndexError):continue
+ return None
+
+
 def _reviewed_partition_plan(db,job,inputs,now,policy):
  """A real timestamp redistribution, proved by every original native value."""
  from cp_controls import digest
@@ -321,6 +445,7 @@ def _reviewed_partition_plan(db,job,inputs,now,policy):
  windows=[(a-pd.Timedelta(minutes=offset),a+pd.Timedelta(minutes=width-offset)) for width in widths for offset in range(0,width,15)]
  for left,end in windows:
   if left.normalize()!=end.normalize() or not (left<=pd.Timestamp(job.get('interval_start',job['first']))<pd.Timestamp(job['end'])<=end):continue
+  opening=None
   try:
    source=_official_window(db,job['isin'],str(left),str(end),now,allow_zero_rows=True)
    native={base:_native(db,job['isin'],meta,base,str(left),str(end)) for base in ('5m','15m')}
@@ -329,10 +454,13 @@ def _reviewed_partition_plan(db,job,inputs,now,policy):
    if native==source['rows']:continue
    # The original parent must itself be exactly built from its native children.
    if any(_aggregate([r for r in native['5m'] if pd.Timestamp(p[0])<=pd.Timestamp(r[0])<pd.Timestamp(p[0])+pd.Timedelta(minutes=15)])!=list(p[1:]) for p in native['15m']):continue
-   partition=_trade_partition(native['5m'],source['trades'],max_delay=45 if reviewed else 15);sampled=None
+   partition=_trade_partition(native['5m'],source['trades'],max_delay=45 if reviewed else 15);sampled=None;opening=None
    if partition is None and reviewed and obs.get('result')=='DIFFERENT':
     sampled=_sampled_price_partition(native['5m'],source['trades'])
     if sampled:partition=sampled[0]
+    elif job['tf']=='5m':
+     opening=_opening_price_partition(native['5m'],source['trades'])
+     if opening:partition=opening[0]
    if partition is None:continue
    official_stamps={r[0] for r in source['rows']['5m']};moves=[]
    if reviewed:
@@ -349,6 +477,11 @@ def _reviewed_partition_plan(db,job,inputs,now,policy):
       children=[(r,edge) for r,edge in zip(native['5m'],partition) if pd.Timestamp(parent[0])<=pd.Timestamp(r[0])<pd.Timestamp(parent[0])+pd.Timedelta(minutes=15)]
       events=[(k,source['trades'][k]) for r,(start,stop) in children for k in range(start,stop)]
       target={str(pd.Timestamp(t[0]).floor('15min')) for k,t in events}
+      positive_single=(parent[5]>0 and len(children)==1 and len(target)==1 and events
+        and _aggregate([(t[0],t[1],t[1],t[1],t[1],t[2]) for k,t in events])==list(parent[1:])
+        and target<=new_stamps and all(pd.Timedelta(0)<=pd.Timestamp(parent[0])-pd.Timestamp(t)<=pd.Timedelta(minutes=15) for t in target))
+      if positive_single:
+       moves.append(dict(base_tf='15m',old_at=parent[0],new_at=min(target),ohlcv=list(parent[1:]),binding='unique exact single-child positive events recomposed in actual source parent',recomposed_into=sorted(target),child_event_ranges=[dict(old_at=r[0],start=edge[0],stop=edge[1]) for r,edge in children]));continue
       if (parent[5]!=0 or len(set(parent[1:5]))!=1 or not events or len({k for k,t in events})!=len(events)
           or any(t[1]!=parent[1] or t[2]!=0 for k,t in events) or not target<=new_stamps
           or any(not pd.Timedelta(0)<=pd.Timestamp(parent[0])-pd.Timestamp(t)<=pd.Timedelta(minutes=45) for t in target)):
@@ -363,7 +496,9 @@ def _reviewed_partition_plan(db,job,inputs,now,policy):
        binding='exact unique ordered official trade partition'))
    lineage={}
    if reviewed:
-    _protect_visual_references(db,job,inputs,dict(first=str(left),end=str(end),source=source))
+    guard_plan=dict(first=str(left),end=str(end),source=source,before=native,**(dict(sampled_positive_opening_burst=opening[1]) if opening else {}))
+    co_reviews=_partition_co_reviews(db,job,inputs,guard_plan);guard_plan['co_review_inputs']=co_reviews
+    _protect_visual_references(db,job,inputs,guard_plan)
     from history_service import parent_provenance_key
     for base,rows in native.items():
      saved=read(db,parent_provenance_key(job['isin'],meta,base),{})
@@ -374,8 +509,11 @@ def _reviewed_partition_plan(db,job,inputs,now,policy):
      before=native,source=source,source_digest=digest(source),created_at=now.isoformat(),relocations=moves,
      native_trade_partition=partition,zero_observations_corroborated=True,
      **(dict(sampled_positive_interior_price=sampled[1],sampled_price_version=1) if sampled else {}),
-     origin=('Current DIFFERENT review; complete paired official tape uniquely partitions every native quantity and reproduces native prices except one positive interior extreme already counted in volume; exact native parents and conserved full5m/15m window' if sampled else 'Current visual discrepancy; complete official tape uniquely reproduces all original OHLCV with bounded native timestamp delay; conserved 5m/15m window'))
+     **(dict(sampled_positive_opening_burst=opening[1],opening_burst_version=1) if opening else {}),
+     **(dict(co_review_inputs=co_reviews) if reviewed and co_reviews else {}),
+     origin=('Current DIFFERENT review; complete paired official tape uniquely partitions every native quantity and reproduces native prices except one positive interior extreme already counted in volume; exact native parents and conserved full5m/15m window' if sampled else 'Current DIFFERENT review; complete paired tape uniquely reproduces all native quantities and closes with one identical positive opening-price burst omitted only from sampling; exact native parents and conserved5m/15m window' if opening else 'Current visual discrepancy; complete official tape uniquely reproduces all original OHLCV with bounded native timestamp delay; conserved 5m/15m window'))
   except ValueError as error:
+   if opening and str(error)=='RETIME_OTHER_CURRENT_TV_REFERENCE_CONFLICT':continue # try a whole jointly reviewed window, never ignore a conflicting fact
    if str(error) in ('RETIME_OTHER_CURRENT_TV_REFERENCE_CONFLICT','RETIME_CURRENT_TV_BOUND_CONTEXT_CHANGED','RETIME_VISUAL_REFERENCE_WINDOW_TOO_DENSE'):raise
    continue
   except (KeyError,TypeError):continue
@@ -747,7 +885,7 @@ def retime_current(db,receipt,now=None):
   if not row or not stored_identity(db,json.loads(row[0]),receipt['identity'],'15m'):return False
   if receipt.get('reviewed_tf')=='5m' and not stored_identity(db,json.loads(row[0]),receipt['identity'],'5m'):return False
   source=_official_window(db,receipt['isin'],receipt['first'],receipt['end'],pd.Timestamp(now or pd.Timestamp.now(tz='UTC')),
-   allow_zero_rows=receipt.get('mode') in ('VERIFIED_NATIVE_EMPTY','VERIFIED_NATIVE_TRADE_PARTITION','VERIFIED_PRICE_OBSERVATION_TIMEBASE','VERIFIED_PRICE_CLOSING_TICK_PARTITION') and receipt.get('zero_observations_corroborated') is True)
+   allow_zero_rows=receipt.get('mode') in ('VERIFIED_NATIVE_EMPTY','VERIFIED_NATIVE_TRADE_PARTITION','VERIFIED_NATIVE_SESSION_TAIL','VERIFIED_PRICE_OBSERVATION_TIMEBASE','VERIFIED_PRICE_CLOSING_TICK_PARTITION') and receipt.get('zero_observations_corroborated') is True)
   if not receipt_source_current(source,receipt):return False
   return all(digest(_native(db,receipt['isin'],receipt['identity'],base,receipt['first'],receipt['end']))==digest(rows)
              for base,rows in source['rows'].items())

@@ -173,7 +173,7 @@ def _input(db, job):
     if tf in ('5m','15m') and rows and len(rows)<int((pd.Timestamp(job['last'])-pd.Timestamp(job['first']))/pd.Timedelta(minutes=5 if tf=='5m' else 15))+1:
         prefix=RETIME_PREFIX+isin+':'
         siblings=db.execute("""SELECT value FROM settings WHERE key>=? AND key<? AND key<>?
-          AND json_extract(value,'$.state')='APPLIED' AND json_extract(value,'$.mode') IN ('VERIFIED_NATIVE_EMPTY','VERIFIED_NATIVE_TRADE_PARTITION','VERIFIED_NATIVE_POSITIVE_PRICE_EXTREME')
+          AND json_extract(value,'$.state')='APPLIED' AND json_extract(value,'$.mode') IN ('VERIFIED_NATIVE_EMPTY','VERIFIED_NATIVE_TRADE_PARTITION','VERIFIED_NATIVE_SESSION_TAIL','VERIFIED_NATIVE_POSITIVE_PRICE_EXTREME')
           AND json_extract(value,'$.first')<? AND json_extract(value,'$.end')>?
           AND json_extract(value,'$.identity.source')=? AND json_extract(value,'$.identity.symbol')=?
           AND json_extract(value,'$.identity.venue')=? AND json_extract(value,'$.identity.currency')=?
@@ -601,11 +601,13 @@ def _native_empty_pending(db,isin,limit):
         AND ((json_extract(value,'$.finding.state') IN ('SOURCE_TIMEBASE_UNCONFIRMED','GAP','NATIVE_ROWS_PRESENT')
         AND (COALESCE(json_extract(value,'$.native_empty_algorithm'),0)<?
           OR (json_extract(value,'$.tf')='5m' AND json_extract(value,'$.observation.result') IN ('PRESENT','DIFFERENT')
-            AND COALESCE(json_extract(value,'$.native_empty_algorithm'),0)<11)))
+            AND julianday(COALESCE(json_extract(value,'$.next_check'),json_extract(value,'$.created_at')))<=julianday('now')
+            AND COALESCE(json_extract(value,'$.native_empty_algorithm'),0)<12)))
         OR (json_extract(value,'$.tf')='5m' AND json_extract(value,'$.first')=json_extract(value,'$.last')
           AND json_extract(value,'$.finding.state')='SOURCE_DISCREPANCY'
           AND json_extract(value,'$.observation.result')='DIFFERENT'
-          AND COALESCE(json_extract(value,'$.positive_price_algorithm'),0)<1)
+          AND julianday(COALESCE(json_extract(value,'$.next_check'),json_extract(value,'$.created_at')))<=julianday('now')
+          AND COALESCE(json_extract(value,'$.native_empty_algorithm'),0)<12)
         OR (json_extract(value,'$.tf')='15m' AND json_extract(value,'$.first')=json_extract(value,'$.last')
           AND json_extract(value,'$.finding.state')='SOURCE_DISCREPANCY'
           AND json_extract(value,'$.observation.result')='DIFFERENT'
@@ -672,7 +674,7 @@ def turn(store, info, now=None, native_empty_only=False):
             seeded=[]
             for _,raw in _native_empty_pending(db,isin,NATIVE_EMPTY_LIMIT):
                 job=json.loads(raw);old=dict(job)
-                job.update(native_empty_algorithm=11 if job['tf']=='5m' and (job.get('observation') or {}).get('result') in ('PRESENT','DIFFERENT') else NATIVE_EMPTY_ALGORITHM,positive_price_algorithm=1,current_difference_algorithm=1,status='RECHECK_QUEUED' if job['status']=='RECHECK_QUEUED' else 'QUEUED',next_check=clock.isoformat())
+                job.update(native_empty_algorithm=12 if job['tf']=='5m' and (job.get('observation') or {}).get('result') in ('PRESENT','DIFFERENT') else NATIVE_EMPTY_ALGORITHM,positive_price_algorithm=1,current_difference_algorithm=1,status='RECHECK_QUEUED' if job['status']=='RECHECK_QUEUED' else 'QUEUED',next_check=clock.isoformat())
                 _save_job(db,job,old);seeded.append((key(job),json.dumps(job,ensure_ascii=False)))
             progress['native_empty_batch_at']=clock.isoformat()
         else:seeded=_seed_official_empty_checks(db,info,clock,progress,max(0,INGEST_LIMIT-segments))
@@ -725,7 +727,7 @@ def turn(store, info, now=None, native_empty_only=False):
                 if correction:
                     current['official_timebase_repair']=publish_retime(db,current,inputs,correction,clock)
                     if (correction.get('mode')=='VERIFIED_NATIVE_EMPTY'
-                            or correction.get('reviewed_tf')=='5m' and correction.get('mode') in ('VERIFIED_NATIVE_TRADE_PARTITION','VERIFIED_NATIVE_POSITIVE_PRICE_EXTREME')):
+                            or correction.get('reviewed_tf')=='5m' and correction.get('mode') in ('VERIFIED_NATIVE_TRADE_PARTITION','VERIFIED_NATIVE_SESSION_TAIL','VERIFIED_NATIVE_POSITIVE_PRICE_EXTREME')):
                         # Finish the current proof on this same writer transaction
                         # instead of adding a second queued pass.
                         inputs=_input(db,current);result=_classify(current,inputs,clock)
