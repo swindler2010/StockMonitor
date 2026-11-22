@@ -1979,6 +1979,43 @@
       ],
       "limits": "GETTEX-first: DQ аудит отдельно от доступности анализа всех зарегистрированных акций. Свежесть цены исполнения, identity и риск сохраняются. Реальный DQ не подменяется READY. Живой каталог не является разрешением произвольно импортировать OHLCV.",
       "status": "9 адресных тестов опубликованного3dd60db PASS21.398с; старый policy-publication дефект воспроизведён STALE, исправленный путь CURRENT и реальное изменение политики отклоняется. Многодневная полная приёмка Issue19 не завершена. Windows: штатная очередьNVIDIA опубликовалаCURRENT20.11 20:03:35 CET,9 аналитическихTF;1H/4H сохраняют независимуюCURRENT-проверку при новых5m/15m. ВнешнийMCP подтвердил актуальные времена, не продлевая срок."
+    },
+    {
+      "id": "official_verified_5m_windows_and_review_completion",
+      "title": "Подтверждение5m, восстановление родителей и завершение сверок в коротком ходе СР",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "SOURCE_TIMEBASE_UNCONFIRMED",
+        "GAP",
+        "UNCONFIRMED",
+        "NATIVE_ROWS_PRESENT"
+      ],
+      "status": "Implemented in TEST; scope145 at22Nov20:51CET:95 processed,50 unresolved. Work0 manual candle writes; CP92 primary confirmations and3 current owner-TV acceptances. Overall task ongoing.",
+      "steps": [
+        "Reuse complete paired GETTEX publications, exact listing/ISIN/EUR/timezone and actual closed5m/15m inputs. Prove an empty5m range from complete exact parent windows, not a missing provider reply.",
+        "Uniquely partition every original native5m OHLCV against every real source event, preserve exact native parents and full-window OHLCV conservation. Try bounded30/45/60-minute windows;9 native bars,5000 events,20000 search steps; default delay15minutes.",
+        "For a current fingerprint-bound PRESENT/DIFFERENT15m review under approved registered GETTEX source policy, allow up to45minutes native delay. Missing original parent timestamps require unique exact OHLCV relocation into an absent native parent; no discarded parent aggregate.",
+        "Reject current conflicting visual facts and bound neighboring context. Keep before values, source files/hashes, original lineage, final transaction revalidation and normal dependent DQ/CORE rechecks.",
+        "Finish existing owner-TV historical policy on the same short reconciliation turn and persist its assessment request, without provider or CORE work in that route.",
+        "Allow only harmless own-review timestamp/job service revisions or unrelated later tails when complete frozen native bindings remain identical; retain actual data/source/policy/identity guards and never renew a permission from a read.",
+        "Separate currently validated full-source repairs and accepted TV absences from active errors. Refresh the open view for changed source/native/policy/evidence inputs; preserve raw DQ records and new disputes.",
+        "Revalidate a bound visual fingerprint after repair; a pre-repair saved source_comparison current flag must not hold an already repaired interval in active errors. Keep unbound legacy conflicts conservatively."
+      ],
+      "evidence": [
+        "test_cp_five_minute_partition.py",
+        "test_cp_scoped_tail.py",
+        "test_cp_five_minute_empty.py",
+        "test_cp_problem_view.py",
+        "test_cp_pending_observation_route.py"
+      ],
+      "limits": [
+        "TV visual use remains assisted; no autonomous TV scraping, fabricated bars, inferred exchange NO_TRADES or blanket trading grant. Missing evidence, ambiguous partition, changed original values, source coverage or policy remain explicit. Counts are overlapping scoped diagnostic ranges, not a sum of independent physical candles. Source proof views remain slow on large per-stock registries; no250ms claim."
+      ],
+      "automatic_action": "Existing serial CandlePilot feed/reconciliation writer and current primary-source validators",
+      "manual_action": "Visual TradingView comparison only where independent saved evidence is insufficient; direct candle writes by Work are not used."
     }
   ],
   "sources": [
