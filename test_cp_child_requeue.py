@@ -64,6 +64,15 @@ class ChildArrival(unittest.TestCase):
   self.assertIn('children_fingerprint',after['origin'])
   stable=f.jobs();f.plan();self.assertEqual(f.jobs(),stable)
   self.add_children();self.assertEqual(f.plan()['state'],'QUEUED')
+ def test_binding_supports_every_existing_ui_timeframe(self):
+  from timeframes import LABELS,base_for
+  from cp_reconciliation import _spec
+  f=self.f
+  for tf in LABELS:
+   with self.subTest(tf=tf):
+    base=base_for(tf,'gettex');at='2026-11-19 00:00:00' if base=='1D' else f.span[0]
+    job=_spec(f.isin,f.meta,base,at,at)
+    with f.s.connect() as db:self.assertTrue(cp.repair_children_fingerprint(db,job))
 
 if __name__=='__main__':unittest.main()
 
