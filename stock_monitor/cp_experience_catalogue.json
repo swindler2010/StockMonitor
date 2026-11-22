@@ -4,6 +4,33 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "official_native_price_sampling",
+      "title": "Полный объём, но отдельные реальные цены не попали в родную свечу",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "SOURCE_DISCREPANCY"
+      ],
+      "status": "IMPLEMENTED; Windows CP Siemens16Nov09:00 APPLIED22Nov16:15:01 CET, RESOLVED_NATIVE16:20:56. Source proof current; scoped rollback eligible1. MCP exact OHLCV and finite CORE indicators;30.703s calculation is not a global performance PASS.",
+      "steps": [
+        "Current exact DIFFERENT review, closed15m, confirmed same GETTEX/EUR identity, owner source and correction policies required.",
+        "Complete paired official tape, exact unchanged timestamp sets, all child/parent quantities and closes conserved. Only the first5m child may differ.",
+        "Excluding exactly the first positive price and at most one unique isolated interior extreme must reproduce every native price; all original parent values must aggregate original children. Bound64positive events; no general provider overwrite.",
+        "Existing transactional publisher rechecks inputs/policies/proof, preserves originals and provenance, and wakes only exact affected jobs."
+      ],
+      "evidence": [
+        "test_cp_native_price_sampling.py",
+        "test_cp_positive_opening_extreme.py"
+      ],
+      "limits": [
+        "Current source proof must remain valid. Missing pair, changed quantity/close, unrelated price/identity, ambiguity or changed revisions reject. No synthetic candles or trading grant."
+      ],
+      "automatic_action": "Existing CandlePilot revision_watcher / serial feed writer",
+      "manual_action": "Saved current assisted TV discrepancy; no autonomous TV access rights granted."
+    },
+    {
       "id": "native_repairs_requeue_only_affected_scopes",
       "title": "После подтверждённого ремонта связанные проверки не ждут старого срока",
       "sources": [
@@ -19,14 +46,16 @@
         "После штатной записи сравнить исходные и подтверждённые строки внутри точного listing/ISIN/TF. Повторно поставить только пересекающиеся задания и ABSENT-задания, у которых изменилась сохранённая соседняя свеча.",
         "Не менять первоначальный TV fingerprint, исходные наблюдения, native retry и cooldown поставщика. Следующий существующий ход заново проверяет данные/identity/качество и допустимость подтверждения.",
         "Ограничить один вызов16заданиями. Для уже опубликованных двух новых видов ремонта восстанавливать follow-up по не более2актуальным receipt за ход; старые DONE-аудиты не повторять.",
-        "Одна и та же квитанция не должна бесконечно обновлять next_check. Сохранять отметку причины и идемпотентность; неподтверждённые соседние интервалы остаются заблокированными после честной проверки."
+        "Одна и та же квитанция не должна бесконечно обновлять next_check. Сохранять отметку причины и идемпотентность; неподтверждённые соседние интервалы остаются заблокированными после честной проверки.",
+        "A bounded metadata-only existing planner wake handles already applied current repair receipts; the owned feed revalidates proof before requeueing. Changed proofs are recorded once without source calls or false repair."
       ],
       "evidence": [
         "test_cp_native_closing_tick.ClosingTick.test_current_review_and_complete_tape_repair_only_exact_closing_tick",
-        "test_cp_delayed_closing_tick.DelayedClosing.test_complete_tape_unique_native_prefix_and_review_restore_price_and_close"
+        "test_cp_delayed_closing_tick.DelayedClosing.test_complete_tape_unique_native_prefix_and_review_restore_price_and_close",
+        "test_cp_repaired_scope_wakeup.py"
       ],
       "limits": "Только очередь текущих локальных зависимостей после доказанного изменения native. Не загрузка, не изменение разрешений и не повторная ручная сверка TV. Никакого второго writer или обхода TTL/DQ/freshness.",
-      "status": "Regression reproduced old future wait; updated closing case2variants plus composite PASS3.350s, added follow-up idempotence PASS2.462s. Windows ordinary follow-up pending."
+      "status": "IMPLEMENTED; ordinary TEST22Nov16:11/16:13 dependent rechecks; version2 only changed input fingerprints. Mixed-parent false wait resolved by CP16:30:25 CET."
     },
     {
       "id": "delayed_zero_price_and_missing_final_tick",
@@ -52,7 +81,35 @@
         "test_cp_price_observation"
       ],
       "limits": "Не произвольная замена всех данных. Только полностью объяснённое уникальное временное перераспределение существующей цены и одна последняя запись из подтверждённого GETTEX. Нет новых торговых разрешений/изменения счёта. При изменении входов, недостаточных парных файлах или отзыве политики — отказ.",
-      "status": "Installed Windows TEST: ordinary CP applied22Oct19:30–20:00;3 physical rows added,3 changed,0 relocated.15m zero price176.82/V0 and19:45 close175.98/V219 match official and TV; current proof true. Account/fills/global settings/positions/drawings/levels unchanged.23 previously empty per-card indicator dictionaries became DEFAULT_IND during normal save; configured dictionaries unchanged. Follow-up queued normally; full all-stock task IN_PROGRESS."
+      "status": "IMPLEMENTED; Windows CP Palantir22Oct19:30/19:45 APPLIED22Nov15:27:56 CET,3rows added/3changed/0relocated; source proof current; no manual OHLCV writes."
+    },
+    {
+      "id": "mixed_range_reuses_current_empty_child",
+      "title": "Смешанный диапазон учитывает подтверждённый пустой интервал",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "NATIVE_ROWS_PRESENT",
+        "SOURCE_TIMEBASE_UNCONFIRMED"
+      ],
+      "status": "IMPLEMENTED; FAIL before, targeted PASS1.700s. Ordinary Windows CP Palantir22Oct19:15--19:30 RESOLVED_NATIVE/NATIVE_ROWS_CONFIRMED22Nov16:30:25 CET;1actual candle+1confirmed empty interval.",
+      "steps": [
+        "Partial existing15m ranges may reuse up to8 overlapping APPLIED VERIFIED_NATIVE_EMPTY receipts with exactly the same source/symbol/venue/currency/timezone.",
+        "Every receipt revalidates complete official coverage and exact native rows with retime_current; no cross-TF/provider proof transfer.",
+        "Existing publisher queues affected mixed parents, including proof-only changes. Only changed input fingerprints requeue; original TV observations, provider cooldown and serial lane preserved."
+      ],
+      "evidence": [
+        "test_cp_official_timebase.py",
+        "test_cp_native_closing_tick.py",
+        "test_cp_repaired_scope_wakeup.py"
+      ],
+      "limits": [
+        "Changed5m input revokes proof. No synthetic row, warmup observation, freshness extension or trading permission."
+      ],
+      "automatic_action": "Existing CP reconciliation and ordinary re-evaluation",
+      "manual_action": "No repeated visual check when independent evidence stays exact."
     },
     {
       "id": "saved_observation_survives_deduplicated_fresh_feed",
