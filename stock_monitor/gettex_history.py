@@ -97,12 +97,13 @@ def _download(isin,http,parse,store,start=None,end=None):
         # Cached history needs no invented network URL. In particular retain
         # :8000 and the published path when an official location is available.
         for p in cache.glob('posttrade.*.csv.gz'):locations.setdefault(p.name,None)
-    frames=[];errors=[];network_returns=[];cached_files=0
+    frames=[];errors=[];network_returns=[];cached_files=0;eligible_files=0
     for name,url in sorted(locations.items()):
         match=re.fullmatch(r'posttrade\.(\d{8})\.(\d{2})\.(\d{2})\.(mund|munc)\.csv\.gz',name,re.I)
         if not match:continue
         at=pd.to_datetime(''.join(match.group(i) for i in (1,2,3)),format='%Y%m%d%H%M',utc=True)
         if start is not None and (at<pd.Timestamp(start).tz_convert('UTC').floor('h')-pd.Timedelta(hours=1) or at>pd.Timestamp(end).tz_convert('UTC').ceil('h')+pd.Timedelta(hours=1)):continue
+        eligible_files+=1
         path=cache/name
         try:
             with LOCK:
@@ -123,7 +124,10 @@ def _download(isin,http,parse,store,start=None,end=None):
     # SQLite trades alone cannot prove that a missing interval had no trades.
     if not frames:
         from delivery_observations import outcome
-        error=ValueError('В доступных файлах GETTEX нет сделок EUR для '+isin+(' • '+errors[0] if errors else ''))
+        reason=('SOURCE_LIMITED: нет опубликованных или сохранённых файлов GETTEX для запрошенного периода'
+                if start is not None and eligible_files==0 else
+                'В доступных файлах GETTEX нет сделок EUR для '+isin+(' • '+errors[0] if errors else ''))
+        error=ValueError(reason)
         outcome(store.directory,isin,'trades',scheduler.gettex_meta(isin),'ERROR' if errors else 'EMPTY',error if errors else None)
         error._delivery_outcome_recorded=True
         raise error

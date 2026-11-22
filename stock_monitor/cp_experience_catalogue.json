@@ -4,6 +4,28 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "source_files_missing_is_not_absent_trades",
+      "title": "Нет файлов периода — не утверждение об отсутствии сделок",
+      "sources": [
+        "gettex_history._download",
+        "cp_experience.failure_evidence"
+      ],
+      "states": [
+        "UNCONFIRMED",
+        "SOURCE_LIMITED"
+      ],
+      "steps": [
+        "Посчитать только опубликованные или кешированные файлы, попавшие в точное запрошенное окно.",
+        "Если подходящих файлов нет, вернуть SOURCE_LIMITED с причиной отсутствия доступного покрытия; не утверждать отсутствие EUR-сделок и не создавать NO_TRADES.",
+        "Если подходящий файл прочитан, но для ISIN нет строк, это отдельный результат, не отсутствие самого файла; подтверждение пустоты возможно только прежним проверенным полным парным MUNC/MUND механизмом."
+      ],
+      "evidence": [
+        "test_cp_file_availability.py: out-of-window manifest versus an actually selected file"
+      ],
+      "limits": "Никаких новых свечей, допусков, снятия DQ, обхода cooldown или утверждений о максимальной глубине источника.",
+      "status": "2 targeted cases PASS; code/runtime stage recorded in checkpoint"
+    },
+    {
       "id": "reopen_parent_repair_on_scoped_child_arrival",
       "title": "Новые младшие свечи возобновляют terminal-восстановление родителя",
       "sources": [
@@ -26,7 +48,7 @@
         "Local saved GETTEX 19.11.2026 08:00: complete 5m children recover missing 15m without HTTP in isolated SQLite"
       ],
       "limits": "Это разрешение повторной попытки, не разрешение свечи или сделки. Пустые ответы и неполные/чужие дети не являются подтверждением; рабочая история тестом не изменяется.",
-      "status": "3 new + 3 affected PASS locally; publication/runtime verification recorded in checkpoint"
+      "status": "4 new + 2 affected PASS; published objects c8d7c23b: 6 PASS /1.518s; Windows normal restart, positive natural child arrival remains to be observed"
     },
     {
       "id": "official_exact_five_minute_relocation",
