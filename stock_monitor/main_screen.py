@@ -133,6 +133,19 @@ def native_titlebar(root, palette):
         pass  # Older Windows keeps its native caption; no functional fallback.
 
 
+def flow_widgets(widgets,width):
+    """Reflow only changed cells; repeated Configure must not relayout Tk."""
+    row=column=used=0
+    for widget in widgets:
+        requested=widget.winfo_reqwidth()+2
+        if used and used+requested>width:
+            row+=1;column=used=0
+        current=widget.grid_info()
+        if current.get('row')!=row or current.get('column')!=column:
+            widget.grid(row=row,column=column,sticky='w',padx=(0,2),pady=1)
+        column+=1;used+=requested
+
+
 def decision_row(parent, decision, reason):
     """Reserve the longest status height; loading must not move other cards."""
     from tkinter import font
@@ -842,9 +855,13 @@ def build(app, periods, bg, text):
     ttk.Label(header_context, text=tr('Премаркет: —'), style='DeskMuted.TLabel', font=('Segoe UI', 8)).pack(anchor='e')
     screen.header_volume = tk.StringVar(app.root, tr('Объём: —'))
     ttk.Label(header_context, textvariable=screen.header_volume, style='DeskMuted.TLabel', font=('Segoe UI', 8)).pack(anchor='e',pady=3)
+    header_visible=[True]
     def header_width(event):
-        if event.width < 720:header_context.grid_remove()
-        else:header_context.grid()
+        visible=event.width>=720
+        if visible==header_visible[0]:return
+        header_visible[0]=visible
+        if visible:header_context.grid()
+        else:header_context.grid_remove()
     screen.asset.bind('<Configure>', header_width, add='+')
 
     tabs = ttk.Frame(screen.asset, style='Desk.TFrame')
@@ -859,13 +876,7 @@ def build(app, periods, bg, text):
         button=ttk.Button(tab_strip, text=tr(label), command=command, style='DeskActive.TButton' if label == 'График' else 'TButton')
         tab_buttons.append(button)
     def wrap_tabs(event):
-        row=column=used=0
-        for button in tab_buttons:
-            requested=button.winfo_reqwidth()+2
-            if used and used+requested>event.width:
-                row+=1;column=used=0
-            button.grid(row=row,column=column,sticky='w',padx=(0,2),pady=1)
-            column+=1;used+=requested
+        flow_widgets(tab_buttons,event.width)
     tab_strip.bind('<Configure>',wrap_tabs,add='+')
     toolbar = ttk.Frame(screen.asset, style='Desk.TFrame')
     toolbar.grid(row=3, column=0, columnspan=4, sticky='ew', pady=(3, 0))
@@ -916,14 +927,10 @@ def build(app, periods, bg, text):
         width = event.width if event else toolbar.winfo_width()
         if width < 20 or width == last_layout[0]:return
         last_layout[0] = width
-        for widget,label in collapsing_tools:widget.configure(text=label if width>=950 else '')
-        row = column = used = 0
-        for widget in visible_tools:
-            requested = widget.winfo_reqwidth() + 2
-            if used and used + requested > width - 4:
-                row += 1;column = used = 0
-            widget.grid(row=row, column=column, padx=(0,2), pady=1, sticky='w')
-            column += 1;used += requested
+        for widget,label in collapsing_tools:
+            text=label if width>=950 else ''
+            if widget.cget('text')!=text:widget.configure(text=text)
+        flow_widgets(visible_tools,width-4)
     toolbar.bind('<Configure>', wrap_tools, add='+')
     app.root.after_idle(wrap_tools)
 
@@ -1077,11 +1084,12 @@ def build(app, periods, bg, text):
         marker = (width,body_width)
         if width < 600 or body_width < 400 or marker == screen._body_width or len(body.panes()) != 2:return
         screen._body_width = marker
-        screen.sidebar.configure(width=max(200, min(270, round(width * .16))))
+        sidebar_width=max(200,min(270,round(width*.16)))
+        if int(screen.sidebar.cget('width'))!=sidebar_width:screen.sidebar.configure(width=sidebar_width)
         right = max(250, min(380, round(width * .22)))
         position = body_width-right if screen._split_ratio is None else round(body_width * screen._split_ratio)
         position = min(body_width - 250, position)
-        if position > 0:body.sashpos(0, position)
+        if position > 0 and body.sashpos(0)!=position:body.sashpos(0, position)
 
     def divider_changed(_):
         if len(body.panes()) == 2:screen._split_ratio = body.sashpos(0) / max(1, body.winfo_width())

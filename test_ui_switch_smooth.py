@@ -111,6 +111,29 @@ class StableBitmapTests(unittest.TestCase):
 
 
 class StableSignalLayout(unittest.TestCase):
+    def test_53_200_configures_leave_unchanged_cells_alone_and_reflow_changed_width(self):
+        import tkinter as tk
+        from tkinter import ttk
+        from main_screen import flow_widgets
+        from contextlib import ExitStack
+        root=tk.Tk();root.withdraw();self.addCleanup(root.destroy)
+        widgets=[ttk.Button(root,text='Tool '+str(n),width=6) for n in range(12)]
+        root.update_idletasks();flow_widgets(widgets,800);root.update_idletasks()
+        with ExitStack() as stack:
+            calls=[stack.enter_context(patch.object(w,'grid',wraps=w.grid)) for w in widgets]
+            for count in (53,200):
+                for _ in range(count):flow_widgets(widgets,800)
+                self.assertEqual(sum(c.call_count for c in calls),0)
+            flow_widgets(widgets,250)
+            self.assertGreater(sum(c.call_count for c in calls),0)
+            self.assertLessEqual(sum(c.call_count for c in calls),len(widgets))
+        row=column=used=0
+        for w in widgets:
+            size=w.winfo_reqwidth()+2
+            if used and used+size>250:row+=1;column=used=0
+            self.assertEqual((w.grid_info()['row'],w.grid_info()['column']),(row,column))
+            column+=1;used+=size
+
     def test_real_signal_row_keeps_following_card_still_while_permission_clears(self):
         import tkinter as tk
         from tkinter import ttk
