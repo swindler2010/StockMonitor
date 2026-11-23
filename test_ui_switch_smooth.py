@@ -44,6 +44,43 @@ class FocusWithoutPolicyReads(unittest.TestCase):
         app._retry_current_chart.assert_called_once_with(values);app._render_current_display.assert_not_called()
 
 
+class WarmChartHandoff(unittest.TestCase):
+    def app(self):
+        from benchmark_ui import BenchmarkMixin
+        active=(object(),'engine',time.monotonic()-1)
+        app=NS(_active_chart_read=active,root=Mock(),compute_chart=Mock(),closing=False)
+        return app,active,BenchmarkMixin
+
+    def test_53_200_new_requests_share_one_bounded_handoff_and_do_not_interrupt_the_new_read(self):
+        for count in (53,200):
+            app,active,mix=self.app()
+            for _ in range(count):mix._supersede_chart_read(app)
+            app.root.after.assert_called_once();app.compute_chart.interrupt.assert_not_called()
+            delay,callback=app.root.after.call_args.args
+            self.assertGreater(delay,0);self.assertLessEqual(delay,5000)
+            app._active_chart_read=(object(),'display',time.monotonic())
+            callback();app.compute_chart.interrupt.assert_not_called()
+
+    def test_timeout_interrupts_only_the_same_readonly_core_and_display_still_interrupts_immediately(self):
+        app,active,mix=self.app();mix._supersede_chart_read(app)
+        app.root.after.call_args.args[1]();app.compute_chart.interrupt.assert_called_once_with('chart')
+        app,_,mix=self.app();app._active_chart_read=(object(),'display',time.monotonic())
+        mix._supersede_chart_read(app);app.compute_chart.interrupt.assert_called_once_with('chart');app.root.after.assert_not_called()
+
+    def test_superseded_core_never_publishes_and_worker_marker_clears_after_failure(self):
+        from chart_worker import LatestRequest
+        app,_,mix=self.app();jobs=[];applied=[]
+        latest=LatestRequest(lambda work,done,failed:jobs.append((work,done,failed)),applied.append,Mock())
+        latest.request(lambda:'old core');latest.request(lambda:'new view')
+        mix._supersede_chart_read(app);jobs[0][1]('old core')
+        self.assertEqual(applied,[]);self.assertEqual(len(jobs),2)
+        jobs[1][1]('new view');self.assertEqual(applied,['new view'])
+        app.compute_chart.calculate.side_effect=RuntimeError('isolated failed read')
+        with self.assertRaisesRegex(RuntimeError,'isolated'):mix._calculate_chart_read(app,{'timeframe':'1H'},'engine')
+        self.assertIsNone(app._active_chart_read)
+        app.compute_chart.calculate.assert_called_once_with('chart',{'timeframe':'1H','_chart_phase':'engine'})
+
+
 class StableBitmapTests(unittest.TestCase):
     def fixture(self):
         import tkinter as tk

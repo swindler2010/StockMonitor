@@ -126,8 +126,37 @@ class BenchmarkMixin:
         self._accepted_trading_chart=None
         bind_engine(self,None)
         self.status.set(tr('Загрузка: {name} · {timeframe}',name=info['name'],timeframe=self.timeframe.get()))
-        if self._chart_jobs.running and not self.dispatcher.cancel('chart'):self.compute_chart.interrupt('chart')
-        self._chart_jobs.request(lambda:(values,self.compute_chart.calculate('chart',{**values,'_chart_phase':'display'})))
+        if self._chart_jobs.running and not self.dispatcher.cancel('chart'):self._supersede_chart_read()
+        self._chart_jobs.request(lambda:(values,self._calculate_chart_read(values,'display')))
+
+    def _calculate_chart_read(self,values,phase):
+        import time
+        active=(object(),phase,time.monotonic())
+        self._active_chart_read=active
+        try:return self.compute_chart.calculate('chart',{**values,'_chart_phase':phase})
+        finally:
+            if getattr(self,'_active_chart_read',None) is active:self._active_chart_read=None
+
+    def _supersede_chart_read(self):
+        # A short CORE tail often finishes sooner than restarting this readonly
+        # process and importing the entire calculation stack again. LatestRequest
+        # still discards its superseded result; no permission survives selection.
+        import time
+        active=getattr(self,'_active_chart_read',None)
+        if active is None or active[1]!='engine':
+            self.compute_chart.interrupt('chart');return
+        pending=getattr(self,'_chart_read_cancel',None)
+        if pending and pending[0] is active:return
+        if pending:self.root.after_cancel(pending[1])
+        delay=max(1,round((5-(time.monotonic()-active[2]))*1000))
+        def cancel_old():
+            pending=getattr(self,'_chart_read_cancel',None)
+            if pending and pending[0] is active:self._chart_read_cancel=None
+            if not self.closing and getattr(self,'_active_chart_read',None) is active:
+                self.compute_chart.interrupt('chart')
+        self._chart_read_cancel=(active,self.root.after(delay,cancel_old))
+        emit=getattr(self,'_performance_emit',None)
+        if emit:emit('chart_read_handoff',phase='engine',grace_seconds=delay/1000)
 
     def _chart_failed(self,error):
         if self.closing:return
@@ -195,7 +224,7 @@ class BenchmarkMixin:
         if hasattr(self,'main_screen'):self.main_screen.bind_chart(prepared)
         self._chart_timing('display',prepared)
         if prepared.get('_core_pending'):
-            self._chart_jobs.request(lambda:(values,self.compute_chart.calculate('chart',{**values,'_chart_phase':'engine'})))
+            self._chart_jobs.request(lambda:(values,self._calculate_chart_read(values,'engine')))
 
     def _render_current_display(self,prepared):
         # Called only after selection, live revisions and receipt files passed
