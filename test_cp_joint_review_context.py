@@ -25,6 +25,7 @@ class JointReviewContext(unittest.TestCase):
    f=tempfile.NamedTemporaryFile(dir=root,prefix='CP joint context isolated ',suffix=suffix,delete=False);f.write(data);f.close();paths.append(Path(f.name));self.addCleanup(paths[-1].unlink,missing_ok=True)
   rv.confirm_primary_window(s,spec,paths[0],'GETTEX:FIX',[str(paths[1])],['timestamp','open','high','low','close','volume'],True,'isolated exact primary parent')
   primary=s.setting(rv.key(spec));original_observation=copy.deepcopy(primary['observation']);jobs=[]
+  self.assertFalse(rv._observation_current(dict(observation=dict(fingerprint_version=rv.FINGERPRINT_VERSION)),captured))
   for clock in ('14:15','14:30'):
    js=rv._spec(isin,m,'15m',t(clock),t(clock))
    with s.connect() as d:

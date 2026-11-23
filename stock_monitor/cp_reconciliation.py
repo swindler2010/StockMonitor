@@ -221,6 +221,7 @@ def _observation_current(job, inputs):
     if not observation:return False
     if observation.get('input_fingerprint')==inputs['fingerprint']:return True
     if (observation.get('fingerprint_version')==FINGERPRINT_VERSION
+            and inputs.get('review_context_fingerprint') is not None
             and inputs.get('review_context_fingerprint')==observation.get('input_fingerprint')):return True
     # Require the *old complete hash* before migration. Already stale reviews
     # cannot be revived merely by removing non-market fields from the binding.
