@@ -2,6 +2,7 @@
 import json
 import sqlite3
 import time
+from contextlib import closing
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -64,7 +65,7 @@ def collect(path, infos, now=None):
     # Only positive candidates need their existing closed-input validation proof.
     paths = ','.join("'$."+k+"'" for k in headers)
     cpaths = ','.join("'$."+k+"'" for k in fields)
-    with sqlite3.connect(Path(path).resolve().as_uri()+'?mode=ro', uri=True, timeout=.2) as db:
+    with closing(sqlite3.connect(Path(path).resolve().as_uri()+'?mode=ro', uri=True, timeout=.2)) as db:
         db.execute('BEGIN'); db.execute('PRAGMA query_only=ON')
         records = {k.split(':',1)[1]: dict(zip(headers, json.loads(v))) for k,v in db.execute(
             "SELECT key,json_extract(value,"+paths+") FROM settings WHERE key LIKE 'cp_eligibility:%'")}
@@ -160,5 +161,8 @@ class Runtime:
             for fn in callbacks:fn()
         def failed(_):
             self.busy=False;self.next_try=time.time()+60
-        if app.job(lambda:collect(app.store.path,infos),done,failed,lane='misc',key='watchlist-order') is False:
+        # Closed-input proof checks are CPU-heavy: reuse the owned read worker,
+        # retaining the binding/token check above immediately before display.
+        if app.job(lambda:app.compute_feed.calculate('watchlist_order',{'watchlist':infos}),
+                done,failed,lane='misc',key='watchlist-order') is False:
             self.busy=False

@@ -410,7 +410,6 @@ class Desktop014:
 
     def _scheduled_refresh(self):
         if self.closing:return
-        from candle_schedule import planned_feeds
         infos=copy.deepcopy(self.watchlist)
         focus={'isin':self.instrument_cfg()['isin'],'timeframe':self.timeframe.get()}
         def apply(plan):
@@ -439,7 +438,10 @@ class Desktop014:
         # This only reads the plan; acquisition stays on the serial feed lane.
         # Aged history jobs outrank misc and can postpone the very planner
         # which assigns fresh/recovery work. Reuse the existing read lane.
-        self.job(lambda:planned_feeds(self.store,infos,focus=focus),apply,key='cp-schedule',lane='read')
+        # Proof validation in planning is CPU-heavy Python too: keep it out
+        # of the GUI interpreter/GIL, using the existing owned read worker.
+        self.job(lambda:self.compute_feed.calculate('feed_plan',{'watchlist':infos,'focus':focus}),
+            apply,key='cp-schedule',lane='read')
         self.root.after(30000,self._scheduled_refresh)
 
     def refresh_all_async(self):

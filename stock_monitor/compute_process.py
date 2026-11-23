@@ -93,6 +93,12 @@ def serve():
                 from feed_worker import FeedContext
                 if feed_context is None:feed_context=FeedContext(store)
                 result=feed_context.calculate(values['info'])
+            elif kind=='feed_plan':
+                from candle_schedule import planned_feeds
+                result=planned_feeds(store,values['watchlist'],now=values.get('now'),focus=values.get('focus'))
+            elif kind=='watchlist_order':
+                from watchlist_order import collect
+                result=collect(store.path,values['watchlist'],now=values.get('now'))
             elif kind=='eligibility':
                 from calculation_window import calculate_eligibility
                 result=calculate_eligibility(store,values['info'])
