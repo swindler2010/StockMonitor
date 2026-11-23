@@ -4,6 +4,31 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "joint_disjoint_tv_diagnoses_and_proved_neighbour_context",
+      "title": "�������� DIFFERENT-����������� ������� ����������� ������������� ������",
+      "sources": [
+        "gettex_chart"
+      ],
+      "states": [
+        "RETIME_OTHER_CURRENT_TV_REFERENCE_CONFLICT"
+      ],
+      "status": "IMPLEMENTED IN WINDOWS TEST; exact public code 9eed266 targeted7 PASS; ordinary CP joint/primary/empty chain completed23Nov12:36:05CET and read-only MCP verified",
+      "evidence": [
+        "stock_monitor/revision_watcher.py",
+        "stock_monitor/cp_reconciliation.py",
+        "test_cp_joint_review_context.py"
+      ],
+      "steps": [
+        "Use an already unique complete conserved GETTEX5m/15m partition to bind disjoint current15m DIFFERENT diagnoses with exact job/native digests. Presence contradictions and overlapping diagnoses remain blocking.",
+        "A proved partition may change only the neighbour context of a disjoint DIFFERENT diagnosis; original subject, listing and entire original visual fingerprint must remain unchanged. Reconstruct the complete original hash; each changed neighbour must be exact before/after of a current disjoint reviewed partition receipt. Do not renew visual timestamps or deadlines.",
+        "Requeue affected DIFFERENT neighbours through the existing bounded serial repair-followup route; no provider retry/deadline bypass, new worker, source merge or permission change.",
+        "Exact primary parent confirmation still requires unchanged captured native-window/source digests, screenshot hash, policy, identity and final writer revalidation. Real changes revoke reuse.",
+        "Targeted isolated scenario includes joint redistribution then ordinary queued primary-parent correction, changed native/source/policy/presence negatives; bounded53/200 followups. No production direct candle writes or trading grant.",
+        "Independent exact parent confirmation can precede or follow the disjoint partition diagnoses; both tested. Only pre-existing due15m visual-conflict receipts below algorithm2 get one new local pass, preserving future retry times and all unrelated completed jobs.",
+        "Natural Schneider19Nov chain: joint14:00-14:45 at23Nov12:28:15CET (changed3/relocated2), exact15:00-15:15 at12:31:37CET (changed3), ordinary follow-up12:36:05CET resolved all four jobs and confirmed14:45 NO_TRADES from complete primary files without inserting an empty candle.14:15 uses the joint receipt, not an additional repair. MCP returned corrected14:15/14:30/15:00; PAPER account/fills hashes unchanged. See docs/CP_CANDLE_RECOVERY_CURRENT_RU.md#cp-tv-joint-20261123."
+      ]
+    },
+    {
       "id": "official_native_five_minute_empty",
       "title": "Подтверждённые пустые 5m оставались в ожидании при поддержке только 15m",
       "sources": [
@@ -2812,5 +2837,5 @@
       "sha256_at_import": "1cdb3ec4c375da282bcdcc62de0eeba30ea30f1c7d1bd76bcd03f37d62c8da57"
     }
   ],
-  "updated_at": "2026-11-23T10:04:29+01:00"
+  "updated_at": "2026-11-23T12:37:22+01:00"
 }
