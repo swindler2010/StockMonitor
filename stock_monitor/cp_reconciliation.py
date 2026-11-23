@@ -280,11 +280,13 @@ def _classify(job, inputs, now):
                 native_complete=complete,
                 confirmed_empty_intervals=len(confirmed),actual_candles=len(frame),
                 observation_current=True,evidence_digest=digest(proof),evidence_checked_at=proof.get('checked_at'))
-        return dict(state='NATIVE_ROWS_CONFIRMED' if complete else 'NATIVE_ROWS_PRESENT' if check['state']!='INVALID' else 'INVALID',
+        result=dict(state='NATIVE_ROWS_CONFIRMED' if complete else 'NATIVE_ROWS_PRESENT' if check['state']!='INVALID' else 'INVALID',
                     reason='Штатный DQ обнаружил строки; окончательная полнота и допуск проверяются существующим pipeline',
                     native_dq=check['state'],market_state=market,can_affect_dq=False,
                     confirmed_empty_intervals=len(confirmed),actual_candles=len(frame),
                     observation_current=current)
+        if result['state']=='NATIVE_ROWS_PRESENT':result.update(_publication_wait(job,inputs))
+        return result
     # Identity alone omits TF; otherwise historical daily reviews incorrectly
     # take the narrower intraday calendar and fail before comparing evidence.
     sessions=schedule({**meta,'timeframe':job['tf']},a,b)
@@ -335,12 +337,38 @@ def _classify(job, inputs, now):
     visual=observation.get('result') if _observation_current(job,inputs) else None
     discrepancy=('TV_ROW_MISSING_IN_SM' if visual in ('PRESENT','ZERO_VOLUME') else
                  'TV_DIFFERENCE' if visual=='DIFFERENT' else 'MISSING_IN_BOTH' if visual=='ABSENT' else None)
-    return dict(state=state,reason=reason,market_state=market,discrepancy=discrepancy,
+    result=dict(state=state,reason=reason,market_state=market,discrepancy=discrepancy,
         can_affect_dq=state in ('NO_TRADES','MARKET_CLOSED'),
         traded_volume=0 if market=='NO_TRADES' else None,event_count=0 if market=='NO_TRADES' else None,
         zero_values_are='metadata only; no OHLCV row',
         evidence_digest=digest(proof),evidence_checked_at=proof.get('checked_at'),
         observation_current=bool(visual),indicator_timebase='Actual closed candles only; confirmed empty intervals add no observations or warmup')
+    if state=='UNCONFIRMED':result.update(_publication_wait(job,inputs))
+    return result
+
+
+def _publication_wait(job,inputs):
+    """A known partial official publication needs source recovery, not a click.
+
+    This describes an existing GETTEX acquisition task. It supplies no absence
+    proof, candle, waiver or new request; chart-vendor gaps remain independent.
+    """
+    import pandas as pd
+    meta=job['identity'];proof=inputs['proof']
+    if (meta.get('source')!='gettex' or meta.get('venue')!='GETTEX' or meta.get('currency')!='EUR'
+            or meta.get('symbol')!=job['isin'] or meta.get('timezone')!='Europe/Berlin'
+            or proof.get('isin')!=job['isin'] or proof.get('identity')!=meta
+            or proof.get('basis')!='complete_published_trade_files'):return {}
+    try:
+        a,b=pd.Timestamp(job['interval_start']),pd.Timestamp(job['end'])
+        if a.tzinfo is not None or b.tzinfo is not None or a>=b:return {}
+        for first,last in proof.get('incomplete_publication_intervals',[]):
+            left,right=pd.Timestamp(first),pd.Timestamp(last)
+            if left.tzinfo is None and right.tzinfo is None and left<right and left<b and right>a:
+                return dict(provider_wait=True,source_action='existing_gettex_acquisition',
+                    reason='SOURCE_COVERAGE_UNCONFIRMED: неполная публикация GETTEX; штатная очередь ждёт подтверждённую полную пару MUNC/MUND, пустой ответ не доказывает отсутствие сделок')
+    except (ValueError,TypeError):pass
+    return {}
 
 
 def _enqueue(db, spec, origin, now):
@@ -753,8 +781,8 @@ def turn(store, info, now=None, native_empty_only=False):
                     native_rows=inputs['rows'],native_neighbors=inputs['neighbors'],
                     checks=current.get('checks',0)+1,next_check=(clock+pd.Timedelta(hours=1)).isoformat(),
                     native_retry=inputs['native_retry'],capability=capability(),
-                    status='RESOLVED_NATIVE' if result['can_affect_dq'] or result['state']=='NATIVE_ROWS_CONFIRMED' else 'AWAITING_USER' if not current.get('observation') else 'AWAITING_SOURCE',
-                    review_required=not (result['can_affect_dq'] or result['state']=='NATIVE_ROWS_CONFIRMED' or result.get('observation_current',False)))
+                    status='RESOLVED_NATIVE' if result['can_affect_dq'] or result['state']=='NATIVE_ROWS_CONFIRMED' else 'AWAITING_SOURCE' if current.get('observation') or result.get('provider_wait') is True else 'AWAITING_USER',
+                    review_required=not (result['can_affect_dq'] or result['state']=='NATIVE_ROWS_CONFIRMED' or result.get('observation_current',False) or result.get('provider_wait') is True))
                 _queue_observed_recovery(db,current,inputs,result,clock.isoformat())
                 current['source_disposition']=_source_disposition(current,result,source_policy)
                 if current['source_disposition']:

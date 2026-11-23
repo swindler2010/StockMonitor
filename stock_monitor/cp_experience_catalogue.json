@@ -2295,6 +2295,48 @@
       "tests": [
         "test_cp_primary_window_confirmation.PrimaryWindow"
       ]
+    },
+    {
+      "id": "tv_scope_global_source_revision_strict_recheck",
+      "title": "Глобальное обновление доказательств источника повторно снимало неизменившийся исторический допуск",
+      "sources": [
+        "gettex_chart"
+      ],
+      "states": [
+        "INPUT_REVISION_CHANGED"
+      ],
+      "status": "IMPLEMENTED; targeted positive and negative tests PASS; Windows verification pending",
+      "evidence": [
+        "stock_monitor/cp_controls.py",
+        "test_cp_scoped_proof_revision.py",
+        "test_cp_scoped_tail.py"
+      ],
+      "steps": [
+        "On an issued TV absence receipt only, allow a newer interval_evidence revision after the original complete scoped visual fingerprint and native binding both match.",
+        "Keep policy, DQ, listing, instrument and unknown revisions strict; reclassify now and reject real trades, recovered bars, changed neighbours, file hashes, closures or future proof times.",
+        "Read-only revalidation never changes the grant, original input revisions, accepted_at or expiry. An ordinary CP writer may independently renew the same accepted scope."
+      ]
+    },
+    {
+      "id": "official_partial_publication_awaits_source_not_user",
+      "title": "Неполная официальная публикация ошибочно требовала нажатия пользователя",
+      "sources": [
+        "gettex"
+      ],
+      "states": [
+        "UNCONFIRMED",
+        "NATIVE_ROWS_PRESENT"
+      ],
+      "status": "IMPLEMENTED; targeted normal-turn source recovery test PASS; Windows verification pending",
+      "evidence": [
+        "stock_monitor/cp_reconciliation.py",
+        "test_cp_publication_wait.py"
+      ],
+      "steps": [
+        "Only exact GETTEX/EUR/ISIN official proof with an overlapping incomplete_publication interval enters AWAITING_SOURCE and describes the existing shared MUNC/MUND acquisition lane.",
+        "Keep the one-hour check deadline, DQ, complete-pair proof, final publication revisions and source cooldowns. No new worker, network pipeline, absence inference or data write.",
+        "When complete same-source evidence arrives, the ordinary turn reclassifies and resolves. Invalid native prices and independent chart-vendor gaps remain blocked; 404/empty answers do not prove NO_TRADES."
+      ]
     }
   ],
   "sources": [
@@ -2746,5 +2788,5 @@
       "sha256_at_import": "1cdb3ec4c375da282bcdcc62de0eeba30ea30f1c7d1bd76bcd03f37d62c8da57"
     }
   ],
-  "updated_at": "2026-11-23T00:58:00+01:00"
+  "updated_at": "2026-11-23T09:29:00+01:00"
 }

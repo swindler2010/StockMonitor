@@ -415,7 +415,8 @@ def _reviewed_market_tail_current(db,isin,entry,token,current):
         jobs=e.get('job_ids',[])
         if len(jobs)!=1:return False
         job_key=rv.PREFIX+isin+':'+jobs[0]
-        allowed={market,'setting:'+job_key}
+        proof_key='setting:interval_evidence:'+isin
+        allowed={market,'setting:'+job_key,proof_key}
         if (not changed or not changed<=allowed
                 or any(not isinstance(token[k],int) or current[k]<=token[k] for k in changed)):return False
         if not {'setting:'+TV_POLICY,'setting:'+job_key,'setting:interval_evidence:'+isin,
@@ -428,6 +429,16 @@ def _reviewed_market_tail_current(db,isin,entry,token,current):
                 or not _covered([p['range']],[[job['first'],job['last']]])):return False
         inputs=rv._input(db,job)
         if inputs['rows'] or _tv_native_binding(job,inputs)!=e['native_binding']:return False
+        if proof_key in changed:
+            # The full scoped visual fingerprint includes source identity,
+            # file hashes, relevant coverage/closures and native neighbours.
+            # Only a retained, still exact observation may survive a global
+            # proof revision. Never rebase a changed proof or renew a grant.
+            if not rv._observation_current(job,inputs):return False
+            checked=inputs['proof'].get('checked_at')
+            if checked is not None:
+                checked=pd.Timestamp(checked)
+                if checked.tzinfo is None or checked>pd.Timestamp.now(tz='UTC'):return False
         finding=rv._classify(job,inputs,pd.Timestamp.now(tz='UTC'))
         return (finding.get('state') in ('GAP','UNCONFIRMED','SOURCE_TIMEBASE_UNCONFIRMED')
                 and not finding.get('reason','').startswith('EXCHANGE_NOTICE_CONFLICT'))
