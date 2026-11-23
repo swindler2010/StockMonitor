@@ -108,10 +108,10 @@ def translate(row, target):
 
 def update_cache(rows, target, previous, translator=translate, now=None, maximum=3):
     now = time.time() if now is None else now
-    wanted = {fingerprint(row) for row in rows[:100]}
+    wanted = {fingerprint(row) for row in rows}
     cache = {k: v for k, v in (previous.get('items') or {}).items() if k in wanted}
     count = 0
-    for row in rows[:100]:
+    for row in rows:
         key = fingerprint(row); old = cache.get(key, {})
         if old.get('target') == target and (old.get('status') in ('TRANSLATED', 'ALREADY_TARGET') or now-old.get('at', 0) < 3600): continue
         if count >= maximum: break
@@ -119,12 +119,16 @@ def update_cache(rows, target, previous, translator=translate, now=None, maximum
         try: value = translator(row, target)
         except Exception as error: value = dict(status='UNAVAILABLE', target=target, error=str(error)[:100])
         cache[key] = {**value, 'at': now, 'fingerprint': key}
-    return dict(items=cache, target=target, engine=ENGINE)
+    from news_retention import digest,iso
+    pending=sum(not (cache.get(k,{}).get('target')==target and cache.get(k,{}).get('status') in ('TRANSLATED','ALREADY_TARGET')) and (k not in cache or now-cache[k].get('at',0)>=3600) for k in wanted)
+    retry=[v['at']+3600 for v in cache.values() if v.get('status')=='UNAVAILABLE' and v.get('at',0)+3600>now]
+    return dict(items=cache,target=target,engine=ENGINE,source_digest=digest(rows),pending_count=pending,
+                next_retry_at=min(retry) if retry else None,attempted_at=iso(now) if count else previous.get('attempted_at',iso(now)))
 
 
 def project(rows, cache, target):
     result = []
-    for row in rows[:100]:
+    for row in rows:
         value = cache.get('items', {}).get(fingerprint(row), {})
         accepted = value.get('target') == target and value.get('status') in ('TRANSLATED', 'ALREADY_TARGET')
         result.append({**row, 'original_title': row.get('title', ''), 'original_summary': row.get('summary', ''),

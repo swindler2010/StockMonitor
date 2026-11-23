@@ -55,7 +55,7 @@ def timestamp(value):
         return None
 
 
-def normalize(rows, now=None):
+def normalize(rows, now=None, *, maximum=100):
     now = time.time() if now is None else now
     result, seen, headlines = [], set(), set()
     from news_media import image_url
@@ -77,7 +77,7 @@ def normalize(rows, now=None):
                        'event_basis': 'HEADLINE_KEYWORDS_NOT_CONFIRMED_EVENT',
                        'text_quality': 'UPSTREAM_REPLACEMENT_CHARACTERS' if '\ufffd' in title+plain(raw.get('summary')) else 'AS_PROVIDED',
                        'translation': {'status': 'ORIGINAL_UNTRANSLATED', 'text_is_original': True}})
-    return sorted(result, key=lambda x: x['published'] or '', reverse=True)[:100]
+    return sorted(result, key=lambda x: x['published'] or '', reverse=True)[:maximum]
 
 
 def parse_feed(data, provider):
@@ -124,15 +124,15 @@ def download_feed(url):
 
 def snapshot(rows, errors, previous=None, now=None):
     now = time.time() if now is None else now
-    items = normalize(rows, now)
-    retained = not items and bool((previous or {}).get('articles'))
-    if retained:
-        items = normalize(previous['articles'], now)
+    from news_retention import merge,digest
+    incoming=normalize(rows,now,maximum=None)
+    items,seen=merge(incoming,previous,now)
+    retained=not incoming and bool(items)
     return dict(articles=items, errors=errors,
                 status='STALE_CACHE' if retained else 'PARTIAL' if items and errors else 'AVAILABLE' if items else 'UNAVAILABLE' if errors else 'EMPTY',
                 attempted_at=datetime.fromtimestamp(now, timezone.utc).isoformat(),
                 fetched_at=previous.get('fetched_at') if retained else datetime.fromtimestamp(now, timezone.utc).isoformat() if items else None,
-                retained_previous=retained)
+                retained_previous=retained,first_seen=seen,retention_days=7,content_digest=digest(items))
 
 
 def market_news(previous=None, fetch=download_feed):
@@ -195,7 +195,6 @@ def company_news(instrument, client, previous=None):
     result=snapshot(rows,errors,previous)
     if rows and attempts[-1].get('transport',{}).get('at'):
         result['fetched_at']=timestamp(attempts[-1]['transport']['at'])
-    result['articles']=result['articles'][:30]
     return {**result,'schema_version':2,'identity':identity,'isin':isin,'symbol':symbol,'source_attempts':attempts,
             'fallback_status':'USED' if any(a.get('matched',0)>0 for a in attempts[1:]) else 'EXHAUSTED' if len(attempts)>1 or not rows else 'NOT_NEEDED',
             'translation_policy':'ORIGINAL_SOURCE_WITH_SEPARATE_DISPLAY_TRANSLATION',

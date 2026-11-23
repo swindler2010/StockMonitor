@@ -50,14 +50,14 @@ class CalendarTests(unittest.TestCase):
         self.assertEqual(rows[0]['date'], '2026-12-08')
         self.assertEqual(len(rows), 1)
 
-    def test_runtime_uses_same_misc_lane_persists_ui_namespace_and_releases_busy(self):
+    def test_runtime_uses_same_news_lane_persists_ui_namespace_and_releases_busy(self):
         writes, pending, seen = [], [], []
         store = SimpleNamespace(directory=Path('.'), setting=lambda k, d: {}, set_setting=lambda k, v: writes.append(k))
         app = SimpleNamespace(store=store, closing=False, _calendar_listener=lambda value: seen.append(value),
                               job=lambda work, done, failed, **kwargs: pending.append((work, done, failed, kwargs)) or True)
         runtime = NewsRuntime(app); runtime.client = lambda url: fed() if 'federalreserve' in url else b'<dt>25/11/2026</dt><dd>General Council meeting</dd>'
         self.assertTrue(runtime.refresh_calendar()); self.assertFalse(runtime.refresh_calendar())
-        work, done, _, meta = pending.pop(); self.assertEqual(meta['lane'], 'misc')
+        work, done, _, meta = pending.pop(); self.assertEqual(meta['lane'], 'news')
         result = work(); app.closing = True; done(result)
         self.assertEqual(writes, [SETTING]); self.assertFalse(runtime.busy); self.assertFalse(seen)
 

@@ -78,6 +78,9 @@ class Dispatcher:
         # Let an overdue assessment take the next slot while keeping chart,
         # trading and explicit reads ahead and never preempting a writer.
         if lane=='eligibility' and time.monotonic()-task['queued']>=60:priority=1.05
+        # One sequential auxiliary news owner; an aged feed loop must not
+        # prevent unopened stocks from ever receiving their news cache.
+        if lane=='news':priority=1.75 if time.monotonic()-task['queued']>=30 else 4
         # CP session polling must not starve older feed/history turns behind
         # an always-changing visible instrument. Preserve chart/read priority.
         if lane=='feed_update' and time.monotonic()-task['queued']>=300:priority=min(priority,2)

@@ -30,9 +30,9 @@ class TranslationTests(unittest.TestCase):
         for total in (53, 200):
             rows = [row(n) for n in range(total)]; cache = {}; calls = []
             def translator(r, target): calls.append(fingerprint(r)); return translated(r, target)
-            for _ in range(35): cache = update_cache(rows, 'ru', cache, translator=translator, now=1)
-            self.assertEqual(len(calls), min(total, 100)); self.assertEqual(len(set(calls)), len(calls))
-            self.assertLessEqual(len(cache['items']), 100)
+            for _ in range((total+2)//3+1): cache = update_cache(rows, 'ru', cache, translator=translator, now=1)
+            self.assertEqual(len(calls), total); self.assertEqual(len(set(calls)), len(calls))
+            self.assertEqual(len(cache['items']), total)
 
     def test_translation_failure_is_explicit_original_and_backoff_prevents_busy_loop(self):
         def failed(*_): raise ValueError('MODEL_MISSING')
@@ -61,7 +61,7 @@ class TranslationTests(unittest.TestCase):
             return cache
         with patch('news_translation.update_cache', side_effect=update):
             self.assertTrue(runtime.translate_news('A', [row()], 'ru', callbacks.append))
-            w, d, meta = jobs.pop(); self.assertEqual(meta['lane'], 'misc'); result = w()
+            w, d, meta = jobs.pop(); self.assertEqual(meta['lane'], 'news'); result = w()
         self.assertFalse(state[setting('A', 'ru')]['items']); app.closing = True; d(result)
         self.assertFalse(callbacks); self.assertFalse(runtime.busy)
 

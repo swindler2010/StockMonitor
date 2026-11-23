@@ -20,6 +20,9 @@ def clean_saved(value):
     article={k:row.get(k) for k in ('provider','feed_provider','published','language','scope','publisher_status','publisher_url','relevance','link_kind') if isinstance(row.get(k),(str,type(None)))}
     article={k:(v[:500] if isinstance(v,str) else v) for k,v in article.items()}
     article.update(title=title,url=url,summary=plain(row.get('original_summary',row.get('summary')),1600),image_url=image_url(row.get('image_url')))
+    from news_retention import article as retained
+    article=retained({**article,'first_seen_at':row.get('first_seen_at')},time.time())
+    if article is None:return None
     return {'target':target,'article':article}
 
 

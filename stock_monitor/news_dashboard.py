@@ -18,9 +18,10 @@ PAGE_SIZE=12
 def prepare(value):
     value=value if isinstance(value,dict) else {}
     rows=value.get('articles') or []
-    rows=[row for row in rows[:100] if isinstance(row,dict)] if isinstance(rows,(list,tuple)) else []
+    from news_retention import project as retained
+    rows=retained(value)['articles']
     from news_translation import project
-    articles = normalize(rows)
+    articles = normalize(rows,maximum=None)
     if value.get('_translation_target'): articles = project(articles, value.get('_translation_cache', {}), value['_translation_target'])
     return dict(snapshot=value,articles=articles)
 
@@ -118,8 +119,9 @@ class Dialog:
         ttk.Label(centre,textvariable=self.heading,style='DeskTitle.TLabel',font=('Segoe UI',18,'bold')).pack(anchor='w',pady=(0,10))
         periods=ttk.Frame(centre,style='Desk.TFrame');periods.pack(fill='x',pady=(0,8))
         self.period_buttons={}
-        for label,days in [('Все',None),('24 ч',1),('3 д',3),('7 д',7),('14 д',14),('30 д',30),('3 мес',90)]:
+        for label,days in [('Все',None),('24 ч',1),('3 д',3),('7 д',7)]:
             b=ttk.Button(periods,text=tr(label),command=lambda value=days:self.period(value));b.pack(side='left',padx=(0,3));self.period_buttons[days]=b
+        ttk.Label(periods,text=tr('Хранение новостей — 7 дней'),style='DeskMuted.TLabel').pack(side='right')
         filters=ttk.Frame(centre,style='Desk.TFrame');filters.pack(fill='x',pady=(0,8))
         self.provider_box=ttk.Combobox(filters,textvariable=self.provider,values=[tr('Все')],state='readonly',style=p+'.TCombobox',width=20);self.provider_box.pack(side='left',padx=(0,5))
         ttk.Combobox(filters,textvariable=self.category,values=[tr('Все'),*(tr(v) for v in EVENTS.values())],state='readonly',style=p+'.TCombobox',width=18).pack(side='left',padx=5)

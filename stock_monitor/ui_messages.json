@@ -5168,5 +5168,9 @@
     "ru": "Достигнут лимит сохранённых элементов",
     "en": "Saved item limit reached",
     "de": "Maximale Anzahl gespeicherter Einträge erreicht"
+  },
+  "Хранение новостей — 7 дней": {
+    "en": "News retained for 7 days",
+    "de": "Nachrichten werden 7 Tage gespeichert"
   }
 }
