@@ -241,6 +241,7 @@ class Screen:
         app.root.bind('<Destroy>', lambda event:self.close() if event.widget is app.root else None, add='+')
 
     def sync_watchlist(self):
+        if hasattr(self,'quality_panel'):self.quality_panel.ensure_context()
         app = self.app
         infos = app.stock_order.ordered() if hasattr(app, 'stock_order') else app.watchlist
         query = self.query.get().casefold().strip()
@@ -277,7 +278,7 @@ class Screen:
                 app.instrument.set(selected['name'])
                 for variable in app.metrics.values():variable.set('—')
                 if hasattr(self,'delta'):
-                    self.delta.set('—');self.listing.set('—');self.source_summary.set('—');self.quality.set(tr('Загрузка'))
+                    self.delta.set('—');self.listing.set('—');self.source_summary.set('—')
             if iid in self.tree.get_children('') and self.tree.selection() != (iid,):
                 self.tree.selection_set(iid)
                 self.tree.see(iid)
@@ -477,6 +478,7 @@ class Screen:
             self.app.refresh_chart()
 
     def bind_engine(self, engine):
+        if hasattr(self,'quality_panel'):self.quality_panel.bind_engine(engine)
         if hasattr(self,'pages'):self.pages.engine_changed()
         value = engine.get('confidence') if isinstance(engine, dict) else None
         valid = (isinstance(engine, dict) and engine.get('status') in ('READY', 'DATA BLOCKED')
@@ -489,9 +491,6 @@ class Screen:
             self.progress['value'] = 0
             self.sync_text.set(tr('Синхронизация: обновление'))
             if hasattr(self, 'sync_label'):self.sync_label.configure(style='DeskSyncPending.TLabel')
-            if hasattr(self, 'quality'):
-                self.quality.set(tr('Ожидается актуальный расчёт'))
-                self.quality_bar['value'] = 0
         contexts = (engine.get('timeframe_context') or {}) if valid else {}
         contexts = contexts if isinstance(contexts, dict) else {}
         for tf, variable in self.context_vars.items():
@@ -528,6 +527,7 @@ class Screen:
 
     def bind_chart(self, prepared):
         """Project the already accepted frame's bounded tail and provenance."""
+        if hasattr(self,'quality_panel'):self.quality_panel.bind_chart(prepared)
         frame = prepared.get('frame')
         if frame is None or frame.empty:
             self.delta.set('—')
@@ -537,13 +537,6 @@ class Screen:
         self.sync_text.set(tr('Синхронизация: ОК'))
         self.sync_label.configure(style='DeskSyncGood.TLabel')
         self.listing.set(' · '.join(str(meta.get(k) or '—') for k in ('venue', 'currency', 'source')))
-        dq = meta.get('data_quality') or {}
-        self.quality.set(str(dq.get('state', '—')) if isinstance(dq, dict) else str(dq))
-        state = self.quality.get()
-        self.quality_bar.configure(style='DeskQualityGood.Horizontal.TProgressbar' if state == 'READY'
-                                   else 'DeskQualityBad.Horizontal.TProgressbar' if state == 'INVALID'
-                                   else 'DeskQualityPending.Horizontal.TProgressbar')
-        self.quality_bar['value'] = 100 if state != '—' else 0
         self.source_summary.set(str(meta.get('source') or '—') + ' · ' + str(meta.get('venue') or '—'))
         if hasattr(self, 'header_volume'):
             volume = finite_float(frame.volume.iloc[-1])
@@ -1058,14 +1051,10 @@ def build(app, periods, bg, text):
         label.pack(side='right')
         screen.source_rows[name] = variable, label
     app.tooltip(sources, 'Показан выбранный ряд и время его свечи. LSEG и financial.com описывают одного поставщика, а не независимые подтверждения свежести.')
-    quality = ttk.Frame(side,padding=(9,5),style='DeskCard.TFrame')
-    quality.pack(side='bottom',fill='x',before=scroller,padx=4,pady=(4,0))
-    ttk.Label(quality,text=tr('Качество данных'),style='Desk.TLabel',font=('Segoe UI',10,'bold')).pack(anchor='w')
-    screen.quality = tk.StringVar(app.root, '—')
-    screen.quality_bar = ttk.Progressbar(quality, style='DeskQualityPending.Horizontal.TProgressbar', maximum=100)
-    screen.quality_bar.pack(fill='x', pady=(3, 5))
-    app.tooltip(screen.quality_bar, 'Цвет показывает фактический DQ-статус, а не выдуманный процент качества или допуск к сделке.')
-    ttk.Label(quality, textvariable=screen.quality, style='Desk.TLabel').pack(anchor='w')
+    from quality_panel import Panel
+    screen.quality_panel=Panel(app,side)
+    screen.quality_panel.frame.pack(side='bottom',fill='x',before=scroller,padx=4,pady=(4,0))
+    screen.quality=screen.quality_panel.audit
     details = card('Позиция и подробности анализа')
     for key, label in [('ema10', 'EMA 10'), ('ema30', 'EMA 30'), ('support','Поддержка'),('resistance','Сопротивление'),('stop', 'Стоп'), ('add', 'Добавление'), ('position', 'Позиция / результат')]:
         ttk.Label(details, text=tr(label), style='DeskMuted.TLabel').pack(anchor='w')

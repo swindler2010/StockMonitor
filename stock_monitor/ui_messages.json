@@ -5264,5 +5264,109 @@
   "Даты и прогнозы могут измениться": {
     "en": "Dates and estimates may change",
     "de": "Termine und Prognosen können sich ändern"
+  },
+  "История CP": {
+    "en": "CP history",
+    "de": "CP-Historie"
+  },
+  "Проверка истории": {
+    "en": "History audit",
+    "de": "Historienprüfung"
+  },
+  "Ожидание DQ": {
+    "en": "Awaiting DQ",
+    "de": "DQ wird erwartet"
+  },
+  "Анализ: ожидается расчёт": {
+    "en": "Analysis: awaiting calculation",
+    "de": "Analyse: Berechnung ausstehend"
+  },
+  "Анализ: данные блокируют расчёт": {
+    "en": "Analysis: blocked by data",
+    "de": "Analyse: durch Daten blockiert"
+  },
+  "Анализ доступен": {
+    "en": "Analysis available",
+    "de": "Analyse verfügbar"
+  },
+  "Цена и риск — перед сделкой": {
+    "en": "Price and risk checked before orders",
+    "de": "Preis und Risiko werden vor Orders geprüft"
+  },
+  "Неполных агрегатов: {count}": {
+    "en": "Incomplete aggregates: {count}",
+    "de": "Unvollständige Aggregate: {count}"
+  },
+  "Неподтверждённых интервалов: {count}": {
+    "en": "Unconfirmed intervals: {count}",
+    "de": "Unbestätigte Intervalle: {count}"
+  },
+  "Пропущенных свечей: {count}": {
+    "en": "Missing candles: {count}",
+    "de": "Fehlende Kerzen: {count}"
+  },
+  "Полнота публикации не подтверждена": {
+    "en": "Publication completeness unconfirmed",
+    "de": "Vollständigkeit der Veröffentlichung unbestätigt"
+  },
+  "Некорректные OHLCV": {
+    "en": "Invalid OHLCV",
+    "de": "Ungültige OHLCV"
+  },
+  "Причина не указана": {
+    "en": "Reason not supplied",
+    "de": "Grund nicht angegeben"
+  },
+  "Замечаний нет": {
+    "en": "No issues",
+    "de": "Keine Beanstandungen"
+  },
+  "Предупреждений: {count}": {
+    "en": "Warnings: {count}",
+    "de": "Warnungen: {count}"
+  },
+  "Ещё причин: {count}": {
+    "en": "More reasons: {count}",
+    "de": "Weitere Gründe: {count}"
+  },
+  "ТФ проверки DQ": {
+    "en": "DQ audit timeframe",
+    "de": "Zeitrahmen der DQ-Prüfung"
+  },
+  "Это проверка истории, не разрешение на сделку.": {
+    "en": "This is a history audit, not permission to execute orders.",
+    "de": "Dies ist eine Historienprüfung, keine Orderfreigabe."
+  },
+  "Временных отметок: {actual}/{expected}": {
+    "en": "Candle timestamps: {actual}/{expected}",
+    "de": "Kerzenzeitpunkte: {actual}/{expected}"
+  },
+  "Показаны первые {count} из {total}": {
+    "en": "Showing first {count} of {total}",
+    "de": "Die ersten {count} von {total} werden angezeigt"
+  },
+  "Причины": {
+    "en": "Reasons",
+    "de": "Gründe"
+  },
+  "Диапазоны": {
+    "en": "Ranges",
+    "de": "Bereiche"
+  },
+  "Проверено": {
+    "en": "Checked",
+    "de": "Geprüft"
+  },
+  "Предупреждения": {
+    "en": "Warnings",
+    "de": "Warnungen"
+  },
+  "Таймфрейм": {
+    "en": "Timeframe",
+    "de": "Zeitrahmen"
+  },
+  "Нет подтверждённого ряда": {
+    "en": "No confirmed series",
+    "de": "Keine bestätigte Zeitreihe"
   }
 }
