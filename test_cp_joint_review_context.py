@@ -31,6 +31,9 @@ class JointReviewContext(unittest.TestCase):
    with s.connect() as d:
     j,_=rv._enqueue(d,js,dict(kind='related_fixture'),now);i=rv._input(d,j);old=dict(j);j.update(input_fingerprint=i['fingerprint'],fingerprint_version=rv.FINGERPRINT_VERSION);rv._save_job(d,j,old)
    rv.observe(s,j['id'],isin,rv.digest(s.setting(rv.key(j))),'DIFFERENT','GETTEX:FIX',True);jobs.append(s.setting(rv.key(j)))
+  if getattr(self,'primary_review_last',False):
+   rv.confirm_primary_window(s,spec,paths[0],'GETTEX:FIX',[str(paths[1])],['timestamp','open','high','low','close','volume'],True,'isolated exact primary parent')
+   original_observation=copy.deepcopy(s.setting(rv.key(spec))['observation'])
   job=jobs[-1]
   with s.connect() as d:
    i=rv._input(d,job);plan=rw.retime_plan(d,job,i,now);self.assertIsNotNone(plan);self.assertEqual(plan['mode'],'VERIFIED_NATIVE_TRADE_PARTITION');self.assertIn(jobs[0]['id'],plan['co_review_inputs']);self.assertEqual(plan['end'],t('14:45'))
@@ -59,6 +62,10 @@ class JointReviewContext(unittest.TestCase):
   final=s.setting(rw.RETIME_PREFIX+isin+':'+spec['id'])
   with s.connect() as d:self.assertTrue(rw.retime_current(d,final));self.assertEqual(rw._native(d,isin,m,'15m',spec['first'],spec['end']),source['rows']['15m'])
   self.assertIsNone(s.setting('cp_manual_risk:'+isin))
+
+ def test_independent_primary_review_recorded_last_does_not_deadlock_disjoint_partition(self):
+  self.primary_review_last=True
+  self.test_conserved_joint_reviews_keep_exact_disjoint_primary_confirmation_and_final_guards()
 
  def test_53_and_200_adjacent_difference_followups_are_bounded_and_preserve_other_identity(self):
   root=Path(__file__).parent.parent.parent/'СМ-Архив'

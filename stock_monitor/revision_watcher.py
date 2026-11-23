@@ -311,14 +311,14 @@ def _protect_visual_references(db,job,inputs,plan):
   if binding and obs['result']=='DIFFERENT':
    from cp_controls import digest
    if digest(review)==binding['job_digest'] and checked['fingerprint']==binding['input_fingerprint']:continue
-  # A newer proved partition may update the context of a disjoint diagnosis;
+  # A proved partition may update only the context of a disjoint diagnosis;
   # it does not change that diagnosis's subject rows or contradict its fact.
   # The unchanged subject can reuse its observation only through the exact
   # current primary-receipt binding below, never by moving its timestamp.
   disjoint=review['end']<=plan['first'] or plan['end']<=review['first']
   if (obs['result']=='DIFFERENT' and disjoint and plan.get('native_partition_proved')
       and own.get('result')=='DIFFERENT' and own_at is not None
-      and obs.get('at') and own_at>pd.Timestamp(obs['at'])):continue
+      and obs.get('at')):continue
   present=any(review['first']<=r[0]<review['end'] for r in canonical)
   covered=plan['first']<=review['first'] and review['end']<=plan['end']
   if (obs['result']=='ABSENT' and present
