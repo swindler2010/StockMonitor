@@ -459,6 +459,7 @@ class Screen:
     def _apply_selection(self):
         self._selection_pending = None
         self.sync_watchlist()
+        if hasattr(self,'pages'):self.pages.context_changed()
 
     def choose_stock(self, _=None):
         selected = self.tree.selection()
@@ -475,6 +476,7 @@ class Screen:
             self.app.refresh_chart()
 
     def bind_engine(self, engine):
+        if hasattr(self,'pages'):self.pages.engine_changed()
         value = engine.get('confidence') if isinstance(engine, dict) else None
         valid = (isinstance(engine, dict) and engine.get('status') in ('READY', 'DATA BLOCKED')
                  and engine.get('signal') in ('BUY', 'SELL', 'WAIT', 'HOLD'))
@@ -572,6 +574,7 @@ class Screen:
     def fullscreen(self, active):
         # Chart itself, its artists and viewport remain the same objects.
         if active:
+            if hasattr(self,'pages'):self.pages.select('chart')
             self.sidebar.pack_forget()
             self.asset.pack_forget()
             self.bottom_shared.pack_forget()
@@ -608,6 +611,7 @@ class Screen:
 
     def close(self):
         self._closed = True
+        if hasattr(self,'pages'):self.pages.close()
         for timer in (self._clock_timer, self._account_timer, self._delta_timer, self._selection_pending, self._favorite_timer, self._news_translation_timer):
             if timer is not None:
                 try:self.app.root.after_cancel(timer)
@@ -870,10 +874,11 @@ def build(app, periods, bg, text):
     tab_strip = ttk.Frame(tabs,style='Desk.TFrame')
     tab_strip.grid(row=0,column=0,sticky='ew')
     tab_buttons=[]
-    for label, command in [('Обзор', app.show_card), ('График', lambda: app.canvas.get_tk_widget().focus_set()),
-                           ('Анализ', app.show_card), ('Финансы', app.show_card), ('Отчёты', app.show_news),
-                           ('Новости', app.show_news), ('События', app.show_news)]:
-        button=ttk.Button(tab_strip, text=tr(label), command=command, style='DeskActive.TButton' if label == 'График' else 'TButton')
+    from workspace_pages import SECTIONS
+    screen.section_buttons={}
+    for section,label in SECTIONS.items():
+        button=ttk.Button(tab_strip,text=tr(label),command=lambda key=section:screen.pages.select(key),style='DeskActive.TButton' if section=='chart' else 'TButton')
+        screen.section_buttons[section]=button
         tab_buttons.append(button)
     def wrap_tabs(event):
         flow_widgets(tab_buttons,event.width)
@@ -947,8 +952,9 @@ def build(app, periods, bg, text):
     screen.news.grid(row=0,column=0,sticky='nsew',padx=(0,6))
     news_bar = ttk.Frame(screen.news, style='Desk.TFrame')
     news_bar.pack(fill='x')
-    for label, command in [('Новости', app.show_news), ('События', app.show_news), ('Отчёты', app.show_news), ('Календарь', lambda:screen.calendar_panel.show())]:
-        ttk.Button(news_bar, text=tr(label), command=command).pack(side='left', padx=(0, 2))
+    screen.bottom_buttons={}
+    for label, command in [('Новости',lambda:screen.pages.select('news')),('События',lambda:screen.pages.select('events')),('Отчёты',lambda:screen.pages.select('reports')),('Календарь', lambda:screen.calendar_panel.show())]:
+        button=ttk.Button(news_bar,text=tr(label),command=command);button.pack(side='left',padx=(0,2));screen.bottom_buttons[label]=button
     screen.news_text = tk.StringVar(app.root)
     screen.news_label = ttk.Label(screen.news, textvariable=screen.news_text, style='DeskMuted.TLabel', wraplength=650, font=('Segoe UI', 8))
     screen.news_label.pack(fill='x', pady=2)
@@ -957,7 +963,7 @@ def build(app, periods, bg, text):
         screen.news_tree.heading(key, text=tr(label))
         screen.news_tree.column(key, width=width, minwidth=55, stretch=key == 'title')
     screen.news_tree.pack(fill='x')
-    screen.news_tree.bind('<Double-1>', lambda _: app.show_news())
+    screen.news_tree.bind('<Double-1>',lambda _:screen.pages.select('news'))
     screen.news.bind('<Configure>', lambda e: screen.news_label.configure(wraplength=max(100, e.width - 15)))
     app.fig = Figure(figsize=(10, 7), dpi=100, facecolor=bg)
     app.ax_price = app.fig.add_axes([.09, .3, .88, .65])
@@ -966,6 +972,8 @@ def build(app, periods, bg, text):
         axes.set_facecolor(bg)
     app.canvas = FigureCanvasTkAgg(app.fig, master=screen.workspace)
     app.canvas.get_tk_widget().pack(fill='both', expand=True)
+    from workspace_pages import Pages
+    screen.pages=Pages(screen);screen.pages.buttons=screen.section_buttons
     for event, callback in [('motion_notify_event', app.on_motion), ('figure_leave_event', app.on_leave), ('button_press_event', app.on_press), ('button_release_event', app.on_release), ('scroll_event', app.on_scroll)]:
         app.canvas.mpl_connect(event, callback)
 

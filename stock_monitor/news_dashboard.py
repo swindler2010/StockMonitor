@@ -87,14 +87,18 @@ def details(article):
 
 
 class Dialog:
-    def __init__(self,app):
+    def __init__(self,app,parent=None):
         from main_screen import native_titlebar
         self.app=app;self.closed=False;self.generation=0;self.page=0;self.days=None;self.packet={};self.rows=[];self.shown=[]
         self.render_timer=self.freshness_timer=self.translation_timer=None
-        self.win=win=tk.Toplevel(app.root);app._news_window=win
+        self.embedded=parent is not None
+        self.win=win=ttk.Frame(parent,style='Desk.TFrame') if self.embedded else tk.Toplevel(app.root)
+        if self.embedded:win.pack(fill='both',expand=True)
+        else:app._news_window=win
         width=min(1500,max(1000,app.root.winfo_width()-40),win.winfo_screenwidth()-70)
         height=min(870,max(620,app.root.winfo_height()-70),win.winfo_screenheight()-90)
-        win.geometry(f'{width}x{height}+{max(0,app.root.winfo_rootx()+20)}+{max(0,app.root.winfo_rooty()+35)}');win.minsize(1000,620)
+        if not self.embedded:
+            win.geometry(f'{width}x{height}+{max(0,app.root.winfo_rootx()+20)}+{max(0,app.root.winfo_rooty()+35)}');win.minsize(1000,620)
         self.palette=palette=THEMES.get(app.store.setting('theme','Тёмная'),THEMES['Тёмная'])
         self.p=p=styles(app.root,palette)
         self.targets=[(tr('Рынок и экономика'),'market',None)]+[(i['name'],i['isin'],i.get('profile_symbol') or i.get('history_symbol')) for i in app.watchlist if i.get('kind')!='benchmark']
@@ -104,11 +108,13 @@ class Dialog:
         top=ttk.Frame(base,style=p+'.TFrame');top.pack(fill='x',pady=(0,10))
         self.choice=ttk.Combobox(top,values=[x[0] for x in self.targets],state='readonly',style=p+'.TCombobox',width=42)
         self.choice.pack(side='left',padx=(0,10))
+        if self.embedded:self.choice.configure(state='disabled',width=25)
         selected=next((n for n,x in enumerate(self.targets) if x[0]==app.symbol.get()),0);self.choice.current(selected)
-        ttk.Label(top,textvariable=self.status,style='DeskMuted.TLabel',wraplength=700).pack(side='left',fill='x',expand=True)
+        ttk.Label(top,textvariable=self.status,style='DeskMuted.TLabel',wraplength=300 if self.embedded else 700,width=20 if self.embedded else None).pack(side='left',fill='x',expand=True)
         ttk.Button(top,text=tr('↻ Обновить'),command=self.refresh).pack(side='right')
         workspace=ttk.Frame(base,style=p+'.TFrame');workspace.pack(fill='both',expand=True)
         side_host=ttk.Frame(workspace,width=330,style=p+'.TFrame');side_host.pack(side='right',fill='y',padx=(10,0));side_host.pack_propagate(False)
+        if self.embedded:side_host.pack_forget()
         self.side_canvas=tk.Canvas(side_host,background=palette['bg'],highlightthickness=0)
         side_scroll=ttk.Scrollbar(side_host,command=self.side_canvas.yview,style=p+'.Vertical.TScrollbar');side_scroll.pack(side='right',fill='y')
         self.side_canvas.configure(yscrollcommand=side_scroll.set);self.side_canvas.pack(fill='both',expand=True)
@@ -123,8 +129,8 @@ class Dialog:
             b=ttk.Button(periods,text=tr(label),command=lambda value=days:self.period(value));b.pack(side='left',padx=(0,3));self.period_buttons[days]=b
         ttk.Label(periods,text=tr('Хранение новостей — 7 дней'),style='DeskMuted.TLabel').pack(side='right')
         filters=ttk.Frame(centre,style='Desk.TFrame');filters.pack(fill='x',pady=(0,8))
-        self.provider_box=ttk.Combobox(filters,textvariable=self.provider,values=[tr('Все')],state='readonly',style=p+'.TCombobox',width=20);self.provider_box.pack(side='left',padx=(0,5))
-        ttk.Combobox(filters,textvariable=self.category,values=[tr('Все'),*(tr(v) for v in EVENTS.values())],state='readonly',style=p+'.TCombobox',width=18).pack(side='left',padx=5)
+        self.provider_box=ttk.Combobox(filters,textvariable=self.provider,values=[tr('Все')],state='readonly',style=p+'.TCombobox',width=14 if self.embedded else 20);self.provider_box.pack(side='left',padx=(0,5))
+        ttk.Combobox(filters,textvariable=self.category,values=[tr('Все'),*(tr(v) for v in EVENTS.values())],state='readonly',style=p+'.TCombobox',width=14 if self.embedded else 18).pack(side='left',padx=5)
         ttk.Label(filters,text=tr('Тональность: не рассчитана'),style='DeskMuted.TLabel').pack(side='left',padx=8)
         search=ttk.Entry(filters,textvariable=self.query,style=p+'.TEntry',font=('Segoe UI',10));search.pack(side='left',fill='x',expand=True,padx=(5,0))
         app.tooltip(search,'Поиск в заголовках и кратком содержании')
@@ -143,11 +149,12 @@ class Dialog:
 
         toolbar=ttk.Frame(centre,style='Desk.TFrame');toolbar.pack(fill='x',pady=(0,7))
         ttk.Label(toolbar,textvariable=self.result_text,style='DeskMuted.TLabel').pack(side='left')
-        ttk.Combobox(toolbar,textvariable=self.sort,values=[tr('Сначала новые'),tr('Сначала старые')],state='readonly',style=p+'.TCombobox',width=20).pack(side='left',padx=12)
-        ttk.Checkbutton(toolbar,text=tr('Компактный список'),variable=self.compact,command=self.schedule).pack(side='right')
+        ttk.Combobox(toolbar,textvariable=self.sort,values=[tr('Сначала новые'),tr('Сначала старые')],state='readonly',style=p+'.TCombobox',width=16 if self.embedded else 20).pack(side='left',padx=8 if self.embedded else 12)
+        compact=ttk.Checkbutton(toolbar,text='' if self.embedded else tr('Компактный список'),variable=self.compact,command=self.schedule);compact.pack(side='right')
+        if self.embedded:app.tooltip(compact,'Компактный список')
         paging=ttk.Frame(centre,style='Desk.TFrame');paging.pack(side='bottom',fill='x',pady=(7,0))
         self.view_mode=tk.StringVar(win,tr('Все новости'))
-        self.view_box=ttk.Combobox(toolbar,textvariable=self.view_mode,values=[tr('Все новости'),tr('Избранные новости'),tr('Закладки')],state='readonly',style=p+'.TCombobox',width=19)
+        self.view_box=ttk.Combobox(toolbar,textvariable=self.view_mode,values=[tr('Все новости'),tr('Избранные новости'),tr('Закладки')],state='readonly',style=p+'.TCombobox',width=14 if self.embedded else 19)
         self.view_box.pack(side='right',padx=8);self.view_box.bind('<<ComboboxSelected>>',lambda _:self.period(self.days))
         self.page_text=tk.StringVar(win)
         ttk.Button(paging,text='‹',width=3,command=lambda:self.change_page(-1)).pack(side='left')
@@ -168,10 +175,11 @@ class Dialog:
         self.choice.bind('<<ComboboxSelected>>',lambda _:self.load())
         for variable in (self.query,self.provider,self.category,self.sort):variable.trace_add('write',lambda *_:self.schedule())
         self.listener=lambda key,value:self.project(key,value)
-        app._news_listener=self.listener
-        win.protocol('WM_DELETE_WINDOW',self.close);win.bind('<Escape>',lambda _:self.close())
+        if not self.embedded:
+            app._news_listener=self.listener
+            win.protocol('WM_DELETE_WINDOW',self.close);win.bind('<Escape>',lambda _:self.close())
         win.bind('<Destroy>',lambda event:self.cleanup() if event.widget is win else None,add='+')
-        win.bind('<Map>',lambda event:win.after_idle(lambda:native_titlebar(win,palette)) if event.widget is win else None,add='+')
+        if not self.embedded:win.bind('<Map>',lambda event:win.after_idle(lambda:native_titlebar(win,palette)) if event.widget is win else None,add='+')
         from news_cards import Cards
         self.presentation=Cards(self);self.presentation.start()
         self.load();self.tick()
@@ -181,7 +189,9 @@ class Dialog:
     def load(self,clear=True):
         self.generation+=1;generation=self.generation;name,key,_=self.target()
         if clear:self.rows=[];self.packet={};self.page=0;self.render()
-        self.heading.set(tr('Новости')+' • '+name);self.win.title(tr('Новости')+' • '+name);self.status.set(tr('Чтение сохранённых новостей…'))
+        self.heading.set(tr('Новости')+' • '+name)
+        if not self.embedded:self.win.title(tr('Новости')+' • '+name)
+        self.status.set(tr('Чтение сохранённых новостей…'))
         def done(packet):self.receive(key,generation,packet)
         def failed(message):
             if not self.closed and generation==self.generation:self.status.set(tr('Кэш новостей временно недоступен')+': '+str(message or 'QUEUE_BUSY')[:160])
@@ -259,6 +269,7 @@ class Dialog:
         self.translation_timer=self.win.after(1000,run)
 
     def summary(self):
+        if self.embedded:return
         for widget in self.side.winfo_children():widget.destroy()
         _,key,_=self.target();info=next((i for i in self.app.watchlist if i['isin']==key),None)
         frame=ttk.Frame(self.side,padding=14,style='DeskCard.TFrame');frame.pack(fill='x',pady=(0,10))

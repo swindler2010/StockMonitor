@@ -5172,5 +5172,65 @@
   "Хранение новостей — 7 дней": {
     "en": "News retained for 7 days",
     "de": "Nachrichten werden 7 Tage gespeichert"
+  },
+  "Чтение сохранённых данных…": {
+    "en": "Reading saved data…",
+    "de": "Gespeicherte Daten werden gelesen…"
+  },
+  "Данные временно недоступны. Повторите обновление.": {
+    "en": "Data temporarily unavailable. Try refreshing again.",
+    "de": "Daten sind vorübergehend nicht verfügbar. Aktualisierung erneut versuchen."
+  },
+  "Полная карточка в отдельном окне": {
+    "en": "Full company card in a separate window",
+    "de": "Vollständige Unternehmenskarte in einem eigenen Fenster"
+  },
+  "Подробная отчётность": {
+    "en": "Detailed financial statements",
+    "de": "Detaillierte Finanzberichte"
+  },
+  "Последняя свеча": {
+    "en": "Latest candle",
+    "de": "Letzte Kerze"
+  },
+  "Закрытых свечей": {
+    "en": "Closed candles",
+    "de": "Geschlossene Kerzen"
+  },
+  "Индикаторы последней свечи; формирующаяся свеча предварительная": {
+    "en": "Indicators of the latest candle; the forming candle is provisional",
+    "de": "Indikatoren der letzten Kerze; die laufende Kerze ist vorläufig"
+  },
+  "Отчётность ещё не загружена. Откройте подробную отчётность для обновления.": {
+    "en": "Financial statements have not been loaded. Open detailed statements to refresh.",
+    "de": "Finanzberichte wurden noch nicht geladen. Detaillierte Berichte zur Aktualisierung öffnen."
+  },
+  "Валюта указана у каждого показателя": {
+    "en": "Currency is shown for each metric",
+    "de": "Die Währung ist bei jeder Kennzahl angegeben"
+  },
+  "Signal MACD": {
+    "en": "MACD signal",
+    "de": "MACD-Signallinie"
+  },
+  "Публикации эмитента:": {
+    "de": "Veröffentlichungen des Emittenten:",
+    "en": "Issuer publications:"
+  },
+  "График": {
+    "en": "Chart",
+    "de": "Chart"
+  },
+  "Анализ": {
+    "en": "Analysis",
+    "de": "Analyse"
+  },
+  "Финансы": {
+    "en": "Financials",
+    "de": "Finanzen"
+  },
+  "События": {
+    "en": "Events",
+    "de": "Ereignisse"
   }
 }
