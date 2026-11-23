@@ -155,7 +155,7 @@ class BenchmarkMixin:
             if not self.closing and getattr(self,'_active_chart_read',None) is active:
                 self.compute_chart.interrupt('chart')
         self._chart_read_cancel=(active,self.root.after(delay,cancel_old))
-        emit=getattr(self,'_performance_emit',None)
+        emit=getattr(self.root,'_performance_emit',None)
         if emit:emit('chart_read_handoff',phase='engine',grace_seconds=delay/1000)
 
     def _chart_failed(self,error):

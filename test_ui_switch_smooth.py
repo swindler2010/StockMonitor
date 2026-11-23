@@ -56,6 +56,8 @@ class WarmChartHandoff(unittest.TestCase):
             app,active,mix=self.app()
             for _ in range(count):mix._supersede_chart_read(app)
             app.root.after.assert_called_once();app.compute_chart.interrupt.assert_not_called()
+            app.root._performance_emit.assert_called_once()
+            self.assertEqual(app.root._performance_emit.call_args.args,('chart_read_handoff',))
             delay,callback=app.root.after.call_args.args
             self.assertGreater(delay,0);self.assertLessEqual(delay,5000)
             app._active_chart_read=(object(),'display',time.monotonic())
