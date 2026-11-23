@@ -2254,6 +2254,47 @@
       ],
       "automatic_action": "Recover the independently published positive closing suffix with original lineage and ordinary reassessment",
       "manual_action": "Current visual review if unavailable; missing complete source files or ambiguous mapping remains blocked"
+    },
+    {
+      "id": "official_automatic_zero_timebase",
+      "title": "Полностью доказанный перенос существующего нулевого наблюдения без внешнего подтверждения",
+      "sources": [
+        "gettex_chart",
+        "gettex"
+      ],
+      "states": [
+        "SOURCE_TIMEBASE_UNCONFIRMED"
+      ],
+      "status": "IMPLEMENTED;9 normal autonomous source repairs verified,6 using new zero-only rule; no TV automation or trading permission",
+      "steps": [
+        "Complete paired GETTEX tape must exactly conserve all native OHLCV and every15m parent; every positive5m row unchanged.",
+        "Unique bijection of existing flat zero-volume observations only, maximum5m delay; no new observations or NO_TRADES inference.",
+        "Bounded due version pass on existing serial writer; retain future/completed requests, identity/policy/source/input final guards and rollback."
+      ],
+      "tests": [
+        "test_cp_automatic_zero_timebase.AutomaticZero"
+      ]
+    },
+    {
+      "id": "official_exact_primary_parent_confirmation",
+      "title": "Неполное количество native: точный первичный родитель подтверждён визуально в TV",
+      "sources": [
+        "gettex_chart",
+        "gettex"
+      ],
+      "states": [
+        "SOURCE_DISCREPANCY",
+        "GAP"
+      ],
+      "status": "IMPLEMENTED;Alphabet26Oct16:30 parent and16:40 child repaired by normal CP; manual TV review remains assisted",
+      "steps": [
+        "Metadata API accepts no OHLCV, binds exact manually reviewed timestamp/O/H/L/C/V of one closed15m GETTEX/EUR parent to previously captured primary and native inputs.",
+        "Revalidate complete source tape,5m/15m listing, policy, screenshot hashes and all native rows before ordinary writer publication; conflicting current TV facts block.",
+        "Use only independently saved primary values; preserve superseded values and lineage separately from conserved relocations; queue DQ/CORE through normal pipeline."
+      ],
+      "tests": [
+        "test_cp_primary_window_confirmation.PrimaryWindow"
+      ]
     }
   ],
   "sources": [
@@ -2704,5 +2745,6 @@
       "kind": "5 target visual diagnosis and saved-source comparison; no import; no trading PASS",
       "sha256_at_import": "1cdb3ec4c375da282bcdcc62de0eeba30ea30f1c7d1bd76bcd03f37d62c8da57"
     }
-  ]
+  ],
+  "updated_at": "2026-11-23T00:58:00+01:00"
 }
