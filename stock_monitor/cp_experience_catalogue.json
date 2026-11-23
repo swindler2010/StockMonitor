@@ -2305,7 +2305,7 @@
       "states": [
         "INPUT_REVISION_CHANGED"
       ],
-      "status": "IMPLEMENTED; targeted positive and negative tests PASS; Windows verification pending",
+      "status": "IMPLEMENTED IN WINDOWS TEST; exact public-code targeted tests PASS; ordinary CP verification recorded in current report",
       "evidence": [
         "stock_monitor/cp_controls.py",
         "test_cp_scoped_proof_revision.py",
@@ -2327,7 +2327,7 @@
         "UNCONFIRMED",
         "NATIVE_ROWS_PRESENT"
       ],
-      "status": "IMPLEMENTED; targeted normal-turn source recovery test PASS; Windows verification pending",
+      "status": "IMPLEMENTED IN WINDOWS TEST; exact public-code targeted tests PASS; ordinary CP verification recorded in current report",
       "evidence": [
         "stock_monitor/cp_reconciliation.py",
         "test_cp_publication_wait.py"
@@ -2335,7 +2335,31 @@
       "steps": [
         "Only exact GETTEX/EUR/ISIN official proof with an overlapping incomplete_publication interval enters AWAITING_SOURCE and describes the existing shared MUNC/MUND acquisition lane.",
         "Keep the one-hour check deadline, DQ, complete-pair proof, final publication revisions and source cooldowns. No new worker, network pipeline, absence inference or data write.",
-        "When complete same-source evidence arrives, the ordinary turn reclassifies and resolves. Invalid native prices and independent chart-vendor gaps remain blocked; 404/empty answers do not prove NO_TRADES."
+        "When complete same-source evidence arrives, the ordinary turn reclassifies and resolves. Invalid native prices and independent chart-vendor gaps remain blocked; 404/empty answers do not prove NO_TRADES.",
+        "Use one due cached pass on the existing bounded evidence lane for known overlapping incomplete official publications, behind visual reviews. At most eight jobs per turn; preserve deadlines and mark the one-pass version only after final writer validation. Tested at53/200 pending jobs."
+      ]
+    },
+    {
+      "id": "exact_primary_parent_restores_wholly_missing_native_window",
+      "title": "Полностью отсутствующее native-окно отклонялось механизмом точного первичного подтверждения",
+      "sources": [
+        "gettex_chart"
+      ],
+      "states": [
+        "GAP",
+        "RETIME_NOT_CONSERVED"
+      ],
+      "status": "IMPLEMENTED IN WINDOWS TEST; exact public-code targeted tests PASS; ordinary CP verification recorded in current report",
+      "evidence": [
+        "stock_monitor/revision_watcher.py",
+        "stock_monitor/cp_reconciliation.py",
+        "test_cp_primary_window_confirmation.py"
+      ],
+      "steps": [
+        "A separately captured complete paired GETTEX tape and a bound exact closed15m manual TV confirmation of timestamp/O/H/L/C/V may restore a wholly absent native5m+15m window.",
+        "Retain original consistency checks for partially present native windows. Require exact original native and source digests, validated same listing on5m/15m, approved policies, positive primary parent and unchanged screenshot hash.",
+        "Use the ordinary serial CP writer and final guards; values come only from primary GETTEX. No synthetic bars, inferred NO_TRADES, TV OHLCV import or trading grant.",
+        "Preserve before/lineage and strict current receipt validation. Changed native/source/policy/evidence blocks publication; new isolated case recovers three real5m rows and one15m parent, no manual risk grant."
       ]
     }
   ],
@@ -2788,5 +2812,5 @@
       "sha256_at_import": "1cdb3ec4c375da282bcdcc62de0eeba30ea30f1c7d1bd76bcd03f37d62c8da57"
     }
   ],
-  "updated_at": "2026-11-23T09:29:00+01:00"
+  "updated_at": "2026-11-23T10:04:29+01:00"
 }
