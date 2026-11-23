@@ -614,7 +614,7 @@ NATIVE_EMPTY_LIMIT=8
 
 def _native_empty_pending(db,isin,limit):
     prefix=PREFIX+isin+':'
-    return db.execute("""SELECT key,value FROM settings WHERE key>=? AND key<?
+    rows=db.execute("""SELECT key,value FROM settings WHERE key>=? AND key<?
       AND (json_extract(value,'$.tf')='5m' OR (json_extract(value,'$.tf')='15m' AND json_extract(value,'$.observation.result') IN ('ABSENT','PRESENT','DIFFERENT','ZERO_VOLUME')))
       AND julianday(json_extract(value,'$.last'))>=julianday(json_extract(value,'$.first'))
       AND julianday(json_extract(value,'$.last'))-julianday(json_extract(value,'$.first'))<30.0/1440
@@ -647,6 +647,38 @@ def _native_empty_pending(db,isin,limit):
           AND COALESCE(json_extract(value,'$.current_difference_algorithm'),0)<1))))
       ORDER BY CASE json_extract(value,'$.status') WHEN 'RECHECK_QUEUED' THEN 0 WHEN 'QUEUED' THEN 1 ELSE 2 END,json_extract(value,'$.first') DESC,key LIMIT ?""",
       (prefix,prefix+'\uffff',NATIVE_EMPTY_ALGORITHM,limit)).fetchall()
+    room=limit-len(rows)
+    if room<=0:return rows
+    # Extract the small range list once, not the full source ledger per job.
+    # The later writer still validates the complete, current proof.
+    saved=db.execute("SELECT json_extract(value,'$.isin','$.basis','$.identity','$.incomplete_publication_intervals') FROM settings WHERE key=?",('interval_evidence:'+isin,)).fetchone()
+    if not saved:return rows
+    try:
+        subject,basis,identity,intervals=json.loads(saved[0])
+        if (subject!=isin or basis!='complete_published_trade_files' or identity!=dict(source='gettex',venue='GETTEX',currency='EUR',symbol=isin,timezone='Europe/Berlin') or not intervals):return rows
+    except (ValueError,TypeError):return rows
+    # One cached reclassification of a known partial official pair must not
+    # wait behind the entire archive scan. Existing visual reviews keep their
+    # reserved precedence. This SQL nominates only; _input/final guards still
+    # validate the exact listing, source proof and native window on the writer.
+    rows+=db.execute("""SELECT j.key,j.value FROM settings j WHERE j.key>=? AND j.key<?
+      AND json_extract(j.value,'$.identity.source')='gettex'
+      AND json_extract(j.value,'$.identity.venue')='GETTEX'
+      AND json_extract(j.value,'$.identity.currency')='EUR'
+      AND json_extract(j.value,'$.identity.symbol')=?
+      AND json_extract(j.value,'$.tf') IN ('5m','15m')
+      AND json_extract(j.value,'$.observation') IS NULL
+      AND json_extract(j.value,'$.status') IN ('QUEUED','AWAITING_USER','AWAITING_SOURCE')
+      AND COALESCE(json_extract(j.value,'$.source_publication_wait_algorithm'),0)<1
+      AND julianday(COALESCE(json_extract(j.value,'$.next_check'),json_extract(j.value,'$.created_at')))<=julianday('now')
+      AND julianday(json_extract(j.value,'$.end'))>julianday(json_extract(j.value,'$.interval_start'))
+      AND julianday(json_extract(j.value,'$.end'))-julianday(json_extract(j.value,'$.interval_start'))<=30.0/1440
+      AND EXISTS (SELECT 1 FROM json_each(?) r
+        WHERE json_extract(r.value,'$[0]')<json_extract(j.value,'$.end')
+        AND json_extract(r.value,'$[1]')>json_extract(j.value,'$.interval_start'))
+      ORDER BY json_extract(j.value,'$.created_at'),j.key LIMIT ?""",
+      (prefix,prefix+'\uffff',isin,json.dumps(intervals),room)).fetchall()
+    return rows
 
 
 def native_empty_batches(db,infos,limit=8):
@@ -783,6 +815,8 @@ def turn(store, info, now=None, native_empty_only=False):
                     native_retry=inputs['native_retry'],capability=capability(),
                     status='RESOLVED_NATIVE' if result['can_affect_dq'] or result['state']=='NATIVE_ROWS_CONFIRMED' else 'AWAITING_SOURCE' if current.get('observation') or result.get('provider_wait') is True else 'AWAITING_USER',
                     review_required=not (result['can_affect_dq'] or result['state']=='NATIVE_ROWS_CONFIRMED' or result.get('observation_current',False) or result.get('provider_wait') is True))
+                if native_empty_only and current['identity']['source']=='gettex':
+                    current['source_publication_wait_algorithm']=1
                 _queue_observed_recovery(db,current,inputs,result,clock.isoformat())
                 current['source_disposition']=_source_disposition(current,result,source_policy)
                 if current['source_disposition']:

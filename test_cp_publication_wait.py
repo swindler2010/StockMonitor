@@ -1,5 +1,5 @@
 """A partial official pair stays blocked in the existing source-recovery lane."""
-import copy,json,os,sys,tempfile,unittest
+import copy,json,os,sqlite3,sys,tempfile,unittest
 from pathlib import Path
 import pandas as pd
 sys.path.insert(0,str(Path(__file__).parent/'stock_monitor'))
@@ -37,13 +37,30 @@ class PublicationWait(unittest.TestCase):
     db.execute('UPDATE candles SET high=98 WHERE ts=?',(job['first'],));invalid=rv._input(db,job)
    self.assertEqual(rv._classify(job,invalid,now)['state'],'INVALID');self.assertNotIn('provider_wait',rv._classify(job,invalid,now))
    with store.connect() as db:db.execute('DELETE FROM candles WHERE ts=?',(job['first'],))
-   rv.turn(store,info,now)
+   with store.connect() as db:self.assertEqual(len(rv._native_empty_pending(db,info['isin'],8)),1)
+   rv.turn(store,info,now,native_empty_only=True)
    saved=store.setting(rv.key(job));self.assertEqual(saved['status'],'AWAITING_SOURCE');self.assertFalse(saved['review_required']);self.assertIn('SOURCE_COVERAGE_UNCONFIRMED',saved['finding']['reason']);self.assertEqual(pd.Timestamp(saved['next_check']),now+pd.Timedelta(hours=1))
+   self.assertEqual(saved['source_publication_wait_algorithm'],1)
+   with store.connect() as db:self.assertEqual(rv._native_empty_pending(db,info['isin'],8),[])
    proof['incomplete_publication_intervals']=[];proof['no_trades']=[[job['first'],job['end']]];store.set_setting('interval_evidence:'+info['isin'],proof)
    rv.turn(store,info,now+pd.Timedelta(hours=1,seconds=1));saved=store.setting(rv.key(job));self.assertEqual(saved['status'],'RESOLVED_NATIVE');self.assertEqual(saved['finding']['state'],'NO_TRADES')
    with store.connect() as db:self.assertEqual(db.execute('SELECT * FROM candles').fetchall(),before);self.assertEqual(db.execute('SELECT count(*) FROM paper_fills').fetchone()[0],0)
   finally:
    store.read_cache.close()
    for candidate in (path,Path(str(path)+'-wal'),Path(str(path)+'-shm')):candidate.unlink(missing_ok=True)
+
+ def test_53_200_partial_requests_have_bounded_one_pass_without_changing_deadlines(self):
+  for count in (53,200):
+   with self.subTest(count=count),sqlite3.connect(':memory:') as db:
+    db.execute('CREATE TABLE settings(key TEXT PRIMARY KEY,value TEXT)');isin='US0378331005';now=pd.Timestamp.now(tz='UTC');meta=dict(source='gettex',symbol=isin,venue='GETTEX',currency='EUR',timezone='Europe/Berlin');spans=[]
+    for n in range(count):
+     a=pd.Timestamp('2026-11-13 07:30:00')+pd.Timedelta(minutes=n*15);j=rv._spec(isin,meta,'15m',str(a),str(a));j.update(status='RESOLVED_NATIVE' if n%5==0 else 'AWAITING_USER',created_at=(now-pd.Timedelta(days=1)).isoformat(),next_check=(now+pd.Timedelta(hours=1) if n%5==1 else now-pd.Timedelta(minutes=1)).isoformat(),source_publication_wait_algorithm=1 if n%5==2 else 0);rv.write(db,rv.key(j),j)
+     if n%5!=3:spans.append([j['first'],j['end']])
+    rv.write(db,'interval_evidence:'+isin,dict(isin=isin,identity=meta,basis='complete_published_trade_files',incomplete_publication_intervals=spans));before=db.total_changes;selected=rv._native_empty_pending(db,isin,8);self.assertEqual(len(selected),8);self.assertEqual(db.total_changes,before)
+    originals={key:json.loads(raw) for key,raw in selected}
+    for key,j in originals.items():
+     self.assertEqual(j['status'],'AWAITING_USER');self.assertLess(pd.Timestamp(j['next_check']),now);self.assertEqual(j['source_publication_wait_algorithm'],0);self.assertIn([j['first'],j['end']],spans);rv.write(db,key,{**j,'source_publication_wait_algorithm':1})
+    after=rv._native_empty_pending(db,isin,8);self.assertFalse(set(originals)&{key for key,_ in after})
+    for key,j in originals.items():self.assertEqual(rv.read(db,key)['next_check'],j['next_check'])
 
 if __name__=='__main__':unittest.main()
