@@ -49,7 +49,7 @@ class StableBitmapTests(unittest.TestCase):
         import tkinter as tk
         from matplotlib.figure import Figure
         from smooth_canvas import FigureCanvasTkAgg
-        root=tk.Tk();root.withdraw();self.addCleanup(root.destroy)
+        root=tk.Tk();root.withdraw();root.update_idletasks();self.addCleanup(root.destroy)
         fig=Figure(figsize=(2,1),dpi=50,facecolor='#ff0000')
         canvas=FigureCanvasTkAgg(fig,master=root);canvas.draw()
         self.addCleanup(lambda:canvas.get_tk_widget().destroy() if canvas.get_tk_widget().winfo_exists() else None)
@@ -66,6 +66,7 @@ class StableBitmapTests(unittest.TestCase):
         self.assertEqual((canvas._tkphoto.width(),canvas._tkphoto.height()),(175,90));self.assertEqual(limits,(ax.get_xlim(),ax.get_ylim()))
         self.assertEqual(canvas._tkcanvas.coords(item),[87.5,45.]);self.assertEqual(canvas._tkcanvas.find_all(),(item,))
         self.assertEqual(canvas._tkphoto.get(1,1),(255,0,0))
+        self.assertEqual(canvas._tkcanvas.cget('background'),'#ff0000')
 
     def test_53_200_layout_events_schedule_one_frame_without_clearing_visible_image(self):
         for count in (53,200):
@@ -94,6 +95,26 @@ class StableBitmapTests(unittest.TestCase):
         root,fig,canvas=self.fixture();canvas.draw_idle();timer=canvas._idle_draw_id
         self.assertTrue(timer);canvas.get_tk_widget().destroy();self.assertIsNone(canvas._idle_draw_id)
         self.assertNotIn(timer,root.tk.call('after','info'));root.update()
+
+
+class StableSignalLayout(unittest.TestCase):
+    def test_real_signal_row_keeps_following_card_still_while_permission_clears(self):
+        import tkinter as tk
+        from tkinter import ttk
+        from main_screen import decision_row
+        from trading_view import format_engine
+        root=tk.Tk();self.addCleanup(root.destroy);root.geometry('290x260+20000+20000')
+        ttk.Style(root).configure('DeskSignal.TLabel',font=('Segoe UI',18,'bold'))
+        title=tk.StringVar(root);reason=tk.StringVar(root)
+        row=decision_row(root,title,reason);following=ttk.Label(root,text='Next card');following.pack()
+        positions=[]
+        for engine in ({'signal':'WAIT','status':'READY'},None,{'signal':'BUY','status':'READY'},
+                       {'signal':'WAIT','status':'DATA BLOCKED','blockers':['Unconfirmed inputs']}):
+            text,details=format_engine(engine);title.set(text);reason.set(details[:45]);root.update_idletasks()
+            positions.append((row.winfo_height(),following.winfo_y()))
+            self.assertEqual(title.get(),text)
+            if engine is None:self.assertIn('WAIT',text)
+        self.assertEqual(len(set(positions)),1);self.assertFalse(row.pack_propagate())
 
 
 if __name__=='__main__':unittest.main()

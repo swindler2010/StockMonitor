@@ -6,6 +6,7 @@ guards stay with their existing owners; no worker or market cache is added.
 import tkinter as tk
 from matplotlib.backend_bases import ResizeEvent
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg as BaseCanvas
+from matplotlib.colors import to_hex
 
 
 class FigureCanvasTkAgg(BaseCanvas):
@@ -14,6 +15,7 @@ class FigureCanvasTkAgg(BaseCanvas):
     def __init__(self,*args,**kwargs):
         self._pending_bitmap_size=None
         super().__init__(*args,**kwargs)
+        self._tkcanvas.configure(background=to_hex(self.figure.get_facecolor()))
         self._tkcanvas.bind('<Destroy>',self._destroy_pending_draw,add='+')
 
     def _destroy_pending_draw(self,event):
@@ -50,6 +52,7 @@ class FigureCanvasTkAgg(BaseCanvas):
         self._idle_draw_id=self._tkcanvas.after(self.frame_delay_ms,idle_draw)
 
     def draw(self):
+        self._tkcanvas.configure(background=to_hex(self.figure.get_facecolor()))
         size=self._pending_bitmap_size
         if size is None or (self._tkphoto.width(),self._tkphoto.height())==size:
             super().draw();self._pending_bitmap_size=None;return

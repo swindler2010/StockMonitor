@@ -133,6 +133,18 @@ def native_titlebar(root, palette):
         pass  # Older Windows keeps its native caption; no functional fallback.
 
 
+def decision_row(parent, decision, reason):
+    """Reserve the longest status height; loading must not move other cards."""
+    from tkinter import font
+    status_font=ttk.Style(parent).lookup('DeskSignal.TLabel','font') or 'TkDefaultFont'
+    row=ttk.Frame(parent,style='Desk.TFrame',height=3*font.Font(parent,font=status_font).metrics('linespace'))
+    row.pack(fill='x',pady=5)
+    row.pack_propagate(False)
+    ttk.Label(row,textvariable=decision,style='DeskSignal.TLabel',wraplength=135).pack(side='left',anchor='w')
+    ttk.Label(row,textvariable=reason,style='DeskMuted.TLabel',font=('Segoe UI',8),wraplength=140).pack(side='right',fill='x',expand=True,padx=(7,0))
+    return row
+
+
 class SignalMeter(tk.Canvas):
     """Segmented display of a prepared score; never computes a trading signal."""
     def __init__(self, parent, **kwargs):
@@ -982,11 +994,8 @@ def build(app, periods, bg, text):
     screen.signal_caption = tk.StringVar(app.root, '1H')
     app.decision = tk.StringVar(app.root)
     signal.heading.configure(textvariable=screen.signal_caption)
-    decision_row=ttk.Frame(signal,style='Desk.TFrame')
-    decision_row.pack(fill='x',pady=5)
-    ttk.Label(decision_row, textvariable=app.decision, style='DeskSignal.TLabel', wraplength=135).pack(side='left',anchor='w')
     screen.signal_reason=tk.StringVar(app.root)
-    ttk.Label(decision_row,textvariable=screen.signal_reason,style='DeskMuted.TLabel',font=('Segoe UI',8),wraplength=140).pack(side='right',fill='x',expand=True,padx=(7,0))
+    decision_row(signal,app.decision,screen.signal_reason)
     contexts = ttk.Frame(signal, style='Desk.TFrame')
     contexts.pack(fill='x')
     screen.context_vars = {tf: tk.StringVar(app.root, f'{tf}\n—') for tf in ('15m', '1H', '4H', '1D')}
