@@ -77,7 +77,7 @@ class StableBitmapTests(unittest.TestCase):
                     first=canvas._idle_draw_id;canvas.draw_idle();self.assertEqual(canvas._idle_draw_id,first)
                     self.assertEqual(draw.call_count,0);self.assertIs(canvas._tkphoto,old)
                     self.assertEqual(canvas._tkcanvas.itemcget(item,'image'),str(old))
-                    time.sleep(.025);root.update()
+                    root.after(120,root.quit);root.mainloop()
                     self.assertEqual(draw.call_count,1);self.assertIsNone(canvas._idle_draw_id)
                 canvas.get_tk_widget().destroy();root.destroy()
                 self._cleanups.pop();self._cleanups.pop()
@@ -95,6 +95,19 @@ class StableBitmapTests(unittest.TestCase):
         root,fig,canvas=self.fixture();canvas.draw_idle();timer=canvas._idle_draw_id
         self.assertTrue(timer);canvas.get_tk_widget().destroy();self.assertIsNone(canvas._idle_draw_id)
         self.assertNotIn(timer,root.tk.call('after','info'));root.update()
+
+    def test_continuous_resize_is_bounded_and_does_not_starve_frames(self):
+        root,fig,canvas=self.fixture();draws=[];started=time.monotonic()
+        original=canvas.draw
+        def draw():draws.append(time.monotonic()-started);original()
+        def resize(n=0):
+            canvas.resize(NS(width=140+n%9,height=90+n%7))
+            if n<35:root.after(10,lambda:resize(n+1))
+            else:root.after(150,root.quit)
+        with patch.object(canvas,'draw',side_effect=draw):
+            resize();root.after(2500,root.quit);root.mainloop()
+        self.assertGreaterEqual(len(draws),2);self.assertLess(draws[0],.4)
+        self.assertEqual((canvas._tkphoto.width(),canvas._tkphoto.height()),(140+35%9,90+35%7))
 
 
 class StableSignalLayout(unittest.TestCase):
