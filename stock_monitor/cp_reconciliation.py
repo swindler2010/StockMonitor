@@ -651,7 +651,9 @@ def _native_empty_pending(db,isin,limit):
           AND json_extract(value,'$.finding.state')='SOURCE_DISCREPANCY'
           AND json_extract(value,'$.observation.result')='DIFFERENT'
           AND julianday(COALESCE(json_extract(value,'$.next_check'),json_extract(value,'$.created_at')))<=julianday('now')
-          AND COALESCE(json_extract(value,'$.current_difference_algorithm'),0)<1))))
+          AND (COALESCE(json_extract(value,'$.current_difference_algorithm'),0)<1
+            OR (COALESCE(json_extract(value,'$.current_difference_algorithm'),0)<2
+              AND json_extract(value,'$.official_timebase_repair.reason')='RETIME_OTHER_CURRENT_TV_REFERENCE_CONFLICT'))))))
       ORDER BY CASE json_extract(value,'$.status') WHEN 'RECHECK_QUEUED' THEN 0 WHEN 'QUEUED' THEN 1 ELSE 2 END,json_extract(value,'$.first') DESC,key LIMIT ?""",
       (prefix,prefix+'\uffff',NATIVE_EMPTY_ALGORITHM,limit)).fetchall()
     room=limit-len(rows)
@@ -745,7 +747,7 @@ def turn(store, info, now=None, native_empty_only=False):
             seeded=[]
             for _,raw in _native_empty_pending(db,isin,NATIVE_EMPTY_LIMIT):
                 job=json.loads(raw);old=dict(job)
-                job.update(native_empty_algorithm=12 if job['tf']=='5m' and (job.get('observation') or {}).get('result') in ('PRESENT','DIFFERENT') else NATIVE_EMPTY_ALGORITHM,positive_price_algorithm=1,current_difference_algorithm=1,status='RECHECK_QUEUED' if job['status']=='RECHECK_QUEUED' else 'QUEUED',next_check=clock.isoformat())
+                job.update(native_empty_algorithm=12 if job['tf']=='5m' and (job.get('observation') or {}).get('result') in ('PRESENT','DIFFERENT') else NATIVE_EMPTY_ALGORITHM,positive_price_algorithm=1,current_difference_algorithm=2 if job['tf']=='15m' else 1,status='RECHECK_QUEUED' if job['status']=='RECHECK_QUEUED' else 'QUEUED',next_check=clock.isoformat())
                 if job['tf']=='5m' and not job.get('observation'):job['automatic_zero_algorithm']=1
                 _save_job(db,job,old);seeded.append((key(job),json.dumps(job,ensure_ascii=False)))
             progress['native_empty_batch_at']=clock.isoformat()

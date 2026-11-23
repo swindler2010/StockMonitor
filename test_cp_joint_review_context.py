@@ -75,4 +75,17 @@ class JointReviewContext(unittest.TestCase):
      for row, in d.execute("select value from settings where json_extract(value,'$.status')='RECHECK_QUEUED'"):
       j=json.loads(row);self.assertEqual(j['observation']['result'],'DIFFERENT');self.assertEqual(j['input_fingerprint'],'old');self.assertEqual(j['next_check'],now.isoformat())
 
+ def test_53_and_200_only_due_previous_visual_conflicts_receive_one_new_local_pass(self):
+  root=Path(__file__).parent.parent.parent/'СМ-Архив'
+  for count in (53,200):
+   with self.subTest(count=count):
+    f=tempfile.NamedTemporaryFile(dir=root,prefix='CP joint due isolated ',suffix='.sqlite3',delete=False);path=Path(f.name);f.close();s=FlatStore(path);self.addCleanup(self.clean,s,path);now=pd.Timestamp.now(tz='UTC');m=dict(source='gettex_chart',venue='GETTEX',currency='EUR',symbol='FIX.GTX',timezone='Europe/Berlin')
+    with s.connect() as d:
+     for n in range(count):
+      ts=str(pd.Timestamp('2026-11-13 07:30')+pd.Timedelta(minutes=15*n));j=rv._spec('A',m,'15m',ts,ts);j.update(status='AWAITING_SOURCE',created_at=(now-pd.Timedelta(days=1)).isoformat(),next_check=(now+pd.Timedelta(hours=1) if n%4==1 else now-pd.Timedelta(minutes=1)).isoformat(),native_empty_algorithm=8,current_difference_algorithm=2 if n%4==2 else 1,finding=dict(state='SOURCE_DISCREPANCY'),observation=dict(result='DIFFERENT'),official_timebase_repair=dict(reason='OTHER_REASON' if n%4==3 else 'RETIME_OTHER_CURRENT_TV_REFERENCE_CONFLICT'));rv.write(d,rv.key(j),j)
+     page=rv._native_empty_pending(d,'A',8);self.assertEqual(len(page),8)
+     for key,raw in page:
+      j=json.loads(raw);self.assertLess(pd.Timestamp(j['next_check']),now);self.assertEqual(j['current_difference_algorithm'],1);self.assertEqual(j['official_timebase_repair']['reason'],'RETIME_OTHER_CURRENT_TV_REFERENCE_CONFLICT');rv.write(d,key,{**j,'current_difference_algorithm':2})
+     self.assertFalse({k for k,v in page}&{k for k,v in rv._native_empty_pending(d,'A',8)});self.assertEqual(d.execute('select count(*) from series').fetchone()[0],0)
+
 if __name__=='__main__':unittest.main()
