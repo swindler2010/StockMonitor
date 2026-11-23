@@ -11,6 +11,34 @@ class PrimaryWindow(unittest.TestCase):
  fixture=fixtures.OpeningSessionTail.fixture
  clean=staticmethod(fixtures.OpeningSessionTail.clean)
 
+ def test_wholly_absent_native_window_recovers_only_independently_confirmed_primary_rows(self):
+  t=fixtures.stamp;first,end=t('08:00'),t('08:15');ticks=[(t('08:01'),100.,2.),(t('08:06'),102.,3.),(t('08:11'),101.,5.)]
+  s,info,m,child,before,official,proof,now=self.fixture([],ticks,first,end,t('08:00'),t('08:00'),None);isin=info['isin'];spec=rv._spec(isin,m,'15m',first,first)
+  with s.connect() as d:captured=rv._input(d,spec);source=rw._official_window(d,isin,first,end,now,allow_zero_rows=True)
+  packet=dict(records=[dict(spec=spec,native=captured)],native_window=before,native_window_digest=rv.digest(before),source=source,source_digest=rv.digest(source));root=Path(__file__).parent.parent.parent/'СМ-Архив';paths=[]
+  for suffix,content in (('.json',json.dumps(packet).encode()),('.png',b'fixture exact parent screenshot')):
+   f=tempfile.NamedTemporaryFile(dir=root,prefix='CP absent primary isolated ',suffix=suffix,delete=False);f.write(content);f.close();paths.append(Path(f.name));self.addCleanup(paths[-1].unlink,missing_ok=True)
+  rv.confirm_primary_window(s,spec,str(paths[0]),'GETTEX:FIX',[str(paths[1])],['timestamp','open','high','low','close','volume'],True,'Fixture exact positive parent')
+  with s.connect() as d:
+   j=rv.read(d,rv.key(spec));i=rv._input(d,j);plan=rw.retime_plan(d,j,i,now);self.assertTrue(plan['missing_native_window']);self.assertEqual(plan['before'],{'5m':[],'15m':[]})
+   d.execute('INSERT INTO series VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',(isin,*[m[k] for k in rw.IDENTITY[:4]],'5m',first,99,99,99,99,1))
+   with self.assertRaisesRegex(ValueError,'RETIME_'):rw.publish_retime(d,j,i,plan,now)
+   d.rollback();d.execute('UPDATE trades SET volume=volume+1')
+   with self.assertRaisesRegex(ValueError,'RETIME_'):rw.publish_retime(d,j,i,plan,now)
+   d.rollback();bad=copy.deepcopy(proof);bad['reference']['GETTEX:20261113'].pop('posttrade.20261113.07.15.mund.csv.gz');rv.write(d,'interval_evidence:'+isin,bad)
+   with self.assertRaisesRegex(ValueError,'RETIME_'):rw.publish_retime(d,j,i,plan,now)
+   d.rollback();rv.write(d,rw.RETIME_POLICY,dict(approved=False,version=rw.RETIME_VERSION));self.assertIsNone(rw.retime_plan(d,j,rv._input(d,j),now));d.rollback()
+  paths[1].write_bytes(b'changed');
+  with s.connect() as d:self.assertIsNone(rw.retime_plan(d,j,rv._input(d,j),now))
+  paths[1].write_bytes(b'fixture exact parent screenshot')
+  with patch('gettex_history.attach_known_interruptions',side_effect=AssertionError('No network')):
+   rv.turn(s,info,now,native_empty_only=True);rv.turn(s,info,now+pd.Timedelta(seconds=1),native_empty_only=True)
+  self.assertEqual(s.setting(rv.key(spec))['status'],'RESOLVED_NATIVE');receipt=s.setting(rw.RETIME_PREFIX+isin+':'+spec['id']);self.assertTrue(receipt['missing_native_window']);self.assertEqual(receipt['added'],4);self.assertEqual(receipt['changed'],0)
+  with s.connect() as d:
+   self.assertTrue(rw.retime_current(d,receipt))
+   for base in before:self.assertEqual(rw._native(d,isin,m,base,first,end),official[base])
+  self.assertIsNone(s.setting('cp_manual_risk:'+isin))
+
  def test_complete_exact_parent_confirmation_recovers_missing_quantities_through_queue_and_rejects_changed_evidence(self):
   t=fixtures.stamp;first,end=t('08:00'),t('08:15')
   ticks=[(t('08:06'),100.,2.),(t('08:11'),102.,3.),(t('08:12'),101.,5.)]

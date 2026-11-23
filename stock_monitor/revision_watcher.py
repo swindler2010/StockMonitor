@@ -767,8 +767,14 @@ def _primary_window_plan(db,job,inputs,now,policy):
      and sp.get('approved') is True and sp.get('version')==1 and sp.get('scope')=='registered_stocks' and sp.get('exclusive_venue')=='GETTEX'):return None
  if not stored_identity(db,inputs['info'],job['identity'],'5m'):return None
  native={b:_native(db,job['isin'],job['identity'],b,job['first'],job['end']) for b in ('5m','15m')}
- if digest(native)!=confirmation.get('native_window_digest') or not 1<=len(native['5m'])<=3 or len(native['15m'])!=1:return None
- if _aggregate(native['5m'])!=list(native['15m'][0][1:]):return None
+ if digest(native)!=confirmation.get('native_window_digest'):return None
+ missing_window=not native['5m'] and not native['15m']
+ # The exact parent confirmation independently covers a wholly absent
+ # native window too. Partial/mismatched existing aggregates still require
+ # their original consistency checks; absence never supplies source values.
+ if not missing_window:
+  if not 1<=len(native['5m'])<=3 or len(native['15m'])!=1:return None
+  if _aggregate(native['5m'])!=list(native['15m'][0][1:]):return None
  source=_official_window(db,job['isin'],job['first'],job['end'],now,allow_zero_rows=True)
  if digest(source)!=confirmation.get('source_digest') or len(source['rows']['15m'])!=1 or source['rows']['15m'][0][5]<=0 or native==source['rows']:return None
  for file in obs.get('evidence',[]):
@@ -781,7 +787,7 @@ def _primary_window_plan(db,job,inputs,now,policy):
  return dict(version=RETIME_VERSION,mode='VERIFIED_PRIMARY_WINDOW',reviewed_tf='15m',isin=job['isin'],identity=job['identity'],first=job['first'],end=job['end'],
    job_id=job['id'],policy_digest=digest(policy),source_policy_digest=digest(sp),input_fingerprint=inputs['fingerprint'],before=native,source=source,
    source_digest=digest(source),created_at=now.isoformat(),lineage_before=lineage,zero_observations_corroborated=True,relocations=superseded,
-   primary_window_confirmation=confirmation,origin='One exact closed15m TV parent independently corroborates complete paired primary GETTEX tape; source values only, superseded native values and lineage retained; no conservation or trading grant claimed')
+   primary_window_confirmation=confirmation,**({'missing_native_window':True} if missing_window else {}),origin='One exact closed15m TV parent independently corroborates complete paired primary GETTEX tape; source values only, superseded native values and lineage retained; no conservation or trading grant claimed')
 
 
 def retime_plan(db,job,inputs,now):
