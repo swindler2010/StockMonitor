@@ -58,6 +58,7 @@ def timestamp(value):
 def normalize(rows, now=None):
     now = time.time() if now is None else now
     result, seen, headlines = [], set(), set()
+    from news_media import image_url
     for raw in rows:
         title = plain(raw.get('title'), 500)
         url = safe_url(raw.get('url'))
@@ -70,7 +71,7 @@ def normalize(rows, now=None):
         seen.add(key); headlines.add(headline)
         published = timestamp(raw.get('published'))
         age = now - datetime.fromisoformat(published).timestamp() if published else None
-        result.append({**raw, 'title': title, 'url': url, 'summary': plain(raw.get('summary')),
+        result.append({**raw, 'title': title, 'url': url, 'summary': plain(raw.get('summary')), 'image_url': image_url(raw.get('image_url')),
                        'published': published, 'date_status': 'UNKNOWN' if age is None else 'FUTURE' if age < -300 else 'STALE' if age > 7*86400 else 'CURRENT',
                        'events': [k for k, pattern in EVENTS.items() if re.search(pattern, title, re.I)],
                        'event_basis': 'HEADLINE_KEYWORDS_NOT_CONFIRMED_EVENT',
@@ -80,6 +81,7 @@ def normalize(rows, now=None):
 
 
 def parse_feed(data, provider):
+    from news_media import feed_image
     if len(data) > 2_000_000 or b'<!DOCTYPE' in data.upper() or b'<!ENTITY' in data.upper():
         raise ValueError('UNSAFE_OR_OVERSIZE_FEED')
     root = ET.fromstring(data)
@@ -88,7 +90,7 @@ def parse_feed(data, provider):
         link=safe_url(item.findtext('link'))
         publisher=item.findtext('source')
         rows.append(dict(title=item.findtext('title'), url=item.findtext('link'),
-                         summary=item.findtext('description'), published=item.findtext('pubDate'),
+                         summary=item.findtext('description'), published=item.findtext('pubDate'), image_url=feed_image(item),
                          provider=publisher or (urlsplit(link).hostname if link else None) or provider, feed_provider=provider, scope='market', language=None,
                          publisher_status='NAMED_BY_FEED' if publisher else 'LINK_DOMAIN_ONLY_ORIGINAL_PUBLISHER_UNCONFIRMED',
                          publisher_url=safe_url(item.find('source').get('url','')) if item.find('source') is not None else '',
@@ -98,7 +100,7 @@ def parse_feed(data, provider):
         links=item.findall('a:link',ns)
         url=next((x.get('href') for x in links if x.get('rel','alternate')=='alternate'),None)
         rows.append(dict(title=item.findtext('a:title',namespaces=ns),url=url,
-                         summary=item.findtext('a:summary',namespaces=ns),
+                         summary=item.findtext('a:summary',namespaces=ns), image_url=feed_image(item),
                          published=item.findtext('a:published',namespaces=ns) or item.findtext('a:updated',namespaces=ns),
                          provider=provider,feed_provider=provider,scope='market',language=None,relevance='Market/economy; no company association'))
     return rows

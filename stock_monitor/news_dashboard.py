@@ -35,9 +35,12 @@ def chart_preview(app,isin):
     frame=prepared.get('frame')
     if frame is None or not len(frame):return None
     try:
-        prices=[float(v) for v in frame['close'].tail(60)]
+        import pandas as pd
+        numeric=pd.DataFrame(frame,copy=False)
+        prices=[float(v) for v in numeric['close'].tail(60)]
         if not prices or not all(math.isfinite(v) for v in prices):return None
-        return dict(prices=prices,at=str(frame.index[-1]),currency=frame.attrs.get('currency') or '—',
+        stats={k:float(numeric[k].iloc[-1]) for k in ('open','high','low','volume') if k in numeric and math.isfinite(float(numeric[k].iloc[-1]))}
+        return dict(prices=prices,ohlcv=stats,change=prices[-1]-prices[-2] if len(prices)>1 else None,at=str(frame.index[-1]),currency=frame.attrs.get('currency') or '—',
                     venue=frame.attrs.get('venue') or '—',timeframe=values.get('timeframe') or '—')
     except (KeyError,TypeError,ValueError):return None
 
@@ -123,11 +126,27 @@ class Dialog:
         ttk.Label(filters,text=tr('Тональность: не рассчитана'),style='DeskMuted.TLabel').pack(side='left',padx=8)
         search=ttk.Entry(filters,textvariable=self.query,style=p+'.TEntry',font=('Segoe UI',10));search.pack(side='left',fill='x',expand=True,padx=(5,0))
         app.tooltip(search,'Поиск в заголовках и кратком содержании')
+        filter_widgets=filters.winfo_children();filter_layout=[None]
+        for widget in filter_widgets:widget.pack_forget()
+        def arrange_filters(event):
+            narrow=event.width<800
+            if filter_layout[0]==narrow:return
+            filter_layout[0]=narrow
+            for widget in filter_widgets:widget.grid_forget()
+            for n,widget in enumerate(filter_widgets[:3]):widget.grid(row=0,column=n,sticky='w',padx=(0,6),pady=3)
+            search.grid(row=1 if narrow else 0,column=0 if narrow else 3,columnspan=3 if narrow else 1,sticky='ew',pady=3)
+            filters.columnconfigure(3,weight=0 if narrow else 1)
+            filters.columnconfigure(2,weight=1 if narrow else 0)
+        filters.bind('<Configure>',arrange_filters)
+
         toolbar=ttk.Frame(centre,style='Desk.TFrame');toolbar.pack(fill='x',pady=(0,7))
         ttk.Label(toolbar,textvariable=self.result_text,style='DeskMuted.TLabel').pack(side='left')
         ttk.Combobox(toolbar,textvariable=self.sort,values=[tr('Сначала новые'),tr('Сначала старые')],state='readonly',style=p+'.TCombobox',width=20).pack(side='left',padx=12)
         ttk.Checkbutton(toolbar,text=tr('Компактный список'),variable=self.compact,command=self.schedule).pack(side='right')
         paging=ttk.Frame(centre,style='Desk.TFrame');paging.pack(side='bottom',fill='x',pady=(7,0))
+        self.view_mode=tk.StringVar(win,tr('Все новости'))
+        self.view_box=ttk.Combobox(toolbar,textvariable=self.view_mode,values=[tr('Все новости'),tr('Избранные новости'),tr('Закладки')],state='readonly',style=p+'.TCombobox',width=19)
+        self.view_box.pack(side='right',padx=8);self.view_box.bind('<<ComboboxSelected>>',lambda _:self.period(self.days))
         self.page_text=tk.StringVar(win)
         ttk.Button(paging,text='‹',width=3,command=lambda:self.change_page(-1)).pack(side='left')
         ttk.Label(paging,textvariable=self.page_text,style='DeskMuted.TLabel').pack(side='left',padx=8)
@@ -151,6 +170,8 @@ class Dialog:
         win.protocol('WM_DELETE_WINDOW',self.close);win.bind('<Escape>',lambda _:self.close())
         win.bind('<Destroy>',lambda event:self.cleanup() if event.widget is win else None,add='+')
         win.bind('<Map>',lambda event:win.after_idle(lambda:native_titlebar(win,palette)) if event.widget is win else None,add='+')
+        from news_cards import Cards
+        self.presentation=Cards(self);self.presentation.start()
         self.load();self.tick()
 
     def target(self):return self.targets[self.choice.current()]
@@ -176,6 +197,7 @@ class Dialog:
     def receive(self,key,generation,packet):
         if self.closed or key!=self.target()[1] or generation!=self.generation:return
         self.packet=packet.get('snapshot',{});self.rows=packet.get('articles',[])
+        self.presentation.project()
         providers=sorted({r.get('provider') or '—' for r in self.rows})
         if tuple(self.provider_box['values'])!=(tr('Все'),*providers):self.provider_box.configure(values=[tr('Все'),*providers])
         if self.provider.get() not in (tr('Все'),*providers):self.provider.set(tr('Все'))
@@ -187,6 +209,7 @@ class Dialog:
         self.render()
 
     def refresh(self):
+        self.presentation.saved.load()
         _,key,symbol=self.target()
         self.status.set(tr('Загрузка…') if self.app.news_runtime.refresh(key,symbol) else tr('Предыдущее обновление ещё выполняется'))
 
@@ -206,7 +229,8 @@ class Dialog:
         if self.closed:return
         provider='Все' if self.provider.get()==tr('Все') else self.provider.get()
         category=next((v for v in EVENTS.values() if tr(v)==self.category.get()),'Все')
-        rows=filtered(self.rows,self.query.get(),self.days,provider,category,self.sort.get()==tr('Сначала старые'))
+        visible=self.presentation.rows(self.rows)
+        rows=filtered(visible,self.query.get(),self.days,provider,category,self.sort.get()==tr('Сначала старые'))
         self.pages=max(1,(len(rows)+PAGE_SIZE-1)//PAGE_SIZE);self.page=min(self.page,self.pages-1)
         self.shown=rows[self.page*PAGE_SIZE:(self.page+1)*PAGE_SIZE]
         self.result_text.set(tr('Найдено')+f': {len(rows)} / {len(self.rows)}')
@@ -214,20 +238,7 @@ class Dialog:
         for days,button in self.period_buttons.items():button.configure(style='DeskActive.TButton' if days==self.days else 'TButton')
         for child in self.cards.winfo_children():child.destroy()
         if not self.shown:ttk.Label(self.cards,text=tr('Материалы отсутствуют или не подходят фильтрам. Это не означает отсутствия событий.'),style='DeskMuted.TLabel',wraplength=650).pack(anchor='w',pady=20)
-        for article in self.shown:
-            card=ttk.Frame(self.cards,padding=12,style='DeskCard.TFrame');card.pack(fill='x',pady=(0,7))
-            title=ttk.Label(card,text=article['title'],style='Desk.TLabel',font=('Segoe UI',12,'bold'),wraplength=700,justify='left')
-            title.pack(fill='x',anchor='w')
-            card.bind('<Configure>',lambda event,label=title:label.configure(wraplength=max(200,event.width-28)))
-            ttk.Label(card,text=translation_note(article)+' · '+str(article.get('provider') or '—')+' · '+str(article.get('published') or tr('Дата неизвестна'))+' · '+date_note(article),style='DeskMuted.TLabel',font=('Segoe UI',9)).pack(anchor='w',pady=(5,3))
-            if not self.compact.get():
-                summary=article.get('summary') or tr('Краткое содержание не предоставлено источником')
-                summary_label=ttk.Label(card,text=summary[:220]+('…' if len(summary)>220 else ''),style='Desk.TLabel',wraplength=700,justify='left')
-                summary_label.pack(anchor='w',fill='x',pady=3)
-                card.bind('<Configure>',lambda event,label=summary_label:label.configure(wraplength=max(200,event.width-28)),add='+')
-            actions=ttk.Frame(card,style='Desk.TFrame');actions.pack(fill='x',pady=(5,0))
-            ttk.Button(actions,text=tr('Подробнее / источник'),command=lambda row=article:self.article(row)).pack(side='left')
-            ttk.Button(actions,text=tr('Оригинал ↗'),command=lambda row=article:self.original(row)).pack(side='right')
+        self.presentation.render(self.shown)
         self.summary()
         self.schedule_translation()
 
@@ -265,6 +276,17 @@ class Dialog:
                 if len(points)>=4:graph.create_line(*points,fill='#2be870' if prices[-1]>=prices[0] else '#ff5966',width=2)
             graph.bind('<Configure>',paint);paint()
         else:ttk.Label(frame,text=tr('Цена: нет соответствующего открытого графика'),style='DeskMuted.TLabel',wraplength=280).pack(anchor='w',pady=9)
+        if preview:
+            change=preview.get('change')
+            if change is not None:
+                previous=preview['prices'][-2];percent=change/previous*100 if previous else None
+                text=f'{change:+.2f}'+(f' ({percent:+.2f}%)' if percent is not None else '')
+                ttk.Label(frame,text=text+' · '+str(preview['timeframe']),style='Desk.TLabel',foreground='#2be870' if change>=0 else '#ff5966').pack(anchor='w',pady=(0,7))
+            for field,label in [('open','Открытие'),('high','Максимум'),('low','Минимум'),('volume','Объём')]:
+                if field in preview.get('ohlcv',{}):
+                    line=ttk.Frame(frame,style='Desk.TFrame');line.pack(fill='x',pady=2)
+                    ttk.Label(line,text=tr(label)+' ('+str(preview['timeframe'])+')',style='DeskMuted.TLabel').pack(side='left')
+                    ttk.Label(line,text=f"{preview['ohlcv'][field]:,.2f}".replace(',',' '),style='Desk.TLabel').pack(side='right')
         ttk.Label(frame,text=tr('Публикаций в сохранённой ленте')+f': {len(self.rows)}',style='Desk.TLabel',wraplength=280).pack(anchor='w',pady=7)
         tone=ttk.Frame(self.side,padding=14,style='DeskCard.TFrame');tone.pack(fill='x',pady=(0,10))
         ttk.Label(tone,text=tr('Тональность новостей'),style='DeskTitle.TLabel').pack(anchor='w')
@@ -319,6 +341,7 @@ class Dialog:
     def cleanup(self):
         if self.closed:return
         self.closed=True
+        if hasattr(self,'presentation'):self.presentation.close()
         for timer in (self.render_timer,self.freshness_timer,self.translation_timer):
             if timer is not None:
                 try:self.win.after_cancel(timer)

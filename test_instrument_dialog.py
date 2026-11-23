@@ -15,12 +15,18 @@ class InstrumentDialogTests(unittest.TestCase):
     def setUp(self):
         self.root=tk.Tk();self.root.withdraw();self.addCleanup(self.root.destroy)
         self.jobs=[]
+        self.job_options=[]
         self.app=SimpleNamespace(root=self.root,store=SimpleNamespace(setting=lambda key,default=None:default),
             watchlist=[],symbol=tk.StringVar(self.root),symbol_box={},source_status=tk.StringVar(self.root),
             refresh_chart=Mock(),register_confirmed_instrument=Mock(),attach_logo=Mock(),
-            job=lambda work,done,failed:self.jobs.append((work,done,failed)))
+            job=self.job)
         theme(self.app,THEMES['Тёмная']);Features.add_stock_dialog(self.app)
         self.dialog=self.app._instrument_dialog;self.root.update()
+
+    def job(self,work,done,failed,**options):
+        if (options.get("key") or (None,))[0]=="ui-collection-load":done(work());return True
+        self.job_options.append(options)
+        self.jobs.append((work,done,failed));return True
 
     def begin(self):
         d=self.dialog;d.query.set('NVIDIA');d.find_button.invoke()
@@ -32,6 +38,18 @@ class InstrumentDialogTests(unittest.TestCase):
 
     def evidence(self):
         return dict(status='CONFIRMED',name='NVIDIA',isin='US67066G1040',symbol='NVD.DE',venue='GETTEX',currency='EUR',evidence={'fixture':True})
+
+    def test_explicit_search_and_identity_use_read_priority_and_reject_old_generations(self):
+        self.begin()
+        self.assertEqual([v['lane'] for v in self.job_options],['read','read'])
+        d=self.dialog
+        for count in (53,200):
+            callbacks=[];self.jobs.clear()
+            for index in range(count):
+                d.query.set('query'+str(index));d.find_button.invoke();callbacks.append(self.jobs.pop()[1])
+            callbacks[-1]([dict(symbol='CURRENT',longname='Current')])
+            for callback in callbacks[:-1]:callback([dict(symbol='OLD',longname='Old')])
+            self.assertEqual(d.results.item('0','values')[0],'CURRENT')
 
     def test_confirmed_row_fields_feed_the_original_add_callback(self):
         done=self.begin();done(self.evidence());self.root.update()

@@ -130,6 +130,8 @@ class LogoMixin:
         from PIL import ImageTk
         from paths import DATA_DIR
         symbol=info.get('profile_symbol') or info.get('history_symbol') or info.get('symbol') or ''
+        if not hasattr(tree,'_logo_bindings'):tree._logo_bindings={}
+        tree._logo_bindings[item]=symbol
         if not hasattr(self,'logo_images'):self.logo_images={};self.logo_waiters={};self.logo_retry={}
         if symbol not in self.logo_images:
             self.logo_images[symbol]=ImageTk.PhotoImage(placeholder(info.get('name') or symbol),master=self.root)
@@ -141,10 +143,14 @@ class LogoMixin:
                 self.logo_retry[symbol]=time.time()+(30*86400 if image is not None else 3600)
                 if image is not None:self.logo_images[symbol]=ImageTk.PhotoImage(image,master=self.root)
                 for target,iid in self.logo_waiters.pop(symbol,[]):
-                    if target.winfo_exists() and target.exists(iid):target.item(iid,image=self.logo_images[symbol])
+                    if target.winfo_exists() and target.exists(iid) and getattr(target,'_logo_bindings',{}).get(iid)==symbol:
+                        image=self.logo_images[symbol]
+                        decorate=getattr(target,'_decorate_logo',None)
+                        target.item(iid,image=decorate(iid,image) if decorate else image)
             if self.job(lambda:fetch(symbol,DATA_DIR/'logos',website,info.get('isin')),done,lambda _:done(None),lane='misc',key='logo:'+symbol) is False:
                 self.logo_waiters.pop(symbol,None);self.logo_retry[symbol]=time.time()+30
-        tree.item(item,image=self.logo_images[symbol])
+        image=self.logo_images[symbol];decorate=getattr(tree,'_decorate_logo',None)
+        tree.item(item,image=decorate(item,image) if decorate else image)
         if symbol in self.logo_waiters:self.logo_waiters[symbol].append((tree,item))
 
     def show_watchlist(self):

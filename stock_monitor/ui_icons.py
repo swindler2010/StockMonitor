@@ -45,6 +45,14 @@ def photo(root, name, size=18, color=None):
             points.append((48+4*r*math.cos(a),48+4*r*math.sin(a)))
         if name=='star_filled':d.polygon(points,fill='#ffd020')
         d.line(points+[points[0]],fill='#ffd020',width=5,joint='curve')
+    elif name in ('bookmark','bookmark_filled'):
+        points=[(6*4,3*4),(18*4,3*4),(18*4,22*4),(12*4,17*4),(6*4,22*4),(6*4,3*4)]
+        if name.endswith('_filled'):d.polygon(points,fill='#00c5ff')
+        d.line(points,fill='#00c5ff',width=5,joint='curve')
+    elif name=='news':
+        box((3,3,21,22),radius=2);box((6,6,11,11))
+        for y in (6,10):line([(14,y),(18,y)],width=3)
+        for y in (14,18):line([(6,y),(18,y)],width=3)
     elif name in ('chart','line'):
         line([(3,3),(3,21),(22,21)])
         line([(5,16),(10,11),(14,14),(21,5)])

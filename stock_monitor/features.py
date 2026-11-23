@@ -588,7 +588,7 @@ class Features:
                 if not win.winfo_exists() or selection_generation!=generation:return
                 state.set('Identity BLOCKED: '+rendered_message(msg)[:160])
             from eur_listings import resolve_for_add
-            self.job(lambda:resolve_for_add(symbol,DATA_DIR/'provider_cache',item,requested_isin),resolved,resolve_failed)
+            self.job(lambda:resolve_for_add(symbol,DATA_DIR/'provider_cache',item,requested_isin),resolved,resolve_failed,lane='read',key=('instrument-identity',id(win),generation))
         results.bind('<<TreeviewSelect>>',selected)
         def found(items):
             if not win.winfo_exists():return
@@ -610,7 +610,7 @@ class Features:
                 if selection_generation==generation:found(items)
             def current_failed(msg):
                 if win.winfo_exists() and selection_generation==generation:state.set(tr('Identity BLOCKED: Search недоступен: ')+rendered_message(msg)[:100])
-            state.set(tr('Поиск…'));self.job(lambda:market.search(q),current_found,current_failed)
+            state.set(tr('Поиск…'));self.job(lambda:market.search(q),current_found,current_failed,lane='read',key=('instrument-search',id(win),generation))
         def add():
             item={k:v.get().strip() for k,v in fields.items()};item['isin']=item['isin'].upper()
             if not confirmed_identity or any(item[k]!=confirmed_identity[k] for k in ('isin','symbol','venue','currency')) or any(item[k]!=confirmed_identity['symbol'] for k in ('history_symbol','profile_symbol')):
