@@ -25,7 +25,7 @@ def resource_sample(previous=None):
 
 
 class Dispatcher:
-    def __init__(self,deliver,path=None,workers=4,sample=resource_sample):
+    def __init__(self,deliver,path=None,workers=5,sample=resource_sample):
         self.deliver=deliver;self.path=Path(path) if path else None
         self.limit=max(2,workers);self.sample=sample;self.cv=threading.Condition()
         self.pending={};self.running={};self.sequence=0;self.closed=False
@@ -96,14 +96,14 @@ class Dispatcher:
                     if self.closed:return
                     lanes={v['lane'] for v in self.running.values()}
                     capacity=self._capacity()
-                    # A long all-stock read must not fill the fourth worker:
-                    # it used to leave a new chart waiting for network jobs.
-                    # Keep one slot for chart work at normal capacity. Under
-                    # pressure retain the existing two-slot policy so reads
-                    # and the single writer can still progress without a chart.
+                    # Three background jobs, plus independent chart/trading
+                    # slots in the existing pool. Trading must not consume the
+                    # only slot a newly selected chart could use. Smaller
+                    # pools and resource pressure retain the previous policy;
+                    # writers are never preempted or run in parallel.
                     choices=[t for t in self.pending.values() if (t['lane'] not in lanes or t['lane']=='misc') and
                              not (t['lane'] in ('snapshot','eligibility') and lanes & {'snapshot','eligibility'}) and
-                             (t['lane'] in ('chart','trading') or (t['lane']=='read' and capacity<=2) or len(self.running)<capacity-1)]
+                             (t['lane'] in ('chart','trading') or (t['lane']=='read' and capacity<=2) or len(self.running)<capacity-(2 if capacity>=5 else 1))]
                     if self.loaded and choices and len(self.running)<capacity:
                         task=min(choices,key=self._rank);key=task['key'];self.pending.pop(key);self.running[key]=task;break
                     self.cv.wait(.1)

@@ -28,7 +28,7 @@ class DispatcherTests(unittest.TestCase):
         self.assertFalse(d.submit(lambda:None,lambda _:None,lambda _:None,key='42',lane='feed_update'))
         d.focus('199',['198']);gate.set();wait(lambda:len(order)==200)
         self.assertEqual(order[:2],[199,198]);self.assertEqual(len(set(order)),200)
-        self.assertEqual(len(d.threads),4);self.assertEqual(d.snapshot()['deduplicated'],1)
+        self.assertEqual(len(d.threads),5);self.assertEqual(d.snapshot()['deduplicated'],1)
     def test_pressure_reserves_interactive_slot(self):
         d=self.make(pressure={'cpu':99,'ram':20});gate=threading.Event();started=threading.Event();interactive=threading.Event();other=threading.Event()
         self.addCleanup(gate.set)
