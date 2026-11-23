@@ -685,7 +685,7 @@ def cached_quotes(path, isins):
 
 def build(app, periods, bg, text):
     from matplotlib.figure import Figure
-    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+    from smooth_canvas import FigureCanvasTkAgg
     from chart_modes import MODES
     from features import set_text
     from themes import THEMES

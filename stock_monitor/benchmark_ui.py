@@ -8,6 +8,15 @@ import benchmarks as bm
 import data_quality as quality
 from analytics import resample
 
+def position_focus(app):
+    """Scheduling hints from the existing drafts, without reading source policy.
+
+    owner_history_info only overlays history_venue_lock; it never changes a
+    position. Trade calculations still use user_state and their normal guards.
+    """
+    return [info['isin'] for info in app.watchlist
+            if float(app.drafts.get(info['isin'],info).get('position',{}).get('quantity') or 0)!=0]
+
 class BenchmarkMixin:
     def apply_benchmark_labels(self,info,archive):
         meta=bm.identity(info)
@@ -91,7 +100,7 @@ class BenchmarkMixin:
             if info.get('kind')=='benchmark' and self.timeframe.get() not in ('1D','1W','1M'):
                 self.timeframe.set('1D')
             self._benchmark_opened_isin=info['isin']
-        self.dispatcher.focus(info['isin'],[i['isin'] for i in self.watchlist if float(self.user_state(i).get('position',{}).get('quantity') or 0)!=0])
+        self.dispatcher.focus(info['isin'],position_focus(self))
         # Immutable UI capture: feed workers must never read Tk variables.
         focus=getattr(self,'_cp_focus',{})
         if focus.get('isin')!=info['isin'] or focus.get('timeframe')!=self.timeframe.get():
