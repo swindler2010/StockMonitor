@@ -187,6 +187,52 @@ def _known_trade(meta,start,end,now,index):
                    for a,b in intervals[left:right])
     except (ValueError,TypeError):return False
 
+def _plain_empty_mask(meta,stamps,base,now,opening,closing,index):
+    """Batch the scalar proof's exact geometry; return None for fallback.
+
+    No decision survives this call. Identity, publication clock and all range
+    contents are read again; only immutable interval indexes may be reused.
+    Official correction scopes keep the existing recursive scalar validator.
+    """
+    if now is None or stamps.tz is not None or stamps.hasnans or meta.get('official_retiming_empty'):return None
+    result=np.zeros(len(stamps),dtype=bool);proof=meta.get('absence_evidence',{})
+    if (not all(proof.get('identity',{}).get(k)==meta.get(k) and meta.get(k) for k in IDENTITY)
+        or proof.get('basis')!='complete_published_trade_files' or not proof.get('reference') or not proof.get('checked_at')):return result
+    try:
+        clock=pd.Timestamp(now);checked=pd.Timestamp(proof['checked_at'])
+        if checked.tzinfo is None or checked>clock:return result
+        days=stamps.normalize();closes=pd.DatetimeIndex([closing.get(day,pd.NaT) for day in days])
+        valid=~closes.isna()
+        if not valid.any():return result
+        labels=stamps[valid]
+        begin=pd.DatetimeIndex([opening[day] for day in days[valid]]) if base=='1D' else labels
+        end=pd.DatetimeIndex(np.minimum((labels+STEPS[base]).as_unit('ns').asi8,closes[valid].as_unit('ns').asi8))
+        # Off-grid/degenerate inputs follow the old validator verbatim.
+        if (begin>=end).any():return None
+        eligible=end.tz_localize(meta['timezone'],ambiguous='raise',nonexistent='raise').tz_convert('UTC')<=checked
+        starts=begin.as_unit('ns').asi8;ends=end.as_unit('ns').asi8
+        for field in ('trade_intervals','zero_quantity_intervals'):
+            ranges,left,right=index(field)
+            if any(a.tzinfo is not None or b.tzinfo is not None or a>=b for a,b in ranges):return None
+            if not ranges:continue
+            positions=np.searchsorted(np.array([a.value for a in left],dtype='int64'),ends,side='left')-1
+            overlap=(positions>=0)&(np.array([b.value for b in right],dtype='int64')[np.maximum(positions,0)]>starts)
+            eligible &= ~overlap
+        ranges,_,_=index('no_trades');merged=[]
+        for a,b in ranges:
+            if a.tzinfo is not None or b.tzinfo is not None or a>=b:return None
+            a,b=a.value,b.value
+            if merged and a<=merged[-1][1]:merged[-1]=(merged[-1][0],max(merged[-1][1],b))
+            else:merged.append((a,b))
+        if not merged:return result
+        left=np.array([a for a,_ in merged],dtype='int64');right=np.array([b for _,b in merged],dtype='int64')
+        positions=np.searchsorted(left,starts,side='right')-1
+        covered=(positions>=0)&(right[np.maximum(positions,0)]>=ends)
+        result[valid]=eligible&covered
+        return result
+    except (ValueError,TypeError,KeyError,IndexError,OverflowError):return None
+
+
 def covered_empty(meta,stamps,base,now=None,*,closed_only=False):
     """Only proven empty intervals can be removed from expectations."""
     if not meta.get('classify_absence') or not (meta.get('absence_evidence') or meta.get('official_retiming_empty')) or base not in STEPS:return pd.DatetimeIndex([])
@@ -201,6 +247,19 @@ def covered_empty(meta,stamps,base,now=None,*,closed_only=False):
     opening_by_day={day:opening.tz_convert(meta['timezone']).tz_localize(None)
                     for day,opening in zip(sessions.index,sessions.open)}
     found=[];index=_evidence_lookup(meta)
+    if not closed_only and len(stamps)>=16:
+        mask=_plain_empty_mask(meta,stamps,base,now,opening_by_day,closing_by_day,index)
+        if mask is not None:
+            if meta.get('absence_evidence',{}).get('exchange_closures'):
+                # Closure proof is independent; a valid NO_TRADES proof already
+                # covers its interval. Check notices only for the remainder.
+                for n in np.flatnonzero(~mask):
+                    stamp=stamps[n];day=stamp.normalize();closing=closing_by_day.get(day)
+                    if closing is None:continue
+                    begin=opening_by_day[day] if base=='1D' else stamp
+                    end=min(stamp+STEPS[base],closing)
+                    if market_closed_proof(meta,begin,end,now) and not _closure_conflict(meta,begin,end,now,index):mask[n]=True
+            return stamps[mask]
     for stamp in stamps:
         day=stamp.normalize()
         closing=closing_by_day.get(day)

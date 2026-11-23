@@ -13,9 +13,13 @@ def audit_only_scopes(specs):
 def bind(frame, info):
     """Attach an in-memory contract; no stored quality/provenance is changed."""
     if source_contract(info, frame.attrs):
-        frame = frame.copy(deep=False)
-        frame.attrs = {**frame.attrs, 'gettex_first_contract': dict(
-            version=VERSION, isin=info['isin'], identity={k:frame.attrs.get(k)
+        # Keep the same shallow row view without pandas deep-copying attrs
+        # that the contract assignment immediately replaces.
+        metadata=frame.attrs
+        import pandas as pd
+        frame = pd.DataFrame(frame,copy=False)
+        frame.attrs = {**metadata, 'gettex_first_contract': dict(
+            version=VERSION, isin=info['isin'], identity={k:metadata.get(k)
             for k in ('source','symbol','venue','currency','timezone')})}
     return frame
 

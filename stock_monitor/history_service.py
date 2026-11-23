@@ -472,7 +472,18 @@ def attach_parent_provenance(store,frame,isin,base):
                 if valid:
                     origins.append(dict(receipt_key=key,first=receipt['first'],end=receipt['end'],source='gettex',original_provider=frame.attrs['source'],
                         mode=receipt.get('mode','RETIMED')))
-                    current=store.setting('interval_evidence:'+isin,{})
+                    # retime_current already decoded this exact proof in the
+                    # same immutable WAL view. Reuse only its scalar header;
+                    # default/writer calls retain the ordinary setting read.
+                    readonly_view=(view and view[0] is db and db.in_transaction
+                        and db.execute('PRAGMA query_only').fetchone()[0])
+                    if readonly_view:
+                        current=view[2].get(('official_proof',isin))
+                        if current is None:
+                            header_key=('parent_proof_header',isin)
+                            if header_key not in view[2]:view[2][header_key]=store.setting('interval_evidence:'+isin,{})
+                            current=view[2][header_key]
+                    else:current=store.setting('interval_evidence:'+isin,{})
                     authority={**current['identity'],'absence_evidence':{**receipt['source']['proof'],'checked_at':current['checked_at']}}
                     empty.append(dict(first=receipt['first'],end=receipt['end'],authority=authority))
             receipt,valid=retimed[key]
