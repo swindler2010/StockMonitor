@@ -186,6 +186,10 @@ def _input(db, job):
                 result.setdefault('official_retiming_empty',[]).append(dict(first=sibling['first'],end=sibling['end'],
                     authority={**proof['identity'],'absence_evidence':{**sibling['source']['proof'],'checked_at':proof['checked_at']}}))
     result['fingerprint']=_fingerprint(result)
+    if job.get('observation') and job['observation'].get('input_fingerprint')!=result['fingerprint']:
+        from revision_watcher import reviewed_context_fingerprint
+        context=reviewed_context_fingerprint(db,job,result)
+        if context:result['review_context_fingerprint']=context
     return result
 
 
@@ -216,6 +220,8 @@ def _observation_current(job, inputs):
     observation=job.get('observation') or {}
     if not observation:return False
     if observation.get('input_fingerprint')==inputs['fingerprint']:return True
+    if (observation.get('fingerprint_version')==FINGERPRINT_VERSION
+            and inputs.get('review_context_fingerprint')==observation.get('input_fingerprint')):return True
     # Require the *old complete hash* before migration. Already stale reviews
     # cannot be revived merely by removing non-market fields from the binding.
     if (observation.get('fingerprint_version')==3 and
@@ -563,7 +569,7 @@ def _queue_repaired_scopes(db,receipt_key,receipt,clock,limit=16):
       AND json_extract(value,'$.identity.venue')=? AND json_extract(value,'$.identity.currency')=?
       AND json_extract(value,'$.identity.timezone')=?
       AND ((json_extract(value,'$.first')<? AND json_extract(value,'$.end')>?)
-       OR (json_extract(value,'$.observation.result')='ABSENT' AND
+       OR (json_extract(value,'$.observation.result') IN ('ABSENT','DIFFERENT') AND
         ((json_extract(value,'$.native_neighbors.before[0]')>=? AND json_extract(value,'$.native_neighbors.before[0]')<?)
          OR (json_extract(value,'$.native_neighbors.after[0]')>=? AND json_extract(value,'$.native_neighbors.after[0]')<?))))
       ORDER BY key LIMIT ?""",(prefix,prefix+'\uffff',*[receipt['identity'][k] for k in ('source','symbol','venue','currency','timezone')],
@@ -575,7 +581,7 @@ def _queue_repaired_scopes(db,receipt_key,receipt,clock,limit=16):
         slots=changed.get(job['tf'],set());obs=job.get('observation') or {}
         direct=any(job['first']<=at<job['end'] for at in slots)
         neighbours=job.get('native_neighbors') or {}
-        adjacent=(obs.get('result')=='ABSENT' and any((neighbours.get(k) or [None])[0] in slots for k in ('before','after')))
+        adjacent=(obs.get('result') in ('ABSENT','DIFFERENT') and any((neighbours.get(k) or [None])[0] in slots for k in ('before','after')))
         if not (direct or adjacent):continue
         if _input(db,job)['fingerprint']==job.get('input_fingerprint'):continue
         old=dict(job);job.update(status='RECHECK_QUEUED' if obs else 'QUEUED',next_check=clock.isoformat(),
@@ -803,14 +809,15 @@ def turn(store, info, now=None, native_empty_only=False):
                         _save_job(db,current,old);checked+=1
                         continue
                 if correction_wait:current['official_timebase_repair']=dict(state='WAITING_EVIDENCE',reason=correction_wait)
-                if _observation_current(current,inputs) and current['observation']['input_fingerprint']!=inputs['fingerprint']:
+                if (_observation_current(current,inputs) and current['observation']['input_fingerprint']!=inputs['fingerprint']
+                        and not inputs.get('review_context_fingerprint')):
                     current['observation']={**current['observation'],'previous_input_fingerprint':current['observation']['input_fingerprint'],
                         'input_fingerprint':inputs['fingerprint'],'binding_updated_at':clock.isoformat(),
                         'fingerprint_version':FINGERPRINT_VERSION,
                         'binding_reason':'v4: exact native rows/neighbours/validated listing/proof; unrelated chart and portfolio settings are not market evidence'}
                 current.update(finding=result,input_fingerprint=inputs['fingerprint'],checked_at=clock.isoformat(),
                     fingerprint_version=FINGERPRINT_VERSION,
-                    native_rows=inputs['rows'],native_neighbors=inputs['neighbors'],
+                    native_rows=inputs['rows'],native_neighbors=current.get('native_neighbors') if inputs.get('review_context_fingerprint') else inputs['neighbors'],
                     checks=current.get('checks',0)+1,next_check=(clock+pd.Timedelta(hours=1)).isoformat(),
                     native_retry=inputs['native_retry'],capability=capability(),
                     status='RESOLVED_NATIVE' if result['can_affect_dq'] or result['state']=='NATIVE_ROWS_CONFIRMED' else 'AWAITING_SOURCE' if current.get('observation') or result.get('provider_wait') is True else 'AWAITING_USER',

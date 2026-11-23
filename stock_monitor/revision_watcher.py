@@ -262,24 +262,24 @@ def _automatic_zero_plan(db,job,inputs,now,policy):
 def _partition_co_reviews(db,job,inputs,plan):
  """Bind disjoint current DIFFERENT diagnoses to one fully proved partition.
 
- Only the opening-burst case uses this atomic co-reconciliation. It never
- accepts conflicting ABSENT/PRESENT facts or an overlapping diagnosis.
+ A unique conserved partition may reconcile disjoint diagnoses of the same
+ TF together. It never accepts contradictory presence facts or overlap.
  """
  from cp_reconciliation import PREFIX,_input,_observation_current
  from cp_controls import digest
- if not plan.get('sampled_positive_opening_burst') or (job.get('observation') or {}).get('result')!='DIFFERENT' or not _observation_current(job,inputs):return {}
+ if not (plan.get('sampled_positive_opening_burst') or (job['tf']=='15m' and plan.get('native_partition_proved'))) or (job.get('observation') or {}).get('result')!='DIFFERENT' or not _observation_current(job,inputs):return {}
  prefix=PREFIX+job['isin']+':'
  rows=db.execute("SELECT value FROM settings WHERE key>=? AND key<? AND json_extract(value,'$.observation.result')='DIFFERENT' AND json_extract(value,'$.first')>=? AND json_extract(value,'$.end')<=? LIMIT 9",(prefix,prefix+'\uffff',plan['first'],plan['end'])).fetchall()
  if len(rows)>8:return {}
  result={}
  for raw, in rows:
   review=json.loads(raw)
-  if review['id']==job['id'] or review.get('identity')!=job['identity'] or review.get('tf')!='5m':continue
+  if review['id']==job['id'] or review.get('identity')!=job['identity'] or review.get('tf')!=job['tf']:continue
   if not (review['end']<=job['first'] or job['end']<=review['first']):continue
   checked=_input(db,review)
   if not _observation_current(review,checked) or not review['observation'].get('identity_confirmed'):continue
-  actual=[r for r in plan['source']['rows']['5m'] if review['first']<=r[0]<review['end']]
-  original=[r for r in plan['before']['5m'] if review['first']<=r[0]<review['end']]
+  actual=[r for r in plan['source']['rows'][job['tf']] if review['first']<=r[0]<review['end']]
+  original=[r for r in plan['before'][job['tf']] if review['first']<=r[0]<review['end']]
   if checked['rows']!=original or original==actual:continue
   result[review['id']]=dict(job_digest=digest(review),input_fingerprint=checked['fingerprint'],first=review['first'],end=review['end'])
  return result
@@ -311,6 +311,14 @@ def _protect_visual_references(db,job,inputs,plan):
   if binding and obs['result']=='DIFFERENT':
    from cp_controls import digest
    if digest(review)==binding['job_digest'] and checked['fingerprint']==binding['input_fingerprint']:continue
+  # A newer proved partition may update the context of a disjoint diagnosis;
+  # it does not change that diagnosis's subject rows or contradict its fact.
+  # The unchanged subject can reuse its observation only through the exact
+  # current primary-receipt binding below, never by moving its timestamp.
+  disjoint=review['end']<=plan['first'] or plan['end']<=review['first']
+  if (obs['result']=='DIFFERENT' and disjoint and plan.get('native_partition_proved')
+      and own.get('result')=='DIFFERENT' and own_at is not None
+      and obs.get('at') and own_at>pd.Timestamp(obs['at'])):continue
   present=any(review['first']<=r[0]<review['end'] for r in canonical)
   covered=plan['first']<=review['first'] and review['end']<=plan['end']
   if (obs['result']=='ABSENT' and present
@@ -560,7 +568,7 @@ def _reviewed_partition_plan(db,job,inputs,now,policy):
        binding='exact unique ordered official trade partition'))
    lineage={}
    if reviewed:
-    guard_plan=dict(first=str(left),end=str(end),source=source,before=native,**(dict(sampled_positive_opening_burst=opening[1]) if opening else {}))
+    guard_plan=dict(first=str(left),end=str(end),source=source,before=native,native_partition_proved=True,**(dict(sampled_positive_opening_burst=opening[1]) if opening else {}))
     co_reviews=_partition_co_reviews(db,job,inputs,guard_plan);guard_plan['co_review_inputs']=co_reviews
     _protect_visual_references(db,job,inputs,guard_plan)
     from history_service import parent_provenance_key
@@ -763,7 +771,8 @@ def _primary_window_plan(db,job,inputs,now,policy):
  if not (job['tf']=='15m' and job['first']==job['last'] and obs.get('result')=='DIFFERENT' and _observation_current(job,inputs)
      and confirmation.get('version')==1 and confirmation.get('first')==job['first'] and confirmation.get('end')==job['end']
      and confirmation.get('matched_fields')==['timestamp','open','high','low','close','volume']
-     and confirmation.get('native_input_fingerprint')==inputs['fingerprint']
+     and (confirmation.get('native_input_fingerprint')==inputs['fingerprint']
+          or inputs.get('review_context_fingerprint') and confirmation.get('native_input_fingerprint')==inputs['review_context_fingerprint'])
      and sp.get('approved') is True and sp.get('version')==1 and sp.get('scope')=='registered_stocks' and sp.get('exclusive_venue')=='GETTEX'):return None
  if not stored_identity(db,inputs['info'],job['identity'],'5m'):return None
  native={b:_native(db,job['isin'],job['identity'],b,job['first'],job['end']) for b in ('5m','15m')}
@@ -980,6 +989,44 @@ def receipt_source_current(source,receipt):
    return result
   return digest(scoped(source))==digest(scoped(saved))
  except (ValueError,KeyError,TypeError):return False
+
+
+def reviewed_context_fingerprint(db,job,inputs):
+ """Reuse an unchanged subject only when a current receipt proves its new neighbour.
+
+ Reconstruct the entire original visual hash first. Every changed neighbour
+ must be an exact before/after row of one disjoint, independently validated
+ conserved source correction. Never renew observations or their deadlines.
+ """
+ from cp_reconciliation import _fingerprint,FINGERPRINT_VERSION
+ obs=job.get('observation') or {};old=job.get('native_neighbors')
+ if obs.get('fingerprint_version')!=FINGERPRINT_VERSION or not old:return None
+ if _fingerprint(dict(inputs,neighbors=old))!=obs.get('input_fingerprint'):return None
+ changed=[k for k in ('before','after') if json.dumps(old.get(k))!=json.dumps(inputs['neighbors'].get(k))]
+ if not changed:return None
+ prefix=RETIME_PREFIX+job['isin']+':';meta=job['identity']
+ for side in changed:
+  previous,current=old.get(side),inputs['neighbors'].get(side)
+  if not previous or not current:return None
+  first,end=min(previous[0],current[0]),max(previous[0],current[0])
+  rows=db.execute("""SELECT value FROM settings WHERE key>=? AND key<?
+   AND json_extract(value,'$.state')='APPLIED'
+   AND json_extract(value,'$.mode')='VERIFIED_NATIVE_TRADE_PARTITION'
+   AND json_extract(value,'$.reviewed_window_partition')=1
+   AND json_extract(value,'$.first')<=? AND json_extract(value,'$.end')>?
+   ORDER BY key LIMIT 9""",(prefix,prefix+'\uffff',first,end)).fetchall()
+  if len(rows)>8:return None
+  proved=False
+  for raw, in rows:
+   receipt=json.loads(raw)
+   if receipt.get('identity')!=meta or not (receipt['end']<=job['first'] or job['end']<=receipt['first']):continue
+   before=receipt.get('before',{}).get(job['tf'],[]);after=receipt.get('source',{}).get('rows',{}).get(job['tf'],[])
+   if (not any(list(r)==list(previous) for r in before)
+       or not any(list(r)==list(current) for r in after)
+       or not retime_current(db,receipt)):continue
+   proved=True;break
+  if not proved:return None
+ return obs['input_fingerprint']
 
 
 def retime_current(db,receipt,now=None):
