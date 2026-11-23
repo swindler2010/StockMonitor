@@ -80,6 +80,55 @@ def technical(app,info,tf,period,cached):
     return result
 
 
+def overview_metrics(overview):
+    from financial_format import format_value
+    from card_view import MONEY,QUOTE
+    rows=[]
+    for key,label in [('marketCap','Капитализация'),('trailingPE','P/E TTM'),('trailingEps','EPS TTM'),('totalRevenue','Выручка'),('netIncomeToCommon','Чистая прибыль'),('totalDebt','Долг'),('totalCash','Денежные средства')]:
+        currency=(overview.get('financialCurrency') or tr('Валюта неизвестна')) if key in MONEY else (overview.get('currency') or tr('Валюта неизвестна')) if key in QUOTE else None
+        kind='price' if key=='trailingEps' else 'amount' if currency else 'number'
+        value=format_value(overview.get(key),language(),kind=kind,currency=currency,compact=key not in ('trailingPE','trailingEps'),digits=2)
+        raw=overview.get(key);exact=tr('Нет данных') if raw is None else str(raw)+(' '+currency if currency else '')
+        rows.append((tr(label),value,exact))
+    return rows
+
+
+def statement_value(row,with_unit=False):
+    from financial_format import format_value
+    unit=row.get('unit');kind='percent' if unit=='ratio' else 'price' if unit=='per_share' else 'number'
+    value=format_value(row.get('value'),language(),kind=kind,compact=kind=='number' and unit!='multiple',digits=2)
+    if with_unit and unit!='ratio':value+=' '+str(row.get('currency') or tr(unit or '—'))
+    return value
+
+
+def calendar_text(data):
+    from card_view import LABELS,DATES
+    from financial_format import format_date,format_value
+    from datetime import datetime,timezone
+    if not isinstance(data,dict) or not data:return tr('События не получены от источника.')
+    def value(raw,key):
+        if isinstance(raw,(list,tuple)):return '; '.join(value(v,key) for v in raw) or tr('Нет данных')
+        if raw is None:return tr('Нет данных')
+        if key in DATES:
+            if isinstance(raw,(int,float)) and not isinstance(raw,bool):
+                try:return format_date(datetime.fromtimestamp(raw,tz=timezone.utc),language(),clock=True)
+                except (ValueError,OverflowError,OSError):return tr('Нет данных')
+            return format_date(raw,language())
+        if isinstance(raw,(int,float)) and not isinstance(raw,bool):return format_value(raw,language(),kind='number',compact=True)
+        return str(raw)
+    return '\n'.join(tr(LABELS.get(k,k))+'\t'+value(v,k) for k,v in data.items())+'\n\n'+tr('Даты и прогнозы могут измениться')
+
+
+def metadata_summary(metadata):
+    from financial_format import format_date
+    from fundamentals_view import freshness
+    source=str(metadata.get('source') or '—')
+    if source=='Yahoo Finance (через yfinance), не GETTEX':source='Yahoo Finance'
+    labels={'CURRENT_CACHE':'Актуально','STALE':'Устарело','FUTURE_TIMESTAMP':'Дата в будущем','UNKNOWN':'Дата неизвестна'}
+    state=freshness(metadata)
+    return source+' · '+format_date(metadata.get('updated_at'),language(),clock=True)+' · '+tr(labels[state]),state
+
+
 class Pages:
     def __init__(self,screen):
         self.screen=screen;self.app=screen.app;self.active='chart';self.sequence=0;self.model=None;self.context=None
@@ -158,70 +207,101 @@ class Pages:
     def text(self,text):
         style=ttk.Style(self.host);bg=style.lookup('Desk.TFrame','background');fg=style.lookup('Desk.TLabel','foreground')
         widget=ScrolledText(self.body,height=8,wrap='word',font=('Segoe UI',11),background=bg or '#0b1220',foreground=fg or '#e5e7eb',relief='flat',padx=12,pady=12)
-        widget.pack(fill='both',expand=True);widget.insert('1.0',text);widget.configure(state='disabled');return widget
+        widget.pack(fill='both',expand=True);widget.insert('1.0',text);widget.configure(state='disabled',spacing1=2,spacing3=4)
+        widget.bind('<Configure>',lambda e:widget.configure(tabs=(max(190,int(e.width*.6)),)))
+        return widget
     def render(self,packet):
         for child in self.body.winfo_children():child.destroy()
         kind=self.active
         if kind=='analysis':self.analysis(packet);return
         data=packet['data'];info=packet['info']
         actions=ttk.Frame(self.body,style='Desk.TFrame');actions.pack(side='bottom',fill='x',pady=(6,0))
-        if kind=='overview':ttk.Button(actions,text=tr('Полная карточка в отдельном окне'),command=self.app.show_card).pack(side='right')
+        if kind=='overview':ttk.Button(actions,text=tr('Карточка'),command=self.app.show_card).pack(side='right')
         if kind in ('finances','reports'):ttk.Button(actions,text=tr('Подробная отчётность'),command=lambda:self.statements(info)).pack(side='right')
         from fundamentals_view import freshness
         metadata=packet['overview_metadata'] if kind=='overview' else packet['events_metadata'] if kind=='events' else data
-        source=str(metadata.get('source') or '—');at=str(metadata.get('updated_at') or '—')
-        ttk.Label(self.body,text=tr('Источник')+': '+source+' · '+tr('Обновлено')+': '+at+' · '+tr(freshness(metadata)),style='DeskMuted.TLabel',wraplength=700).pack(anchor='w',pady=(0,7))
-        ttk.Label(self.body,text=tr('Привязка по настроенному тикеру; ISIN независимо не подтверждён'),style='DeskMuted.TLabel',wraplength=700).pack(anchor='w',pady=(0,7))
+        summary,state=metadata_summary(metadata)
+        note=ttk.Label(self.body,text=summary,style='DeskMuted.TLabel',wraplength=740);note.pack(anchor='w',pady=(0,5))
+        self.hint(note,tr('Источник')+': '+str(metadata.get('source') or '—')+'\n'+tr('Обновлено')+': '+str(metadata.get('updated_at') or '—')+'\n'+tr(freshness(metadata)))
+        binding=ttk.Label(self.body,text=tr('Данные эмитента · ISIN не проверен'),style='DeskMuted.TLabel',font=('Segoe UI',9));binding.pack(anchor='w',pady=(0,8))
+        self.hint(binding,tr('Привязка по настроенному тикеру; ISIN независимо не подтверждён'))
         if kind=='overview':self.overview(packet)
         elif kind=='finances':self.finances(packet)
         elif kind=='reports':self.reports(packet)
         elif kind=='events':
-            from card_view import events
-            self.text(events({'events':packet['calendar']}))
+            self.text(calendar_text(packet['calendar']))
     def statements(self,info):
         from fundamentals_panel import show
         show(self.app,info)
+    def hint(self,widget,text):
+        self.app.tooltip(widget,text)
+        def cleanup(event):
+            tip=getattr(widget,'tip',None)
+            if event.widget is widget and tip is not None:
+                try:tip.destroy()
+                except tk.TclError:pass
+        widget.bind('<Destroy>',cleanup,add='+')
     def overview(self,packet):
-        from card_view import fundamentals
-        info=packet['info'];ov=packet['overview']
-        lines=[info['name'],str(info.get('symbol') or info.get('profile_symbol') or '—')+' · '+info['isin'],
-               str(info.get('venue') or '—')+' / '+str(info.get('currency') or '—'),'',
-               fundamentals(ov,{'marketCap':'Капитализация','trailingPE':'P/E TTM','trailingEps':'EPS TTM','totalRevenue':'Выручка','netIncomeToCommon':'Чистая прибыль','totalDebt':'Долг','totalCash':'Денежные средства'})]
-        self.text('\n'.join(lines))
+        info=packet['info']
+        context=str(info.get('symbol') or info.get('profile_symbol') or '—')+' · '+str(info.get('venue') or '—')+' / '+str(info.get('currency') or '—')+' · '+info['isin']
+        ttk.Label(self.body,text=context,style='DeskMuted.TLabel',font=('Segoe UI',10)).pack(anchor='w',pady=(2,10))
+        footer=ttk.Label(self.body,text=tr('Суммы округлены · точные значения при наведении'),style='DeskMuted.TLabel',font=('Segoe UI',9));footer.pack(side='bottom',anchor='w',pady=(6,0))
+        outer=ttk.Frame(self.body,style='Desk.TFrame');outer.pack(fill='both',expand=True)
+        style=ttk.Style(self.body);canvas=tk.Canvas(outer,highlightthickness=0,background=style.lookup('Desk.TFrame','background'))
+        scroll=ttk.Scrollbar(outer,command=canvas.yview,style='Desk.Vertical.TScrollbar');scroll.pack(side='right',fill='y');canvas.pack(side='left',fill='both',expand=True);canvas.configure(yscrollcommand=scroll.set)
+        table=ttk.Frame(canvas,style='Desk.TFrame',padding=(8,0));window=canvas.create_window(0,0,window=table,anchor='nw')
+        table.columnconfigure(0,weight=1);table.columnconfigure(1,weight=1)
+        style.configure('DeskSummary.TSeparator',background=style.lookup('DeskCard.TFrame','bordercolor') or '#26384c')
+        table.bind('<Configure>',lambda _:canvas.configure(scrollregion=canvas.bbox('all')))
+        canvas.bind('<Configure>',lambda e:canvas.itemconfigure(window,width=e.width))
+        for row,(label,value,exact) in enumerate(overview_metrics(packet['overview'])):
+            name=ttk.Label(table,text=label,style='DeskMuted.TLabel',font=('Segoe UI',10));name.grid(row=row*2,column=0,sticky='w',pady=3)
+            amount=ttk.Label(table,text=value,style='Desk.TLabel',font=('Segoe UI',11,'bold'),anchor='e');amount.grid(row=row*2,column=1,sticky='e',padx=(14,8),pady=3)
+            self.hint(amount,label+': '+exact)
+            ttk.Separator(table,style='DeskSummary.TSeparator').grid(row=row*2+1,column=0,columnspan=2,sticky='ew')
+            for widget in (name,amount):widget.bind('<MouseWheel>',lambda e:canvas.yview_scroll(-int(e.delta/120),'units'))
+        canvas.bind('<MouseWheel>',lambda e:canvas.yview_scroll(-int(e.delta/120),'units'))
     def analysis(self,packet):
         from trading_view import format_engine
-        from financial_format import format_value
+        from financial_format import format_value,format_date
         technical=packet.get('technical')
         if technical is None:
             title,body=format_engine(None);self.text(title+'\n\n'+body);return
         title,body=format_engine(technical['engine']);source=technical['source'];lang=language()
         lines=[title,technical['tf']+' · '+str(source.get('source') or '—')+' / '+str(source.get('venue') or '—')+' / '+str(source.get('currency') or '—'),
-               tr('Последняя свеча')+': '+technical['latest'],tr('Закрытых свечей')+': '+str(technical['closed']),body,'',tr('Индикаторы последней свечи; формирующаяся свеча предварительная')]
+               tr('Последняя свеча')+': '+format_date(technical['latest'],language(),clock=True,assume_zone='Europe/Berlin'),tr('Закрытых свечей')+': '+str(technical['closed']),body,'',tr('Индикаторы последней свечи; формирующаяся свеча предварительная')]
         labels={'ema10':'EMA 10','ema30':'EMA 30','rsi':'RSI (14)','atr':'ATR (14)','macd':'MACD','macd_signal':'Signal MACD','volume':'Объём','volume_mean20':'Средний объём'}
-        for key,label in labels.items():lines.append(tr(label)+': '+format_value(technical['indicators'].get(key),lang,kind='number',digits=3))
-        for key,label in [('support','Поддержка'),('resistance','Сопротивление'),('stop','Стоп сценария')]:lines.append(tr(label)+': '+format_value(technical['levels'].get(key),lang,kind='number',digits=3))
-        self.text('\n\n'.join(lines))
+        for key,label in labels.items():lines.append(tr(label)+'\t'+format_value(technical['indicators'].get(key),lang,kind='number',compact=key in ('volume','volume_mean20'),digits=2 if key in ('volume','volume_mean20','ema10','ema30','rsi') else 3))
+        for key,label in [('support','Поддержка'),('resistance','Сопротивление'),('stop','Стоп сценария')]:lines.append(tr(label)+'\t'+format_value(technical['levels'].get(key),lang,kind='number',digits=3))
+        self.text('\n'.join(lines))
     def finances(self,packet):
-        from financial_format import format_value
+        from financial_format import format_value,format_date
         from localized_widgets import CanonicalCombobox
         frequency=tk.StringVar(self.body,self._finance_frequency)
         box=CanonicalCombobox(self.body,textvariable=frequency,values=['quarterly','yearly','trailing','valuation'],state='readonly',width=20);box.pack(anchor='w',pady=(0,8))
+        empty=ttk.Label(self.body,style='DeskMuted.TLabel');empty.pack(side='bottom',anchor='w',fill='x',pady=6)
         columns=('metric','period','value','currency','state');table=ttk.Frame(self.body);table.pack(fill='both',expand=True)
         tree=ttk.Treeview(table,columns=columns,show='headings',style='Desk.Treeview')
         for key,label,width in [('metric','Показатель',200),('period','Период',115),('value','Значение',140),('currency','Валюта',75),('state','Статус',150)]:tree.heading(key,text=tr(label));tree.column(key,width=width,stretch=key in ('metric','state'))
         vs=ttk.Scrollbar(table,command=tree.yview);vs.pack(side='right',fill='y');hs=ttk.Scrollbar(table,orient='horizontal',command=tree.xview);hs.pack(side='bottom',fill='x');tree.configure(yscrollcommand=vs.set,xscrollcommand=hs.set);tree.pack(fill='both',expand=True)
-        empty=ttk.Label(self.body,style='DeskMuted.TLabel');empty.pack(anchor='w',pady=6)
         def draw(_=None):
             self._finance_frequency=frequency.get();tree.delete(*tree.get_children())
             rows=packet['valuation'] if frequency.get()=='valuation' else [r for r in packet['rows'] if r.get('frequency')==frequency.get()]
             for row in rows:
-                tree.insert('','end',values=(tr(row.get('label') or row.get('metric') or '—'),row.get('period_end') or tr('Период не указан'),
-                    format_value(row.get('value'),language(),kind='percent' if row.get('unit')=='ratio' else 'number',digits=3),row.get('currency') or '—',tr(row.get('cache_status') or row.get('status') or '—')))
+                tree.insert('','end',values=(tr(row.get('label') or row.get('metric') or '—'),format_date(row.get('period_end'),language()) if row.get('period_end') else tr('Период не указан'),
+                    statement_value(row),row.get('currency') or '—',tr(row.get('cache_status') or row.get('status') or '—')))
             empty.configure(text='' if rows else tr('Отчётность ещё не загружена. Откройте подробную отчётность для обновления.'))
+        def inspect(_=None):
+            selected=tree.selection()
+            if not selected:return
+            item=tree.index(selected[0]);rows=packet['valuation'] if frequency.get()=='valuation' else [r for r in packet['rows'] if r.get('frequency')==frequency.get()]
+            if item<len(rows):
+                row=rows[item];empty.configure(text=tr('Значение источника')+': '+str(row.get('value'))+' '+str(row.get('currency') or tr(row.get('unit') or '—')))
+        tree.bind('<<TreeviewSelect>>',inspect)
         box.bind('<<ComboboxSelected>>',draw);draw()
     def reports(self,packet):
         from card_view import reports
-        from financial_format import format_value
+        from financial_format import format_value,format_date
         rows=[r for r in packet['rows'] if r.get('frequency')=='quarterly']
         if not rows:
             fields=('date','type','url','edgarUrl')
@@ -232,13 +312,13 @@ class Pages:
         period=None
         for row in sorted(rows,key=lambda r:str(r.get('period_end') or ''),reverse=True):
             if period!=row.get('period_end'):
-                period=row.get('period_end');lines.append('\n'+tr('Период')+': '+str(period or tr('Период не указан')))
-            lines.append(tr(row.get('label') or row.get('metric') or '—')+': '+format_value(row.get('value'),language(),kind='number',digits=3)+' '+str(row.get('currency') or tr(row.get('unit') or '—')))
+                period=row.get('period_end');lines.append('\n'+tr('Период')+': '+(format_date(period,language()) if period else tr('Период не указан')))
+            lines.append(tr(row.get('label') or row.get('metric') or '—')+'\t'+statement_value(row,with_unit=True))
         if packet['filings']:
             from news_engine import safe_url
             lines.append('\n'+tr('Публикации эмитента:'))
             for filing in packet['filings']:
-                lines.append(str(filing.get('date') or '—')+' · '+str(filing.get('type') or '—')+'\n'+safe_url(filing.get('edgarUrl') or filing.get('url')))
+                lines.append(format_date(filing.get('date'),language())+' · '+str(filing.get('type') or '—')+'\n'+safe_url(filing.get('edgarUrl') or filing.get('url')))
         self.text('\n'.join(lines))
     def close(self):
         self.closed=True;self.sequence+=1

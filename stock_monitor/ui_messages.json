@@ -5232,5 +5232,37 @@
   "События": {
     "en": "Events",
     "de": "Ereignisse"
+  },
+  "Актуально": {
+    "en": "Current",
+    "de": "Aktuell"
+  },
+  "Устарело": {
+    "en": "Outdated",
+    "de": "Veraltet"
+  },
+  "Дата в будущем": {
+    "en": "Future date",
+    "de": "Datum in der Zukunft"
+  },
+  "Данные эмитента · ISIN не проверен": {
+    "en": "Company data · ISIN unverified",
+    "de": "Unternehmensdaten · ISIN ungeprüft"
+  },
+  "Суммы округлены · точные значения при наведении": {
+    "en": "Rounded amounts · hover for exact values",
+    "de": "Gerundete Beträge · genaue Werte per Mauszeiger"
+  },
+  "Значение источника": {
+    "en": "Source value",
+    "de": "Originalwert"
+  },
+  "Валюта неизвестна": {
+    "en": "Currency unknown",
+    "de": "Währung unbekannt"
+  },
+  "Даты и прогнозы могут измениться": {
+    "en": "Dates and estimates may change",
+    "de": "Termine und Prognosen können sich ändern"
   }
 }

@@ -7,6 +7,7 @@ from datetime import datetime,timezone
 import webbrowser
 
 from i18n import tr, language
+from financial_format import format_value,format_date
 from indicator_dialog import styles
 from themes import THEMES
 from news_engine import normalize,safe_url
@@ -76,7 +77,7 @@ def details(article):
     link=tr('Ссылка агрегатора ведёт к публикации') if article.get('link_kind')=='AGGREGATOR_LINK_TO_ORIGINAL' else tr('Ссылка на публикацию')
     scope=tr('В тексте упомянута компания; это не проверка биржевой записи.') if article.get('scope')=='company' else tr('Рынок и экономика')
     if article.get('relevance')=='OFFICIAL_ISSUER_FEED':scope=tr('Официальная лента компании')
-    lines=[article['title'],str(article.get('published') or tr('Дата неизвестна'))+' · '+str(article.get('provider') or '—'),
+    lines=[article['title'],format_date(article.get('published'),language(),clock=True)+' · '+str(article.get('provider') or '—'),
            publisher,article.get('summary') or tr('Краткое содержание не предоставлено источником'),scope,
            tr('Состояние даты')+': '+date_note(article),
            tr('Возможные события по заголовку, не подтверждённый календарь')+': '+(', '.join(tr(EVENTS[k]) for k in article.get('events',[]) if k in EVENTS) or '—'),
@@ -279,8 +280,8 @@ class Dialog:
         if info:ttk.Label(frame,text=str(info.get('symbol') or '')+' · '+str(info.get('currency') or ''),style='DeskMuted.TLabel').pack(anchor='w',pady=7)
         preview=chart_preview(self.app,key)
         if preview:
-            ttk.Label(frame,text=f"{preview['prices'][-1]:.2f} {preview['currency']}",style='DeskPrice.TLabel').pack(anchor='w',pady=5)
-            ttk.Label(frame,text=tr('Архив открытого графика')+' · '+preview['venue']+' · '+preview['timeframe']+'\n'+preview['at'],style='DeskMuted.TLabel',wraplength=280).pack(anchor='w')
+            ttk.Label(frame,text=format_value(preview['prices'][-1],language(),kind='price',currency=preview['currency']),style='DeskPrice.TLabel').pack(anchor='w',pady=5)
+            ttk.Label(frame,text=tr('Архив открытого графика')+' · '+preview['venue']+' · '+preview['timeframe']+'\n'+format_date(preview['at'],language(),clock=True,assume_zone='Europe/Berlin'),style='DeskMuted.TLabel',wraplength=280).pack(anchor='w')
             graph=tk.Canvas(frame,height=120,highlightthickness=0,background=self.palette['bg']);graph.pack(fill='x',pady=10)
             def paint(event=None):
                 graph.delete('all');prices=preview['prices'];width=max(1,graph.winfo_width());height=120
@@ -299,7 +300,7 @@ class Dialog:
                 if field in preview.get('ohlcv',{}):
                     line=ttk.Frame(frame,style='Desk.TFrame');line.pack(fill='x',pady=2)
                     ttk.Label(line,text=tr(label)+' ('+str(preview['timeframe'])+')',style='DeskMuted.TLabel').pack(side='left')
-                    ttk.Label(line,text=f"{preview['ohlcv'][field]:,.2f}".replace(',',' '),style='Desk.TLabel').pack(side='right')
+                    ttk.Label(line,text=format_value(preview['ohlcv'][field],language(),kind='number' if field=='volume' else 'price',compact=field=='volume'),style='Desk.TLabel').pack(side='right')
         ttk.Label(frame,text=tr('Публикаций в сохранённой ленте')+f': {len(self.rows)}',style='Desk.TLabel',wraplength=280).pack(anchor='w',pady=7)
         tone=ttk.Frame(self.side,padding=14,style='DeskCard.TFrame');tone.pack(fill='x',pady=(0,10))
         ttk.Label(tone,text=tr('Тональность новостей'),style='DeskTitle.TLabel').pack(anchor='w')

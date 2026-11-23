@@ -441,7 +441,8 @@ class Screen:
                 if runtime and not runtime.translate_news(key,(value.get('articles') or [])[:3],language(),lambda packet:self.show_news(key,packet)):
                     self._news_translation_timer=self.app.root.after(5000,translate_visible)
             self._news_translation_timer=self.app.root.after(1500,translate_visible)
-        lines = [tr('Сохранённые новости') + ' · ' + str(value.get('attempted_at') or tr('время не подтверждено'))]
+        from financial_format import format_date
+        lines = [tr('Новости')+' · '+format_date(value.get('attempted_at'),language(),clock=True,short=True)]
         for article in articles[:2]:
             lines.append(str(article.get('provider') or '—') + '  ·  ' + str(article.get('title') or '—')[:210])
         self.news_text.set('\n'.join(lines) if articles else tr('Сохранённых новостей нет. Откройте «Новости» для загрузки.'))
@@ -449,7 +450,7 @@ class Screen:
             self.news_text.set(lines[0]+f' · {len(articles)}' if articles else tr('Сохранённых новостей нет. Откройте «Новости» для загрузки.'))
             self.news_tree.delete(*self.news_tree.get_children())
             for article in articles[:5]:
-                self.news_tree.insert('', 'end', values=(str(article.get('published') or '—')[:16], article.get('provider') or '—', ('⌛ ' if article.get('translation',{}).get('status') not in ('TRANSLATED','ALREADY_TARGET') else '')+(article.get('title') or '—')))
+                self.news_tree.insert('', 'end', values=(format_date(article.get('published'),language(),clock=True,short=True), article.get('provider') or '—', ('⌛ ' if article.get('translation',{}).get('status') not in ('TRANSLATED','ALREADY_TARGET') else '')+(article.get('title') or '—')))
 
     def selection_changed(self, *_):
         # Coalesce symbol/TF writes. No source or account work on the UI thread.
@@ -546,8 +547,9 @@ class Screen:
         self.source_summary.set(str(meta.get('source') or '—') + ' · ' + str(meta.get('venue') or '—'))
         if hasattr(self, 'header_volume'):
             volume = finite_float(frame.volume.iloc[-1])
-            from chart_modes import compact_number
-            self.header_volume.set(tr('Объём') + f' ({self.app.timeframe.get()}): ' + compact_number(volume) if math.isfinite(volume) else tr('Объём: —'))
+            from financial_format import format_value
+            from i18n import language
+            self.header_volume.set(tr('Объём') + f' ({self.app.timeframe.get()}): ' + format_value(volume,language(),kind='number',compact=True) if math.isfinite(volume) else tr('Объём: —'))
         if hasattr(self, 'source_rows'):
             timestamp = frame.index[-1].strftime('%d.%m %H:%M')
             used = {'GETTEX': meta.get('venue') == 'GETTEX', 'Xetra': meta.get('venue') in ('GER','XETRA','XETR'),
