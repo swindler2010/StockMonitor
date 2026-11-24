@@ -73,7 +73,7 @@ def strategy_trigger(db, position, entry, plan, bar, price, *, result=None):
     if plan.get('strategy_mode')=='V2' and plan.get('model'):
         from paper_v2_30m import MODEL,protection_trigger
         if plan['model']!=MODEL:raise ValueError('PAPER_PROTECTION_BINDING_CHANGED')
-        return protection_trigger(db,position,entry,plan,bar,price)
+        return protection_trigger(db,position,entry,plan,bar,price,result=result)
     from datetime import datetime
     from paper_account import POLICY as execution, money
     from paper_hourly import read
