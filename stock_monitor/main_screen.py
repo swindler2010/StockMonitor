@@ -55,7 +55,7 @@ def theme(app, palette):
     style.configure('DeskCard.TFrame', background=panel, borderwidth=1,
                     relief='solid', bordercolor=palette['grid'])
     style.configure('DeskMuted.TLabel', background=panel, foreground=palette['muted'])
-    style.configure('DeskTitle.TLabel', background=panel, foreground=palette['text'], font=('Segoe UI', 13, 'bold'))
+    style.configure('DeskTitle.TLabel', background=panel, foreground=palette['text'], font=('Segoe UI', 14, 'bold'))
     style.configure('DeskPrice.TLabel', background=panel, foreground=palette['text'], font=('Segoe UI', 20, 'bold'))
     style.configure('DeskSignal.TLabel', background=panel, foreground=palette['text'], font=('Segoe UI', 16, 'bold'))
     style.configure('DeskHeading.TLabel', foreground=accent, font=('Segoe UI', 10, 'bold'))
@@ -110,6 +110,8 @@ def theme(app, palette):
     for widget, name, size in getattr(app.root, '_desk_icon_widgets', []):
         if widget.winfo_exists():widget.configure(image=photo(app.root,name,size,color=palette['text']))
     app.root.after_idle(lambda: native_titlebar(app.root, palette))
+    from reference_design import window_captions
+    window_captions(app,palette)
 
 
 def native_titlebar(root, palette):
@@ -147,15 +149,26 @@ def flow_widgets(widgets,width):
 
 
 def decision_row(parent, decision, reason):
-    """Reserve the longest status height; loading must not move other cards."""
+    """Keep a minimum height, but allow the complete explanation to wrap."""
     from tkinter import font
+    from reference_design import wrap_label
     status_font=ttk.Style(parent).lookup('DeskSignal.TLabel','font') or 'TkDefaultFont'
-    row=ttk.Frame(parent,style='Desk.TFrame',height=3*font.Font(parent,font=status_font).metrics('linespace'))
+    row=ttk.Frame(parent,style='Desk.TFrame')
     row.pack(fill='x',pady=5)
-    row.pack_propagate(False)
-    a=ttk.Label(row,textvariable=decision,style='DeskSignal.TLabel',wraplength=135);a.pack(side='left',anchor='w')
-    b=ttk.Label(row,textvariable=reason,style='DeskMuted.TLabel',font=('Segoe UI',8),wraplength=140);b.pack(side='right',fill='x',expand=True,padx=(7,0))
-    row.bind('<Configure>',lambda event:(a.configure(wraplength=max(95,int(event.width*.43))),b.configure(wraplength=max(70,int(event.width*.48)))))
+    row.columnconfigure(0,weight=0,minsize=110);row.columnconfigure(1,weight=1)
+    base_font=font.Font(parent,font=status_font)
+    small_font=base_font.copy();small_font.configure(size=max(11,round(abs(base_font.cget('size'))*.72)))
+    row._decision_fonts=(base_font,small_font)
+    row.rowconfigure(0,minsize=3*base_font.metrics('linespace')+4)
+    a=ttk.Label(row,textvariable=decision,style='DeskSignal.TLabel',width=7,wraplength=110)
+    a.grid(row=0,column=0,sticky='ew')
+    b=ttk.Label(row,textvariable=reason,style='DeskMuted.TLabel',font=('Segoe UI',9),wraplength=160,justify='left')
+    b.grid(row=0,column=1,sticky='ew',padx=(9,0))
+    wrap_label(a);wrap_label(b)
+    def status_size(*_):a.configure(font=small_font if len(decision.get())>10 else base_font)
+    trace=decision.trace_add('write',status_size)
+    row.bind('<Destroy>',lambda e:decision.trace_remove('write',trace) if e.widget is row else None,add='+')
+    status_size()
     return row
 
 
@@ -538,7 +551,8 @@ class Screen:
             facts = context.get('facts') or {}
             facts = facts if isinstance(facts, dict) else {}
             regime=facts.get('regime','—')
-            variable.set(f'{tf}\n'+{'BULLISH':'Рост','BEARISH':'Снижение','TRANSITION':'Переход','RANGE':'Боковик'}.get(regime,regime))
+            from reference_design import state_label
+            variable.set(f'{tf}\n'+state_label(regime))
             if tf in getattr(self,'context_frames',{}):
                 cell,label=self.context_frames[tf]
                 selected=tf==self.app.timeframe.get()
@@ -561,8 +575,9 @@ class Screen:
                 variable.set(values.get(key, '—'))
             self.signal_caption.set(tr('Сигнал') + f' ({self.app.timeframe.get()}) · '+tr('закрытая'))
             if hasattr(self,'signal_reason'):
-                reason=str(engine.get('reason') or '') if valid else tr('Ожидается расчёт')
-                self.signal_reason.set(reason[:45]+('…' if len(reason)>45 else ''))
+                from reference_design import concise_reason
+                reason=concise_reason(engine) if valid else tr('Ожидается расчёт')
+                self.signal_reason.set(reason)
 
     def bind_chart(self, prepared):
         """Project the already accepted frame's bounded tail and provenance."""
@@ -767,25 +782,30 @@ def build(app, periods, bg, text):
     # controls belong to the centre column, not above the entire application.
     global_bar = ttk.Frame(outer)
     global_bar.pack(fill='x', pady=(0, 3))
-    hamburger = ttk.Button(global_bar, command=app.show_watchlist, width=3)
+    global_bar.columnconfigure(0,weight=1)
+    menu_bar=ttk.Frame(global_bar);menu_bar.grid(row=0,column=0,sticky='ew')
+    status_bar=ttk.Frame(global_bar);status_bar.grid(row=0,column=1,sticky='e')
+    hamburger = ttk.Button(menu_bar, command=app.show_watchlist, width=3)
     bind_icon(hamburger, app.root, 'menu')
     hamburger.pack(side='left', padx=(0, 4))
     menu = app._main_menu
     menu_buttons = []
     for index in range((menu.index('end') or 0) + 1):
         if menu.type(index) != 'cascade':continue
-        button = ttk.Menubutton(global_bar, text=menu.entrycget(index, 'label'), style='DeskMenu.TMenubutton', takefocus=True)
+        button = ttk.Menubutton(menu_bar, text=menu.entrycget(index, 'label'), style='DeskMenu.TMenubutton', takefocus=True)
         submenu = clone_menu(app.root.nametowidget(menu.entrycget(index, 'menu')), button)
         button.configure(menu=submenu)
         button.pack(side='left')
         menu_buttons.append(button)
     screen.menu_buttons = menu_buttons
+    from reference_design import flow_toolbar
+    flow_toolbar(menu_bar,[hamburger,*menu_buttons])
     if menu_buttons:app.root.bind('<F10>', lambda _: menu_buttons[0].focus_set(), add='+')
-    ttk.Label(global_bar, textvariable=screen.clock_text, style='Muted.TLabel', font=('Segoe UI', 9)).pack(side='right', padx=(10, 5))
-    screen.sync_label = ttk.Label(global_bar, textvariable=screen.sync_text, style='DeskSyncPending.TLabel')
+    ttk.Label(status_bar, textvariable=screen.clock_text, style='Muted.TLabel', font=('Segoe UI', 9),width=21,anchor='e').pack(side='right', padx=(10, 5))
+    screen.sync_label = ttk.Label(status_bar, textvariable=screen.sync_text, style='DeskSyncPending.TLabel')
     screen.sync_label.pack(side='right', padx=10)
     app.tooltip(screen.sync_label, 'Согласованность загруженного графика. Свежесть цены исполнения проверяется отдельно.')
-    app.cp_label = ttk.Label(global_bar, text=tr('● CandlePilot — UNKNOWN'), foreground='#ef4444', font=('Segoe UI', 9))
+    app.cp_label = ttk.Label(status_bar, text=tr('● CandlePilot — UNKNOWN'), foreground='#ef4444', font=('Segoe UI', 9))
     app.cp_label.pack(side='right', padx=5)
     app.cp_label.bind('<Button-1>', lambda _: __import__('candlepilot_health').show(app))
     app.tooltip(app.cp_label, 'CandlePilot Health — нажмите для диагностики')
@@ -986,6 +1006,10 @@ def build(app, periods, bg, text):
     screen.bottom_shared.columnconfigure(0,weight=55,uniform='bottom')
     screen.bottom_shared.columnconfigure(1,weight=45,uniform='bottom')
     screen.bottom_shared.rowconfigure(0,weight=1)
+    def compact_footer(event):
+        height=110 if event.height<700 else 145
+        if int(screen.bottom_shared.cget('height'))!=height:screen.bottom_shared.configure(height=height)
+    screen.right_workspace.bind('<Configure>',compact_footer,add='+')
     screen.news = ttk.Frame(screen.bottom_shared, padding=5, style='DeskCard.TFrame')
     screen.news.grid(row=0,column=0,sticky='nsew',padx=(0,6))
     news_bar = ttk.Frame(screen.news, style='Desk.TFrame')
@@ -1009,6 +1033,8 @@ def build(app, periods, bg, text):
     for axes in (app.ax_price, app.ax_vol):
         axes.set_facecolor(bg)
     app.canvas = FigureCanvasTkAgg(app.fig, master=screen.workspace)
+    from reference_design import polish_chart
+    app.canvas.mpl_connect('resize_event',lambda _:polish_chart(app))
     app.canvas.get_tk_widget().pack(fill='both', expand=True)
     from workspace_pages import Pages
     screen.pages=Pages(screen);screen.pages.buttons=screen.section_buttons
@@ -1049,6 +1075,7 @@ def build(app, periods, bg, text):
     signal.heading.configure(textvariable=screen.signal_caption)
     screen.signal_reason=tk.StringVar(app.root)
     decision_row(signal,app.decision,screen.signal_reason)
+    ttk.Button(signal,text=tr('Подробнее'),command=lambda:screen.pages.select('analysis'),style='DeskGroup.TButton').pack(anchor='e',pady=(0,4))
     contexts = ttk.Frame(signal, style='Desk.TFrame')
     contexts.pack(fill='x')
     screen.context_vars = {tf: tk.StringVar(app.root, f'{tf}\n—') for tf in ('15m', '1H', '4H', '1D')}
@@ -1073,14 +1100,19 @@ def build(app, periods, bg, text):
     for key, label in [('trend', 'Тренд (EMA 10 > EMA 30)'), ('volume', 'Объём / средний 20'), ('macd', 'MACD: гистограмма > 0'), ('rsi', 'RSI (14)')]:
         row = ttk.Frame(conditions, style='Desk.TFrame')
         row.pack(fill='x', pady=1)
-        ttk.Label(row, text=tr(label), style='DeskSmall.TLabel').pack(side='left')
-        ttk.Label(row, textvariable=screen.condition_vars[key], style='DeskSmall.TLabel').pack(side='right')
+        row.columnconfigure(0,weight=1)
+        from reference_design import wrap_label
+        caption=ttk.Label(row, text=tr(label), style='DeskSmall.TLabel',wraplength=210)
+        caption.grid(row=0,column=0,sticky='ew');wrap_label(caption)
+        ttk.Label(row, textvariable=screen.condition_vars[key], style='DeskSmall.TLabel',width=7,anchor='e').grid(row=0,column=1,sticky='e')
     levels = ttk.Frame(conditions, style='Desk.TFrame')
     levels.pack(fill='x', pady=1)
-    ttk.Label(levels, text=tr('Уровни (поддержка/сопротивление)'), style='DeskSmall.TLabel').pack(side='left')
+    levels.columnconfigure(0,weight=1)
+    caption=ttk.Label(levels, text=tr('Уровни (поддержка/сопротивление)'), style='DeskSmall.TLabel',wraplength=210)
+    caption.grid(row=0,column=0,sticky='ew');wrap_label(caption)
     screen.levels_visible=tk.BooleanVar(app.root,value=app.store.setting('global_indicators',{}).get('Уровни анализа',True))
     screen.levels_button=ttk.Checkbutton(levels,variable=screen.levels_visible,command=screen.toggle_levels)
-    screen.levels_button.pack(side='right')
+    screen.levels_button.grid(row=0,column=1,sticky='e')
     sources = card('Источники данных')
     screen.source_summary = tk.StringVar(app.root, '—')
     screen.listing = tk.StringVar(app.root, '—')

@@ -9,6 +9,7 @@ def _number(value):
 
 
 def format_engine(engine):
+    from reference_design import state_label, signal_reason
     if not isinstance(engine,dict) or engine.get('signal') not in ('BUY','SELL','HOLD','WAIT') or engine.get('status') not in ('READY','DATA BLOCKED'):
         return tr('WAIT • нет результата'),tr('Trading Engine: актуальный фоновый результат недоступен. Торговый сигнал не подтверждён.')
     blocked=engine['status']=='DATA BLOCKED' or bool(engine.get('blockers'))
@@ -32,7 +33,7 @@ def format_engine(engine):
         for tf,context in contexts.items():
             context=context if isinstance(context,dict) else {}
             facts=context.get('facts') or {};quality=context.get('data_quality') or {}
-            mtf.append(f"{tf}: {facts.get('regime',tr('нет данных'))} / {quality.get('state',tr('не проверено'))}")
+            mtf.append(f"{tf}: {state_label(facts.get('regime',tr('нет данных')))} / {quality.get('state',tr('не проверено'))}")
             if context.get('scope_initialization',{}).get('stable') is False:
                 lines.append(f"{tf}{tr(': в пределах пяти лет не подтверждён устойчивый прогрев индикаторов; более старые данные не использованы.')}")
     lines.append('MTF: '+('; '.join(mtf) or tr('нет контекста')))
@@ -42,12 +43,13 @@ def format_engine(engine):
     if isinstance(quality,dict):quality=quality.get('state',tr('не проверено'))
     difference=benchmark.get('difference_pp')
     lines.append('Benchmark: '+str(benchmark.get('benchmark_name') or benchmark.get('benchmark_id') or tr('не выбран'))+
-                 ' · '+str(benchmark.get('state','UNAVAILABLE'))+' · DQ '+str(quality)+
+                 ' · '+state_label(benchmark.get('state','UNAVAILABLE'))+' · DQ '+str(quality)+
                  (f" · Δ {difference:+.2f}{tr(' п.п.')}" if _number(difference) else ''))
     if benchmark.get('reason'):
         from benchmark_display import reason_text
         lines.append(reason_text(str(benchmark['reason'])))
     if engine.get('timestamp'):lines.append(tr('Закрытая свеча: ')+str(engine['timestamp']))
+    if engine.get('reason'):lines.insert(0,signal_reason(engine['reason']))
     return title,'\n'.join(lines)
 
 

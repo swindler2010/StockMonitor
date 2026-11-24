@@ -59,6 +59,9 @@ def photo(root, name, size=18, color=None):
             if name=='status_ready':line([(6,12),(10,16),(18,8)],fill=tone,width=6)
             elif name=='status_wait':line([(12,6),(12,12),(17,15)],fill=tone,width=5)
             else:line([(12,6),(12,14)],fill=tone,width=7);d.ellipse((44,66,52,74),fill=tone)
+    elif name=='portfolio':
+        box((3,6,21,21),radius=2);box((8,3,16,6),radius=1)
+        line([(3,12),(21,12)],width=3);box((10,11,14,15),fill='#00c5ff',outline=color,width=2)
     elif name=='news':
         box((3,3,21,22),radius=2);box((6,6,11,11))
         for y in (6,10):line([(14,y),(18,y)],width=3)

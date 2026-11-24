@@ -5,6 +5,7 @@ from decimal import Decimal
 import tkinter as tk
 from tkinter import ttk
 from zoneinfo import ZoneInfo
+from localized_widgets import CanonicalCombobox
 
 JOURNAL_ZONE=ZoneInfo('Europe/Berlin')
 
@@ -225,6 +226,10 @@ def summary(state):
     return (f"{state['account']}{tr(' • только виртуальные операции\nНачальный капитал: ')}{start}{tr(' EUR • Доходность: ')}{change}\nCash: {value('cash')} • Equity: {value('equity')}{tr('\nРеализованный P&L: ')}{value('realized')}{tr(' • Нереализованный: ')}{value('unrealized')}{tr(' • Комиссии: ')}{value('fees')}"+balances+universe+automation_summary(state))
 
 def attach(app, parent):
+    from portfolio_design import Surface
+    from reference_design import flow_toolbar
+    surface=Surface(app,parent)
+    parent._paper_design=surface
     from calendar_panel import label as translated_label
     from paper_orders import order_choices, submit
     from paper_entry_modes import MODES, STRATEGY_CODES
@@ -232,13 +237,13 @@ def attach(app, parent):
     from paper_v1_long_term import enabled as v1_enabled
     from paper_v1_news_view import Panel as V1NewsPanel, show_saved as show_saved_news
     from uuid import uuid4
-    order_box=ttk.LabelFrame(parent,text='Поручение владельца • только PAPER');order_box.pack(fill='x',padx=10,pady=4)
+    order_box=surface.card(parent,'Поручение владельца • только PAPER');order_box.pack(fill='x',padx=10,pady=4)
     row=ttk.Frame(order_box);row.pack(fill='x')
     choices={}
     independent=False
     viewed_book=None
     selected=tk.StringVar(value='');quantity=tk.StringVar(value='1')
-    instrument_box=ttk.Combobox(row,textvariable=selected,values=[],state='readonly',width=24)
+    instrument_box=CanonicalCombobox(row,textvariable=selected,values=[],state='readonly',width=24)
     instrument_box.pack(side='left',padx=4)
     ttk.Label(row,text='Количество:').pack(side='left')
     quantity_box=ttk.Entry(row,textvariable=quantity,width=10);quantity_box.pack(side='left',padx=4)
@@ -280,8 +285,13 @@ def attach(app, parent):
         b=ttk.Button(row,text=label,command=lambda s=side,p=preview:place(s,p));b.pack(side='left',padx=3);order_buttons.append(b)
     # Keep order controls and the ledger visible in the existing small window.
     summary_box=ttk.Frame(parent);summary_box.pack(fill='x',padx=10,pady=4)
-    head=tk.Text(summary_box,height=8,wrap='word',font='TkDefaultFont')
-    summary_scroll=ttk.Scrollbar(summary_box,orient='vertical',command=head.yview)
+    summary_body=ttk.Frame(summary_box)
+    def toggle_details():
+        if summary_body.winfo_manager():summary_body.pack_forget()
+        else:summary_body.pack(fill='x',pady=(5,0))
+    ttk.Button(summary_box,text=tr('Подробности счёта'),command=toggle_details).pack(anchor='w')
+    head=tk.Text(summary_body,height=5,wrap='word',font=('Segoe UI',10))
+    summary_scroll=ttk.Scrollbar(summary_body,orient='vertical',command=head.yview)
     summary_scroll.pack(side='right',fill='y');head.configure(yscrollcommand=summary_scroll.set)
     head.pack(side='left',fill='x',expand=True)
     def set_summary(text):
@@ -290,7 +300,7 @@ def attach(app, parent):
         head.yview_moveto(offset)
     set_summary(tr('Загрузка демосчёта…'))
     controls=ttk.Frame(parent);controls.pack(side='bottom',fill='x',padx=10,pady=4)
-    auto_box=ttk.LabelFrame(parent,text='Автоторговля демосчёта')
+    auto_box=surface.card(parent,'Автоторговля демосчёта')
     auto_box.pack(fill='x',padx=10,pady=4)
     auto_controls=ttk.Frame(auto_box)
     auto_controls.pack(fill='x',padx=4,pady=3)
@@ -299,7 +309,7 @@ def attach(app, parent):
     mode_state=tk.StringVar()
     selector_label=ttk.Label(auto_controls,text='Стратегия')
     selector_label.pack(side='left',padx=(0,4))
-    strategy_box=ttk.Combobox(auto_controls,textvariable=strategy,values=list(strategy_labels.values()),
+    strategy_box=CanonicalCombobox(auto_controls,textvariable=strategy,values=list(strategy_labels.values()),
         state='disabled',width=22)
     strategy_box.pack(side='left',padx=(0,12))
     ttk.Label(auto_controls,text='ТФ автоматически').pack(side='left',padx=(0,8))
@@ -366,10 +376,10 @@ def attach(app, parent):
     scope=tk.StringVar(value='Текущий счёт')
     strategy_filter=tk.StringVar(value='Все стратегии')
     legacy_label='До разделения'
-    scope_box=ttk.Combobox(filter_row,textvariable=scope,values=('Текущий счёт','Архив'),
+    scope_box=CanonicalCombobox(filter_row,textvariable=scope,values=('Текущий счёт','Архив'),
                            state='readonly',width=16)
     scope_box.pack(side='left',padx=(0,6))
-    filter_box=ttk.Combobox(filter_row,textvariable=strategy_filter,
+    filter_box=CanonicalCombobox(filter_row,textvariable=strategy_filter,
                             values=('Все стратегии',*CODES[:-1],'Ручные / другие'),
                             state='readonly',width=18)
     filter_box.pack(side='left')
@@ -559,6 +569,7 @@ def attach(app, parent):
         label=choices.get(current,next(iter(choices.values()),''))
         if selected.get()!=label:selected.set(label)
         set_summary(summary(state))
+        surface.bind(state)
         positions.delete(*positions.get_children())
         for p in state.get('positions',[]):
             if not Decimal(p['quantity']): continue
@@ -660,4 +671,6 @@ def attach(app, parent):
                 db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',(CONFIG,json.dumps(cfg)))
         app.job(work,lambda _:refresh(),failed,lane='misc',key='paper_auto_toggle')
     ttk.Button(controls,text=tr('Автоторговля: пауза / продолжить'),command=toggle).pack(side='left',padx=4)
+    flow_toolbar(row,list(row.winfo_children()))
+    surface.finish()
     _auto_refresh(parent,app,refresh)

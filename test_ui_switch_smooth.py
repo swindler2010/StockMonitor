@@ -185,11 +185,14 @@ class StableSignalLayout(unittest.TestCase):
         positions=[]
         for engine in ({'signal':'WAIT','status':'READY'},None,{'signal':'BUY','status':'READY'},
                        {'signal':'WAIT','status':'DATA BLOCKED','blockers':['Unconfirmed inputs']}):
-            text,details=format_engine(engine);title.set(text);reason.set(details[:45]);root.update_idletasks()
+            text,details=format_engine(engine);title.set(text);reason.set('Short explanation');root.update();root.update_idletasks()
             positions.append((row.winfo_height(),following.winfo_y()))
             self.assertEqual(title.get(),text)
             if engine is None:self.assertIn('WAIT',text)
-        self.assertEqual(len(set(positions)),1);self.assertFalse(row.pack_propagate())
+        self.assertEqual(len(set(positions)),1)
+        reason.set('A complete explanation remains readable. '*10);root.geometry('290x900+20000+20000');root.update_idletasks()
+        self.assertGreater(row.winfo_reqheight(),positions[0][0])
+        for label in row.winfo_children():self.assertGreaterEqual(label.winfo_height(),label.winfo_reqheight())
 
 
 if __name__=='__main__':unittest.main()
