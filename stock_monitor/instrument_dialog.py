@@ -33,7 +33,7 @@ class Dialog:
         style.map('Instrument.Treeview',background=[('selected','#11355b')],foreground=[('selected','#ffffff')])
         self.body=body=ttk.Frame(win,padding=16,style=p+'.TFrame');body.pack(fill='both',expand=True)
         heading=ttk.Frame(body,style=p+'.TFrame');heading.pack(fill='x',pady=(0,12))
-        ttk.Label(heading,text='⊕',foreground='#00c5ff',style=p+'.TLabel',font=('Segoe UI',21)).pack(side='left',padx=(0,9))
+        ttk.Label(heading,image=__import__('ui_icons').photo(app.root,'add',30),style=p+'.TLabel').pack(side='left',padx=(0,9))
         ttk.Label(heading,text=tr('Поиск и добавление акции'),style=p+'.TLabel',font=('Segoe UI',17,'bold')).pack(side='left')
         from ui_icons import photo
         self.favorite_note=tk.StringVar(win)

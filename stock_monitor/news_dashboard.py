@@ -137,7 +137,7 @@ class Dialog:
             return box
         self.provider_box=filter_field('Источник',self.provider,[tr('Все')],14 if self.embedded else 20)
         filter_field('Категория',self.category,[tr('Все'),*(tr(v) for v in EVENTS.values())],14 if self.embedded else 18)
-        filter_field('Тональность новостей',self.tone,[tr(v) for v in ('Все','Позитивные слова','Негативные слова','Без оценки')],16)
+        filter_field('Тональность новостей',self.tone,[tr(v) for v in ('Все','Позитивные','Негативные','Нейтральные','Без оценки')],16)
         search=ttk.Entry(filters,textvariable=self.query,style=p+'.TEntry',font=('Segoe UI',10));search.pack(side='left',fill='x',expand=True,padx=(5,0))
         app.tooltip(search,'Поиск в заголовках и кратком содержании')
         filter_widgets=filters.winfo_children();filter_layout=[None]
@@ -250,7 +250,7 @@ class Dialog:
         visible=self.presentation.rows(self.rows)
         rows=filtered(visible,self.query.get(),self.days,provider,category,self.sort.get()==tr('Сначала старые'))
         from news_sentiment import classify
-        tone=next((k for k,v in [('positive','Позитивные слова'),('negative','Негативные слова'),('unknown','Без оценки')] if tr(v)==self.tone.get()),None)
+        tone=next((k for k,v in [('positive','Позитивные'),('negative','Негативные'),('neutral','Нейтральные'),('unknown','Без оценки')] if tr(v)==self.tone.get()),None)
         if tone:rows=[row for row in rows if classify(row)==tone]
         self.pages=max(1,(len(rows)+PAGE_SIZE-1)//PAGE_SIZE);self.page=min(self.page,self.pages-1)
         self.shown=rows[self.page*PAGE_SIZE:(self.page+1)*PAGE_SIZE]

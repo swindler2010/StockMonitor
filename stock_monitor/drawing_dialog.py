@@ -35,7 +35,9 @@ class Dialog:
         tabs=ttk.Frame(base,style=p+'.TFrame');tabs.pack(fill='x',pady=(0,6))
         self.tabs={}
         for text,command in [('Инструменты',lambda:self.reveal(self.tools_box)),('Избранное',self.favorites),('Объекты',lambda:self.reveal(self.objects)),('Шаблоны',self.templates),('Калькулятор позиции',self.calculator),('Настройки',self.settings)]:
-            b=ttk.Button(tabs,text=tr(text),style=p+'.Secondary.TButton',command=command);b.pack(side='left',fill='x',expand=True,padx=(0,7));self.tabs[text]=b
+            b=ttk.Button(tabs,text=tr(text),image=photo(app.root,{'Инструменты':'draw','Избранное':'star_filled','Объекты':'template','Шаблоны':'template','Калькулятор позиции':'ruler','Настройки':'gear'}[text],18),compound='left',style=p+'.Secondary.TButton',command=command);b.grid(row=0,column=len(self.tabs),sticky='ew',padx=(0,4));self.tabs[text]=b
+        from main_screen import flow_widgets
+        tabs.bind('<Configure>',lambda event:flow_widgets(list(self.tabs.values()),event.width),add='+')
         self.tabs['Инструменты'].configure(style=p+'.Primary.TButton')
         body_host=ttk.Frame(base,style=p+'.TFrame');body_host.pack(fill='both',expand=True)
         self.body_canvas=tk.Canvas(body_host,highlightthickness=0,background=palette['bg'])

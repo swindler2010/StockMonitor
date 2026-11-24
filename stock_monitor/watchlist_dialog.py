@@ -60,7 +60,7 @@ class Dialog:
         for label,command in [('График',self.select),('Акции',lambda:None),('Индикаторы',app.show_indicators),
                               ('CandlePilot',lambda:__import__('candlepilot_health').show(app)),('Новости',app.show_news),
                               ('Портфель',app.show_portfolio),('Настройки',app.show_settings)]:
-            ttk.Button(nav,text=tr(label),command=command,style='DeskActive.TButton' if label=='Акции' else 'Watchlist.TButton').pack(side='left',padx=3)
+            ttk.Button(nav,text=tr(label),image=photo(app.root,{'График':'chart','Акции':'template','Индикаторы':'indicators','CandlePilot':'globe','Новости':'news','Портфель':'template','Настройки':'gear'}[label],18),compound='left',command=command,style='DeskActive.TButton' if label=='Акции' else 'Watchlist.TButton').pack(side='left',padx=3)
         header=ttk.Frame(base,style=p+'.TFrame');header.pack(fill='x',pady=(0,12))
         ttk.Label(header,image=photo(app.root,'chart',40),style=p+'.TLabel').pack(side='left',padx=8)
         title=ttk.Frame(header,style=p+'.TFrame');title.pack(side='left')
@@ -71,9 +71,12 @@ class Dialog:
         for label,color in [('Всего акций',palette['text']),('Готовы','#2be870'),('Ожидают','#d9b13b'),('WAIT','#f3a622'),('Блокировки','#ff5966')]:
             card=ttk.Frame(summary,padding=(9,5),width=140,height=68,style='DeskCard.TFrame');card.pack(side='left',padx=4);card.pack_propagate(False)
             summary_cards.append(card)
-            ttk.Label(card,text=tr(label),style='DeskSmall.TLabel').pack(anchor='w')
+            artwork={'Всего акций':'template','Готовы':'status_ready','Ожидают':'status_wait','WAIT':'status_wait','Блокировки':'status_error'}[label]
+            ttk.Label(card,image=photo(app.root,artwork,25,color=color),style='Desk.TLabel').pack(side='left',padx=(0,7))
+            words=ttk.Frame(card,style='Desk.TFrame');words.pack(side='left',fill='both',expand=True)
+            ttk.Label(words,text=tr(label),style='DeskSmall.TLabel').pack(anchor='w')
             v=tk.StringVar(win,'—');self.stats.append(v)
-            ttk.Label(card,textvariable=v,foreground=color,style='Desk.TLabel',font=('Segoe UI',17,'bold')).pack(anchor='w')
+            ttk.Label(words,textvariable=v,foreground=color,style='Desk.TLabel',font=('Segoe UI',17,'bold')).pack(anchor='w')
         header.bind('<Configure>',lambda event:[card.configure(width=max(76,min(140,(event.width-300)//5-8))) for card in summary_cards],add='+')
         filters=ttk.Frame(base,style=p+'.TFrame');filters.pack(fill='x',pady=(0,10))
         search=ttk.Entry(filters,textvariable=self.query,width=28,style=p+'.TEntry',font=('Segoe UI',10))

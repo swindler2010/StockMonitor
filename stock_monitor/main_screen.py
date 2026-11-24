@@ -315,21 +315,33 @@ class Screen:
         self.schedule_deltas()
         self.favorite_header()
 
-    def load_premarket(self,info):
+    def load_premarket(self,info,force=False):
         if not hasattr(self,'premarket'):return
         import time
         from i18n import language
         key=(info['isin'],info.get('profile_symbol') or info.get('history_symbol'),language(),int(time.time()//300))
-        if key==self._premarket_key:return
+        if key==getattr(self,'_premarket_signature',None) and not force:return
+        self._premarket_signature=key
+        self._premarket_sequence=getattr(self,'_premarket_sequence',0)+1
+        key=(key,self._premarket_sequence)
         self._premarket_key=key
         self.premarket.set(tr('Премаркет: нет данных'))
         self._premarket_detail=tr('Источник карточки не предоставил подтверждённую цену премаркета. Это отдельная площадка, не котировка GETTEX.')
         self.premarket_label.configure(foreground='#94a3b8')
         def work():
-            from premarket_view import present
-            return present(info,self.app.store.setting('card:'+info['isin'],{}))
+            from premarket_runtime import PREFIX,matches
+            packet=self.app.store.setting(PREFIX+info['isin'],{})
+            if matches(packet,info):return dict(packet=packet)
+            return dict(card=self.app.store.setting('card:'+info['isin'],{}))
         def done(result):
             if self._closed or self._premarket_key!=key:return
+            # The source age is checked at publication, after any queue delay.
+            if 'packet' in result:
+                from premarket_runtime import present
+                result=present(info,result['packet'])
+            else:
+                from premarket_view import present
+                result=present(info,result.get('card',{}))
             self.premarket.set(result[0]);self._premarket_detail=result[1]
             self.premarket_label.configure(foreground='#27df75' if result[2] is not None and result[2]>=0 else '#ff5966' if result[2] is not None else '#94a3b8')
         self.app.job(work,done,lambda _:None,lane='read',key='premarket-card-view')

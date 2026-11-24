@@ -49,6 +49,16 @@ def photo(root, name, size=18, color=None):
         points=[(6*4,3*4),(18*4,3*4),(18*4,22*4),(12*4,17*4),(6*4,22*4),(6*4,3*4)]
         if name.endswith('_filled'):d.polygon(points,fill='#00c5ff')
         d.line(points,fill='#00c5ff',width=5,joint='curve')
+    elif name in ('status_ready','status_wait','status_error','add'):
+        if name=='add':
+            box((3,3,21,21),fill='#005b8c',outline='#00c5ff',radius=4)
+            line([(12,6),(12,18)],fill='#ffffff');line([(6,12),(18,12)],fill='#ffffff')
+        else:
+            tone={'status_ready':'#25e772','status_wait':'#efb53b','status_error':'#ff5966'}[name]
+            d.ellipse((8,8,88,88),outline=tone,width=6)
+            if name=='status_ready':line([(6,12),(10,16),(18,8)],fill=tone,width=6)
+            elif name=='status_wait':line([(12,6),(12,12),(17,15)],fill=tone,width=5)
+            else:line([(12,6),(12,14)],fill=tone,width=7);d.ellipse((44,66,52,74),fill=tone)
     elif name=='news':
         box((3,3,21,22),radius=2);box((6,6,11,11))
         for y in (6,10):line([(14,y),(18,y)],width=3)

@@ -84,7 +84,7 @@ class InformationalFieldsTests(unittest.TestCase):
         self.assertEqual(classify({'title':'Why ASML stock fell today'}),'negative')
         self.assertEqual(classify({'title':'NVIDIA shares rise after results'}),'positive')
         data=summary([{'title':'Shares surge'},{'title':'Shares plunge'},{'title':'News'}])
-        self.assertEqual(data['counts'],dict(positive=1,negative=1,unknown=1))
+        self.assertEqual(data['counts'],dict(positive=1,negative=1,neutral=0,unknown=1))
         self.assertAlmostEqual(sum(data['percentages'].values()),100)
         self.assertEqual(summary([])['total'],0)
 

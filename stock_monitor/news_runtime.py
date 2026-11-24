@@ -27,6 +27,7 @@ class NewsRuntime:
         self.client = None
         self.calendar_next = None
         self.company_next = 0
+        self.premarket_next = 0
         self.maintenance_next=0;self.news_streak=0;self.aux_turn=0
 
     def wake(self,delay=250):
@@ -89,13 +90,13 @@ class NewsRuntime:
                 row=db.execute("SELECT json_extract(value,'$.attempted_at') FROM settings WHERE key=?",(SETTING,)).fetchone()
             try:self.calendar_next=datetime.fromisoformat(row[0]).timestamp()+86400
             except (ValueError,TypeError,IndexError):self.calendar_next=0
-        for offset in range(3):
-            choice=(self.aux_turn+offset)%3
+        for offset in range(4):
+            choice=(self.aux_turn+offset)%4
             if choice==0:
                 accepted=self.background_translation(targets)
             elif choice==1:
                 accepted=now>=self.calendar_next and self.refresh_calendar()
-            else:
+            elif choice==2:
                 accepted=False
                 if now>=self.company_next and callable(getattr(self,'refresh_company_events',None)):
                     from company_events import CALENDAR_TTL,PREFIX
@@ -105,7 +106,9 @@ class NewsRuntime:
                     events=due_targets(self.app.store,[(i['isin'],i.get('profile_symbol') or i.get('history_symbol')) for i in stocks],now,prefix=PREFIX,interval=CALENDAR_TTL)
                     self.company_next=now+60
                     if events:accepted=self.refresh_company_events(by_isin[min(events,key=lambda v:v[0])[1]])
-            if accepted:self.aux_turn=(choice+1)%3;self.news_streak=0;return
+            else:
+                accepted=now>=self.premarket_next and self.refresh_premarket()
+            if accepted:self.aux_turn=(choice+1)%4;self.news_streak=0;return
         if due:
             _,key,symbol=min(due,key=lambda x:x[0])
             if self.refresh(key,symbol):self.news_streak+=1
@@ -158,6 +161,34 @@ class NewsRuntime:
             return market_news(previous,fetch=self.client) if key=='market' else company_news(instrument,self.client,previous)
         accepted=self.app.job(work,
                      done, failed, key='news:'+key, lane='news', isin=None if key == 'market' else key)
+        if not accepted:self.busy=False
+        return bool(accepted)
+
+    def refresh_premarket(self):
+        if self.busy or self.app.closing:return False
+        from premarket_runtime import PREFIX,COOLDOWN,fetch,identity,matches
+        self.premarket_next=time.time()+60
+        selected=getattr(self.app,'symbol',None)
+        if selected is None:return False
+        current=next((i for i in self.app.watchlist if i.get('name')==selected.get() and i.get('kind')!='benchmark'),None)
+        if not current:return False
+        info=copy.deepcopy(current);key=PREFIX+info['isin'];self.busy=True
+        def work():
+            previous=self.app.store.setting(key,{});blocked=self.app.store.setting(COOLDOWN,{})
+            packet,cooldown=fetch(info,previous,blocked)
+            return packet,cooldown,previous,blocked
+        def done(value):
+            self.busy=False;self.wake()
+            if self.app.closing:return
+            packet,cooldown,previous,blocked=value
+            current=next((i for i in self.app.watchlist if i.get('isin')==info['isin']),None)
+            if not current or identity(current)!=identity(info) or not matches(packet,current):return
+            if packet!=previous:self.app.store.set_setting(key,packet)
+            if cooldown and cooldown!=blocked:self.app.store.set_setting(COOLDOWN,cooldown)
+            screen=getattr(self.app,'main_screen',None)
+            if screen and self.app.symbol.get()==current['name']:screen.load_premarket(current,force=True)
+        def failed(_):self.busy=False;self.premarket_next=time.time()+300;self.wake()
+        accepted=self.app.job(work,done,failed,key=key,lane='news',isin=info['isin'])
         if not accepted:self.busy=False
         return bool(accepted)
 

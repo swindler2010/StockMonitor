@@ -5488,5 +5488,61 @@
   "Ctrl / Shift — несколько объектов; действия применяются ко всей группе.": {
     "en": "Ctrl / Shift selects multiple objects; actions affect the whole group.",
     "de": "Strg / Umschalt wählt mehrere Objekte; Aktionen betreffen die gesamte Gruppe."
+  },
+  "Не указан тикер карточки.": {
+    "en": "No profile ticker configured.",
+    "de": "Kein Profil-Ticker konfiguriert."
+  },
+  "Последняя минутная цена до открытия. Привязка по настроенному тикеру; ISIN независимо не проверен.": {
+    "en": "Last premarket minute price. Linked by configured ticker; ISIN not independently verified.",
+    "de": "Letzter vorbörslicher Minutenkurs. Zuordnung über konfigurierten Ticker; ISIN nicht unabhängig geprüft."
+  },
+  "Ожидание по требованию источника.": {
+    "en": "Waiting as requested by the source.",
+    "de": "Warten auf Anforderung der Quelle."
+  },
+  "Негативные": {
+    "en": "Negative",
+    "de": "Negativ"
+  },
+  "Нейтральные": {
+    "en": "Neutral",
+    "de": "Neutral"
+  },
+  "До начала указанной источником сессии.": {
+    "en": "Before the session specified by the source.",
+    "de": "Vor der von der Quelle angegebenen Sitzung."
+  },
+  "Позитивные": {
+    "en": "Positive",
+    "de": "Positiv"
+  },
+  "Источник временно недоступен.": {
+    "en": "Source temporarily unavailable.",
+    "de": "Quelle vorübergehend nicht verfügbar."
+  },
+  "Премаркет: ожидание открытия": {
+    "en": "Premarket: waiting for session",
+    "de": "Vorbörse: Sitzung abwarten"
+  },
+  "Премаркет: нет у источника": {
+    "en": "Premarket: not provided",
+    "de": "Vorbörse: nicht verfügbar"
+  },
+  "Премаркет ещё не загружен.": {
+    "en": "Premarket not loaded yet.",
+    "de": "Vorbörse noch nicht geladen."
+  },
+  "Источник пока не прислал минутную цену до открытия.": {
+    "en": "The source has not provided a premarket minute price yet.",
+    "de": "Die Quelle hat noch keinen vorbörslichen Minutenkurs geliefert."
+  },
+  "По финансовым фразам исходного заголовка. Учитываются расходы, прибыль, отрицания и смешанные факты. Не прогноз цены.": {
+    "en": "Financial phrases in the original headline, considering costs, profit, negation and mixed facts. Not a price forecast.",
+    "de": "Finanzbezogene Formulierungen des Originaltitels unter Berücksichtigung von Kosten, Gewinn, Verneinung und gemischten Fakten. Keine Kursprognose."
+  },
+  "Источник не публикует премаркет этого тикера.": {
+    "en": "The source does not publish premarket for this ticker.",
+    "de": "Die Quelle veröffentlicht keine vorbörslichen Daten für diesen Ticker."
   }
 }
