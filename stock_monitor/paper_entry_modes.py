@@ -1,14 +1,17 @@
 """Entry rules shared by PAPER trading and historical experiments."""
-from paper_strategy_v2 import POLICY, above, bounds, finite, proposal
+from paper_strategy_v2 import POLICY, above, bounds, finite
+
+V2_TIMEFRAME = '30m'
+V2_RESEARCH_BLOCKER = 'V2_30M_RESEARCH_ONLY'
 
 VERSION = 2
 DB_NAME = 'paper_entry_modes_v2.sqlite3'
 MODES = (
-    ('V1', 'V1 — Осторожная', 'Строгий вход CORE с трендом, структурой и объёмом. Выход по стопу или развороту CORE.'),
-    ('V2', 'V2 — Умеренная', 'Ранний пробой или ретест при подтверждении соседним интервалом. После 2R частичный выход, остаток сопровождает стоп.'),
+    ('V1', 'V1 — Долгосрочная', 'Недельный тренд, дневной вход и подтягиваемый стоп.'),
+    ('V2', 'V2 — Быстрая 30m', 'Вход по закрытой 30-минутной свече. Быстрые выходы проверяются на истории. Автовход пока приостановлен.'),
     ('PULLBACK', 'V3 — Сбалансированная', 'Возврат выше EMA10 после отката по тренду. Выход у сопротивления или при срыве восстановления.'),
     ('MOMENTUM', 'V4 — Активная', 'Правила V5 на выбранном интервале: пробой, разворот, окно после отчёта. Стоп, цель или 3 часа.'),
-    ('AGGRESSIVE', 'V5 — Агрессивная', '1H: пробой первого часа или подтверждённый ценой разворот. Новые покупки пропускают дни CPI, PPI, занятости и ставки ФРС. Выход по стопу, цели или через 3 часа.'),
+    ('AGGRESSIVE', 'V5 — Агрессивная', 'Автоматический выбор ТФ. Пробой, подтверждённый разворот и дневной гэп с импульсом от 1 ATR. Входы 1H учитывают плавный рост относительно группы.'),
 )
 STRATEGY_CODES = dict(zip((key for key, _, _ in MODES), ('V1', 'V2', 'V3', 'V4', 'V5')))
 UNIVERSE = ('US0378331005', 'US67066G1040', 'US0231351067')
@@ -36,10 +39,10 @@ def level_uncertainty(context):
 
 
 def decision(engine, mode, timeframe="1H", *, legacy_position=False):
-    if mode == 'V2':
-        return proposal(engine, inherit_core=False, timeframe=timeframe)
     if engine.get('status') != 'READY':
         return dict(action='BLOCKED', reason='CORE_DATA_BLOCKED')
+    if mode == 'V2':
+        return dict(action='WAIT', reason=V2_RESEARCH_BLOCKER if timeframe==V2_TIMEFRAME else 'V2_30M_ONLY')
     if engine.get('demo_initialization') and not engine['demo_initialization'].get('consistent'):
         return dict(action='BLOCKED', reason='CORE_SEED_UNSTABLE')
     if mode == 'AGGRESSIVE' and not legacy_position:

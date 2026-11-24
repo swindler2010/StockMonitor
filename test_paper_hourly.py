@@ -153,11 +153,11 @@ class HourlyTests(unittest.TestCase):
         self.assertEqual(sum(x[0]=='job' for x in calls),2)
         app.closing=True;count=len(calls);runtime.tick();self.assertEqual(len(calls),count)
 
-    def test_runtime_enters_on_4h_and_records_both_outcomes(self):
+    def test_runtime_selects_4h_on_wait_or_block_and_prioritizes_executable_1h(self):
         from types import SimpleNamespace
         from unittest.mock import patch
         from trading_context import plan
-        for hourly_signal in ('WAIT', 'BUY'):
+        for hourly_signal in ('WAIT', 'BLOCKED', 'BUY'):
             with self.subTest(hourly_signal=hourly_signal):
                 self.db.execute('DELETE FROM paper_fills')
                 self.db.commit()
@@ -167,6 +167,8 @@ class HourlyTests(unittest.TestCase):
                     result=self.result_for(hourly_signal if tf=='1H' else 'BUY')
                     result['timeframe']=tf
                     result['hourly']['timeframe_contract']=plan(tf)
+                    if tf=='1H' and hourly_signal=='BLOCKED':
+                        result['execution_context']['trading_engine']['status']='BLOCKED'
                     return result
                 store=SimpleNamespace(path='unused',connect=lambda:self.db,
                     set_setting=lambda key,value:reports.update({key:value}))
@@ -177,66 +179,75 @@ class HourlyTests(unittest.TestCase):
                     repeated=hourly.run_turn(app,self.info,{},self.cfg)
                 fills=paper.ledger(self.db)['fills']
                 self.assertEqual(len(fills),1)
-                chosen='4H' if hourly_signal=='WAIT' else '1H'
+                chosen='1H' if hourly_signal=='BUY' else '4H'
                 self.assertEqual(fills[0]['timeframe'],chosen)
                 self.assertEqual(first['timeframes'][chosen]['state'],'COMPLETED')
                 self.assertTrue(repeated['timeframes'][chosen]['idempotent'])
-                if chosen=='1H':
-                    self.assertIn('POSITION_LIMIT', first['timeframes']['4H']['execution_blocker'])
+                self.assertEqual(first['signal_timeframe'],chosen)
+                self.assertEqual(first['candidate_timeframes'],['1H','4H'])
+                self.assertEqual(tuple(first['timeframes']),('1H',) if chosen=='1H' else ('1H','4H'))
 
-    def test_demo_selector_runs_and_executes_all_five_timeframes(self):
-        from types import SimpleNamespace
-        from unittest.mock import patch
-        from trading_context import plan
-        for tf in hourly.SELECTABLE_TIMEFRAMES:
-            with self.subTest(timeframe=tf):
-                self.db.execute('DELETE FROM paper_fills');self.db.commit()
-                self.assertEqual(hourly.set_signal_timeframe(self.db,tf),tf)
+    def test_strategy_choices_ignore_legacy_interval_and_preserve_other_permissions(self):
+        self.cfg[hourly.LEGACY_TIMEFRAME_KEY]='1D'
+        self.write(hourly.CONFIG,self.cfg)
+        self.db.commit()
+        last={k:v for k,v in self.cfg.items() if k!=hourly.LEGACY_TIMEFRAME_KEY}
+        expected={'V1':('1H','4H'),'V2':('30m',),'PULLBACK':('1H','4H'),
+                  'MOMENTUM':('1H',),'AGGRESSIVE':('1H','4H','30m','15m','1D')}
+        for mode,intervals in expected.items():
+            with self.subTest(mode=mode):
+                self.assertEqual(hourly.configured_timeframes(dict(self.cfg,strategy_mode=mode)),intervals)
+                self.assertEqual(hourly.set_trading_mode(self.db,mode),mode)
                 self.db.commit()
-                self.cfg=hourly.read(self.db,hourly.CONFIG)
-                for interval in plan(tf)['required_tf']:
-                    self.db.execute('DELETE FROM series WHERE base_tf=?',(interval,))
-                    for ts in pd.date_range('2026-09-01 07:30',periods=40,freq='D'):
-                        self.db.execute('INSERT INTO series VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
-                            (self.isin,'gettex_chart','GETTEX','EUR','AAPL.GTX',interval,str(ts),100,102,99,101,20))
-                self.db.commit()
-                def result_for(interval,side='BUY'):
-                    result=self.result_for(side)
-                    result['timeframe']=interval
-                    contract=plan(interval)
-                    proof=capture_closed_inputs(self.db,[dict(isin=self.isin,identity=self.identity,base_tf=t,
-                        timeframe=t,through='2026-11-04T09:30:00Z') for t in contract['required_tf']],
-                        result['_input_revisions'])
-                    result['hourly'].update(timeframe_contract=contract,required_tf=contract['required_tf'],proof=proof)
-                    result['execution_context']['trading_engine']['timeframe_context']={
-                        t:dict(data_quality=dict(state='READY')) for t in contract['required_tf']}
-                    return result
-                wrong_tf='4H' if tf=='1H' else '1H'
-                wrong_result=result_for(wrong_tf)
-                args=dict(self.args,timeframe=wrong_tf)
-                with self.assertRaisesRegex(ValueError,'TIMEFRAME_NOT_SELECTED'):
-                    paper.execute(self.db,self.info,wrong_result,args,self.now)
-                reports={};calls=[]
-                def calculate(kind,values):
-                    calls.append(values['timeframe'])
-                    return result_for(values['timeframe'])
-                store=SimpleNamespace(path='unused',connect=lambda:self.db,
-                    set_setting=lambda key,value:reports.update({key:value}))
-                app=SimpleNamespace(store=store,compute_trading=SimpleNamespace(calculate=calculate),
-                    closing=False,user_dirty=False)
-                with patch.object(hourly.sqlite3,'connect',return_value=self.db),patch.object(hourly.time,'time',return_value=self.now):
-                    report=hourly.run_turn(app,self.info,{},self.cfg)
-                    repeated=hourly.run_turn(app,self.info,{},self.cfg)
-                self.assertEqual(calls,[tf,tf])
-                self.assertEqual(report['state'],'COMPLETED')
-                self.assertTrue(repeated['idempotent'])
-                self.assertEqual([f['timeframe'] for f in paper.ledger(self.db)['fills']],[tf])
+                saved=hourly.read(self.db,hourly.CONFIG)
+                expected= dict(last,strategy_mode=mode)
+                if mode=='V1':
+                    expected[hourly.long_term.PROFILE_KEY] = hourly.long_term.MODEL
+                elif hourly.long_term.PROFILE_KEY in saved:
+                    expected[hourly.long_term.PROFILE_KEY] = hourly.long_term.MODEL
+                self.assertEqual(saved,expected)
+                self.assertEqual(hourly.turn_timeframes(saved,None),('1D',) if mode=='V1' else intervals)
+                self.assertEqual(hourly.signal_allowed(saved,'1D','BUY'),mode in ('V1','AGGRESSIVE'))
+                self.assertFalse(hourly.signal_allowed(saved,'5m','BUY'))
+        self.assertFalse(paper.ledger(self.db)['fills'])
 
-    def test_switch_keeps_open_bracket_timeframe(self):
-        self.cfg[hourly.ENTRY_TIMEFRAME_KEY]='30m'
-        self.assertEqual(hourly.turn_timeframes(self.cfg,{'protection':{'signal_tf':'4H'}}),('30m','4H'))
-        self.assertFalse(hourly.signal_allowed(self.cfg,'4H','BUY'))
-        self.assertTrue(hourly.signal_allowed(self.cfg,'30m','SELL'))
+    def test_auto_checks_only_bound_interval_for_open_position(self):
+        self.cfg[hourly.STRATEGY_KEY]='AGGRESSIVE'
+        self.cfg[hourly.LEGACY_TIMEFRAME_KEY]='30m'
+        self.assertEqual(hourly.turn_timeframes(self.cfg,{'auto_entry':{'timeframe':'4H'}}),('4H',))
+        self.assertEqual(hourly.turn_timeframes(self.cfg,{'protection':{'signal_tf':'1D'}}),('1D',))
+        self.assertTrue(hourly.signal_allowed(self.cfg,'4H','BUY'))
+        self.assertTrue(hourly.signal_allowed(self.cfg,'1H','SELL'))
+
+    def test_slow_context_only_renews_before_next_closed_input(self):
+        analysis=self.result['hourly']
+        calculated=pd.Timestamp(self.now,unit='s',tz='UTC')
+        first_deadline=analysis['expires_at']
+        later=calculated+pd.Timedelta(minutes=2)
+        hourly._refresh_completed_window(self.result,later)
+        self.assertGreater(pd.Timestamp(analysis['expires_at']),later)
+        self.assertEqual(pd.Timestamp(self.result['execution_context']['checked_at']),later)
+        self.assertEqual(pd.Timestamp(analysis['checked_at']),calculated)
+        analysis['expires_at']=first_deadline
+        hourly._refresh_completed_window(self.result,calculated+pd.Timedelta(hours=1))
+        self.assertEqual(analysis['expires_at'],first_deadline)
+
+    def test_peer_append_outside_signal_range_does_not_invalidate_v5(self):
+        from paper_v5 import peer_input_current,peer_rows
+        peer='US0231351067'
+        identity=dict(self.identity,symbol='AMZN.GTX')
+        def save(at,close):
+            self.db.execute('INSERT INTO series VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+                (peer,identity['source'],identity['venue'],identity['currency'],identity['symbol'],
+                 '15m',at,100,103,98,close,20))
+        save('2026-11-04 10:15:00',100)
+        inputs={}
+        peer_rows(self.db,peer,identity,'2026-11-04 09:30:00','2026-11-04 10:15:00',inputs)
+        [proof]=inputs.values()
+        save('2026-11-04 10:30:00',101)
+        self.assertTrue(peer_input_current(self.db,proof))
+        save('2026-11-04 10:00:00',101)
+        self.assertFalse(peer_input_current(self.db,proof))
 
     def test_4h_rejects_missing_contract_and_changed_closed_input(self):
         from trading_context import plan
@@ -275,4 +286,3 @@ class HourlyTests(unittest.TestCase):
 
 
 if __name__=='__main__':unittest.main(verbosity=2)
-

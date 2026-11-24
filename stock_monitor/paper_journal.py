@@ -19,12 +19,8 @@ def save_note(db, fill_id, note):
     note = note.strip()
     if len(note) > 1000:
         raise ValueError('До 1000 символов')
-    for table in ('paper_fills', 'paper_fill_archive'):
-        if _has_table(db, table) and db.execute(
-            f'SELECT 1 FROM {table} WHERE id=?', (fill_id,)
-        ).fetchone():
-            break
-    else:
+    from paper_account import saved_fill
+    if saved_fill(db,fill_id) is None:
         raise ValueError('Операция не найдена')
     db.execute('CREATE TABLE IF NOT EXISTS paper_fill_notes(fill_id TEXT PRIMARY KEY, note TEXT NOT NULL)')
     if note:
@@ -41,23 +37,29 @@ def _entry_code(fill):
     return STRATEGY_CODES.get(mode) or (initiator if initiator in CODES else OTHER)
 
 
-def read(db, current):
+def read(db, current, *, portfolio=None, legacy=False):
+    from paper_account import ACCOUNT,operation_rows
     notes = dict(db.execute('SELECT fill_id,note FROM paper_fill_notes')) if _has_table(db, 'paper_fill_notes') else {}
-    rows = [(None, fill) for fill in current]
-    if _has_table(db, 'paper_fill_archive'):
-        archived = db.execute('SELECT reset_epoch,payload FROM paper_fill_archive ORDER BY rowid')
-        rows.extend((epoch, json.loads(payload)) for epoch, payload in archived)
+    rows = [('current',None,fill) for fill in current]
+    rows.extend(('archive',epoch,json.loads(payload)) for _,_,payload,epoch in
+                operation_rows(db,portfolio or ACCOUNT,archived=True))
+    scopes=['current','archive']
+    if legacy:
+        scopes.append('legacy')
+        rows.extend(('legacy',None,json.loads(payload)) for _,_,payload in operation_rows(db,ACCOUNT))
+        rows.extend(('legacy',epoch,json.loads(payload)) for _,_,payload,epoch in
+                    operation_rows(db,ACCOUNT,archived=True))
     totals = {scope: {code: dict(buys=0, sells=0, winners=0, losers=0, flat=0,
                                   realized=Decimal(0), fees=Decimal(0))
-                      for code in CODES} for scope in ('current', 'archive')}
+                      for code in CODES} for scope in scopes}
     inventory = {}
     journal = []
-    for epoch, fill in rows:
+    for scope, epoch, fill in rows:
         # Same listing key and proportional cost basis as paper_account.ledger.
-        key = (epoch, fill['isin'], json.dumps(fill['identity'], sort_keys=True))
+        key = (scope,epoch,fill['isin'],json.dumps(fill['identity'],sort_keys=True))
         position = inventory.setdefault(key, dict(qty=Decimal(0), groups={}))
         holdings = position['groups']
-        stats = totals['current' if epoch is None else 'archive']
+        stats = totals[scope]
         qty = Decimal(fill['quantity'])
         fee = Decimal(fill['fee'])
         gross = Decimal(fill['gross'])
@@ -69,8 +71,16 @@ def read(db, current):
                 reason = f"Разворот после {evidence['daily_down_closes']} снижений из 3"
             elif evidence.get('setup')=='OPEN_RANGE':
                 reason = 'Пробой максимума первого часа'
-            reason += (f" · растут {evidence['breadth_positive']}/{evidence['breadth_available']}"
-                       f" · объём {evidence['relative_volume']:.2f}× медианы")
+            elif evidence.get('setup') == 'DAILY_20_SESSION_BREAKOUT':
+                reason = 'Дневной пробой максимума 20 сессий'
+            elif evidence.get('setup') == 'DAILY_MA20_REBOUND':
+                reason = 'Дневное восстановление после отката'
+            if {'breadth_positive', 'breadth_available', 'relative_volume'} <= evidence.keys():
+                reason += (f" · растут {evidence['breadth_positive']}/{evidence['breadth_available']}"
+                           f" · объём {evidence['relative_volume']:.2f}× медианы")
+            relative = evidence.get('relative_strength', {})
+            if '3m_pp' in relative:
+                reason += f" · {relative['benchmark']} {relative['3m_pp']:+.2f} п.п. / 3 мес."
             if evidence.get('setup')=='DAILY_REVERSAL' and evidence.get('entry_level') is not None:
                 reason += f" · уровень {evidence['entry_level']:.2f} €"
         pnl = None
@@ -119,7 +129,7 @@ def read(db, current):
                 else:
                     position['qty'] -= qty
         journal.append(dict(fill=fill, codes=codes or [OTHER], pnl=None if pnl is None else str(money(pnl)),
-                            reason=reason, note=notes.get(fill['request_id'], ''), archived=epoch is not None))
+                            reason=reason, note=notes.get(fill['request_id'], ''), scope=scope, archived=epoch is not None))
     for groups in totals.values():
         for row in groups.values():
             for name in ('realized', 'fees'):
@@ -127,7 +137,7 @@ def read(db, current):
     journal.sort(key=lambda entry: entry['fill']['at'], reverse=True)
     indices = {scope: {code: [] for code in ('all', *CODES)} for scope in totals}
     for index, entry in enumerate(journal):
-        groups = indices['archive' if entry['archived'] else 'current']
+        groups = indices[entry['scope']]
         for code in ('all', *entry['codes']):
             groups[code].append(index)
     return dict(totals=totals, entries=journal, indices=indices)

@@ -12,6 +12,7 @@ def engine():
         breakout=True,reclaim=False,breakdown=False,bearish_retest=False,extended=False)
     proof=dict(stable=True,basis='Exact terminal indicators and CORE facts with first in-scope seed omitted; no older data')
     return dict(status='READY',signal='WAIT',timeframe_context={t:dict(facts=copy.deepcopy(f),scope_initialization=proof.copy()) for t in ('1H','4H','1D')})
+
 def opening_range(e):
     from paper_v5 import VERSION
     e.setdefault('timestamp','2026-11-04 09:30:00')
@@ -19,7 +20,6 @@ def opening_range(e):
         open_high=99.5,open_low=98.5,prev_close=99.25,close=100.,open=99.25,volume=150.,vol_med=100.,
         checked_at='2026-11-04T09:35:00+00:00',session_end='2026-11-04T22:00:00+00:00',
         breadth_available=4,breadth_positive=3,breadth_required=3,breadth_inputs=['A','B','C','D'])
-
 def event(n=0,action='BUY'):
     from datetime import datetime,timedelta,timezone
     end=datetime(2026,11,10,10,tzinfo=timezone.utc)+timedelta(minutes=15*n)
@@ -30,6 +30,75 @@ def event(n=0,action='BUY'):
         decision_fingerprint='same-closed-inputs',hourly_price=100.,v1=copy.deepcopy(decision),v2=copy.deepcopy(decision))
 
 class V2Tests(unittest.TestCase):
+    def test_modes_keep_quality_gate_and_allow_distinct_active_entries(self):
+        from paper_entry_modes import MODES, decision
+        names=[k for k,_,_ in MODES[1:]]
+        for expected, facts, regime in (
+            ('PULLBACK', dict(breakout=False,reclaim=True,histogram=-.1), 'BULLISH'),
+            ('MOMENTUM', dict(breakout=False,relative_volume=1.3), 'TRANSITION'),
+            ('AGGRESSIVE', dict(breakout=False,ema10=104.,support=99.,histogram=-.3,rsi=46.), 'RANGE'),
+        ):
+            with self.subTest(strategy=expected):
+                e=engine();e['signal']='BUY'
+                h=e['timeframe_context']['1H']['facts']
+                h.update(ema10=99.,candle_up=True,previous_rsi=40.)
+                h.update(facts)
+                if expected=='AGGRESSIVE':opening_range(e)
+                e['timeframe_context']['4H']['facts']['regime']=regime
+                self.assertEqual([k for k in names if decision(e,k)['action']=='BUY'],[expected])
+                e['signal']='SELL'
+                self.assertEqual([k for k in names if decision(e,k)['action']=='BUY'],[expected])
+                for k in names:
+                    self.assertEqual(decision({**e,'status':'DATA BLOCKED'},k)['action'],'BLOCKED')
+
+    def test_five_books_execute_independently(self):
+        from paper_entry_modes import MODES, UNIVERSE
+        names=tuple(k for k,_,_ in MODES)
+        db=shadow.connect(':memory:',modes=names,universe=UNIVERSE)
+        self.addCleanup(db.close)
+        for n in (0,1,2):
+            item=event(n,'WAIT')
+            item['entry_modes']={k:dict(item['v2']) for k in names if k!='V1'}
+            item['entry_modes']['AGGRESSIVE'].update(action='BUY',mode='EARLY',
+                target=110.,risk_fraction=.005,entry_rr=1.25)
+            if n==2:item['quote']['high']=111.
+            result=shadow.apply(db,item)
+            self.assertEqual({k:v['open_positions'] for k,v in result['books'].items()},
+                             {k:int(k=='AGGRESSIVE' and n==1) for k in names})
+        self.assertEqual(result['books']['AGGRESSIVE']['closed_trades'],1)
+        self.assertEqual(result['books']['AGGRESSIVE']['commissions'],2)
+        sell=json.loads(db.execute("SELECT payload FROM journal WHERE book='AGGRESSIVE' ORDER BY id DESC LIMIT 1 OFFSET 1").fetchone()[0])
+        self.assertEqual(sell['reason'],'STRATEGY_TAKE_PROFIT')
+
+    def test_time_exit_counts_only_execution_bars(self):
+        from paper_entry_modes import EXIT_POLICIES
+        b=v2.book()
+        policy=EXIT_POLICIES['AGGRESSIVE']
+        for n in range(18):
+            e=event(n)
+            e['v2']['target']=110.
+            rows=v2.advance(b,'V2',e,exit_policy=policy)
+        self.assertEqual(rows[0]['reason'],'STRATEGY_TIME_EXIT')
+        self.assertFalse(b['positions'])
+
+    def test_strategies_read_the_selected_closed_timeframe(self):
+        from paper_entry_modes import decision
+        from paper_hourly import SELECTABLE_TIMEFRAMES
+        from trading_engine import profile
+        for tf in SELECTABLE_TIMEFRAMES:
+            with self.subTest(timeframe=tf):
+                e=engine()
+                context=e['timeframe_context']['1H']
+                e['timeframe_context']={key:copy.deepcopy(context) for key in profile(tf)}
+                f=e['timeframe_context'][tf]['facts']
+                f.update(ema10=104.,candle_up=True,previous_rsi=40.,support=99.,rsi=46.)
+                opening_range(e)
+                self.assertEqual(decision(e,'AGGRESSIVE',tf)['action'],'BUY' if tf=='1H' else 'WAIT')
+                self.assertEqual(decision(e,'V2',tf)['action'],'WAIT')
+                f.update(ema10=99.,rsi=55.)
+                self.assertEqual(decision(e,'V2',tf)['action'],'WAIT')
+                self.assertEqual(v2.proposal(e,inherit_core=False,timeframe=tf)['action'],'BUY')
+
     def test_early_positive_without_volume_120(self):
         d=v2.proposal(engine());self.assertEqual((d['action'],d['mode'],d['risk_fraction']),('BUY','EARLY',.005))
     def test_entry_filters_and_reward_preserved(self):

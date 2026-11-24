@@ -108,4 +108,3 @@ def decision_evidence(result):
         revisions={k:v for k,v in result.get('_input_revisions',{}).items() if k.startswith(('market:','instrument:'))},
         inputs=[{k:s.get(k) for k in ('spec','count','digest')} for s in proof.get('series',[])],
         contexts=contexts,execution_quote={k:quote.get(k) for k in ('isin','identity','timeframe','bars')},quote_blocker=result.get('quote_blocker'))
-

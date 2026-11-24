@@ -3,12 +3,46 @@ import os,pickle,sqlite3,subprocess,sys,threading,time
 from contextlib import contextmanager
 from pathlib import Path
 
+def receive_readonly(process,deadline):
+    """Read a framed private reply with a deadline, including partial replies.
+
+    No helper thread and no effect on the serial writer's protocol/lifetime.
+    """
+    fd=process.stdout.fileno()
+    if os.name=='nt':
+        import ctypes,msvcrt
+        available=ctypes.c_ulong();kernel=ctypes.WinDLL('kernel32',use_last_error=True)
+        peek=kernel.PeekNamedPipe
+        peek.argtypes=[ctypes.c_void_p,ctypes.c_void_p,ctypes.c_ulong,ctypes.c_void_p,ctypes.POINTER(ctypes.c_ulong),ctypes.c_void_p]
+        handle=msvcrt.get_osfhandle(fd)
+    def exact(size):
+        parts=[];left=size
+        while left:
+            if time.monotonic()>=deadline:raise TimeoutError('READ_CALCULATION_TIMEOUT')
+            if os.name=='nt':
+                if not peek(handle,None,0,None,ctypes.byref(available),None):raise EOFError()
+                ready=available.value
+            else:
+                import select
+                ready=65536 if select.select([fd],[],[],0)[0] else 0
+            if not ready:
+                if process.poll() is not None:raise EOFError()
+                time.sleep(.01);continue
+            block=os.read(fd,min(left,ready,65536))
+            if not block:raise EOFError()
+            parts.append(block);left-=len(block)
+        return b''.join(parts)
+    size=int.from_bytes(exact(8),'big')
+    if not 0<size<=512*1024*1024:raise ValueError('READ_REPLY_SIZE_LIMIT')
+    return pickle.loads(exact(size))
+
 class Client:
     def __init__(self,path,feed_updates=False):
         self.feed_updates=feed_updates
         self.path=str(path);self.process=None;self.lock=threading.Lock();self.closed=False;self.epoch=0;self.active=False;self.active_kind=None
+        self.timeouts={'snapshot':180,'eligibility':90,'chart':90,'read_analytics':90,'feed':90,'paper_hourly':90}
 
-    def calculate(self,kind,values,last_client=None):
+    def calculate(self,kind,values,last_client=None,progress=None):
         with self.lock:
             if self.closed:raise RuntimeError('Calculation worker is closed')
             epoch=self.epoch;self.active=True;self.active_kind=kind;process=None
@@ -18,16 +52,32 @@ class Client:
                     command=[sys.executable,'--compute-worker'] if getattr(sys,'frozen',False) else [interpreter,'-u',str(Path(__file__).resolve())]
                     if self.feed_updates:command.append('--feed-updates')
                     env=dict(os.environ);env['PYTHONPATH']=os.pathsep.join(sys.path)
+                    flags=getattr(subprocess,'CREATE_NO_WINDOW',0)
+                    if kind=='snapshot' and not self.feed_updates:flags|=getattr(subprocess,'BELOW_NORMAL_PRIORITY_CLASS',0)
                     self.process=subprocess.Popen(command,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,
-                        env=env,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+                        env=env,creationflags=flags)
                 process=self.process
                 if self.closed or epoch!=self.epoch:
                     process.terminate();raise RuntimeError('Superseded read-only calculation')
-                pickle.dump((self.path,kind,values,last_client),process.stdin,protocol=5);process.stdin.flush()
-                ok,result=pickle.load(process.stdout)
+                request_values={**values,'_read_progress_protocol':1} if kind=='snapshot' and not self.feed_updates else values
+                pickle.dump((self.path,kind,request_values,last_client),process.stdin,protocol=5);process.stdin.flush()
+                if self.feed_updates:ok,result=pickle.load(process.stdout)
+                else:
+                    budget=self.timeouts.get(kind,90)
+                    if kind=='snapshot':budget=min(1800,max(budget,20*len(values.get('watchlist',[]))))
+                    deadline=time.monotonic()+budget
+                    while True:
+                        ok,result=receive_readonly(process,deadline)
+                        if ok!='PROGRESS':break
+                        if progress:progress(result)
                 if epoch!=self.epoch:raise RuntimeError('Superseded read-only calculation')
                 if not ok:raise RuntimeError(result)
                 return result
+            except TimeoutError:
+                if not self.feed_updates:
+                    self.epoch+=1
+                    if process is not None and process.poll() is None:process.terminate()
+                raise RuntimeError('READ_CALCULATION_TIMEOUT:'+kind) from None
             except (EOFError,BrokenPipeError,OSError):
                 raise RuntimeError('Superseded read-only calculation' if epoch!=self.epoch else 'Calculation worker stopped unexpectedly') from None
             finally:
@@ -117,13 +167,17 @@ def serve():
                 from snapshot_worker import calculate,validate_snapshot
                 from performance_cache import frozen_store
                 from datetime import datetime,timezone
+                wants_progress=values.pop('_read_progress_protocol',None)==1
                 values={**values,'analysis_at':datetime.now(timezone.utc).isoformat()}
+                def progress(value):
+                    payload=pickle.dumps(('PROGRESS',value),protocol=5)
+                    sys.stdout.buffer.write(len(payload).to_bytes(8,'big'));sys.stdout.buffer.write(payload);sys.stdout.buffer.flush()
                 with frozen_store(store) as captured_store:
                     with captured_store.read_cache.track_inputs() as dependencies:
                         captured=values.get('instrument_revisions',{})
                         captured_store.read_cache.assert_current(captured)
                         captured_store.read_cache._record(captured)
-                        result=calculate(captured_store,values,last_client)
+                        result=calculate(captured_store,values,last_client,progress=progress if wants_progress else None)
                         captured_store.read_cache.assert_current(dependencies)
                     result['_captured_input_revisions']=dict(dependencies)
                 result=validate_snapshot(store,result)
@@ -136,8 +190,11 @@ def serve():
             result.setdefault('_calculation_timing',{}).update(compute_seconds=round(time.monotonic()-calculation_started,3),finished_at=time.time())
             response=(True,result)
         except Exception as error:response=(False,diagnostic_error(error))
-        pickle.dump(response,sys.stdout.buffer,protocol=5);sys.stdout.buffer.flush()
+        if feed_updates:pickle.dump(response,sys.stdout.buffer,protocol=5)
+        else:
+            payload=pickle.dumps(response,protocol=5)
+            sys.stdout.buffer.write(len(payload).to_bytes(8,'big'));sys.stdout.buffer.write(payload)
+        sys.stdout.buffer.flush()
     if store is not None:store.read_cache.close()
 
 if __name__=='__main__':serve()
-

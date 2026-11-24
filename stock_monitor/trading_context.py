@@ -12,14 +12,15 @@ from paper_account import EXECUTION_TF
 def closed_period_end(meta, target, now):
     import pandas as pd
     from timeframes import schedule
+    from gettex_sessions import VERIFIED_THROUGH
     local=now.tz_convert(meta['timezone']).tz_localize(None)
     week=target=='1W'
     period=local.to_period('W-FRI' if week else 'M')
     last=period.end_time.normalize()
-    if meta.get('venue')=='GETTEX' and local.year==2026 and last.year>2026:
-        # A W-FRI label may fall in 2027 while its full GETTEX trading
-        # week ends in 2026. Use the confirmed calendar through year-end.
-        last=min(last,pd.Timestamp('2026-12-31'))
+    verified=pd.Timestamp(VERIFIED_THROUGH)
+    if meta.get('venue')=='GETTEX' and local<=verified+pd.Timedelta(days=1)-pd.Timedelta(nanoseconds=1)<last:
+        # A W-FRI label can extend beyond the confirmed trading year.
+        last=verified
     sessions=schedule({**meta,'timeframe':'1D'},(period-2).start_time,last)
     ends=sessions.close.groupby(pd.Grouper(freq='W-FRI' if week else 'MS')).max()
     eligible=ends[ends<=now]
@@ -114,6 +115,11 @@ def calculate(store,values,identity,contract,position,now):
     context.trading_required_tf=tuple(contract['required_tf'])
     context.closed_specs={};context.set_analysis_scope(now)
     engine=context.trading_analysis(info,analysis_only=True)
+    if values.get('_paper_v1_long_term') is True and engine.get('status')=='READY':
+        from paper_v1_long_term import context as long_term_context
+        daily=context.frame_for(info,'1D')
+        weekly=None if position else context.frame_for(info,'1W')
+        engine['v1_long_term']=long_term_context(daily,weekly,identity,now,held=bool(position))
     proof=_candidate_proof(store,list(context.closed_specs.values()),store.read_cache.dependencies())
     from gettex_first import VERSION
     factual=all(engine.get('timeframe_context',{}).get(tf,{}).get('calculation_availability',{}).get('policy')==VERSION
@@ -121,4 +127,3 @@ def calculate(store,values,identity,contract,position,now):
         for tf in contract['required_tf'])
     manual=None if factual else manual_context(store,info['isin'],identity,contract['signal_tf'],proof)
     return dict(engine=engine,proof=proof,manual=manual,contract=contract)
-

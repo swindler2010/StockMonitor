@@ -39,6 +39,7 @@ RULES = {
     'skip_near_earnings': 'Вне трёх часов до и после отчёта NVIDIA',
     'group_unanimous': 'Растут все допущенные акции',
     'reversal_level_held': 'Уровень разворота сохранился к исполнению',
+    'core_confirms_1h': 'CORE подтверждает BUY на 1H',
 }
 
 
@@ -106,7 +107,9 @@ def _news(db, key, clock):
 
 def context(db, info, result, signal, quote, clock, universe_size, period):
     from paper_v5 import macro_release_day
-    features=result['execution_context']['trading_engine']['v5_opening_range']
+    engine=result['execution_context']['trading_engine']
+    features=engine['v5_opening_range']
+    core_signal=engine.get('signal')
     events=_events(clock,info['isin'])
     opened=period['minutes_from_us_open']
     closing=period['minutes_to_us_close']
@@ -125,7 +128,8 @@ def context(db, info, result, signal, quote, clock, universe_size, period):
         skip_macro_release_day=(macro_day['state']=='CLEAR' if macro_day['state']!='CALENDAR_UNCONFIRMED' else None),
         skip_near_earnings=not earning_event if earnings_window else None,
         group_unanimous=(signal['breadth_positive']==universe_size if signal['breadth_available']==universe_size else None),
-        reversal_level_held=quote['close']>level if reversal and level is not None else None)
+        reversal_level_held=quote['close']>level if reversal and level is not None else None,
+        core_confirms_1h=(core_signal=='BUY') if core_signal in ('BUY','WAIT','HOLD','SELL') else None)
     return dict(time=period,events=events,macro_day=macro_day,variants=flags,level=level,setup=signal['setup'],
                 model=signal['model'],news=dict(company=_news(db,info['isin'],clock),market=_news(db,'market',clock)),
                 relative_volume=signal['relative_volume'],atr=signal['atr'],breadth=signal['breadth_positive'])
