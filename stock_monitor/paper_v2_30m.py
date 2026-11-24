@@ -29,9 +29,17 @@ def validate_model(model, now):
     unsigned={k:v for k,v in model.items() if k!='artifact_sha256'}
     if hashlib.sha256(canonical(unsigned).encode()).hexdigest()!=model.get('artifact_sha256'):
         raise ValueError('V2_30M_MODEL_CHANGED')
-    week=pd.Timestamp(now).tz_convert('Europe/Berlin').tz_localize(None).to_period('W-SUN').start_time.date().isoformat()
-    if model.get('week_start')!=week or not model.get('training_end','9999')<week:
-        raise ValueError('V2_30M_MODEL_WEEK_EXPIRED')
+    # The research reference week is provenance, not an owner-set expiry.
+    # Keep the approved weights/dates/hash unchanged across calendar rollover.
+    from datetime import date
+    try:
+        reference=date.fromisoformat(model['week_start'])
+        trained=date.fromisoformat(model['training_end'])
+        today=pd.Timestamp(now).tz_convert('Europe/Berlin').date()
+    except (KeyError,TypeError,ValueError):
+        raise ValueError('V2_30M_MODEL_TIME_UNCONFIRMED') from None
+    if reference.weekday()!=0 or not trained<reference<=today:
+        raise ValueError('V2_30M_MODEL_TIME_UNCONFIRMED')
     if (model.get('features')!=list(f.FEATURES) or model.get('interim')!=list(f.INTERIM)
             or model.get('entries')!=list(f.ENTRIES) or len(model.get('models',[]))!=2
             or model.get('fee')!=2. or model.get('half_spread')!=.001):

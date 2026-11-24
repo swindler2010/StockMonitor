@@ -99,6 +99,27 @@ class V2Transactions(unittest.TestCase):
         self.refresh(action='WAIT')
         self.assertIsNone(hourly.order_command(self.f.db,self.f.info,self.f.result,self.f.now,manage=True))
 
+    def test_november30_reuses_exact_admitted_model_but_requires_fresh_execution_price(self):
+        f=self.f;f.now=pd.Timestamp('2026-11-24T10:05:00Z').timestamp()
+        self.model=artifact(f.isin,f.now)
+        v2.activate(f.db,self.model,dict(passed=True,model=v2.MODEL,artifact_sha256=self.model['artifact_sha256']),
+                    pd.Timestamp(f.now,unit='s',tz='UTC'))
+        self.refresh(100.,'2026-11-24T10:00:00+00:00')
+        saved=dict(f.db.execute('SELECT key,value FROM settings WHERE key IN (?,?)',(v2.MODEL_KEY,v2.ADMISSION_KEY)))
+        other=paper.ledger(f.db,'V5')
+        f.now=pd.Timestamp('2026-11-30T10:05:00Z').timestamp()
+        self.assertEqual(v2.authority(f.db,pd.Timestamp(f.now,unit='s',tz='UTC')),self.model)
+        with self.assertRaisesRegex(ValueError,'STALE_QUOTE'):
+            hourly.order_command(f.db,f.info,f.result,f.now,manage=True)
+        self.assertFalse(paper.ledger(f.db,'V2')['fills'])
+        self.refresh(100.,'2026-11-30T10:00:00+00:00')
+        fill,_=self.buy()
+        self.assertEqual(fill['fill']['side'],'BUY')
+        self.assertEqual(fill['fill']['smart_eligibility']['entry_evidence']['artifact_sha256'],self.model['artifact_sha256'])
+        self.assertEqual(dict(f.db.execute('SELECT key,value FROM settings WHERE key IN (?,?)',
+                         (v2.MODEL_KEY,v2.ADMISSION_KEY))),saved)
+        self.assertEqual(paper.ledger(f.db,'V5'),other)
+
     def test_strategy_clock_does_not_reuse_stale_core_time_or_accept_wrong_delay(self):
         f=self.f;engine=f.result['execution_context']['trading_engine']
         engine['timestamp']='2026-11-04T09:00:00+00:00'
@@ -343,15 +364,24 @@ class FrozenRules(unittest.TestCase):
         offers,_=v2.candidates(tapes,g,when,model)
         self.assertFalse(offers)
 
-    def test_model_changed_future_training_and_week_expiry_rejected(self):
+    def test_model_changed_future_training_and_invalid_reference_rejected(self):
         now=pd.Timestamp('2026-11-24T14:00:00Z');m=artifact('TEST',now.timestamp())
         v2.validate_model(m,now)
         changed=copy.deepcopy(m);changed['fee']=0
         with self.assertRaisesRegex(ValueError,'MODEL_CHANGED'):v2.validate_model(changed,now)
-        with self.assertRaisesRegex(ValueError,'WEEK_EXPIRED'):v2.validate_model(m,now+pd.Timedelta(days=7))
         changed=copy.deepcopy(m);changed['training_end']=changed['week_start']
         changed['artifact_sha256']=hashlib.sha256(v2.canonical({k:v for k,v in changed.items() if k!='artifact_sha256'}).encode()).hexdigest()
-        with self.assertRaisesRegex(ValueError,'WEEK_EXPIRED'):v2.validate_model(changed,now)
+        with self.assertRaisesRegex(ValueError,'TIME_UNCONFIRMED'):v2.validate_model(changed,now)
+        for reference,trained in [('2026-11-30','2026-11-27'),('2026-11-24','2026-11-20'),('bad-date','2026-11-20')]:
+            changed=copy.deepcopy(m);changed.update(week_start=reference,training_end=trained)
+            changed['artifact_sha256']=hashlib.sha256(v2.canonical({k:v for k,v in changed.items() if k!='artifact_sha256'}).encode()).hexdigest()
+            with self.assertRaisesRegex(ValueError,'TIME_UNCONFIRMED'):v2.validate_model(changed,now)
+
+    def test_reference_week_is_provenance_not_a_trading_expiry(self):
+        now=pd.Timestamp('2026-11-24T14:00:00Z');model=artifact('TEST',now.timestamp());before=copy.deepcopy(model)
+        for date in ['2026-11-30T14:00:00Z','2026-12-07T14:00:00Z','2027-01-04T14:00:00Z']:
+            self.assertEqual(v2.validate_model(model,pd.Timestamp(date)),model['artifact_sha256'])
+        self.assertEqual(model,before)
 
     def test_bounded53_and200_predictions_use_exact_immutable_model(self):
         now=pd.Timestamp('2026-11-24T14:00:00Z');m=artifact('TEST',now.timestamp());before=copy.deepcopy(m)
