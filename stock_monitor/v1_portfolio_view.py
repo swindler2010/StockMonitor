@@ -65,10 +65,10 @@ class Dashboard:
         self.picker = ttk.Combobox(toolbar, state="readonly")
         self.picker.bind("<<ComboboxSelected>>", self.select_portfolio)
 
-        columns = ("name", "quantity", "value", "weight", "decision", "entry")
+        columns = ("name", "quantity", "value", "weight", "average", "pnl", "decision", "entry")
         self.rows = ttk.Treeview(frame, columns=columns, show="headings", height=9)
-        headers = ("Инструмент", "Количество", "Стоимость", "Вес", "Рекомендация", "Зона входа")
-        for column, title, width in zip(columns, headers, (220, 85, 135, 80, 220, 120)):
+        headers = ("Инструмент", "Количество", "Стоимость", "Вес", "Ср. цена", "Нереализ. P/L", "Рекомендация", "Зона входа")
+        for column, title, width in zip(columns, headers, (190, 75, 100, 65, 100, 115, 170, 100)):
             self.rows.heading(column, text=tr(title))
             self.rows.column(column, width=width, stretch=column in ("name", "decision"))
         scroll = ttk.Scrollbar(frame, orient="vertical", command=self.rows.yview)
@@ -202,12 +202,14 @@ class Dashboard:
             zone = row.get("zone")
             self.rows.insert("", "end", iid=row["isin"], values=(
                 row["name"], row.get("quantity", "—"), money(row.get("value")),
-                percent(row.get("weight")), tr(row["decision"]), money(zone["buy_below"] if zone else None)))
+                percent(row.get("weight")), money(row.get("average")), money(row.get("pnl")),
+                tr(row["decision"]), money(zone["buy_below"] if zone else None)))
         value_coverage = report["valued"] / report["total"] if report["total"] else None
         self.summary.configure(text=f'{tr("Оценка SC")} {money(report["total"])} · '
                                     f'{tr("Средства без кредита")} {money(report["cash"])} · '
                                     f'{tr("Оценены позиции")} {report["covered"]}/{len(report["positions"])} '
-                                    f'({percent(value_coverage)} {tr("от оценки SC")})')
+                                    f'({percent(value_coverage)} {tr("от оценки SC")}) · '
+                                    f'{tr("Ср. цена")} {report["cost_covered"]}/{len(report["positions"])}')
         self.write(tr("Стресс-тесты портфеля") + "\n" + scenario_lines(report["scenarios"]))
 
     def write(self, text):
@@ -228,6 +230,18 @@ class Dashboard:
             return
         facts, zone = row["facts"], row.get("zone")
         lines = [f'{row["name"]} · {row["isin"]}', tr(row["decision"]), tr(row.get("reason", ""))]
+        if "basis_status" in row:
+            statuses = {
+                "TRANSFER_ESTIMATE": "Оценка FIFO по операциям SC. Для переводов порядок считается по дате записи у брокера.",
+                "FIFO_ESTIMATE": "Оценка FIFO по суммам исполненных операций SC. Порядок по дате записи у брокера.",
+                "MISSING_LOT_COST": "Нет стоимости одной или нескольких открытых покупок либо корпоративных операций.",
+                "QUANTITY_MISMATCH": "Количество из истории операций не сошлось с текущей позицией SC.",
+                "INCOMPLETE_OR_AMBIGUOUS": "В истории есть события, которые нельзя однозначно восстановить.",
+                "SC_TRANSACTION_HISTORY_UNAVAILABLE": "История операций SC временно недоступна.",
+            }
+            lines.append(f'{tr("Средняя цена")} {money(row["average"])} · '
+                         f'{tr("Нереализованный P/L")} {money(row["pnl"])} ({percent(row["pnl_pct"])})')
+            lines.append(tr(statuses.get(row["basis_status"], "Среднюю цену пока нельзя сверить с историей операций.")))
         if zone:
             lines.extend([f'{tr("Оценка по денежному потоку")} '
                           f'{money(zone["low"])} / {money(zone["base"])} / {money(zone["high"])}',
