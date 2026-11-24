@@ -38,6 +38,7 @@ class PresentationTests(unittest.TestCase):
         for lang in ('ru','de','en'):
             i18n._language=lang;title,details=format_engine(engine)
             self.assertEqual(title,'WAIT');self.assertIn('INVALID',details)
+            self.assertNotIn('OUTPERFORMING',details)
             self.assertIn('DAX',details);self.assertEqual(engine,before)
 
     def test_metrics_preserve_zero_negative_and_missing_account_values(self):
@@ -58,6 +59,15 @@ class PresentationTests(unittest.TestCase):
         self.assertIn('extra evidence',format_engine(engine)[1]);self.assertEqual(engine,before)
         self.assertEqual(concise_reason(dict(status='DATA BLOCKED',blockers=[dict(text='GETTEX / EUR / unknown proof')])),
                          'GETTEX / EUR / unknown proof')
+
+    def test_account_details_translate_labels_without_changing_values(self):
+        from paper_view import summary
+        state=dict(status='ACTIVE',account='V1',equity='10000',cash='9000',realized='0',unrealized='0',fees='2',policy={'starting_cash':'10000'})
+        before=copy.deepcopy(state)
+        for lang,label in (('ru','Свободно'),('en','Available cash'),('de','Verfügbar')):
+            i18n._language=lang;text=summary(state)
+            self.assertIn(label+': 9000 EUR',text);self.assertIn('10000 EUR',text)
+            self.assertEqual(state,before)
 
     def test_chart_notes_have_their_own_measured_strip_and_keep_limits(self):
         from matplotlib.figure import Figure
@@ -87,6 +97,9 @@ class TkPresentationTests(unittest.TestCase):
     def setUp(self):
         import tkinter as tk
         self.root=tk.Tk();self.root.geometry('1100x850+20000+20000')
+        self.callback_errors=[]
+        self.root.report_callback_exception=lambda kind,value,tb:self.callback_errors.append(str(value))
+        self.addCleanup(lambda:self.assertEqual(self.callback_errors,[]))
         self.addCleanup(self.root.destroy)
 
     def test_full_reason_fits_at_narrow_and_wide_signal_widths(self):
@@ -179,6 +192,19 @@ class TkPresentationTests(unittest.TestCase):
             self.assertEqual(app.root._reference_caption_palette,THEMES['Светлая'])
             self.assertEqual(apply.call_args.args[1],THEMES['Светлая'])
             win.destroy()
+
+    def test_packed_card_message_wraps_to_parent_without_feedback_or_repeated_bindings(self):
+        from tkinter import ttk
+        from reference_design import wrap_label
+        host=ttk.Frame(self.root,padding=12);host.pack(fill='x')
+        message=ttk.Label(host,text='Поручение изменено; проверьте цену выбранной акции заново. '*3,wraplength=1000)
+        message.pack(anchor='w',padx=4,pady=4)
+        wrap_label(message);binding=message.bind('<Configure>');wrap_label(message)
+        self.assertEqual(binding,message.bind('<Configure>'))
+        for _ in range(6):self.root.update();self.root.update_idletasks()
+        self.assertGreater(int(message.cget('wraplength')),1000)
+        self.assertLess(message.winfo_height(),75)
+        self.assertLess(host.winfo_height(),110)
 
 
 class HeaderLayoutTests(unittest.TestCase):

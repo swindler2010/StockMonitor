@@ -223,7 +223,7 @@ def summary(state):
     balances=("\n"+tr('Свободные средства по счетам')+"  "+
               "  |  ".join(f"{name} {book['cash']} EUR" for name,book in portfolios.items())
               if portfolios else "")
-    return (f"{state['account']}{tr(' • только виртуальные операции\nНачальный капитал: ')}{start}{tr(' EUR • Доходность: ')}{change}\nCash: {value('cash')} • Equity: {value('equity')}{tr('\nРеализованный P&L: ')}{value('realized')}{tr(' • Нереализованный: ')}{value('unrealized')}{tr(' • Комиссии: ')}{value('fees')}"+balances+universe+automation_summary(state))
+    return (f"{state['account']}{tr(' • только виртуальные операции\nНачальный капитал: ')}{start}{tr(' EUR • Доходность: ')}{change}\n{tr('Свободно')}: {value('cash')} • {tr('Капитал')}: {value('equity')}{tr('\nРеализованный P&L: ')}{value('realized')}{tr(' • Нереализованный: ')}{value('unrealized')}{tr(' • Комиссии: ')}{value('fees')}"+balances+universe+automation_summary(state))
 
 def attach(app, parent):
     from portfolio_design import Surface

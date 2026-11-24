@@ -1220,7 +1220,7 @@
     "de": "Kursänderung, %"
   },
   "Оценка": {
-    "en": "Assessment",
+    "en": "Score",
     "de": "Bewertung"
   },
   "правильный": {
@@ -5781,5 +5781,13 @@
   "Поручение владельца • {account}": {
     "en": "Owner order • {account}",
     "de": "Auftrag des Eigentümers • {account}"
+  },
+  "Контекст таймфреймов": {
+    "en": "Timeframe context",
+    "de": "Zeitrahmenkontext"
+  },
+  "Рыночный индекс": {
+    "en": "Market index",
+    "de": "Marktindex"
   }
 }

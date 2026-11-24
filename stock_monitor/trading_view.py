@@ -16,7 +16,7 @@ def format_engine(engine):
     title='WAIT / DATA BLOCKED' if blocked else engine['signal']
     confidence=engine.get('confidence');score=engine.get('score')
     lines=[tr('Сила: ')+(f'{confidence:g}/100' if _number(confidence) and 0<=confidence<=100 else tr('нет данных'))+
-           (f' · score {score:+g}' if _number(score) else ''),tr('Сила подтверждений, не вероятность прибыли.')]
+           (' · '+tr('Оценка')+f' {score:+g}' if _number(score) else ''),tr('Сила подтверждений, не вероятность прибыли.')]
     if blocked:lines.append(tr('Данные блокируют торговый сигнал.'))
     if engine.get('analysis_scope'):
         scope=engine['analysis_scope']
@@ -25,7 +25,7 @@ def format_engine(engine):
                             ('blockers',tr('Блокировка'),None),('entry_blockers',tr('Вход не подтверждён'),None),('warnings',tr('Примечания'),None)):
         values=engine.get(key) or []
         if not isinstance(values,(list,tuple)):values=[values]
-        texts=[diagnostic_text(v.get('text','')) if isinstance(v,dict) else diagnostic_text(v) for v in values]
+        texts=[signal_reason(v.get('text','')) if isinstance(v,dict) else signal_reason(v) for v in values]
         if texts:lines.append(label+': '+ '; '.join(texts[:limit]))
     contexts=engine.get('timeframe_context') or {}
     mtf=[]
@@ -36,13 +36,13 @@ def format_engine(engine):
             mtf.append(f"{tf}: {state_label(facts.get('regime',tr('нет данных')))} / {quality.get('state',tr('не проверено'))}")
             if context.get('scope_initialization',{}).get('stable') is False:
                 lines.append(f"{tf}{tr(': в пределах пяти лет не подтверждён устойчивый прогрев индикаторов; более старые данные не использованы.')}")
-    lines.append('MTF: '+('; '.join(mtf) or tr('нет контекста')))
+    lines.append(tr('Контекст таймфреймов')+': '+('; '.join(mtf) or tr('нет контекста')))
     benchmark=engine.get('benchmark_context') or {}
     if not isinstance(benchmark,dict):benchmark={}
     quality=benchmark.get('quality',tr('не проверено'))
     if isinstance(quality,dict):quality=quality.get('state',tr('не проверено'))
     difference=benchmark.get('difference_pp')
-    lines.append('Benchmark: '+str(benchmark.get('benchmark_name') or benchmark.get('benchmark_id') or tr('не выбран'))+
+    lines.append(tr('Рыночный индекс')+': '+str(benchmark.get('benchmark_name') or benchmark.get('benchmark_id') or tr('не выбран'))+
                  ' · '+state_label(benchmark.get('state','UNAVAILABLE'))+' · DQ '+str(quality)+
                  (f" · Δ {difference:+.2f}{tr(' п.п.')}" if _number(difference) else ''))
     if benchmark.get('reason'):

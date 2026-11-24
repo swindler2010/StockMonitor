@@ -43,11 +43,31 @@ def concise_reason(engine):
 
 def wrap_label(label, padding=0):
     """Natural requested height, measured wrapping, no character truncation."""
+    if getattr(label,'_reference_wrap_installed',False):return label
+    label._reference_wrap_installed=True
+    def inset(widget,value,box=True):
+        parts=value if isinstance(value,(tuple,list)) else widget.tk.splitlist(str(value))
+        values=[widget.winfo_pixels(str(v)) for v in parts]
+        return (2*values[0] if box else sum(values)) if len(values)==2 else 2*values[0] if len(values)==1 else values[0]+values[2] if values else 0
     def resized(event):
-        width = max(60, event.width-padding)
+        if not label.winfo_exists():return
+        if label.winfo_manager()=='pack':
+            # A naturally sized packed label is not its allocated width.
+            # Feeding its own wrapped request back into wraplength shrinks
+            # it word by word and makes the whole card grow vertically.
+            parent=label.master
+            try:inside=inset(parent,parent.cget('padding'))
+            except tk.TclError:inside=0
+            gap=inset(label,label.pack_info().get('padx',0),box=False)
+            width=max(60,parent.winfo_width()-inside-gap-padding-4)
+        else:width=max(60,label.winfo_width()-padding)
         if int(float(label.cget('wraplength') or 0)) != width:
             label.configure(wraplength=width)
     label.bind('<Configure>', resized, add='+')
+    if label.winfo_manager()=='pack':
+        parent=label.master
+        binding=parent.bind('<Configure>',resized,add='+')
+        label.bind('<Destroy>',lambda e:parent.unbind('<Configure>',binding) if e.widget is label and parent.winfo_exists() else None,add='+')
     return label
 
 
