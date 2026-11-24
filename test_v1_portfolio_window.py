@@ -1,7 +1,7 @@
 """Tk verification for the standalone Scalable Capital window and its default scope."""
 import ast
 from pathlib import Path
-from tkinter import TclError, Tk, ttk
+from tkinter import TclError, Tk, Toplevel, ttk
 from types import SimpleNamespace
 from unittest import TestCase, main
 from unittest.mock import patch
@@ -26,6 +26,19 @@ class WindowTest(TestCase):
         self.assertFalse(any(isinstance(widget, ttk.Notebook) for widget in window.winfo_children()))
         window.destroy()
         self.assertIsNot(v1.show(app), window)
+
+    def test_window_uses_visible_navigation_window_as_owner(self):
+        owner = Toplevel(self.root)
+        owner.update_idletasks()
+        window = v1.show(SimpleNamespace(root=self.root), owner)
+        self.assertEqual(str(window.transient()), str(owner))
+
+    def test_first_open_does_not_call_broker_without_cached_positions(self):
+        app = SimpleNamespace(root=self.root, store=SimpleNamespace(directory=Path.cwd()))
+        dashboard = v1.Dashboard(app, ttk.Frame(self.root))
+        with patch.object(v1, "read_local", return_value=None), patch.object(v1, "refresh") as refresh:
+            self.assertEqual(dashboard.load([], False, None, cached_only=True), (None, "SC_AUTH_REQUIRED"))
+            refresh.assert_not_called()
 
     def test_sc_positions_are_the_only_default_rows(self):
         dashboard = v1.Dashboard(SimpleNamespace(root=self.root), ttk.Frame(self.root))
@@ -61,7 +74,7 @@ class WindowTest(TestCase):
         exec(compile(ast.Module(body=[action], type_ignores=[]), str(desktop), "exec"), runner)
         with patch.object(v1, "show", return_value="SC") as show:
             self.assertEqual(runner["show_portfolio"](self.root), "SC")
-            show.assert_called_once_with(self.root)
+            show.assert_called_once_with(self.root, None)
 
 
 if __name__ == "__main__":
