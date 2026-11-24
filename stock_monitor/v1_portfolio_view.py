@@ -47,11 +47,20 @@ def scenario_lines(items):
     return "\n".join(lines)
 
 
-def show(app):
+def raise_window(window, parent):
+    if parent.winfo_ismapped():
+        window.transient(parent)
+    window.deiconify()
+    window.lift()
+    if window.winfo_viewable():
+        window.focus_force()
+
+
+def show(app, parent=None):
+    owner = app.root if parent is None else parent
     existing = getattr(app, "_scalable_v1_window", None)
     if existing is not None and existing.winfo_exists():
-        existing.deiconify()
-        existing.lift()
+        raise_window(existing, owner)
         return existing
     window = Toplevel(app.root)
     window.title(tr("V1 · Scalable Capital"))
@@ -61,6 +70,8 @@ def show(app):
     frame = ttk.Frame(window, padding=(16, 12))
     frame.pack(fill="both", expand=True)
     Dashboard(app, frame)
+    window.bind("<Map>", lambda event: window.focus_force() if event.widget is window else None, add="+")
+    raise_window(window, owner)
     return window
 
 
@@ -74,6 +85,7 @@ class Dashboard:
         self.portfolios = []
         self.selected = None
         self.future = None
+        self.cached_only = False
         self.section = "positions"
         frame.bind("<Destroy>", self.destroy, add="+")
         self.pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="v1-scalable")
@@ -127,7 +139,7 @@ class Dashboard:
         self.rows.bind("<<TreeviewSelect>>", self.detail)
         self.details = ScrolledText(panes, height=8, wrap="word", state="disabled")
         panes.add(self.details, weight=2)
-        self.timer = frame.after(50, self.start)
+        self.timer = frame.after_idle(lambda: self.start(cached_only=True))
 
     def destroy(self, event):
         if event.widget is self.frame:
@@ -135,7 +147,7 @@ class Dashboard:
                 self.frame.after_cancel(self.timer)
             self.pool.shutdown(wait=False, cancel_futures=True)
 
-    def load(self, watchlist, interactive, selected):
+    def load(self, watchlist, interactive, selected, cached_only=False):
         store = self.app.store
         previous = read_local(store.directory)
         if selected is None and previous:
@@ -143,12 +155,15 @@ class Dashboard:
         if previous and selected != previous["holdings"]["portfolioId"]:
             previous = None
         status = None
-        try:
-            snapshot = refresh(store.directory, selected, interactive)
-        except SyncError as exc:
-            snapshot, status = previous, str(exc)
-        except Exception:
-            snapshot, status = previous, "SC_TRANSPORT_UNAVAILABLE"
+        if cached_only:
+            snapshot, status = previous, "SC_CACHED" if previous else "SC_AUTH_REQUIRED"
+        else:
+            try:
+                snapshot = refresh(store.directory, selected, interactive)
+            except SyncError as exc:
+                snapshot, status = previous, str(exc)
+            except Exception:
+                snapshot, status = previous, "SC_TRANSPORT_UNAVAILABLE"
         if not snapshot or "selection" in snapshot:
             return snapshot, status
 
@@ -175,7 +190,8 @@ class Dashboard:
             return (quote.get("bars") or [{}])[-1].get("close")
 
         report = analyze(snapshot, watchlist, financials, lambda isin: store.setting("news:" + isin, {}) or {},
-                         currency_rates=eur_rates(), load_quote=market_price)
+                         currency_rates=eur_rates() if not status else {},
+                         load_quote=market_price if not status else None)
         if status:
             report["current"] = False
             for row in report["positions"] + report["candidates"]:
@@ -190,14 +206,17 @@ class Dashboard:
             self.selected = self.portfolios[index]["portfolioId"]
             self.start(True)
 
-    def start(self, interactive=False):
+    def start(self, interactive=False, *, cached_only=False):
         if self.future is not None:
             return
         if self.timer:
             self.frame.after_cancel(self.timer)
-        self.status.set(tr("Обновление Scalable Capital…"))
+        if not cached_only:
+            self.status.set(tr("Обновление Scalable Capital…"))
         self.sync.state(["disabled"])
-        self.future = self.pool.submit(self.load, [dict(row) for row in self.app.watchlist], interactive, self.selected)
+        self.cached_only = cached_only
+        self.future = self.pool.submit(self.load, [dict(row) for row in self.app.watchlist],
+                                       interactive, self.selected, cached_only)
         self.timer = self.frame.after(200, self.poll)
 
     def poll(self):
@@ -209,8 +228,11 @@ class Dashboard:
         except Exception:
             report, error = None, "V1_DATA_UNAVAILABLE"
         self.future = None
-        self.timer = self.frame.after(15 * 60 * 1000, self.start)
+        self.timer = None
         self.render(report, error)
+        if report and "selection" not in report:
+            period = 150 if self.cached_only else 15 * 60 * 1000
+            self.timer = self.frame.after(period, self.start)
 
     def render(self, report, error):
         selection = self.rows.selection()
@@ -235,7 +257,8 @@ class Dashboard:
             "auth_invalid": "Войдите в Scalable Capital ещё раз.",
             "SC_AUTH_CANCELLED": "Вход не завершён.",
         }.get(error, "Связь со Scalable Capital недоступна." if error else "")
-        self.sync.configure(text=tr("Подключить SC" if not report or error else "Обновить"))
+        self.sync.configure(text=tr("Подключить SC" if error in {"SC_AUTH_REQUIRED", "auth_required", "auth_invalid", "SC_AUTH_CANCELLED"}
+                                   or not report else "Обновить"))
         if not report:
             self.status.set(tr(status or "Нет данных Scalable Capital."))
             self.show_section("positions")
