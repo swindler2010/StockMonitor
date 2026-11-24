@@ -93,7 +93,7 @@ class Dialog:
         self.app=app;self.closed=False;self.generation=0;self.page=0;self.days=None;self.packet={};self.rows=[];self.shown=[]
         self.render_timer=self.freshness_timer=self.translation_timer=None
         self.embedded=parent is not None
-        self.win=win=ttk.Frame(parent,style='Desk.TFrame') if self.embedded else tk.Toplevel(app.root)
+        self.win=win=ttk.Frame(parent,style='Desk.TFrame') if self.embedded else tk.Toplevel(app.root,background=ttk.Style(app.root).lookup('Desk.TFrame','background') or '#0b1220')
         if self.embedded:win.pack(fill='both',expand=True)
         else:app._news_window=win
         width=min(1500,max(1000,app.root.winfo_width()-40),win.winfo_screenwidth()-70)

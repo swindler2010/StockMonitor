@@ -76,16 +76,16 @@ class RuntimeTests(unittest.TestCase):
     def test_existing_news_lane_same_mapping_and_no_identical_cache_writes(self):
         runtime=self.make();packet=parse(INFO,response(),NOW);self.settings[PREFIX+INFO['isin']]=packet
         with patch('premarket_runtime.fetch',return_value=(packet,{})):
-            self.assertTrue(runtime.refresh_premarket());args,kw=self.jobs.pop();self.assertEqual(kw['lane'],'news')
-            self.assertTrue(runtime.busy);self.assertFalse(runtime.refresh_premarket())
-            args[1](args[0]());self.assertFalse(runtime.busy);self.app.store.set_setting.assert_not_called()
-        self.app.main_screen.load_premarket.assert_called_once_with(self.app.watchlist[0],force=True)
+            self.assertTrue(runtime.refresh_premarket());args,kw=self.jobs.pop();self.assertEqual(kw['lane'],'misc')
+            self.assertTrue(runtime.premarket_busy);self.assertFalse(runtime.refresh_premarket())
+            args[1](args[0]());self.assertFalse(runtime.premarket_busy);self.app.store.set_setting.assert_not_called()
+        self.app.main_screen.load_premarket.assert_called_once_with(self.app.watchlist[0],force=True,packet=packet)
 
-    def test_new_selected_stock_gets_one_turn_before_background_news(self):
-        runtime=self.make();runtime.maintenance_next=float('inf')
-        runtime.refresh_premarket=Mock(return_value=True)
-        with patch('news_runtime.due_targets',side_effect=AssertionError('selected stock should be first')):runtime.tick()
-        runtime.refresh_premarket.assert_called_once();self.assertEqual(runtime.premarket_selection,'Apple')
+    def test_new_selected_stock_does_not_wait_for_a_busy_translation_and_keeps_one_quote_job(self):
+        runtime=self.make();runtime.busy=True
+        runtime.tick();self.assertTrue(runtime.premarket_busy);self.assertTrue(runtime.busy)
+        self.assertEqual(len(self.jobs),1);self.assertEqual(self.jobs[0][1]['lane'],'misc')
+        runtime.tick();self.assertEqual(len(self.jobs),1)
 
     def test_53_and_200_old_mapping_replies_never_publish(self):
         for count in (53,200):
@@ -116,6 +116,14 @@ class RuntimeTests(unittest.TestCase):
                 with patch('premarket_runtime.present',return_value=('CURRENT','current',None)):
                     new[1]({'packet':{}})
                 screen.premarket.set.assert_called_once_with('CURRENT')
+
+    def test_completed_source_packet_updates_display_without_a_second_queued_read(self):
+        from main_screen import Screen
+        screen=Screen.__new__(Screen);screen._closed=False;screen._premarket_key=None
+        screen.premarket=Mock();screen.premarket_label=Mock();screen.app=SimpleNamespace(job=Mock())
+        packet=parse(INFO,response(),NOW)
+        with patch('premarket_runtime.time.time',return_value=NOW):screen.load_premarket(INFO,force=True,packet=packet)
+        screen.app.job.assert_not_called();self.assertIn('USD',screen.premarket.set.call_args.args[0])
 
     def test_display_queue_delay_rechecks_price_age_at_publication(self):
         from main_screen import Screen

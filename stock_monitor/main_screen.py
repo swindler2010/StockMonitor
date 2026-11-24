@@ -315,7 +315,7 @@ class Screen:
         self.schedule_deltas()
         self.favorite_header()
 
-    def load_premarket(self,info,force=False):
+    def load_premarket(self,info,force=False,packet=None):
         if not hasattr(self,'premarket'):return
         import time
         from i18n import language
@@ -344,7 +344,12 @@ class Screen:
                 result=present(info,result.get('card',{}))
             self.premarket.set(result[0]);self._premarket_detail=result[1]
             self.premarket_label.configure(foreground='#27df75' if result[2] is not None and result[2]>=0 else '#ff5966' if result[2] is not None else '#94a3b8')
-        self.app.job(work,done,lambda _:None,lane='read',key='premarket-card-view')
+        if packet is not None:
+            from premarket_runtime import matches
+            if matches(packet,info):done(dict(packet=packet))
+            return
+        if self.app.job(work,done,lambda _:None,lane='read',key='premarket-card-view') is False:
+            self._premarket_signature=None
 
     def show_logos(self, values):
         if getattr(self.app, 'closing', False):

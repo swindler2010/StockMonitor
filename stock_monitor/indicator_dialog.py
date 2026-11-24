@@ -87,7 +87,7 @@ class Dialog:
         self.app=app
         self.palette=THEMES.get(app.store.setting('theme','Тёмная'),THEMES['Тёмная'])
         root=app.root
-        self.win=win=tk.Toplevel(root)
+        self.win=win=tk.Toplevel(root,background=self.palette['bg'])
         win.title(tr('Индикаторы • Все акции'))
         width=min(660,max(500,win.winfo_screenwidth()-80))
         height=min(870,max(560,win.winfo_screenheight()-100))
@@ -158,3 +158,4 @@ class Dialog:
         self.defaults_button=ttk.Button(self.actions,text=tr('По умолчанию'),image=photo(self.app.root,'reset',20,color=self.palette['text']),compound='left',command=defaults,style=p+'.Secondary.TButton')
         self.defaults_button.pack(side='left')
         return self.win
+

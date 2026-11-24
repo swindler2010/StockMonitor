@@ -20,7 +20,7 @@ class Dialog:
     def __init__(self,app):
         from main_screen import native_titlebar
         self.app=app;self.items={};self.original_photos={};self.decorated={};self.sort_column=None;self.descending=False;self.favorites_first=False
-        self.win=win=tk.Toplevel(app.root);win.title(tr('Поиск и добавление акции'))
+        self.win=win=tk.Toplevel(app.root,background=ttk.Style(app.root).lookup('Desk.TFrame','background') or '#0b1220');win.title(tr('Поиск и добавление акции'))
         from design_layout import fit_window
         fit_window(win,1100,730,(900,600))
         palette=THEMES.get(app.store.setting('theme','Тёмная'),THEMES['Тёмная'])

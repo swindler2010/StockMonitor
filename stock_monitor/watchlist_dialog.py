@@ -39,7 +39,7 @@ class Dialog:
     def __init__(self,app):
         from main_screen import native_titlebar
         self.app=app;self.closed=False
-        self.win=win=tk.Toplevel(app.root);win.title(tr('Акции • Stock Monitor'))
+        self.win=win=tk.Toplevel(app.root,background=ttk.Style(app.root).lookup('Desk.TFrame','background') or '#0b1220');win.title(tr('Акции • Stock Monitor'))
         from design_layout import fit_window
         fit_window(win,1540,840,(1000,600))
         self.palette=palette=THEMES.get(app.store.setting('theme','Тёмная'),THEMES['Тёмная'])

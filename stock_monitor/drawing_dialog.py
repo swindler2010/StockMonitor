@@ -20,7 +20,7 @@ class Dialog:
         from main_screen import native_titlebar
         self.app=app;self.info=copy.deepcopy(info);self.isin=info['isin'];self.identity=chart_identity(app)
         self.listed=copy.deepcopy(app.user_state(info).get('drawings',[]))
-        self.win=win=tk.Toplevel(app.root);app._drawing_windows[self.isin]=win
+        self.win=win=tk.Toplevel(app.root,background=ttk.Style(app.root).lookup('Desk.TFrame','background') or '#0b1220');app._drawing_windows[self.isin]=win
         win.title(tr('Рисование • {name}',name=info['name']))
         width=min(1080,max(900,app.root.winfo_width()-80));height=min(790,max(780,app.root.winfo_height()-90))
         from design_layout import fit_window
