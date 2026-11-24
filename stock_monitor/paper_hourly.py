@@ -1110,11 +1110,15 @@ def reset(db, epoch):
 
 def compact(result):
     engine = result.get('execution_context', {}).get('trading_engine', {})
-    return dict(at=time.time(), calculation_seconds=result.get('_calculation_timing',{}).get('compute_seconds'),
+    report=dict(at=time.time(), calculation_seconds=result.get('_calculation_timing',{}).get('compute_seconds'),
         core=engine.get('status', 'UNKNOWN'), signal=engine.get('signal', 'WAIT'),
         signal_at=engine.get('timestamp'), reason=engine.get('reason'),
         quote_blocker=result.get('quote_blocker'),
         quote_at=(result.get('execution_quote', {}).get('bars') or [{}])[-1].get('close_at'))
+    entry=engine.get('v2_30m') or {}
+    if entry.get('ranked_isin'):
+        report.update(v2_ranked_isin=entry['ranked_isin'],v2_market_source=entry.get('market_source'))
+    return report
 
 
 def primary_report(reports):
@@ -1448,9 +1452,11 @@ def due_stock(db,cfg,ids,now,portfolio=None):
         revisions.update(v5_revisions(db,keys[offset:offset+900]))
     due=[]
     v2_slots=set()
+    v2_ranked=set()
     if portfolio=='V2' and configured_strategy(cfg)=='V2':
-        from paper_v2_quotes import new_slots
+        from paper_v2_quotes import new_slots,ranked_slots
         v2_slots=new_slots(db,ids,previous,now)
+        v2_ranked=ranked_slots(ids,previous,now)
     for rank,isin in enumerate(ids):
         status=previous.get(isin,{})
         wake=status.get('retry_inputs',{})
@@ -1460,8 +1466,8 @@ def due_stock(db,cfg,ids,now,portfolio=None):
                or status.get('candidate_timeframes')!=list(configured_timeframes(cfg)))
         if v5:
             dirty=dirty or status.get('v5_rule_version')!=v5_rule_version(cfg)
-        if dirty or now>=status.get('next_check',0):
-            due.append((isin not in v2_slots,not dirty,status.get('at',0),rank if portfolio=='V1' else isin,isin))
+        if dirty or now>=status.get('next_check',0) or isin in v2_ranked:
+            due.append((isin not in v2_ranked,isin not in v2_slots,not dirty,status.get('at',0),rank if portfolio=='V1' else isin,isin))
     return min(due)[-1] if due else None
 
 

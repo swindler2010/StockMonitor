@@ -26,6 +26,18 @@ def new_slots(db,codes,previous,now):
     return boosted
 
 
+def ranked_slots(codes,previous,now):
+    """Route an already ranked basket winner to its own full guarded CORE job."""
+    ranked=set()
+    for status in previous.values():
+        code=status.get('v2_ranked_isin');stamp=status.get('quote_at')
+        if (code not in codes or status.get('reason')!='V2_HIGHER_RANKED_STOCK' or not stamp
+                or status.get('v2_market_source')!='gettex'):continue
+        close=pd.Timestamp(stamp).timestamp();at=status.get('at',0)
+        if (0<=now-close<=900 and close<=at<=now and previous.get(code,{}).get('at',0)<at):ranked.add(code)
+    return ranked
+
+
 def rows(db,code,meta,start,end):
     if meta==identity({'isin':code}):
         return db.execute('SELECT ts,open,high,low,close,volume FROM candles WHERE '

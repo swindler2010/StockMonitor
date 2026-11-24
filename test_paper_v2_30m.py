@@ -161,6 +161,14 @@ class V2Transactions(unittest.TestCase):
         self.assertFalse(new_slots(f.db,[f.isin],{f.isin:status},f.now))
         self.assertFalse(new_slots(f.db,[f.isin],{},f.now+901))
         self.assertEqual(hourly.due_stock(f.db,cfg,[other,f.isin],f.now,'V5'),other)
+        # A basket WAIT can route its winner, but it never grants execution.
+        hint=dict(status,at=f.now-30,reason='V2_HIGHER_RANKED_STOCK',v2_ranked_isin=f.isin,
+                  v2_market_source='gettex',quote_at='2026-11-04T10:00:00Z')
+        f.write(paper.entry_status_key('V2',other),hint)
+        f.write(paper.entry_status_key('V2',f.isin),dict(status,at=f.now-60,next_check=f.now+60))
+        self.assertEqual(hourly.due_stock(f.db,cfg,[other,f.isin],f.now,'V2'),f.isin)
+        f.write(paper.entry_status_key('V2',f.isin),dict(status,at=f.now))
+        self.assertFalse(__import__('paper_v2_quotes').ranked_slots([other,f.isin],{other:hint,f.isin:status},f.now+901))
 
     def test_official_fresh_price_is_selected_and_missing_data_never_fabricated(self):
         from contextlib import contextmanager
