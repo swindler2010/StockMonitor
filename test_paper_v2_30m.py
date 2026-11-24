@@ -99,6 +99,73 @@ class V2Transactions(unittest.TestCase):
         self.refresh(action='WAIT')
         self.assertIsNone(hourly.order_command(self.f.db,self.f.info,self.f.result,self.f.now,manage=True))
 
+    def official(self):
+        import paper_v2_quotes as sources
+        f=self.f;bar=f.result['execution_quote']['bars'][0]
+        stamp=str(pd.Timestamp(bar['open_at']).tz_convert('Europe/Berlin').tz_localize(None))
+        f.db.execute('INSERT INTO candles VALUES (?,?,?,?,?,?,?,?,?)',
+            (f.isin,'gettex','15m',stamp,*(bar[k] for k in ('open','high','low','close','volume'))))
+        q=f.result['execution_quote'];q['identity']=sources.identity(f.info)
+        q['data_quality']['identity']=q['identity'].copy()
+        f.result['_input_revisions'].update(dict(f.db.execute('SELECT scope,revision FROM input_revisions')))
+
+    def test_official_quote_actual_buy_sell_retains_origin_and_canonical_position(self):
+        f=self.f;before=paper.ledger(f.db,'V5');self.official()
+        fill,_=self.buy()
+        self.assertEqual(fill['fill']['execution_identity']['source'],'gettex')
+        self.assertEqual(fill['fill']['identity'],f.identity)
+        self.assertEqual(paper.ledger(f.db,'V2')['positions'][0]['identity'],f.identity)
+        f.now+=900;self.refresh(96.,'2026-11-04T10:15:00+00:00',action='HOLD');self.official()
+        args=hourly.order_command(f.db,f.info,f.result,f.now,manage=True)
+        sold=paper.execute(f.db,f.info,f.result,args,f.now)['fill']
+        self.assertEqual(sold['execution_identity']['source'],'gettex')
+        self.assertEqual(sold['smart_eligibility']['protective_exit']['reason'],'STOP_LOSS')
+        self.assertEqual(paper.ledger(f.db,'V2')['positions'][0]['quantity'],'0')
+        self.assertEqual(paper.ledger(f.db,'V5'),before)
+
+    def test_official_quote_forgery_identity_and_other_portfolio_rejected(self):
+        from paper_v2_quotes import bound_identity
+        f=self.f;self.official();original=copy.deepcopy(f.result)
+        for key,value in [('currency','USD'),('venue','FRA'),('symbol','OTHER'),('source','csv')]:
+            f.result=copy.deepcopy(original);f.result['execution_quote']['identity'][key]=value
+            with self.assertRaisesRegex(ValueError,'IDENTITY_BLOCKED'):bound_identity(f.db,f.info,f.result)
+        f.result=copy.deepcopy(original);f.result['paper_portfolio']='V5'
+        with self.assertRaisesRegex(ValueError,'IDENTITY_BLOCKED'):bound_identity(f.db,f.info,f.result)
+        f.result=copy.deepcopy(original);f.result['execution_quote']['bars'][0]['close']+=.01
+        with self.assertRaisesRegex(ValueError,'QUOTE_CHANGED'):hourly.order_command(f.db,f.info,f.result,f.now,manage=True)
+        self.assertFalse(paper.ledger(f.db,'V2')['fills'])
+
+    def test_official_closed_window_rejects_changes_without_reading_future(self):
+        import paper_v2_quotes as sources
+        f=self.f;self.official();meta=sources.identity(f.info)
+        start=end='2026-11-04 10:45:00'
+        proof=(f.isin,meta,start,end,hourly.digest(sources.rows(f.db,f.isin,meta,start,end)))
+        f.result['hourly']['v2_inputs']={'market:'+f.isin+':15m':proof}
+        f.db.execute('INSERT INTO candles VALUES (?,?,?,?,?,?,?,?,?)',
+            (f.isin,'gettex','15m','2026-11-04 11:00:00',100,102,99,101,20))
+        sources.validate_inputs(f.db,f.result)
+        f.db.execute('UPDATE candles SET high=104 WHERE ts=?',(start,))
+        with self.assertRaisesRegex(ValueError,'MARKET_INPUT_CHANGED'):sources.validate_inputs(f.db,f.result)
+
+    def test_official_fresh_price_is_selected_and_missing_data_never_fabricated(self):
+        from contextlib import contextmanager
+        from types import SimpleNamespace
+        import paper_v2_quotes as sources
+        f=self.f;self.official()
+        @contextmanager
+        def connect():yield f.db
+        store=SimpleNamespace(connect=connect,read_cache=SimpleNamespace(depend=lambda _:None))
+        q=sources.fresh_quote(store,f.info,f.identity,pd.Timestamp(f.now,unit='s',tz='UTC'))
+        self.assertEqual(q['identity']['source'],'gettex')
+        for key in ('open','high','low','close','volume','closed'):
+            self.assertEqual(q['bars'][0][key],f.result['execution_quote']['bars'][0][key])
+        for key in ('open_at','close_at'):
+            self.assertEqual(pd.Timestamp(q['bars'][0][key]),pd.Timestamp(f.result['execution_quote']['bars'][0][key]))
+        f.db.execute('UPDATE candles SET volume=0')
+        with patch.object(hourly,'fresh_quote',side_effect=ValueError('PAPER_NO_CLOSED_BAR')):
+            with self.assertRaisesRegex(ValueError,'NO_CLOSED_BAR'):
+                sources.fresh_quote(store,f.info,f.identity,pd.Timestamp(f.now,unit='s',tz='UTC'))
+
     def test_target_sale_locks_profitable_day_and_prevents_second_position(self):
         f=self.f;self.buy()
         with self.assertRaisesRegex(ValueError,'ONE_POSITION'):
@@ -169,7 +236,7 @@ class V2Transactions(unittest.TestCase):
 
 class FrozenRules(unittest.TestCase):
     def test_screen_stale_price_never_runs_basket_or_authorizes_order(self):
-        with patch.object(hourly,'fresh_quote',side_effect=ValueError('PAPER_STALE_QUOTE')),patch.object(v2,'context') as basket:
+        with patch('paper_v2_quotes.fresh_quote',side_effect=ValueError('PAPER_STALE_QUOTE')),patch.object(v2,'context') as basket:
             result=v2.screen(None,dict(isin='TEST'),{},pd.Timestamp('2026-11-24T14:00:00Z'))
         basket.assert_not_called()
         self.assertEqual(result['quote_blocker'],'PAPER_STALE_QUOTE')
@@ -177,7 +244,7 @@ class FrozenRules(unittest.TestCase):
         self.assertNotIn('hourly',result)
 
     def test_screen_possible_buy_cannot_skip_full_core(self):
-        with patch.object(hourly,'fresh_quote',return_value={'bars':[]}), \
+        with patch('paper_v2_quotes.fresh_quote',return_value={'bars':[]}), \
                 patch.object(v2,'context',return_value=dict(action='BUY',reason='UNIT_TEST')):
             self.assertIsNone(v2.screen(None,dict(isin='TEST'),{},pd.Timestamp('2026-11-24T14:00:00Z')))
     def market(self,reverse=False,extended=False):
@@ -269,3 +336,4 @@ class FrozenRules(unittest.TestCase):
 
 
 if __name__=='__main__':unittest.main()
+

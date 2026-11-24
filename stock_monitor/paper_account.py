@@ -380,8 +380,19 @@ def execute(db,info,result,args,now=None):
     quote_result=result['execution_quote'] if hourly else result
     if result.get('identity',{}).get('source')=='gettex_chart' and 'setting:gettex_chart:'+info['isin']+':'+quote_result['timeframe'] not in token:
         raise ValueError('PAPER_NO_LISTING_REVISION')
-    listing=stored_identity(db,persisted,result.get('identity',{}),quote_result['timeframe'])
+    analysis_identity=result.get('identity',{})
+    origin=analysis_identity
+    if hourly and not intent:
+        from paper_v2_quotes import bound_identity
+        origin=bound_identity(db,persisted,result)
+    listing=stored_identity(db,persisted,origin,quote_result['timeframe'])
     identity,b=quote(persisted,quote_result,now,accepted_historical_risk=manual is not None,stored_listing=listing)
+    execution_identity=identity
+    if identity!=analysis_identity:
+        # Only the exact-row V2 adapter above may separate price provenance
+        # from the unchanged canonical position/analysis binding.
+        if identity!=origin or not hourly or intent:raise ValueError('PAPER_AUTO_QUOTE_IDENTITY_BLOCKED')
+        identity=analysis_identity
     if (not hourly and contract.get('status')!='READY' and manual is None) or contract.get('isin')!=info['isin']:
         raise ValueError('PAPER_WINDOW_BLOCKED')
     if manual is None and contract.get('trading_engine',{}).get('status')!='READY':raise ValueError('PAPER_ENGINE_DATA_BLOCKED')
@@ -409,6 +420,7 @@ def execute(db,info,result,args,now=None):
     if (time.time() if live_clock else now)>=args['_deadline']:raise ValueError('PAPER_EXPIRED')
     fill={'request_id':args['request_id'],'at':datetime.fromtimestamp(now,timezone.utc).isoformat(),'isin':info['isin'],'identity':identity,'timeframe':result['timeframe'],'side':args['side'],'quantity':str(q),'reference_price':str(b['close']),'bar_close_at':b['close_at'],'price':str(price),'gross':str(gross),'fee':str(fee),'spread_bps':POLICY['spread_bps'],'virtual':True,'input_revisions':token,'smart_eligibility':smart}
     fill['spread_bps']=execution_policy['spread_bps']
+    if execution_identity!=identity:fill['execution_identity']=execution_identity
     if manual is not None:fill['manual_risk']=manual
     if hourly:fill['execution_quote_timeframe']=quote_result['timeframe']
     fill['initiator']=intent['initiator'] if intent else hourly_receipt.get('strategy_label','V1') if hourly else 'CHATGPT'
@@ -524,3 +536,4 @@ def mark_positions(db,state,now=None):
     state['unrealized']=str(money(total)) if complete else None
     state['equity']=str(money(Decimal(state['cash'])+sum(Decimal(p.get('market_value','0')) for p in state['positions']))) if complete else None
     return state
+

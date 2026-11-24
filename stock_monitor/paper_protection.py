@@ -203,8 +203,9 @@ def decision(db,info,result,now):
         raise ValueError('PAPER_PROTECTION_BINDING_CHANGED')
     if result.get('quote_blocker'):raise ValueError(result['quote_blocker'])
     q=result.get('execution_quote',{})
-    if q.get('identity')!=result['identity']:raise ValueError('PAPER_PROTECTION_QUOTE_IDENTITY')
-    _,bar=quote(info,q,now,stored_listing=stored_identity(db,info,result['identity'],q.get('timeframe')))
+    from paper_v2_quotes import bound_identity
+    origin=bound_identity(db,info,result)
+    _,bar=quote(info,q,now,stored_listing=stored_identity(db,info,origin,q.get('timeframe')))
     close_at=datetime.fromisoformat(bar['close_at']).timestamp()
     if close_at<=datetime.fromisoformat(entry['at']).timestamp():return None
     from paper_v1_long_term import MODEL as V1_MODEL
@@ -231,3 +232,4 @@ def decision(db,info,result,now):
     return dict(side='SELL',reason=reason,entry_request_id=entry['request_id'],
         request_id='protect-'+digest(key),plan_digest=digest(plan),quote_at=bar['close_at'],
         reference=str(price),quantity=str(qty),trigger=POLICY['trigger'])
+

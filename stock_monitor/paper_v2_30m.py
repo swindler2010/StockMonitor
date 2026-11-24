@@ -179,6 +179,7 @@ def candidates(tapes,g,when,model):
 
 def context(store,info,identity,now,execution_quote):
     from eur_listings import stored_identity
+    import paper_v2_quotes as sources
     cache=store.read_cache
     with store.connect() as db:
         for key in (MODEL_KEY,ADMISSION_KEY): cache.depend('setting:'+key)
@@ -194,6 +195,7 @@ def context(store,info,identity,now,execution_quote):
         g=g.loc[g.index<=when]
         if g.empty or when not in g.index: return {'action':'WAIT','reason':'V2_SESSION_GRID_UNAVAILABLE'}
         instruments=[json.loads(row[0]) for row in db.execute('SELECT payload FROM instruments ORDER BY isin')]
+        official=execution_quote.get('identity',{}).get('source')=='gettex'
         tapes={};raws={};peers={}
         for item in instruments:
             from paper_account import instrument_allowed
@@ -201,16 +203,14 @@ def context(store,info,identity,now,execution_quote):
             code=item['isin'];key='gettex_chart:'+code+':15m'
             for scope in ('instrument:'+code,'setting:'+key,'market:'+code+':15m'): cache.depend(scope)
             saved=db.execute('SELECT value FROM settings WHERE key=?',(key,)).fetchone()
-            meta=json.loads(saved[0]).get('identity',{}) if saved else {}
-            if (meta.get('source')!='gettex_chart' or meta.get('venue')!='GETTEX' or meta.get('currency')!='EUR'
+            meta=sources.identity(item) if official else json.loads(saved[0]).get('identity',{}) if saved else {}
+            if (meta.get('source') not in ('gettex','gettex_chart') or meta.get('venue')!='GETTEX' or meta.get('currency')!='EUR'
                     or meta.get('timezone')!='Europe/Berlin' or not stored_identity(db,item,meta,'15m')): continue
             start=str((g.index[0]-pd.Timedelta(minutes=15)).tz_convert('Europe/Berlin').tz_localize(None))
             end=str((when-pd.Timedelta(minutes=15)).tz_convert('Europe/Berlin').tz_localize(None))
-            rows=db.execute('SELECT ts,open,high,low,close,volume FROM series WHERE isin=? AND source=? '
-                'AND venue=? AND currency=? AND symbol=? AND base_tf=? AND ts>=? AND ts<=? ORDER BY ts',
-                (code,meta['source'],meta['venue'],meta['currency'],meta['symbol'],'15m',start,end)).fetchall()
+            rows=sources.rows(db,code,meta,start,end)
             from paper_hourly import digest
-            peers['market:'+code+':15m']=(code,meta,start,end,'15m',digest(rows))
+            peers['market:'+code+':15m']=(code,meta,start,end,digest(rows))
             if not rows:continue
             raws[code]=rows
         fingerprint=digest([model['artifact_sha256'],when.isoformat(),instruments,
@@ -233,7 +233,8 @@ def context(store,info,identity,now,execution_quote):
         if cached is None:
             offers,waits=candidates(tapes,g,when,model) if len(tapes)>=13 else ([],{})
             _CACHE.clear();_CACHE[fingerprint]=(offers,waits)
-        shared=dict(_peer_inputs=peers,cohort=[item['isin'] for item in instruments])
+        shared=dict(_v2_inputs=peers,cohort=[item['isin'] for item in instruments],
+                    market_source='gettex' if official else 'gettex_chart')
         if not offers:return dict(shared,action='WAIT',reason=waits.get(info['isin'],'V2_PEER_OR_PRICE_COVERAGE_INSUFFICIENT'))
         best=offers[0]
         if best['isin']!=info['isin']:return dict(shared,action='WAIT',reason='V2_HIGHER_RANKED_STOCK',ranked_isin=best['isin'])
@@ -256,7 +257,7 @@ def decision(engine,timeframe):
 
 def screen(store,info,identity,now):
     """Cheap rejection only. A possible BUY must still run the full CORE path."""
-    from paper_hourly import fresh_quote
+    from paper_v2_quotes import fresh_quote
     quote={}
     try:
         quote['execution_quote']=fresh_quote(store,info,identity,now)
@@ -265,9 +266,9 @@ def screen(store,info,identity,now):
         packet=dict(action='BLOCKED',reason=str(error))
         quote['quote_blocker']=str(error)
     if packet.get('action')=='BUY':return None
-    peers=packet.pop('_peer_inputs',{})
+    peers=packet.pop('_v2_inputs',{})
     return dict(isin=info['isin'],identity=identity,timeframe='30m',_v2_entry_screen=True,
-        _peer_inputs=peers,execution_context=dict(trading_engine=dict(status='NOT_EVALUATED',
+        _v2_inputs=peers,execution_context=dict(trading_engine=dict(status='NOT_EVALUATED',
             signal='WAIT',timestamp=packet.get('signal_closed'),reason=packet['reason'],v2_30m=packet)),**quote)
 
 
@@ -332,3 +333,4 @@ def protection_trigger(db,position,entry,plan,bar,price):
     management=(dict(quote_at=bar['close_at'],stop=str(updated),prior_stop=str(stop),highest=str(highest))
         if last.get('quote_at')!=bar['close_at'] and (updated>stop or highest>Decimal(last.get('highest',quote))) else None)
     return None,qty,False,management
+

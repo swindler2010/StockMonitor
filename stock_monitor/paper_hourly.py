@@ -278,10 +278,10 @@ def order_size(db, info, result, side, now, *, allow_paused=False, strategy=None
     if not variable_size(cfg) and strategy is None:
         return dict(quantity=1, mode='FIXED_ONE')
     q = result.get('execution_quote', {})
-    if q.get('identity') != result['identity']:
-        raise ValueError('PAPER_AUTO_QUOTE_IDENTITY_BLOCKED')
+    from paper_v2_quotes import bound_identity
+    quote_identity=bound_identity(db,info,result)
     _, bar = quote(info, q, now,
-        stored_listing=stored_identity(db, info, result['identity'], q.get('timeframe')))
+        stored_listing=stored_identity(db, info, quote_identity, q.get('timeframe')))
     v1 = strategy is not None and strategy.get('model') == long_term.MODEL
     if v1 and (not long_term.enabled(cfg) or result['timeframe'] != '1D'):
         raise ValueError('PAPER_AUTO_STRATEGY_BLOCKED')
@@ -654,6 +654,9 @@ def calculate(store, values, *, now=None, context_only=False, quote_cache=None):
             result['discretionary'] = copy.deepcopy(order)
         if daily_quote:
             result.update(daily_quote)
+        elif (not order and configured_strategy(cfg)=='V2' and signal_tf=='30m'):
+            from paper_v2_quotes import fresh_quote as v2_quote
+            result['execution_quote']=v2_quote(store,info,identity,now)
         elif quote_cache is None:
             result['execution_quote'] = fresh_quote(store, info, identity, now)
         else:
@@ -674,7 +677,7 @@ def calculate(store, values, *, now=None, context_only=False, quote_cache=None):
         from paper_v2_30m import context as frozen_context
         try:
             engine['v2_30m']=frozen_context(store,info,identity,now,result.get('execution_quote'))
-            result.setdefault('_peer_inputs',{}).update(engine['v2_30m'].pop('_peer_inputs',{}))
+            result['_v2_inputs']=engine['v2_30m'].pop('_v2_inputs',{})
         except ValueError as error:
             engine['v2_30m']=dict(action='BLOCKED',reason=str(error))
     return result
@@ -734,7 +737,11 @@ def calculate_snapshot(store, values):
         results[tf]={'_calculation_error':type(error).__name__+': '+str(error)}
 
     def quote_tail(db, result):
-        meta=result['identity']
+        meta=result.get('execution_quote',{}).get('identity') or result['identity']
+        if meta.get('source')=='gettex':
+            return db.execute('SELECT ts,open,high,low,close,volume FROM candles WHERE '
+                'isin=? AND source=? AND base_tf=? ORDER BY ts DESC LIMIT 4',
+                (result['isin'],'gettex',EXECUTION_TF)).fetchall()
         return db.execute('SELECT ts,open,high,low,close,volume FROM series WHERE '
             'isin=? AND source=? AND venue=? AND currency=? AND symbol=? AND base_tf=? '
             'ORDER BY ts DESC LIMIT 4',(result['isin'],meta['source'],meta['venue'],meta['currency'],meta['symbol'],EXECUTION_TF)).fetchall()
@@ -784,6 +791,11 @@ def calculate_snapshot(store, values):
             return result
         peer_inputs=result.pop('_peer_inputs',{})
         daily_inputs=result.pop('_v5_daily_inputs',{})
+        v2_inputs=result.pop('_v2_inputs',{})
+        from paper_v2_quotes import input_current as v2_input_current
+        if not all(v2_input_current(db,value) for value in v2_inputs.values()):
+            raise InputRevisionChanged('V2 30m supplemental input changed')
+        if v2_inputs:result['hourly']['v2_inputs']=v2_inputs
         proof=result['hourly']['proof']
         current=validate_closed_inputs(db,proof,memo)
         if quote_rows is not None and quote_tail(db,result)!=quote_rows:
@@ -803,7 +815,8 @@ def calculate_snapshot(store, values):
                 listing_unchanged=scope==listing and saved==_setting_value(db,scope[len('setting:'):])
                 proofs=[basis[scope] for basis in (peer_inputs,daily_inputs) if scope in basis]
                 peer_unchanged=bool(proofs) and all(peer_input_current(db,value) for value in proofs)
-                if not listing_unchanged and not peer_unchanged:
+                v2_unchanged=scope in v2_inputs and v2_input_current(db,v2_inputs[scope])
+                if not listing_unchanged and not peer_unchanged and not v2_unchanged:
                     raise InputRevisionChanged('PAPER input changed: '+scope)
             current[scope]=revision_now
         manual=result['execution_context'].get('manual_risk')
@@ -892,7 +905,9 @@ def validate_analysis(db, info, result, now, cfg):
         raise ValueError('PAPER_AUTO_BENCHMARK_BLOCKED')
     if configured_strategy(cfg)=='V2':
         from paper_v2_30m import validate_context
+        from paper_v2_quotes import validate_inputs
         validate_context(db,engine,now)
+        validate_inputs(db,result)
     daily = engine.get('v5_portfolio_context') or {}
     if 'cohort' in daily:
         from paper_v5 import daily_group
@@ -947,7 +962,9 @@ def validate(db, info, result, args, now):
     if not signal_at or args.get('request_id')!=command:
         raise ValueError('PAPER_AUTO_REQUEST_MISMATCH')
     q=result.get('execution_quote',{})
-    if q.get('identity')!=result['identity'] or q.get('isin')!=isin:
+    from paper_v2_quotes import bound_identity
+    bound_identity(db,info,result)
+    if q.get('isin')!=isin:
         raise ValueError('PAPER_AUTO_QUOTE_IDENTITY_BLOCKED')
     receipt=dict(context=VERSION,strategy='CORE:'+CORE_VERSION if mode=='V1' else STRATEGY_CODES[mode],
         strategy_mode=mode,strategy_label=STRATEGY_CODES[mode],timeframe=tf,signal=signal['action'],
@@ -1918,3 +1935,4 @@ class Runtime:
                 self.busy = False
             else:self.operational_turns = 0
         app.root.after(2000 if self.split_portfolios or v1 or paper_v5_four_hour.enabled(cfg) else 15000,self.tick)
+
