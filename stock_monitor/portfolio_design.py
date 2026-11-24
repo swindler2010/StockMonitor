@@ -20,6 +20,32 @@ def metrics(state):
     return result
 
 
+def _card_style(root, prefix, palette):
+    """Keep rounded cards without tiling a tiny alpha image over large panels.
+
+    Tk repeats the image centre. A 14px centre required thousands of Windows
+    alpha blits per repaint. A larger centre keeps the same 9px corner slices
+    and explicit 32px minimum, without changing any shared dialog style.
+    """
+    cache=getattr(root,'_portfolio_card_images',None)
+    if cache is None:root._portfolio_card_images=cache={}
+    name=prefix+'.PaperCard.TFrame'
+    if name in cache:return name
+    from PIL import Image,ImageDraw,ImageTk
+    dark=palette['bg']!='#f8fafc'
+    bitmap=Image.new('RGBA',(1536,384))
+    ImageDraw.Draw(bitmap).rounded_rectangle((2,2,1533,381),radius=23,
+        fill='#0a2136' if dark else '#ffffff',
+        outline='#477797' if dark else '#7892ad',width=4)
+    photo=ImageTk.PhotoImage(bitmap.resize((512,128),Image.Resampling.LANCZOS),master=root)
+    element=prefix+'PaperCard'
+    style=ttk.Style(root)
+    style.element_create(element,'image',photo,border=9,width=32,height=32,sticky='nsew')
+    style.layout(name,[(element,{'sticky':'nsew'})])
+    cache[name]=photo
+    return name
+
+
 class Surface:
     def __init__(self,app,parent):
         from indicator_dialog import styles
@@ -27,6 +53,7 @@ class Surface:
         self.parent=parent;self.root=app.root
         self.palette=THEMES.get(app.store.setting('theme','Тёмная'),THEMES['Тёмная'])
         self.p=p=styles(app.root,self.palette)
+        self.card_style=_card_style(app.root,p,self.palette)
         style=ttk.Style(parent)
         field='#0a2136' if self.palette['bg']!='#f8fafc' else '#ffffff'
         style.configure(p+'.Paper.TLabel',background=style.lookup(p+'.TFrame','background'),foreground=self.palette['text'],font=('Segoe UI',10))
@@ -48,12 +75,15 @@ class Surface:
         strip=ttk.Frame(parent,style=p+'.TFrame');strip.pack(fill='x',padx=10,pady=(0,5))
         self.values={}
         for column,(key,label) in enumerate((('equity','Капитал'),('cash','Свободно'),('return','Доходность'),('fees','Комиссии'))):
-            box=Card(strip,label,p);box.grid(row=0,column=column,sticky='nsew',padx=(0,6) if column<3 else 0)
+            box=self.card(strip,label);box.grid(row=0,column=column,sticky='nsew',padx=(0,6) if column<3 else 0)
             strip.columnconfigure(column,weight=1,uniform='paper-kpi')
             variable=tk.StringVar(parent,'—');self.values[key]=variable
             ttk.Label(box,textvariable=variable,style=p+'.Drawing.TLabel',font=('Segoe UI',14,'bold')).pack(anchor='w')
 
-    def card(self,parent,text):return Card(parent,text,self.p)
+    def card(self,parent,text):
+        box=Card(parent,text,self.p)
+        box.configure(style=self.card_style)
+        return box
 
     def bind(self,state):
         self.title.set(tr('Демо — виртуальная торговля')+' · '+str(state.get('account') or '—'))
