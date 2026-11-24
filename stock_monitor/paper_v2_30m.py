@@ -15,6 +15,7 @@ MODEL = 'v2_frozen_forward_watch_1'
 MODEL_KEY = 'paper_v2_30m_model'
 ADMISSION_KEY = 'paper_v2_30m_admission'
 COSTS = {'commission':'2.00', 'spread_bps':'20'}
+LOCK75_PULLBACK_EXTENSION = frozenset({'US5951121038', 'DE000ENER6Y0'})
 POLICY = dict(early_risk=.005, total_risk=.02, allocation=.45, minimum_rr=2.)
 _CACHE = {}
 
@@ -318,11 +319,49 @@ def protection_plan(result,signal,size,now):
         identity=result['identity'].copy(),signal_tf='30m',quote_tf=result['execution_quote']['timeframe'],
         stop=size['stop'],target=size['target'],entry=str(signal['quote']*1.001),
         initial_quote=str(signal['quote']),atr=str(signal['atr']),exit_rule=signal['exit_rule'],
+        extend_lock75=(signal.get('setup') == 'pullback' and signal['exit_rule'] == 'lock75'
+                       and result.get('isin') in LOCK75_PULLBACK_EXTENSION),
         planned_quantity=str(size['quantity']),armed_at=now,estimated_stop_risk=size['estimated_risk'],
         risk_is_estimate=True,trigger=protection['trigger'],fill=protection['fill'])
 
 
-def protection_trigger(db,position,entry,plan,bar,price):
+def can_extend_lock75(db, entry, bar, price, qty, breakeven, stamp, result):
+    """Use the immediately preceding closed quarter from the execution source."""
+    from decimal import Decimal
+    from paper_v2_quotes import rows
+    from timeframes import schedule
+
+    if not result or price <= breakeven:
+        return False
+    volume = Decimal(str(bar.get('volume', 0)))
+    if not volume.is_finite() or volume < qty:
+        return False
+    execution = result.get('execution_quote', {})
+    source = execution.get('identity', {})
+    code = entry['isin']
+    if (execution.get('isin') != code or execution.get('timeframe') != '15m'
+            or source.get('source') not in ('gettex', 'gettex_chart')
+            or source.get('venue') != 'GETTEX' or source.get('currency') != 'EUR'
+            or source.get('timezone') != 'Europe/Berlin'):
+        return False
+    local = stamp.tz_convert(source['timezone'])
+    quarter = pd.Timedelta(minutes=15)
+    date = local.date().isoformat()
+    try:
+        session = schedule(source, date, date)
+    except ValueError:
+        return False
+    if session.empty or local - 2 * quarter < session.iloc[0]['open'] or local + quarter > session.iloc[0]['close']:
+        return False
+    previous_start = (local - 2 * quarter).tz_localize(None).isoformat(sep=' ')
+    previous = rows(db, code, source, previous_start, previous_start)
+    if len(previous) != 1 or previous[0][4] is None:
+        return False
+    previous_close = Decimal(str(previous[0][4]))
+    return previous_close.is_finite() and 0 < previous_close < price
+
+
+def protection_trigger(db,position,entry,plan,bar,price,*,result=None):
     from decimal import Decimal
     from paper_hourly import read
     from paper_protection import management_key
@@ -334,14 +373,23 @@ def protection_trigger(db,position,entry,plan,bar,price):
     if last.get('quote_at')==bar['close_at']:stop=Decimal(last['prior_stop'])
     qty=Decimal(position['quantity']);atr=Decimal(plan['atr']);quote=Decimal(plan['initial_quote'])
     elapsed=(stamp-pd.Timestamp(entry['bar_close_at']))/pd.Timedelta(minutes=15)
+    breakeven=(Decimal(position['cost'])+Decimal('2'))/(qty*Decimal('.999'))
+    at_extension_slot = (plan.get('extend_lock75') is True and plan['exit_rule'] == 'lock75'
+                         and entry.get('isin') in LOCK75_PULLBACK_EXTENSION
+                         and elapsed == f.EXITS['lock75'])
+    extend = False
+    if at_extension_slot and stop < price < Decimal(plan['target']):
+        extend = (last.get('extension_at') == bar['close_at']
+                  or can_extend_lock75(db, entry, bar, price, qty, breakeven, stamp, result))
     reason=('STOP_LOSS' if price<=stop else 'TAKE_PROFIT' if price>=Decimal(plan['target'])
-        else 'V2_TIME_EXIT' if elapsed>=f.EXITS[plan['exit_rule']]
+        else 'V2_TIME_EXIT' if elapsed>=f.EXITS[plan['exit_rule']] and not extend
         else 'V2_FIRST_QUARTER_FAILED' if plan['exit_rule']=='step30' and elapsed>=1 and price<=quote-Decimal('.30')*atr
         else None)
     if reason:return reason,qty,False,None
     highest=max(price,Decimal(last.get('highest',quote)))
-    breakeven=(Decimal(position['cost'])+Decimal('2'))/(qty*Decimal('.999'))
     updated=max(stop,breakeven,highest-Decimal('.9')*atr) if plan['exit_rule']=='lock75' and highest>=breakeven+Decimal('.30')*atr else stop
     management=(dict(quote_at=bar['close_at'],stop=str(updated),prior_stop=str(stop),highest=str(highest))
-        if last.get('quote_at')!=bar['close_at'] and (updated>stop or highest>Decimal(last.get('highest',quote))) else None)
+        if last.get('quote_at')!=bar['close_at'] and (extend or updated>stop or highest>Decimal(last.get('highest',quote))) else None)
+    if extend and management is not None:
+        management['extension_at'] = bar['close_at']
     return None,qty,False,management
