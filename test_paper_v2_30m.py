@@ -414,4 +414,63 @@ class FrozenRules(unittest.TestCase):
         self.assertEqual(v2.protection_trigger(db,position,entry,plan,bar,Decimal('105'))[0],'V2_TIME_EXIT')
 
 
+
+class Lock75Extension(unittest.TestCase):
+    def setUp(self):
+        self.db = sqlite3.connect(':memory:')
+        self.addCleanup(self.db.close)
+        self.db.execute('CREATE TABLE settings(key TEXT PRIMARY KEY,value TEXT)')
+        self.db.execute('CREATE TABLE candles(isin,source,base_tf,ts,open,high,low,close,volume)')
+        self.code = 'US5951121038'
+        self.entry = dict(isin=self.code, request_id='lock75-test',
+                          bar_close_at='2026-11-24T14:00:00Z')
+        self.plan = dict(exit_rule='lock75', extend_lock75=True, stop='97', target='110',
+                         initial_quote='100', atr='2')
+        self.bar = dict(close_at='2026-11-24T15:15:00Z', volume=20)
+        self.position = dict(quantity='10', cost='1003.00')
+        self.result = dict(execution_quote=dict(isin=self.code, timeframe='15m',
+            identity=dict(source='gettex', symbol=self.code, venue='GETTEX',
+                          currency='EUR', timezone='Europe/Berlin')))
+        self.db.execute('INSERT INTO candles VALUES (?,?,?,?,?,?,?,?,?)',
+                        (self.code, 'gettex', '15m', '2026-11-24 15:45:00', 101, 102, 100, 101, 20))
+
+    def check(self, price):
+        return v2.protection_trigger(self.db, self.position, self.entry, self.plan,
+                                     self.bar, Decimal(price), result=self.result)
+
+    def test_extends_once_and_keeps_retry_stable(self):
+        from paper_protection import write_management
+        reason, _, _, state = self.check('103')
+        self.assertIsNone(reason)
+        self.assertEqual(state['extension_at'], self.bar['close_at'])
+        write_management(self.db, state, self.entry['request_id'])
+        self.assertEqual(self.check('103'), (None, Decimal(10), False, None))
+        self.bar['close_at'] = '2026-11-24T15:30:00Z'
+        self.assertEqual(self.check('104')[0], 'V2_TIME_EXIT')
+        self.assertEqual(self.check('96')[0], 'STOP_LOSS')
+        self.assertEqual(self.check('112')[0], 'TAKE_PROFIT')
+
+    def test_requires_previous_candle_profit_volume_and_enabled_entry(self):
+        self.assertEqual(self.check('100.40')[0], 'V2_TIME_EXIT')
+        self.assertEqual(self.check('101')[0], 'V2_TIME_EXIT')
+        self.bar['volume'] = 9
+        self.assertEqual(self.check('103')[0], 'V2_TIME_EXIT')
+        self.bar['volume'] = 20
+        self.plan.pop('extend_lock75')
+        self.assertEqual(self.check('103')[0], 'V2_TIME_EXIT')
+        self.plan['extend_lock75'] = True
+        self.db.execute('DELETE FROM candles')
+        self.assertEqual(self.check('103')[0], 'V2_TIME_EXIT')
+
+    def test_oracle_is_not_enabled(self):
+        self.entry['isin'] = 'US68389X1054'
+        self.assertEqual(self.check('103')[0], 'V2_TIME_EXIT')
+
+    def test_no_extension_past_session_close(self):
+        self.entry['bar_close_at'] = '2026-11-24T20:45:00Z'
+        self.bar['close_at'] = '2026-11-24T22:00:00Z'
+        self.db.execute('UPDATE candles SET ts=?', ('2026-11-24 22:30:00',))
+        self.assertEqual(self.check('103')[0], 'V2_TIME_EXIT')
+
+
 if __name__=='__main__':unittest.main()
