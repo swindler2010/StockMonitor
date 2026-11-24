@@ -1199,6 +1199,10 @@ class Desktop014:
         tabs.add(real,text=tr('Реальный портфель'));tabs.add(paper,text=tr('Демосчёт'))
         from paper_view import attach
         attach(self,paper)
+        from v1_portfolio_view import Dashboard
+        v1 = ttk.Frame(tabs)
+        tabs.add(v1, text=tr('V1 · Долгосрок'))
+        Dashboard(self, v1, tabs)
         columns=('ticker','quantity','entry','price','currency','pnl','dividends','total_return','pct','stop','target','support','resistance','signal','source','at')
         body=ttk.Frame(real);body.pack(fill='both',expand=True,padx=10,pady=10)
         tree=ttk.Treeview(body,columns=columns,show='tree headings');tree.column('#0',width=35,stretch=False)
