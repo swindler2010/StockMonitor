@@ -59,8 +59,7 @@ def require_portfolio(holdings, cash, overview, expected=None):
 
 
 def news_items(packet, isin, now):
-    items = []
-    seen = set()
+    items = {}
     for row in packet.get("articles", []):
         title, url = row.get("title"), row.get("url")
         try:
@@ -71,25 +70,63 @@ def news_items(packet, isin, now):
             continue
         key = " ".join(title.casefold().split())
         date = row.get("published_at") or row.get("published")
-        if key in seen or not fresh(date, now, timedelta(days=7)):
+        if not fresh(date, now, timedelta(days=7)):
             continue
-        seen.add(key)
-        items.append(dict(title=title, url=url, date=date, summary=row.get("summary"),
-                          source=row.get("source") or row.get("provider"),
-                          relevance=row.get("relevance"), impact=news_impact(title, row.get("summary"))))
-    return sorted(items, key=lambda item: timestamp(item["date"]), reverse=True)[:8]
+        summary = row.get("summary")
+        source = row.get("source") or row.get("provider")
+        trusted = row.get("relevance") == "OFFICIAL_ISSUER_FEED"
+        event = news_event(title, summary)
+        previous = items.get(key)
+        if previous and (previous["verified"] or not trusted):
+            continue
+        items[key] = dict(title=title, url=url, date=date, summary=summary, source=source,
+                          relevance=row.get("relevance"), impact=event["impact"],
+                          event=event["kind"], material=event["material"], verified=trusted)
+    return sorted(items.values(), key=lambda item: timestamp(item["date"]), reverse=True)[:8]
 
 
-def news_impact(title, summary):
+MATERIAL_EVENTS = (
+    ("GUIDANCE_CUT", r"\b(?:cuts?|lowers?|reduces?|withdraws?|suspends?)\s+(?:its\s+)?(?:full.year\s+)?(?:guidance|outlook|forecast)\b|\b(?:senkt|streicht)\s+(?:die\s+)?(?:jahres)?prognose\b",
+     "Сверить новый прогноз, пересчитать денежный поток и зону покупки."),
+    ("LIQUIDITY", r"\b(?:files? for (?:chapter 11|bankruptcy)|defaults? on (?:debt|bond)|going concern warning|insolvenzantrag)\b",
+     "Проверить долговые обязательства и способность бизнеса продолжать работу."),
+    ("REPORT_CORRECTION", r"\b(?:restates? (?:its\s+)?(?:financial statements|financial results)|bilanzkorrektur)\b",
+     "Проверить исправленную отчётность и надёжность исходной оценки."),
+    ("REGULATORY", r"\b(?:export ban|export restrictions?|product recall|rückruf)\b",
+     "Проверить затронутые рынки или товары и оценить финансовые последствия."),
+)
+REVIEW_EVENTS = (
+    ("EARNINGS", r"\b(?:earnings|quarterly results|quartalszahlen|jahresbericht)\b",
+     "Сверить фактическую выручку, маржу и денежный поток с предыдущим прогнозом."),
+    ("GUIDANCE", r"\b(?:guidance|outlook|prognose)\b",
+     "Проверить изменение прогнозов по выручке и марже."),
+    ("DEBT", r"\b(?:debt|refinanc\w*|liquidity|schulden)\b",
+     "Проверить ликвидность и стоимость финансирования."),
+    ("REGULATION", r"\b(?:regulat\w*|antitrust|kartell)\b",
+     "Проверить ожидаемые затраты и ограничения."),
+)
+
+
+def news_event(title, summary):
+    headline = title.casefold()
+    if not re.search(r"\b(?:rumou?rs?|speculation|denies|mulls|considers)\b|\?", headline):
+        for kind, pattern, impact in MATERIAL_EVENTS:
+            if re.search(pattern, headline):
+                return dict(kind=kind, impact=impact, material=True)
     text = (title + " " + (summary or "")).casefold()
-    checks = (
-        (("guidance", "outlook", "prognose"), "Проверить прогноз компании и допущения по выручке и марже."),
-        (("earnings", "results", "quarter", "quartal"), "Сопоставить результаты с прежним прогнозом и денежным потоком."),
-        (("debt", "refinanc", "liquidity", "schuld"), "Проверить ликвидность и стоимость финансирования."),
-        (("regulat", "export control", "antitrust", "kartell"), "Проверить влияние на доступ к рынкам, затраты и сроки."),
-    )
-    return next((message for words, message in checks if any(word in text for word in words)),
-                "Требуется проверка материала, чтобы оценить влияние на тезис.")
+    for kind, pattern, impact in REVIEW_EVENTS:
+        if re.search(pattern, text):
+            return dict(kind=kind, impact=impact, material=False)
+    return dict(kind="OTHER", impact="Влияние на инвестиционный тезис требует проверки.", material=False)
+
+
+def news_overlay(label, reason, items, holding):
+    """A material issuer report puts a recommendation under review."""
+    current = next((article for article in items if article["verified"] and article["material"]), None)
+    if current is None:
+        return label, reason, None
+    updated = "Пересмотреть позицию" if holding else "Ждать проверки новости"
+    return updated, current["impact"], current["event"]
 
 
 def valuation(facts, currency_rates):
@@ -204,6 +241,9 @@ def analyze(snapshot, instruments, load_financials, load_news, now=None, currenc
         facts = evidence(load_financials(info), now)
         zone = valuation(facts, currency_rates)
         label, reason = decision(True, price, weight, facts, zone)
+        articles = news_items(load_news(isin), isin, now)
+        baseline = label
+        label, reason, news_reason = news_overlay(label, reason, articles, holding=True)
         if not current:
             label, reason = "Обновить данные", "Снимок брокера устарел."
         basis = costs.get(isin) or {}
@@ -214,7 +254,8 @@ def analyze(snapshot, instruments, load_financials, load_news, now=None, currenc
                               basis_status=basis.get("status") or snapshot.get("cost_basis_status"),
                               isin=isin, name=row.get("name") or isin, quantity=quantity, price=price, value=value,
                               weight=weight, kind=info.get("kind", "stock") if info else None, facts=facts, zone=zone,
-                              decision=label, reason=reason, articles=news_items(load_news(isin), isin, now)))
+                              decision=label, reason=reason, articles=articles,
+                              baseline=baseline, news_reason=news_reason if current else None))
     for info in catalog.values():
         if info["isin"] in present or info.get("kind", "stock") != "stock":
             continue
@@ -222,11 +263,14 @@ def analyze(snapshot, instruments, load_financials, load_news, now=None, currenc
         zone = valuation(facts, currency_rates)
         price = load_quote(info, now) if zone and load_quote else None
         label, reason = decision(False, price, None, facts, zone)
+        articles = news_items(load_news(info["isin"]), info["isin"], now)
+        baseline = label
+        label, reason, news_reason = news_overlay(label, reason, articles, holding=False)
         if not current:
             label, reason = "Обновить данные", "Снимок брокера устарел."
         candidates.append(dict(isin=info["isin"], name=info.get("name") or info["isin"], facts=facts,
                                decision=label, reason=reason, price=price, zone=zone,
-                               articles=news_items(load_news(info["isin"]), info["isin"], now)))
+                               articles=articles, baseline=baseline, news_reason=news_reason if current else None))
     crypto = numeric((overview.get("valuation") or {}).get("crypto"))
     return dict(positions=sorted(positions, key=lambda row: (row["value"] is None, -(row["value"] or 0))),
                 candidates=sorted(candidates, key=lambda row: (row["decision"] != "Рассмотреть покупку",
