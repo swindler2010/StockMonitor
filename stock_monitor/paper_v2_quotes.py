@@ -92,4 +92,3 @@ def bound_identity(db,info,result):
     if len(saved)!=1 or tuple(saved[0][1:])!=expected:
         raise ValueError('V2_OFFICIAL_QUOTE_CHANGED')
     return origin
-

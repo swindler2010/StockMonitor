@@ -232,4 +232,3 @@ def decision(db,info,result,now):
     return dict(side='SELL',reason=reason,entry_request_id=entry['request_id'],
         request_id='protect-'+digest(key),plan_digest=digest(plan),quote_at=bar['close_at'],
         reference=str(price),quantity=str(qty),trigger=POLICY['trigger'])
-

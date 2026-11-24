@@ -235,6 +235,18 @@ class V2Transactions(unittest.TestCase):
 
 
 class FrozenRules(unittest.TestCase):
+    def test_v2_presentation_reports_half_percent_risk_in_selected_language(self):
+        import i18n
+        from paper_view import automation_summary
+        state=dict(automation=dict(strategy_mode='V2',enabled=True,independent=True),
+                   automatic_portfolios=['V2'],portfolios={})
+        old=i18n._language
+        try:
+            for language,phrase in [('ru','0,5%'),('de','0,5%'),('en','0.5%')]:
+                i18n._language=language
+                self.assertIn(phrase,automation_summary(state))
+        finally:i18n._language=old
+
     def test_screen_stale_price_never_runs_basket_or_authorizes_order(self):
         with patch('paper_v2_quotes.fresh_quote',side_effect=ValueError('PAPER_STALE_QUOTE')),patch.object(v2,'context') as basket:
             result=v2.screen(None,dict(isin='TEST'),{},pd.Timestamp('2026-11-24T14:00:00Z'))
@@ -336,4 +348,3 @@ class FrozenRules(unittest.TestCase):
 
 
 if __name__=='__main__':unittest.main()
-

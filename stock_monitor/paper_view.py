@@ -42,6 +42,8 @@ def automation_summary(state):
         mode='V1'
     if mode in ('MOMENTUM','AGGRESSIVE'):
         size='до 10 акций на позицию • доступные средства'
+    if mode=='V2':
+        size=tr('V2: одна позиция, до 10 акций, до 45% средств и 0,5% расчётного риска с издержками.')
     lines=['\nАвтоторговля демо: '+('ВКЛЮЧЕНА' if auto.get('enabled') else 'ПАУЗА')+
         ' • '+STRATEGY_CODES[mode]+' • ТФ автоматически ('+signal_intervals+') • только GETTEX/EUR\n'+size]
     if auto.get('independent'):

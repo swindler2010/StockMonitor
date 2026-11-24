@@ -333,4 +333,3 @@ def protection_trigger(db,position,entry,plan,bar,price):
     management=(dict(quote_at=bar['close_at'],stop=str(updated),prior_stop=str(stop),highest=str(highest))
         if last.get('quote_at')!=bar['close_at'] and (updated>stop or highest>Decimal(last.get('highest',quote))) else None)
     return None,qty,False,management
-

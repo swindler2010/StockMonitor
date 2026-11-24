@@ -536,4 +536,3 @@ def mark_positions(db,state,now=None):
     state['unrealized']=str(money(total)) if complete else None
     state['equity']=str(money(Decimal(state['cash'])+sum(Decimal(p.get('market_value','0')) for p in state['positions']))) if complete else None
     return state
-

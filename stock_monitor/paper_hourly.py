@@ -1935,4 +1935,3 @@ class Runtime:
                 self.busy = False
             else:self.operational_turns = 0
         app.root.after(2000 if self.split_portfolios or v1 or paper_v5_four_hour.enabled(cfg) else 15000,self.tick)
-
