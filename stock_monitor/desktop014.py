@@ -163,7 +163,7 @@ class Desktop014:
             ('Данные',[('Обновить данные',self.refresh_all_async),('Добавить инструмент',self.add_stock_dialog),('Удалить инструмент',self.remove_instrument)]),
             ('Инструменты',[('Индикаторы',self.show_indicators),('Рисование',self.show_drawing),('Линейка',self.start_measurement)]),
             ('CandlePilot',[('Состояние и диагностика',lambda:__import__('candlepilot_health').show(self))]),
-            ('Торговля',[('Портфель / Демо',self.show_portfolio),('Позиция и уровни',self.position_dialog),('Журнал решений',self.show_decision_journal)]),
+            ('Торговля',[('Локальные позиции / Демо',self.show_local_portfolio),('Позиция и уровни',self.position_dialog),('Журнал решений',self.show_decision_journal)]),
             ('Настройки',[('Параметры',self.show_settings),('Оформление',self.show_theme)]),
             ('Справка',[(freshness_label('title'),lambda:show_freshness(self)),('Советы по развитию',lambda:show_development_advisor(self)),('Связь с ChatGPT / MCP',self.show_connection),('Диагностика',self.show_ai),('Логотипы: Elbstream',lambda:__import__('webbrowser').open('https://elbstream.com')),('Обновить программу',lambda:self.check_updates(False))])]:
             sub=tk.Menu(menu,tearoff=False,background=BG,foreground=TEXT,activebackground=BLUE,activeforeground=TEXT,font=('Segoe UI',9))
@@ -1193,16 +1193,16 @@ class Desktop014:
         self.update_ai_view();self.root.after(2000,self.connection_tick)
 
     def show_portfolio(self):
+        from v1_portfolio_view import show
+        return show(self)
+
+    def show_local_portfolio(self):
         win=tk.Toplevel(self.root);win.title(tr('Портфель'));win.geometry('1120x440')
         tabs=ttk.Notebook(win);tabs.pack(fill='both',expand=True)
         real=ttk.Frame(tabs);paper=ttk.Frame(tabs)
-        tabs.add(real,text=tr('Реальный портфель'));tabs.add(paper,text=tr('Демосчёт'))
+        tabs.add(real,text=tr('Локальные позиции'));tabs.add(paper,text=tr('Демосчёт'))
         from paper_view import attach
         attach(self,paper)
-        from v1_portfolio_view import Dashboard
-        v1 = ttk.Frame(tabs)
-        tabs.add(v1, text=tr('V1 · Долгосрок'))
-        Dashboard(self, v1, tabs)
         columns=('ticker','quantity','entry','price','currency','pnl','dividends','total_return','pct','stop','target','support','resistance','signal','source','at')
         body=ttk.Frame(real);body.pack(fill='both',expand=True,padx=10,pady=10)
         tree=ttk.Treeview(body,columns=columns,show='tree headings');tree.column('#0',width=35,stretch=False)
