@@ -160,6 +160,10 @@ class V2Transactions(unittest.TestCase):
             f.db.execute('INSERT INTO series VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
                 (f.isin,'gettex_chart','GETTEX','EUR','AAPL.GTX','15m','2026-11-04 11:00:00',100,102,99,101,20))
             v2.context(store,f.info,f.identity,now,quote);self.assertEqual(build.call_count,2)
+            f.db.execute('UPDATE series SET volume=NULL WHERE base_tf=?',('15m',))
+            result=v2.context(store,f.info,f.identity,now,quote)
+            self.assertEqual(result['reason'],'V2_PEER_OR_PRICE_COVERAGE_INSUFFICIENT')
+            self.assertEqual(build.call_count,2)
         v2._CACHE.clear()
 
 

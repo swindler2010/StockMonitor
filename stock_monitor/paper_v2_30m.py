@@ -222,10 +222,12 @@ def context(store,info,identity,now,execution_quote):
             offers=waits=None
         for code,rows in (() if cached is not None else raws.items()):
             raw=pd.DataFrame(rows,columns=['ts','open','high','low','close','volume']).set_index('ts')
+            raw=raw.apply(pd.to_numeric,errors='coerce')
             raw.index=pd.DatetimeIndex(raw.index).tz_localize('Europe/Berlin',ambiguous='NaT',nonexistent='NaT')+pd.Timedelta(minutes=15)
             raw=raw.loc[~raw.index.isna() & raw.index.isin(g.index)]
             valid=np.isfinite(raw).all(axis=1)&raw[['open','high','low','close']].gt(0).all(axis=1)&raw.volume.ge(0)
             valid&=raw.high.ge(raw[['open','low','close']].max(axis=1))&raw.low.le(raw[['open','high','close']].min(axis=1))
+            if not valid.any():continue
             native,bars=f.half_hours(raw.loc[valid],g)
             tapes[code]=SimpleNamespace(close=native.close.to_numpy(),volume=native.volume.to_numpy(),bars=bars)
         if cached is None:
