@@ -6,6 +6,26 @@ def identity(info):
     return dict(source='gettex',symbol=info['isin'],venue='GETTEX',currency='EUR',timezone='Europe/Berlin')
 
 
+def new_slots(db,codes,previous,now):
+    """Scheduling hint only; the shared executor still checks the actual row.
+
+    A new eligible official close must not wait behind the archive's entire
+    stale universe. Once evaluated, it loses this boost for that close.
+    """
+    if not codes:return set()
+    local=pd.Timestamp(now,unit='s',tz='UTC').tz_convert('Europe/Berlin').tz_localize(None)
+    upper=local.floor('15min')-pd.Timedelta(minutes=15)
+    lower=local-pd.Timedelta(minutes=30)
+    found=db.execute('SELECT isin,MAX(ts) FROM candles WHERE source=? AND base_tf=? '
+        'AND ts>=? AND ts<=? AND isin IN ('+','.join('?' for _ in codes)+') GROUP BY isin',
+        ('gettex','15m',str(lower),str(upper),*codes)).fetchall()
+    boosted=set()
+    for code,stamp in found:
+        end=(pd.Timestamp(stamp)+pd.Timedelta(minutes=15)).tz_localize('Europe/Berlin')
+        if end.minute%30==0 and previous.get(code,{}).get('at',0)<end.timestamp():boosted.add(code)
+    return boosted
+
+
 def rows(db,code,meta,start,end):
     if meta==identity({'isin':code}):
         return db.execute('SELECT ts,open,high,low,close,volume FROM candles WHERE '

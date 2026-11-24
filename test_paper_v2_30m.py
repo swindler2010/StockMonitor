@@ -147,6 +147,21 @@ class V2Transactions(unittest.TestCase):
         f.db.execute('UPDATE candles SET high=104 WHERE ts=?',(start,))
         with self.assertRaisesRegex(ValueError,'MARKET_INPUT_CHANGED'):sources.validate_inputs(f.db,f.result)
 
+    def test_new_official_slot_precedes_stale_universe_once_without_changing_v5(self):
+        from paper_v2_quotes import new_slots
+        f=self.f;self.official();other='DE0000000001'
+        cfg=paper.portfolio_config(f.cfg,'V2');cfg['identities'][other]=f.identity.copy()
+        status=dict(at=f.now-60,strategy_mode='V2',timeframe_policy=hourly.TIMEFRAME_POLICY,
+                    candidate_timeframes=['30m'],next_check=f.now-1)
+        f.write(paper.entry_status_key('V2',f.isin),dict(status,at=f.now-600))
+        f.write(paper.entry_status_key('V2',other),dict(status,at=f.now-3600))
+        self.assertEqual(hourly.due_stock(f.db,cfg,[other,f.isin],f.now,'V2'),f.isin)
+        f.write(paper.entry_status_key('V2',f.isin),status)
+        self.assertEqual(hourly.due_stock(f.db,cfg,[other,f.isin],f.now,'V2'),other)
+        self.assertFalse(new_slots(f.db,[f.isin],{f.isin:status},f.now))
+        self.assertFalse(new_slots(f.db,[f.isin],{},f.now+901))
+        self.assertEqual(hourly.due_stock(f.db,cfg,[other,f.isin],f.now,'V5'),other)
+
     def test_official_fresh_price_is_selected_and_missing_data_never_fabricated(self):
         from contextlib import contextmanager
         from types import SimpleNamespace

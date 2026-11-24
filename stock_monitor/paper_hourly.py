@@ -1447,6 +1447,10 @@ def due_stock(db,cfg,ids,now,portfolio=None):
     for offset in range(0,len(keys),900):
         revisions.update(v5_revisions(db,keys[offset:offset+900]))
     due=[]
+    v2_slots=set()
+    if portfolio=='V2' and configured_strategy(cfg)=='V2':
+        from paper_v2_quotes import new_slots
+        v2_slots=new_slots(db,ids,previous,now)
     for rank,isin in enumerate(ids):
         status=previous.get(isin,{})
         wake=status.get('retry_inputs',{})
@@ -1457,7 +1461,7 @@ def due_stock(db,cfg,ids,now,portfolio=None):
         if v5:
             dirty=dirty or status.get('v5_rule_version')!=v5_rule_version(cfg)
         if dirty or now>=status.get('next_check',0):
-            due.append((not dirty,status.get('at',0),rank if portfolio=='V1' else isin,isin))
+            due.append((isin not in v2_slots,not dirty,status.get('at',0),rank if portfolio=='V1' else isin,isin))
     return min(due)[-1] if due else None
 
 
