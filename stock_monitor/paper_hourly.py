@@ -957,7 +957,7 @@ def validate(db, info, result, args, now):
     size=order_size(db,info,result,side,now,strategy=buy_setup,protective=protective)
     if Decimal(str(args.get('quantity')))!=Decimal(str(size['quantity'])):
         raise ValueError('PAPER_AUTO_SIZE_BLOCKED')
-    signal_at=engine.get('timestamp')
+    signal_at=signal_timestamp(result)
     command=protective['request_id'] if protective else portfolio_request_id(db,cfg,isin,signal_at,tf,portfolio)
     if not signal_at or args.get('request_id')!=command:
         raise ValueError('PAPER_AUTO_REQUEST_MISMATCH')
@@ -1067,7 +1067,7 @@ def order_command(db, info, result, now, *, manage=False):
         return None
     if result.get('quote_blocker'):raise ValueError(result['quote_blocker'])
     command=protective['request_id'] if protective else portfolio_request_id(
-        db,cfg,isin,engine['timestamp'],signal_tf,portfolio)
+        db,cfg,isin,signal_timestamp(result),signal_tf,portfolio)
     prior=saved_fill(db,command,include_archive=False)
     if prior:
         if prior[0]!=portfolio:raise ValueError('PAPER_REQUEST_REUSED')
@@ -1108,11 +1108,21 @@ def reset(db, epoch):
     return ledger(db)
 
 
+def signal_timestamp(result):
+    """Model signal clock; keep CORE's independent archive timestamp intact."""
+    engine=result.get('execution_context',{}).get('trading_engine',{})
+    packet=engine.get('v2_30m') or {}
+    if packet.get('action')=='BUY':
+        from paper_v2_30m import MODEL
+        if packet.get('model')==MODEL:return packet.get('signal_closed')
+    return engine.get('timestamp')
+
+
 def compact(result):
     engine = result.get('execution_context', {}).get('trading_engine', {})
     report=dict(at=time.time(), calculation_seconds=result.get('_calculation_timing',{}).get('compute_seconds'),
         core=engine.get('status', 'UNKNOWN'), signal=engine.get('signal', 'WAIT'),
-        signal_at=engine.get('timestamp'), reason=engine.get('reason'),
+        signal_at=signal_timestamp(result), reason=engine.get('reason'),
         quote_blocker=result.get('quote_blocker'),
         quote_at=(result.get('execution_quote', {}).get('bars') or [{}])[-1].get('close_at'))
     entry=engine.get('v2_30m') or {}

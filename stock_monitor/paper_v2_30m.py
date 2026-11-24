@@ -246,6 +246,10 @@ def validate_context(db,engine,now):
     if packet.get('action')!='BUY':return
     model=authority(db,pd.Timestamp(now,unit='s',tz='UTC'))
     if packet.get('artifact_sha256')!=model['artifact_sha256']:raise ValueError('V2_30M_MODEL_CHANGED')
+    signal,price=pd.Timestamp(packet.get('signal_closed')),pd.Timestamp(packet.get('quote_end'))
+    if (pd.isna(signal) or pd.isna(price) or signal.tzinfo is None or price.tzinfo is None
+            or price-signal!=pd.Timedelta(minutes=30) or price.minute%30
+            or price.second or price.microsecond):raise ValueError('V2_30M_SIGNAL_CLOCK_CHANGED')
     codes=[row[0] for row in db.execute('SELECT isin FROM instruments ORDER BY isin')]
     if codes!=packet.get('cohort'):raise ValueError('V2_30M_REGISTERED_UNIVERSE_CHANGED')
 

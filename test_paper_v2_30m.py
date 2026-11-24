@@ -99,6 +99,20 @@ class V2Transactions(unittest.TestCase):
         self.refresh(action='WAIT')
         self.assertIsNone(hourly.order_command(self.f.db,self.f.info,self.f.result,self.f.now,manage=True))
 
+    def test_strategy_clock_does_not_reuse_stale_core_time_or_accept_wrong_delay(self):
+        f=self.f;engine=f.result['execution_context']['trading_engine']
+        engine['timestamp']='2026-11-04T09:00:00+00:00'
+        engine['v2_30m']['signal_closed']='2026-11-04T09:00:00+00:00'
+        args=hourly.order_command(f.db,f.info,f.result,f.now,manage=True)
+        with self.assertRaisesRegex(ValueError,'SIGNAL_CLOCK_CHANGED'):
+            paper.execute(f.db,f.info,f.result,args,f.now)
+        engine['v2_30m']['signal_closed']='2026-11-04T09:30:00+00:00'
+        answer,args=self.buy()
+        self.assertEqual(answer['fill']['smart_eligibility']['signal_at'],'2026-11-04T09:30:00+00:00')
+        self.assertEqual(engine['timestamp'],'2026-11-04T09:00:00+00:00')
+        self.assertEqual(args['request_id'],hourly.portfolio_request_id(f.db,paper.portfolio_config(f.cfg,'V2'),
+            f.isin,'2026-11-04T09:30:00+00:00','30m','V2'))
+
     def official(self):
         import paper_v2_quotes as sources
         f=self.f;bar=f.result['execution_quote']['bars'][0]
