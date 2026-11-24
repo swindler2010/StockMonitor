@@ -225,8 +225,12 @@ def summary(state):
               if portfolios else "")
     return (f"{state['account']}{tr(' • только виртуальные операции\nНачальный капитал: ')}{start}{tr(' EUR • Доходность: ')}{change}\n{tr('Свободно')}: {value('cash')} • {tr('Капитал')}: {value('equity')}{tr('\nРеализованный P&L: ')}{value('realized')}{tr(' • Нереализованный: ')}{value('unrealized')}{tr(' • Комиссии: ')}{value('fees')}"+balances+universe+automation_summary(state))
 
-def attach(app, parent):
+def attach(app, parent, *, portfolio=None):
     from portfolio_design import Surface
+    if portfolio is None and hasattr(parent.master,'_portfolio_nav_book'):portfolio='V2'
+    linked_account=portfolio is not None
+    if linked_account and portfolio not in ('V2','V3','V4','V5'):
+        raise ValueError('Unknown demo account')
     from reference_design import flow_toolbar
     surface=Surface(app,parent)
     parent._paper_design=surface
@@ -240,8 +244,11 @@ def attach(app, parent):
     order_box=surface.card(parent,'Поручение владельца • только PAPER');order_box.pack(fill='x',padx=10,pady=4)
     row=ttk.Frame(order_box);row.pack(fill='x')
     choices={}
-    independent=False
-    viewed_book=None
+    independent=linked_account
+    viewed_book=portfolio
+    order_pending=False
+    def active_account():
+        return not linked_account or getattr(parent.master,'_portfolio_nav_book',viewed_book)==viewed_book
     selected=tk.StringVar(value='');quantity=tk.StringVar(value='1')
     instrument_box=CanonicalCombobox(row,textvariable=selected,values=[],state='readonly',width=24)
     instrument_box.pack(side='left',padx=4)
@@ -253,7 +260,8 @@ def attach(app, parent):
     selected.trace_add('write',changed);quantity.trace_add('write',changed)
     order_buttons=[]
     def place(side,preview=False):
-        if saving_mode:
+        nonlocal order_pending
+        if saving_mode or not active_account():
             return
         isin=next((k for k,v in choices.items() if v==selected.get()),None)
         if isin is None:message.set('Нет выбранной акции с действующим подключением к PAPER.');return
@@ -266,13 +274,19 @@ def attach(app, parent):
         instrument_box.configure(state='disabled');quantity_box.configure(state='disabled')
         for button in order_buttons:button.configure(state='disabled')
         message.set('Проверяю данные, цену и риск…')
+        order_revision=mode_revision
+        order_pending=True
         future=submit(app,args,'MANUAL',preview)
         def poll():
+            nonlocal order_pending
             if not parent.winfo_exists() or app.closing:return
             if not future.done():parent.after(100,poll);return
+            order_pending=False
             instrument_box.configure(state='readonly');quantity_box.configure(state='normal')
             for button in order_buttons:button.configure(state='normal')
             answer=future.result()
+            if order_revision!=mode_revision:
+                refresh();return
             if answer.get('status') in ('PREVIEW','COMPLETED'):
                 f=answer['fill'];plan=f.get('smart_eligibility',{}).get('protection') or {}
                 message.set(('Оценка' if preview else 'Исполнено')+f": {choices.get(f['isin'],f['isin'])} {f['side']} {f['quantity']} по {price_text(f['price'])} EUR • "
@@ -546,11 +560,17 @@ def attach(app, parent):
     def done(state,revision):
         nonlocal busy,choices,saved_mode,journal,v1_active,independent,viewed_book
         busy=False
-        if not alive(): return
+        if not alive() or not active_account(): return
         if revision!=mode_revision:
             refresh();return
+        if linked_account and (state.get('account')!=viewed_book or state.get('automation',{}).get('independent') is not True):
+            choices={}
+            set_summary(tr('Демосчёт временно недоступен; данные не изменены.'))
+            for button in order_buttons:button.configure(state='disabled')
+            return
         current=next((k for k,v in choices.items() if v==selected.get()),None)
         choices=order_choices(state)
+        for button in order_buttons:button.configure(state='disabled' if order_pending else 'normal')
         auto=state.get('automation',{})
         independent=bool(auto.get('independent'))
         if independent:
@@ -563,7 +583,7 @@ def attach(app, parent):
             v1_active=v1_enabled(auto)
             strategy.set(strategy_labels.get(saved_mode,''))
             controls_state='readonly' if independent or auto.get('approved') is True else 'disabled'
-            strategy_box.configure(state=controls_state)
+            strategy_box.configure(state='disabled' if linked_account else controls_state)
         show_news_tab(viewed_book if independent else 'V1' if v1_active else None)
         instrument_box.configure(values=list(choices.values()))
         label=choices.get(current,next(iter(choices.values()),''))
@@ -594,7 +614,7 @@ def attach(app, parent):
         if alive(): set_summary(tr('Демосчёт временно недоступен; данные не изменены.'))
     def refresh():
         nonlocal busy
-        if busy or not alive(): return
+        if busy or not alive() or not active_account(): return
         busy=True
         from paper_account import status
         revision=mode_revision
@@ -605,6 +625,7 @@ def attach(app, parent):
         return next((key for key,label in strategy_labels.items() if label==strategy.get()),None)
     def edit_mode(_):
         nonlocal editing_mode,saved_mode,viewed_book,journal,mode_revision
+        if linked_account:return
         draft=draft_mode()
         if independent:
             if draft is None:
@@ -631,6 +652,7 @@ def attach(app, parent):
         mode_state.set('')
     def choose_mode():
         nonlocal saving_mode
+        if linked_account:return
         requested_strategy=draft_mode()
         if not requested_strategy:
             return
@@ -659,6 +681,26 @@ def attach(app, parent):
     apply_button=ttk.Button(auto_controls,text='Применить',command=choose_mode,state='disabled')
     apply_button.pack(side='left',before=mode_label)
     strategy_box.bind('<<ComboboxSelected>>',edit_mode)
+    if linked_account:
+        selector_label.pack_forget();strategy_box.pack_forget();apply_button.pack_forget()
+        ttk.Label(auto_controls,textvariable=strategy).pack(side='left',before=mode_label)
+    def select_portfolio(book):
+        nonlocal viewed_book,independent,choices,journal,mode_revision,saved_mode
+        if not linked_account or book not in ('V2','V3','V4','V5'):
+            raise ValueError('Unknown demo account')
+        if book==viewed_book:
+            refresh();return
+        viewed_book=book;independent=True;mode_revision+=1
+        saved_mode=next(mode for mode,code in STRATEGY_CODES.items() if code==book)
+        choices={};selected.set('');instrument_box.configure(values=[])
+        for button in order_buttons:button.configure(state='disabled')
+        journal={};positions.delete(*positions.get_children());render_study({});move_page(0)
+        surface.bind(dict(status='LOADING',account=book))
+        order_box.configure(text='Поручение владельца • '+book)
+        strategy.set(strategy_labels[saved_mode])
+        set_summary(tr('Загрузка демосчёта…')+' '+book)
+        refresh()
+    parent._paper_select_portfolio=select_portfolio
     ttk.Button(controls,text=tr('Обновить демосчёт'),command=refresh).pack(side='left',padx=4)
     def toggle():
         def work():
@@ -674,3 +716,4 @@ def attach(app, parent):
     flow_toolbar(row,list(row.winfo_children()))
     surface.finish()
     _auto_refresh(parent,app,refresh)
+    return select_portfolio
