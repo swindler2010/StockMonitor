@@ -68,20 +68,21 @@ def draw_prices(ax,frame,mode):
             colors='#f59e0b',linewidths=.4,linestyles=':',alpha=.5),autolim=False)
     if meta.get('partial_chart'):
         ax.text(.99,.98,str(meta.get('data_quality',{}).get('state','UNKNOWN'))+' / PARTIAL — только отображение',ha='right',va='top',
-                transform=ax.transAxes,color='#f59e0b',fontsize=8)
+                transform=ax.transAxes,color='#f59e0b',fontsize=8,gid='sm-chart-scope')
     live=meta.get('live_candle',{})
     if live.get('timestamp') in set(map(str,frame.index)):
         i=int(frame.index.get_loc(live['timestamp']))
         text='Живая свеча — предварительные данные' if live.get('status')=='FORMING' else 'Живая свеча — ожидаются данные'
         ax.plot([i],[c[i]],marker='o',markersize=4,color='#38bdf8',zorder=6)
-        ax.text(.99,.91,text,ha='right',va='top',transform=ax.transAxes,color='#38bdf8',fontsize=8)
+        ax.text(.99,.91,text,ha='right',va='top',transform=ax.transAxes,color='#38bdf8',fontsize=8,gid='sm-chart-live')
         from datetime import datetime
         from zoneinfo import ZoneInfo
         through=live.get('observed_through')
         if through:
             local=datetime.fromisoformat(through).astimezone(ZoneInfo(meta.get('timezone','Europe/Berlin')))
-            ax.text(.99,.86,'Полученные данные до '+local.strftime('%d.%m %H:%M'),ha='right',va='top',
-                    transform=ax.transAxes,color='#38bdf8',fontsize=7)
+            from i18n import tr
+            ax.text(.99,.86,tr('Получены данные до {at}',at=local.strftime('%d.%m %H:%M')),ha='right',va='top',
+                    transform=ax.transAxes,color='#38bdf8',fontsize=7,gid='sm-chart-through')
     ax.autoscale_view()
 
 

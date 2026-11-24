@@ -13,11 +13,16 @@ _PATTERNS=(
 
 def diagnostic_text(value):
     text=str(value)
-    translated=rendered_message(text)
+    translated=tr(text)
+    if translated==text:translated=rendered_message(text)
     if translated!=text:return translated
     for pattern,template,names in _PATTERNS:
         match=pattern.fullmatch(text)
-        if match:return tr(template,**dict(zip(names,match.groups())))
+        if match:
+            values=dict(zip(names,match.groups()))
+            if 'structure' in values:
+                values['structure']=tr({'breakout':'Пробой','retest':'Повторная проверка уровня','reclaim':'Возврат выше уровня'}[values['structure']])
+            return tr(template,**values)
     match=re.fullmatch('('+_TF+r'): DATA BLOCKED / ([A-Z_]+); (.*)',text,flags=re.DOTALL)
     if match:
         tf,state,reason=match.groups()

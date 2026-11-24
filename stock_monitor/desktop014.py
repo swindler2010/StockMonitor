@@ -217,6 +217,8 @@ class Desktop014:
         pinned_chart=False
         pinned_archive=False
         if required_identity is not None and required_identity.get('source')=='onvista':
+            if tf not in ('1D','1W','1M'):
+                raise ValueError('ONVISTA_DAILY_ONLY: дневной архив не подтверждает внутридневные свечи')
             from onvista_archive import available_daily
             matches=[f for f in available_daily(self.store,info,clock)
                      if all(f.attrs.get(k)==v for k,v in required_identity.items())]
@@ -794,7 +796,7 @@ class Desktop014:
                 color='#22c55e' if zone['side']=='support' else '#ef4444'
                 self.ax_price.axhspan(zone['low'],zone['high'],color=color,alpha=.09 if zone['historical'] else .16)
                 self.ax_price.axhline((zone['low']+zone['high'])/2,color=color,lw=1.5,ls='--' if zone['historical'] else '-',alpha=.8)
-            self.ax_price.text(.01,.98,tr('S/R: сплошные — ближайшие; пунктир — исторические'),transform=self.ax_price.transAxes,va='top',fontsize=7,color=MUTED)
+            self.ax_price.text(.01,.98,tr('S/R: сплошные — ближайшие; пунктир — исторические'),transform=self.ax_price.transAxes,va='top',fontsize=7,color=MUTED,gid='sm-level-key')
             if result.get('display_levels_available'):
                 for field,color,label in (('support','#22c55e','Поддержка'),('resistance','#ef4444','Сопротивление')):
                     self.ax_price.axhline(result[field],color=color,lw=1.5,ls='--',label=label+' · закрытые свечи')
@@ -812,7 +814,7 @@ class Desktop014:
         if hasattr(self,'main_screen'):
             bar=visible.iloc[-1]
             ticker=frame.attrs.get('symbol') or info.get('symbol') or info['name']
-            title=f"{ticker} · {self.timeframe.get()} · {frame.attrs.get('venue','—')}  ОТКР {number(bar.open)}  МАКС {number(bar.high)}  МИН {number(bar.low)}  ЗАКР {number(bar.close)} {currency}"
+            title=tr('{ticker} · {tf} · {venue}  ОТКР {open}  МАКС {high}  МИН {low}  ЗАКР {close} {currency}',ticker=ticker,tf=self.timeframe.get(),venue=frame.attrs.get('venue','—'),open=number(bar.open),high=number(bar.high),low=number(bar.low),close=number(bar.close),currency=currency)
             self.ax_price.set_title(title,color=TEXT,fontsize=8,loc='left')
         else:self.ax_price.set_title(f'{info["name"]} • {TF[self.timeframe.get()]} • {label} • {currency}',color=TEXT,fontsize=10)
         self.ax_price.set_ylabel('' if hasattr(self,'main_screen') else currency,color=MUTED)
@@ -1193,8 +1195,10 @@ class Desktop014:
         self.update_ai_view();self.root.after(2000,self.connection_tick)
 
     def show_portfolio(self):
-        win=tk.Toplevel(self.root);win.title(tr('Портфель'));win.geometry('1120x440')
+        win=tk.Toplevel(self.root,background=BG);win.title(tr('Портфель'))
         tabs=ttk.Notebook(win);tabs.pack(fill='both',expand=True)
+        from portfolio_design import window as design_portfolio_window
+        design_portfolio_window(self,win,tabs)
         real=ttk.Frame(tabs);paper=ttk.Frame(tabs)
         tabs.add(real,text=tr('Реальный портфель'));tabs.add(paper,text=tr('Демосчёт'))
         from paper_view import attach

@@ -138,8 +138,10 @@ class Dialog:
         self.provider_box=filter_field('Источник',self.provider,[tr('Все')],14 if self.embedded else 20)
         filter_field('Категория',self.category,[tr('Все'),*(tr(v) for v in EVENTS.values())],14 if self.embedded else 18)
         filter_field('Тональность новостей',self.tone,[tr(v) for v in ('Все','Позитивные','Негативные','Нейтральные','Без оценки')],16)
-        search=ttk.Entry(filters,textvariable=self.query,style=p+'.TEntry',font=('Segoe UI',10));search.pack(side='left',fill='x',expand=True,padx=(5,0))
-        app.tooltip(search,'Поиск в заголовках и кратком содержании')
+        search=ttk.Frame(filters,style='Desk.TFrame');search.pack(side='left',fill='x',expand=True,padx=(5,0))
+        ttk.Label(search,text=tr('Поиск в новостях'),style='DeskMuted.TLabel',font=('Segoe UI',9)).pack(anchor='w')
+        search_entry=ttk.Entry(search,textvariable=self.query,style=p+'.TEntry',font=('Segoe UI',10));search_entry.pack(fill='x')
+        app.tooltip(search_entry,'Поиск в заголовках и кратком содержании')
         filter_widgets=filters.winfo_children();filter_layout=[None]
         for widget in filter_widgets:widget.pack_forget()
         def arrange_filters(event):
@@ -156,7 +158,7 @@ class Dialog:
         toolbar=ttk.Frame(centre,style='Desk.TFrame');toolbar.pack(fill='x',pady=(0,7))
         ttk.Label(toolbar,textvariable=self.result_text,style='DeskMuted.TLabel').pack(side='left')
         ttk.Combobox(toolbar,textvariable=self.sort,values=[tr('Сначала новые'),tr('Сначала старые')],state='readonly',style=p+'.TCombobox',width=16 if self.embedded else 20).pack(side='left',padx=8 if self.embedded else 12)
-        compact=ttk.Checkbutton(toolbar,text='' if self.embedded else tr('Компактный список'),variable=self.compact,command=self.schedule);compact.pack(side='right')
+        compact=ttk.Checkbutton(toolbar,text=tr('Список') if self.embedded else tr('Компактный список'),variable=self.compact,command=self.schedule);compact.pack(side='right')
         if self.embedded:app.tooltip(compact,'Компактный список')
         paging=ttk.Frame(centre,style='Desk.TFrame');paging.pack(side='bottom',fill='x',pady=(7,0))
         self.view_mode=tk.StringVar(win,tr('Все новости'))

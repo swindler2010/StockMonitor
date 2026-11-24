@@ -1157,7 +1157,7 @@
   },
   "S/R: сплошные — ближайшие; пунктир — исторические": {
     "en": "S/R: solid — nearest; dashed — historical",
-    "de": "S/R: durchgezogen — nächstgelegen; gestrichelt — historisch"
+    "de": "U/W: durchgezogen — nächste; gestrichelt — historische"
   },
   "Volume Profile\nоценка OHLCV": {
     "en": "Volume Profile\nOHLCV estimate",
@@ -1220,7 +1220,7 @@
     "de": "Kursänderung, %"
   },
   "Оценка": {
-    "en": "Assessment",
+    "en": "Score",
     "de": "Bewertung"
   },
   "правильный": {
@@ -3095,7 +3095,8 @@
   },
   "Слом поддержки / bearish retest на закрытии": {
     "en": "Support break / bearish retest at the close",
-    "de": "Unterstützungsbruch / bärischer Retest zum Schlusskurs"
+    "de": "Unterstützungsbruch / bärischer Retest zum Schlusskurs",
+    "ru": "Пробой поддержки или её проверка снизу на закрытии"
   },
   "Сопротивление ближе 0.5 ATR": {
     "en": "Resistance is less than 0.5 ATR away",
@@ -3111,19 +3112,23 @@
   },
   "Timing TF сохраняет bearish структуру": {
     "en": "Timing TF retains a bearish structure",
-    "de": "Timing-TF behält eine bärische Struktur bei"
+    "de": "Timing-TF behält eine bärische Struktur bei",
+    "ru": "На сигнальном ТФ сохраняется нисходящая структура"
   },
   "Средний и старший TF не согласованы bullish": {
     "en": "Medium and higher TF are not aligned bullish",
-    "de": "Mittlerer und höherer TF sind nicht gemeinsam bullisch ausgerichtet"
+    "de": "Mittlerer und höherer TF sind nicht gemeinsam bullisch ausgerichtet",
+    "ru": "Средний и старший ТФ ещё не подтверждают рост"
   },
   "Нет подтверждённого breakout/retest/reclaim": {
     "en": "No confirmed breakout/retest/reclaim",
-    "de": "Kein bestätigter breakout/retest/reclaim"
+    "de": "Kein bestätigter breakout/retest/reclaim",
+    "ru": "Нет подтверждённого пробоя, повторной проверки или возврата выше уровня"
   },
   "Momentum входа не подтверждён": {
     "en": "Entry momentum is not confirmed",
-    "de": "Einstiegsimpuls nicht bestätigt"
+    "de": "Einstiegsimpuls nicht bestätigt",
+    "ru": "Импульс для покупки ещё не подтверждён"
   },
   "Вход не подтверждён объёмом ≥ 1.2 × предыдущих 20 свечей": {
     "en": "Entry is not confirmed by volume ≥ 1.2 × the previous 20 candles",
@@ -5633,5 +5638,156 @@
   "V2: одна позиция, до 10 акций, до 45% средств и 0,5% расчётного риска с издержками.": {
     "en": "V2: one position, up to 10 shares, 45% of funds and 0.5% estimated risk including costs.",
     "de": "V2: eine Position, bis zu 10 Aktien, 45% der Mittel und 0,5% geschätztes Risiko einschließlich Kosten."
+  },
+  "Сильнее индекса": {
+    "en": "Stronger than the index",
+    "de": "Stärker als der Index"
+  },
+  "Слабее индекса": {
+    "en": "Weaker than the index",
+    "de": "Schwächer als der Index"
+  },
+  "На уровне индекса": {
+    "en": "In line with the index",
+    "de": "Auf Indexniveau"
+  },
+  "Рост": {
+    "en": "Rising",
+    "de": "Aufwärts"
+  },
+  "Снижение": {
+    "en": "Falling",
+    "de": "Abwärts"
+  },
+  "Переход": {
+    "en": "Transition",
+    "de": "Übergang"
+  },
+  "Боковик": {
+    "en": "Sideways",
+    "de": "Seitwärts"
+  },
+  "Демо — виртуальная торговля": {
+    "en": "Demo — paper trading",
+    "de": "Demo — virtueller Handel"
+  },
+  "Капитал": {
+    "en": "Equity",
+    "de": "Kontowert"
+  },
+  "Свободно": {
+    "en": "Available cash",
+    "de": "Verfügbar"
+  },
+  "Поиск в новостях": {
+    "en": "Search news",
+    "de": "Nachrichten durchsuchen"
+  },
+  "Получены данные до {at}": {
+    "en": "Data received through {at}",
+    "de": "Daten erhalten bis {at}"
+  },
+  "{ticker} · {tf} · {venue}  ОТКР {open}  МАКС {high}  МИН {low}  ЗАКР {close} {currency}": {
+    "en": "{ticker} · {tf} · {venue}  OPEN {open}  HIGH {high}  LOW {low}  CLOSE {close} {currency}",
+    "de": "{ticker} · {tf} · {venue}  ERÖFF {open}  HOCH {high}  TIEF {low}  SCHLUSS {close} {currency}"
+  },
+  "Пробой": {
+    "en": "Breakout",
+    "de": "Ausbruch"
+  },
+  "Повторная проверка уровня": {
+    "en": "Level retest",
+    "de": "Erneuter Test des Niveaus"
+  },
+  "Возврат выше уровня": {
+    "en": "Reclaim of the level",
+    "de": "Rückkehr über das Niveau"
+  },
+  "Живая свеча — предварительные данные": {
+    "en": "Live candle — provisional data",
+    "de": "Laufende Kerze — vorläufige Daten"
+  },
+  "Живая свеча — ожидаются данные": {
+    "en": "Live candle — awaiting data",
+    "de": "Laufende Kerze — Daten ausstehend"
+  },
+  "Подробности счёта": {
+    "en": "Account details",
+    "de": "Kontodetails"
+  },
+  "Поручение владельца • только PAPER": {
+    "en": "Owner order • PAPER only",
+    "de": "Auftrag des Eigentümers • nur PAPER"
+  },
+  "Количество:": {
+    "en": "Quantity:",
+    "de": "Anzahl:"
+  },
+  "Цена BUY": {
+    "en": "BUY price",
+    "de": "BUY-Preis"
+  },
+  "Цена SELL": {
+    "en": "SELL price",
+    "de": "SELL-Preis"
+  },
+  "Автоторговля демосчёта": {
+    "en": "Automatic paper trading",
+    "de": "Automatischer Demohandel"
+  },
+  "ТФ автоматически": {
+    "en": "Automatic timeframe",
+    "de": "Zeitrahmen automatisch"
+  },
+  "Факторы V5": {
+    "en": "V5 factors",
+    "de": "V5-Faktoren"
+  },
+  "Журнал V1–V5": {
+    "en": "V1–V5 journal",
+    "de": "V1–V5-Journal"
+  },
+  "Плюс": {
+    "en": "Wins",
+    "de": "Gewinne"
+  },
+  "Минус": {
+    "en": "Losses",
+    "de": "Verluste"
+  },
+  "Ноль": {
+    "en": "Flat",
+    "de": "Null"
+  },
+  "Комиссии, €": {
+    "en": "Fees, €",
+    "de": "Gebühren, €"
+  },
+  "Price P/L": {
+    "ru": "Курсовой результат",
+    "en": "Price P/L",
+    "de": "Kursgewinn/-verlust"
+  },
+  "Dividends": {
+    "ru": "Дивиденды",
+    "en": "Dividends",
+    "de": "Dividenden"
+  },
+  "Total Return": {
+    "ru": "Общий результат",
+    "en": "Total return",
+    "de": "Gesamtergebnis"
+  },
+  "Поручение владельца • {account}": {
+    "en": "Owner order • {account}",
+    "de": "Auftrag des Eigentümers • {account}"
+  },
+  "Контекст таймфреймов": {
+    "en": "Timeframe context",
+    "de": "Zeitrahmenkontext"
+  },
+  "Рыночный индекс": {
+    "en": "Market index",
+    "de": "Marktindex"
   }
 }
