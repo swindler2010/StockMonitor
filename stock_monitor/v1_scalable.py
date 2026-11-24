@@ -21,6 +21,7 @@ READS = {
     "get_portfolio_cash_breakdown",
     "get_portfolio_overview",
     "list_portfolio_transactions",
+    "get_transaction_details",
 }
 SYNC = Lock()
 CACHE = "scalable-v1-snapshot.json"
@@ -126,11 +127,13 @@ async def read_tool(session, name, arguments=None):
     return payload
 
 
-async def read_transactions(session, portfolio, max_pages=40):
+async def read_transactions(session, portfolio, max_pages=40, *, all_statuses=False):
     rows = []
     cursors = set()
     ids = set()
-    args = {"portfolioId": portfolio, "pageSize": 100, "statuses": ["SETTLED"]}
+    args = {"portfolioId": portfolio, "pageSize": 100}
+    if not all_statuses:
+        args["statuses"] = ["SETTLED"]
     for _ in range(max_pages):
         packet = await read_tool(session, "list_portfolio_transactions", args)
         entries = packet.get("transactions")
@@ -153,7 +156,7 @@ async def read_transactions(session, portfolio, max_pages=40):
     raise SyncError("SC_TRANSACTION_HISTORY_INCOMPLETE")
 
 
-async def broker_snapshot(selected=None, interactive=False):
+async def broker_snapshot(selected=None, interactive=False, transaction_id=None):
     try:
         from mcp import ClientSession
         from mcp.client.auth import OAuthClientProvider
@@ -189,6 +192,12 @@ async def broker_snapshot(selected=None, interactive=False):
             async with streamablehttp_client(URL, auth=oauth, terminate_on_close=False) as (receive, send, _):
                 async with ClientSession(receive, send) as session:
                     await session.initialize()
+                    if transaction_id is not None:
+                        result = await read_tool(session, "get_transaction_details",
+                                                 {"portfolioId": selected, "transactionId": transaction_id})
+                        if result.get("portfolioId") != selected or (result.get("transaction") or {}).get("id") != transaction_id:
+                            raise SyncError("SC_TRANSACTION_IDENTITY_MISMATCH")
+                        return result["transaction"]
                     available = await read_tool(session, "list_accessible_portfolios")
                     portfolios = [p for p in available.get("portfolios", []) if p.get("portfolioId")]
                     if not portfolios:
@@ -206,10 +215,13 @@ async def broker_snapshot(selected=None, interactive=False):
                                     synced_at=datetime.now(timezone.utc).isoformat())
                     try:
                         async with asyncio.timeout(18):
-                            rows = await read_transactions(session, selected)
+                            rows = await read_transactions(session, selected, all_statuses=True)
                         snapshot["cost_basis"] = cost_basis(rows, holdings["holdings"])
+                        snapshot["transactions"] = rows
+                        snapshot["transactions_status"] = "COMPLETE"
                     except (TimeoutError, SyncError, ValueError, TypeError, AttributeError):
                         snapshot["cost_basis_status"] = "SC_TRANSACTION_HISTORY_UNAVAILABLE"
+                        snapshot["transactions_status"] = "UNAVAILABLE"
                     return snapshot
     finally:
         callback.close()
@@ -247,5 +259,16 @@ def refresh(directory, selected=None, interactive=False):
         finally:
             temporary.unlink(missing_ok=True)
         return snapshot
+    finally:
+        SYNC.release()
+
+
+def transaction_detail(portfolio_id, transaction_id):
+    if not portfolio_id or not transaction_id:
+        raise SyncError("SC_TRANSACTION_IDENTITY_MISSING")
+    if not SYNC.acquire(blocking=False):
+        raise SyncError("SC_SYNC_IN_PROGRESS")
+    try:
+        return asyncio.run(broker_snapshot(portfolio_id, transaction_id=transaction_id))
     finally:
         SYNC.release()
