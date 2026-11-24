@@ -10,6 +10,7 @@ from urllib.parse import parse_qs, urlsplit
 import webbrowser
 
 from v1_portfolio import require_portfolio
+from v1_cost_basis import cost_basis
 
 URL = "https://mcp.scalable.capital/mcp"
 PORT = 51241
@@ -19,6 +20,7 @@ READS = {
     "get_portfolio_holdings",
     "get_portfolio_cash_breakdown",
     "get_portfolio_overview",
+    "list_portfolio_transactions",
 }
 SYNC = Lock()
 CACHE = "scalable-v1-snapshot.json"
@@ -124,6 +126,33 @@ async def read_tool(session, name, arguments=None):
     return payload
 
 
+async def read_transactions(session, portfolio, max_pages=40):
+    rows = []
+    cursors = set()
+    ids = set()
+    args = {"portfolioId": portfolio, "pageSize": 100, "statuses": ["SETTLED"]}
+    for _ in range(max_pages):
+        packet = await read_tool(session, "list_portfolio_transactions", args)
+        entries = packet.get("transactions")
+        page = packet.get("page")
+        if packet.get("portfolioId") != portfolio or not isinstance(entries, list) or not isinstance(page, dict):
+            raise SyncError("SC_TRANSACTION_PAGE_INVALID")
+        for entry in entries:
+            transaction_id = entry.get("id")
+            if not transaction_id or transaction_id in ids:
+                raise SyncError("SC_TRANSACTION_PAGE_OVERLAP")
+            ids.add(transaction_id)
+            rows.append(entry)
+        cursor = page.get("nextCursor")
+        if not cursor:
+            return rows
+        if cursor in cursors:
+            raise SyncError("SC_TRANSACTION_CURSOR_REPEATED")
+        cursors.add(cursor)
+        args = {**args, "cursor": cursor}
+    raise SyncError("SC_TRANSACTION_HISTORY_INCOMPLETE")
+
+
 async def broker_snapshot(selected=None, interactive=False):
     try:
         from mcp import ClientSession
@@ -173,8 +202,15 @@ async def broker_snapshot(selected=None, interactive=False):
                     cash = await read_tool(session, "get_portfolio_cash_breakdown", args)
                     overview = await read_tool(session, "get_portfolio_overview", args)
                     require_portfolio(holdings, cash, overview, selected)
-                    return dict(holdings=holdings, cash=cash, overview=overview,
-                                synced_at=datetime.now(timezone.utc).isoformat())
+                    snapshot = dict(holdings=holdings, cash=cash, overview=overview,
+                                    synced_at=datetime.now(timezone.utc).isoformat())
+                    try:
+                        async with asyncio.timeout(18):
+                            rows = await read_transactions(session, selected)
+                        snapshot["cost_basis"] = cost_basis(rows, holdings["holdings"])
+                    except (TimeoutError, SyncError, ValueError, TypeError, AttributeError):
+                        snapshot["cost_basis_status"] = "SC_TRANSACTION_HISTORY_UNAVAILABLE"
+                    return snapshot
     finally:
         callback.close()
 
