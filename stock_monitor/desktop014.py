@@ -1192,17 +1192,23 @@ class Desktop014:
         self.ai_status.set('ChatGPT/MCP: ' + tr(status) + suffix)
         self.update_ai_view();self.root.after(2000,self.connection_tick)
 
-    def show_portfolio(self):
+    def show_portfolio(self, parent=None):
         from v1_portfolio_view import show
-        return show(self)
+        return show(self, parent)
 
     def show_local_portfolio(self):
         win=tk.Toplevel(self.root);win.title(tr('Портфель'));win.geometry('1120x440')
         tabs=ttk.Notebook(win);tabs.pack(fill='both',expand=True)
         real=ttk.Frame(tabs);paper=ttk.Frame(tabs)
         tabs.add(real,text=tr('Локальные позиции'));tabs.add(paper,text=tr('Демосчёт'))
-        from paper_view import attach
-        attach(self,paper)
+        def open_demo(_event):
+            if tabs.select()!=str(paper):
+                return
+            tabs.unbind('<<NotebookTabChanged>>',demo_binding)
+            from paper_view import attach
+            attach(self,paper)
+
+        demo_binding=tabs.bind('<<NotebookTabChanged>>',open_demo,add='+')
         columns=('ticker','quantity','entry','price','currency','pnl','dividends','total_return','pct','stop','target','support','resistance','signal','source','at')
         body=ttk.Frame(real);body.pack(fill='both',expand=True,padx=10,pady=10)
         tree=ttk.Treeview(body,columns=columns,show='tree headings');tree.column('#0',width=35,stretch=False)
