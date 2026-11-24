@@ -230,6 +230,8 @@ class Dashboard:
             return
         facts, zone = row["facts"], row.get("zone")
         lines = [f'{row["name"]} · {row["isin"]}', tr(row["decision"]), tr(row.get("reason", ""))]
+        if row.get("news_reason"):
+            lines.append(f'{tr("До новости")} {tr(row["baseline"])} → {tr(row["decision"])}')
         if "basis_status" in row:
             statuses = {
                 "TRANSFER_ESTIMATE": "Оценка FIFO по операциям SC. Для переводов порядок считается по дате записи у брокера.",
@@ -263,7 +265,8 @@ class Dashboard:
             self.details.insert("end", item["title"] + "\n", tag)
             self.details.tag_configure(tag, foreground="#2563eb", underline=True)
             self.details.tag_bind(tag, "<Button-1>", lambda _event, url=item["url"]: webbrowser.open(url))
-            self.details.insert("end", f'{item["date"]} · {item["source"] or ""}\n{tr(item["impact"])}\n\n')
+            trust = tr("Источник компании") if item["verified"] else tr("Публикация СМИ · требует проверки")
+            self.details.insert("end", f'{item["date"]} · {item["source"] or ""} · {trust}\n{tr(item["impact"])}\n\n')
         if not row["articles"]:
             self.details.insert("end", tr("Свежие новости в СМ отсутствуют"))
         self.details.configure(state="disabled")
