@@ -123,6 +123,38 @@ class Surface:
         visit(parent or self.parent)
 
 
+
+def _account_navigation(app,win,tabs):
+    """Five navigation buttons, one real page and one shared PAPER reader."""
+    from indicator_dialog import styles
+    p=styles(app.root,THEMES.get(app.store.setting('theme','Тёмная'),THEMES['Тёмная']))
+    style=ttk.Style(win)
+    style.layout(p+'.Accounts.TNotebook.Tab',[])
+    tabs.configure(style=p+'.Accounts.TNotebook')
+    tabs._portfolio_nav_book='V1'
+    bar=ttk.Frame(win,style=p+'.TFrame',padding=(10,7))
+    bar.pack(side='top',fill='x',before=tabs)
+    buttons={}
+    def choose(book):
+        if book not in ('V1','V2','V3','V4','V5'):raise ValueError('Unknown portfolio page')
+        pages=tabs.tabs()
+        if len(pages)!=2:return
+        tabs._portfolio_nav_book=book
+        tabs.select(pages[0] if book=='V1' else pages[1])
+        if book!='V1':
+            paper=tabs.nametowidget(pages[1])
+            paper._paper_select_portfolio(book)
+        for code,button in buttons.items():
+            button.configure(style=p+('.Primary.TButton' if code==book else '.Secondary.TButton'))
+    for book in ('V1','V2','V3','V4','V5'):
+        button=ttk.Button(bar,text=book,width=6,style=p+('.Primary.TButton' if book=='V1' else '.Secondary.TButton'),
+                          command=lambda b=book:choose(b))
+        button.pack(side='left',padx=(0,6))
+        buttons[book]=button
+    win._portfolio_account_buttons=buttons
+    win._portfolio_choose_account=choose
+
+
 def window(app,win,tabs):
     from main_screen import native_titlebar
     from design_layout import fit_window
@@ -130,6 +162,7 @@ def window(app,win,tabs):
     palette=THEMES.get(app.store.setting('theme','Тёмная'),THEMES['Тёмная'])
     win.configure(background=palette['bg'])
     fit_window(win,1240,850,(900,700))
+    _account_navigation(app,win,tabs)
     win.iconphoto(False,photo(app.root,'portfolio',32,color='#00c5ff'))
     win.bind('<Map>',lambda e:win.after_idle(lambda:native_titlebar(win,palette)) if e.widget is win else None,add='+')
     win.bind('<Escape>',lambda _:win.destroy())
