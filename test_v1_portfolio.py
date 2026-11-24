@@ -5,7 +5,8 @@ from types import SimpleNamespace
 import unittest
 
 from v1_portfolio import analyze, require_portfolio, simulate
-from v1_scalable import SyncError, read_tool
+from v1_cost_basis import cost_basis
+from v1_scalable import SyncError, read_tool, read_transactions
 
 NOW = datetime(2026, 11, 24, 20, tzinfo=timezone.utc)
 AT = NOW.isoformat()
@@ -84,10 +85,65 @@ class PortfolioTest(unittest.TestCase):
         self.assertIsNone(data["positions"][-1]["value"])
 
 
+def movement(id, hour, action, quantity, amount, reversal=False):
+    row = dict(id=id, lastEventAt=NOW.replace(hour=hour).isoformat(), status="SETTLED",
+               currency="EUR", isCancellation=reversal)
+    values = dict(isin=APPLE, quantity=str(quantity), amount=str(amount))
+    if action in ("BUY", "SELL"):
+        return {**row, "kind": "security", "security": {**values, "side": action}}
+    return {**row, "kind": "non_trade_security", "nonTradeSecurity": {**values, "transactionType": action}}
+
+
+class CostBasisTest(unittest.TestCase):
+    def test_partial_sell_keeps_open_fifo_lots_and_reports_pnl(self):
+        rows = [movement("a", 8, "BUY", 2, -20), movement("b", 9, "BUY", 3, -60),
+                movement("c", 10, "SELL", 3, 75)]
+        snapshot = packet()
+        snapshot["cost_basis"] = cost_basis(list(reversed(rows)), snapshot["holdings"]["holdings"])
+        row = report(snapshot)["positions"][0]
+        self.assertEqual((row["average"], row["cost"], row["pnl"], row["pnl_pct"]), (20, 40, 20, .5))
+        self.assertEqual(row["basis_status"], "FIFO_ESTIMATE")
+
+    def test_transfer_reversal_removes_original_lot(self):
+        rows = [movement("a", 8, "TRANSFER_IN", 2, 90), movement("b", 9, "BUY", 2, -30),
+                movement("c", 10, "TRANSFER_IN", 2, 90, reversal=True)]
+        self.assertEqual(cost_basis(rows, packet()["holdings"]["holdings"])[APPLE]["average"], 15)
+
+    def test_matched_transfer_needs_original_purchase_chronology(self):
+        rows = [movement("a", 8, "TRANSFER_IN", 2, 90)]
+        result = cost_basis(rows, packet()["holdings"]["holdings"])[APPLE]
+        self.assertEqual((result["average"], result["status"]), (45, "TRANSFER_ESTIMATE"))
+
+    def test_ambiguous_reversal_with_identical_lots_stays_unknown(self):
+        rows = [movement("a", 8, "TRANSFER_IN", 2, 90), movement("b", 9, "TRANSFER_IN", 2, 90),
+                movement("c", 10, "TRANSFER_IN", 2, 90, reversal=True)]
+        self.assertEqual(cost_basis(rows, packet()["holdings"]["holdings"])[APPLE],
+                         {"status": "INCOMPLETE_OR_AMBIGUOUS"})
+
+    def test_unknown_corporate_action_cost_and_quantity_mismatch(self):
+        shares = packet()["holdings"]["holdings"]
+        self.assertEqual(cost_basis([movement("a", 8, "SWAP_IN", 2, 0)], shares)[APPLE],
+                         {"status": "MISSING_LOT_COST"})
+        self.assertEqual(cost_basis([movement("b", 9, "BUY", 1, -25)], shares)[APPLE],
+                         {"status": "QUANTITY_MISMATCH"})
+
+
 class ToolBoundaryTest(unittest.IsolatedAsyncioTestCase):
     async def test_whitelist_rejects_broker_mutations(self):
         with self.assertRaisesRegex(SyncError, "SC_READ_ONLY"):
             await read_tool(None, "place_order")
+
+    async def test_portfolio_history_paginates_until_cursor_ends(self):
+        class Session:
+            async def call_tool(self, name, args):
+                assert name == "list_portfolio_transactions" and args["statuses"] == ["SETTLED"]
+                cursor = args.get("cursor")
+                return SimpleNamespace(structuredContent=dict(portfolioId="sample",
+                    transactions=[{"id": cursor or "one"}],
+                    page={"nextCursor": None if cursor else "two"}), isError=False)
+        self.assertEqual(await read_transactions(Session(), "sample"), [{"id": "one"}, {"id": "two"}])
+        with self.assertRaisesRegex(SyncError, "SC_TRANSACTION_HISTORY_INCOMPLETE"):
+            await read_transactions(Session(), "sample", max_pages=1)
 
     async def test_parser_uses_broker_structured_result(self):
         class Session:
