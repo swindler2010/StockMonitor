@@ -58,7 +58,8 @@ def sample_features(s, grid, tapes):
     sections = []
     for key, tape in tapes.items():
         bars = tape.bars
-        atr_fraction = bars.atr/bars.close
+        positive_atr = bars.atr.where(bars.atr.gt(0))
+        atr_fraction = positive_atr/bars.close
         others = returns.drop(columns=key)
         market = others.median(axis=1).where(others.notna().sum(axis=1)>=12)
         others30 = impulses.drop(columns=key)
@@ -71,7 +72,7 @@ def sample_features(s, grid, tapes):
             'own_30m': bars.ret/atr_fraction,
             'turn': (bars.ret-bars.ret.shift())/atr_fraction,
             'close_location': location,
-            'range': (bars.high-bars.low)/bars.atr,
+            'range': (bars.high-bars.low)/positive_atr,
             'activity': np.log(bars.vol_ratio.where(bars.vol_ratio>0)),
             'friction': (2*s.FEE/(s.base.MAX_SHARES*bars.close)+2*s.HALF_SPREAD)/atr_fraction,
             'atr_fraction': np.log(atr_fraction),
