@@ -8,7 +8,7 @@ TEXT={
  'refresh':('Обновить таблицу','Tabelle aktualisieren','Refresh table'),
  'loading':('Чтение диагностики…','Diagnose wird gelesen…','Reading diagnostics…'),
  'error':('Диагностика недоступна','Diagnose nicht verfügbar','Diagnostics unavailable'),
- 'note':('Диагностика, не торговый допуск. Время поставщика не подтверждено.','Diagnose, keine Handelsfreigabe. Anbieterzeit unbestätigt.','Diagnostics, not trading permission. Provider time is unconfirmed.'),
+ 'note':('Возраст считается от подтверждённой сделки GETTEX, не от скачивания. НЕИЗВЕСТНО — подтверждения нет. Торговые проверки выполняются отдельно.','Alter ab bestätigtem GETTEX-Geschäft, nicht Download. UNBEKANNT bedeutet fehlender Nachweis. Handelsprüfungen bleiben separat.','Age is measured from a confirmed GETTEX trade, not a download. UNKNOWN means missing evidence. Execution checks remain separate.'),
  'name':('Компания / ISIN','Unternehmen / ISIN','Company / ISIN'),
  'source':('Источник / площадка','Quelle / Handelsplatz','Source / venue'),
  'status':('Статус','Status','Status'),
@@ -21,6 +21,9 @@ TEXT={
  'LEGACY_UNCLASSIFIED':('Без классификации','Nicht klassifiziert','Unclassified'),
  'NOT_OBSERVED':('Нет наблюдения','Nicht beobachtet','Not observed'),
  'reported':('Время поставщика (Берлин)','Anbieterzeit (Berlin)','Provider time (Berlin)'),
+ 'confirmed':('Подтверждённая сделка (Берлин)','Bestätigtes Geschäft (Berlin)','Confirmed trade (Berlin)'),
+ 'WITHIN_LIMIT':('ВОЗРАСТ В ПРЕДЕЛАХ ПОРОГА','ALTER INNERHALB GRENZE','AGE WITHIN LIMIT'),
+ 'STALE':('ВОЗРАСТ ПРЕВЫШАЕТ ПОРОГ','ALTER ÜBER GRENZE','AGE EXCEEDS LIMIT'),
  'age':('Возраст, мин','Alter, Min.','Age, min'),
  'received':('Ответ получен (Берлин)','Antwort erhalten (Berlin)','Response received (Berlin)'),
  'UNKNOWN':('НЕИЗВЕСТНО','UNBEKANNT','UNKNOWN'),
@@ -39,9 +42,9 @@ def show(app):
     ttk.Label(win,text=label('note'),padding=8).pack(fill='x')
     ttk.Label(win,textvariable=status,padding=8).pack(fill='x')
     area=ttk.Frame(win);area.pack(fill='both',expand=True)
-    columns=('name','source','status','attempt','reported','age','received')
+    columns=('name','source','status','attempt','confirmed','age','reported','received')
     table=ttk.Treeview(area,columns=columns,show='headings')
-    for key,width in zip(columns,(320,200,140,160,220,90,220)):
+    for key,width in zip(columns,(320,200,200,160,230,90,220,220)):
         table.heading(key,text=label(key));table.column(key,width=width,minwidth=60,stretch=False)
     horizontal=ttk.Scrollbar(area,orient='horizontal',command=table.xview)
     table.configure(xscrollcommand=horizontal.set);horizontal.pack(side='bottom',fill='x')
@@ -52,11 +55,14 @@ def show(app):
         names={i['isin']:i.get('name') or i['isin'] for i in value['stocks']}
         table.delete(*table.get_children())
         for row in value['sources']:
-            report=row['reported_market_time'];age=report['age_seconds']
+            report=row['reported_market_time'];confirmed=row['confirmed_market_update'];age=confirmed['age_seconds']
             table.insert('', 'end',values=(names[row['isin']]+' / '+row['isin'],row['source']+' / '+row['venue'],
                 label(row['status']),label(row.get('latest_attempt',{}).get('outcome','NOT_OBSERVED')),
-                report['berlin'] or '—','—' if age is None else f'{age/60:.2f}',row['response_received']['berlin'] or '—'))
-        status.set(label('counts').format(stocks=value['stock_count'],sources=value['source_count'],at=value['checked_at_berlin']))
+                confirmed['berlin'] or '—','—' if age is None else f'{age/60:.2f}',report['berlin'] or '—',row['response_received']['berlin'] or '—'))
+        counts=value['status_counts'];within=value['confirmed_within_minutes']
+        status.set(label('counts').format(stocks=value['stock_count'],sources=value['source_count'],at=value['checked_at_berlin'])
+            +f" • {value['threshold_minutes']} min • ≤15/20/25: {within['15']}/{within['20']}/{within['25']}"
+            +f" • {label('STALE')}: {counts.get('STALE',0)} • {label('UNKNOWN')}: {counts.get('UNKNOWN',0)}")
     def fail(_):
         if win.winfo_exists():status.set(label('error'))
     def refresh():

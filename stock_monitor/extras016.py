@@ -74,6 +74,7 @@ class Extras016(LogoMixin):
                     if widget!=self.chart_body:widget.pack_forget()
             self.chart_body.forget(self.chart_side)
             self.root.attributes('-fullscreen',True);self.chart_fullscreen=True
+        if hasattr(self,'main_screen'):self.main_screen.fullscreen(self.chart_fullscreen)
         self.canvas.draw_idle()
 
     def escape_chart(self,event=None):

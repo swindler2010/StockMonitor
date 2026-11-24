@@ -159,16 +159,17 @@ def planned_feeds(store,infos,now=None,focus=None):
  # after live acquisition, so repeated short-TF updates cannot omit it.
  from calculation_window import eligibility_due
  from cp_controls import due_request,historical_review_due
- from cp_reconciliation import due_observation
+ from cp_reconciliation import due_observation,native_empty_batches
  with store.connect() as db:
   # Automatic dependency repairs use ordinary per-stock history turns. They
   # must not fill the explicit owner-priority lane and starve the whole feed.
   urgent=due_request(db,now=now,include_automatic=False)
   observation=None if urgent else due_observation(db,infos,now)
+  native_empty=native_empty_batches(db,infos)
  priority_isin=urgent['problem']['isin'] if urgent else observation['isin'] if observation else None
  priority=next((i for i in infos if i['isin']==priority_isin),None)
  fresh,freshness=fresh_candidate(store,infos,now,focus)
- return {'fresh':fresh,'freshness':freshness,'planned_at':now.isoformat(),'priority':priority,'observation_recheck':observation,'feeds':[(i,r) for _,i,r in sorted(due,key=lambda x:x[0])],'review':historical_review_due(store,infos),'eligibility':eligibility_due(store,infos,now),'prevented_feed_jobs':prevented}
+ return {'fresh':fresh,'freshness':freshness,'planned_at':now.isoformat(),'priority':priority,'observation_recheck':observation,'native_empty':native_empty,'feeds':[(i,r) for _,i,r in sorted(due,key=lambda x:x[0])],'review':historical_review_due(store,infos),'eligibility':eligibility_due(store,infos,now),'prevented_feed_jobs':prevented}
 
 FRESH_ROTATION='cp_fresh_rotation'
 

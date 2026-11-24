@@ -398,6 +398,14 @@ def select_display(info,tf,normal,store,now=None):
     from eur_listings import confirmed_listing,venue_allowed
     import gettex_chart
     now=pd.Timestamp(now or pd.Timestamp.now(tz='UTC'))
+    from gettex_first import bound
+    if bound(normal):
+        view=normal.copy(deep=False);view.attrs=copy.deepcopy(normal.attrs)
+        if view.attrs.get('partial_chart'):
+            view.attrs['quality_review_projection']=view.attrs.pop('partial_chart')
+        view.attrs.pop('partial_indicators',None)
+        view.attrs['dq_nonblocking']=True
+        return live_tail(info,tf,view,store,now)
     def project(raw,base):
         if raw.empty or not confirmed_listing(info,raw.attrs) or not venue_allowed(info,raw.attrs):return None
         try:

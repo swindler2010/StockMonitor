@@ -7,6 +7,43 @@ from analytics import indicators,bar_ends
 
 def read_time():return pd.Timestamp.now(tz='UTC')
 
+def calculate_consistent(store,values,calculator=None):
+    """One WAL read view, then final live input validation; no database copy."""
+    from contextlib import contextmanager
+    from performance_cache import ReadCache
+    # Only the owned serial readonly child can retain its bounded cache across
+    # WAL views. Main-thread/shared Store callers keep an isolated connection.
+    reuse=bool(getattr(store,'_serial_readonly',False) and not store.read_cache.db.in_transaction)
+    captured=copy.copy(store);captured.read_cache=store.read_cache if reuse else ReadCache(store.path)
+    @contextmanager
+    def connect():yield captured.read_cache.db
+    captured.connect=connect
+    try:
+        db=captured.read_cache.db;db.execute('PRAGMA query_only=ON');db.execute('BEGIN')
+        # Only this immutable WAL view may reuse an expensive lineage check.
+        # Never carried to the writer or the next analytical request.
+        captured._lineage_read_view=(db,read_time(),{})
+        with captured.read_cache.track_inputs() as token:
+            expected=values.get('instrument_revisions',{})
+            captured.read_cache.assert_current(expected);captured.read_cache._record(expected)
+            result=(calculator or calculate)(captured,values)
+        token=dict(token)
+    finally:
+        if reuse:captured.read_cache.db.rollback()
+        else:captured.read_cache.close()
+    from gettex_first import engine_available,calculation_allowed
+    engine=result.get('trading_engine') or (result.get('analysis_context') or {}).get('trading_engine',{})
+    analysis=result.get('analysis')
+    factual=engine_available(engine,list(engine.get('timeframe_context',{})))
+    if analysis and len(analysis)==2:factual=factual or calculation_allowed(analysis[1])
+    if factual:
+        # DQ is observed at calculation time, not an input permission. Actual
+        # candles, listing receipts, settings and policies stay revision-bound.
+        token={k:v for k,v in token.items() if not k.startswith('setting:data_quality:')}
+    store.read_cache.assert_current(token)
+    result['_input_revisions']=token
+    return result
+
 def capture(app,args):
     values=inputs(app)
     info=next((i for i in values['watchlist'] if i['isin']==args['isin']),None)
@@ -39,11 +76,17 @@ def calculate(store,values):
     context.analysis_at=now
     execution_context=None
     analysis_context=None
-    from paper_account import instrument_allowed
-    if instrument_allowed(info) and args['timeframe'] in ('5m','15m'):
+    from gettex_first import bound
+    from paper_account import EXECUTION_TF, instrument_allowed
+    if instrument_allowed(info) and args['timeframe']==EXECUTION_TF:
         from calculation_window import build
         execution_context=build(context,info,args['timeframe'],state,now)
-    if instrument_allowed(info):
+    if bound(frame):
+        engine=context.trading_analysis(info,analysis_only=True)
+        analysis_context={'analysis_ready':engine.get('status')=='READY','execution_permission':False,
+            'calculated_at':now.isoformat(),'identity':identity,'trading_engine':engine,
+            'basis':'GETTEX-first actual saved bars; CandlePilot warnings are audit-only'}
+    elif instrument_allowed(info):
         from cp_controls import demo_initialization_policy,initialization_policy_for
         key='cp_manual_risk:'+info['isin'];store.read_cache.depend('setting:'+key)
         policy=initialization_policy_for(store,info)
@@ -59,7 +102,8 @@ def calculate(store,values):
     # The existing engine still assesses DQ/admission on every read; this is
     # only the OHLCV/indicator-page identity, never a trade-readiness lease.
     ends=bar_ends(frame) if not frame.empty else pd.DatetimeIndex([],tz='UTC')
-    closed=(ends<=now) & (frame['bar_complete'].fillna(False).astype(bool).to_numpy() if 'bar_complete' in frame else True)
+    from gettex_first import bound
+    closed=(ends<=now) & (frame['bar_complete'].fillna(False).astype(bool).to_numpy() if 'bar_complete' in frame and not bound(frame) else True)
     temporal=hashlib.sha256(closed.tobytes()).hexdigest()
     query={k:v for k,v in args.items() if k not in ('offset','limit','expected_revision','_deadline')}
     revision=hashlib.sha256(json.dumps([token,query,state,settings,temporal],sort_keys=True,default=str).encode()).hexdigest()
@@ -85,7 +129,7 @@ def calculate(store,values):
             if boundary.tzinfo is None:raise ValueError('RANGE_REQUIRES_TIMEZONE')
             boundary=boundary.tz_convert('UTC')
             mask=mask & (openings>=boundary if key=='from' else openings<=boundary)
-    closed=(ends<=now) & (enriched['bar_complete'].fillna(False).astype(bool).to_numpy() if 'bar_complete' in enriched else True)
+    closed=(ends<=now) & (enriched['bar_complete'].fillna(False).astype(bool).to_numpy() if 'bar_complete' in enriched and not bound(enriched) else True)
     if args.get('closed_only'):mask=mask & closed
     matches=[n for n,keep in enumerate(mask) if keep]
     matched_total=len(matches);rows=[]
@@ -119,3 +163,4 @@ def calculate(store,values):
         'delivery_latency':{'status':'PARTIAL_MEASURED' if measured else 'UNCONFIRMED','storage_observed_bars':measured,
             'provider_latency':'UNCONFIRMED','reason':'Storage observations are available only for tracked new/changed base bars; HTTP receipt and provider publication remain unknown'},
         'execution':'read only; no download, source switch or trade'}
+

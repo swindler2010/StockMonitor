@@ -27,7 +27,8 @@ class OrderTests(unittest.TestCase):
     def tearDown(self):self.f.tearDown()
     def collect(self,now=None):
         f=self.f;changes=f.db.total_changes
-        with patch.object(order.sqlite3,'connect',return_value=f.db):
+        # This fixture lends its connection; production owns/closes a new one.
+        with patch.object(order.sqlite3,'connect',return_value=f.db), patch.object(order,'closing',lambda db:db):
             result=order.collect('unused',[f.info],now or self.now)
         self.assertEqual(f.db.total_changes,changes)
         f.db.execute('PRAGMA query_only=OFF')

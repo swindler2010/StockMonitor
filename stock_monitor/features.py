@@ -288,6 +288,9 @@ class Features:
         return True
 
     def bridge_dispatch(self,action,args):
+        if action=='reconcile_dq_evidence':
+            from dq_evidence import dispatch
+            return dispatch(self,args)
         if action=='paper_trade':
             from paper_orders import owner_route, submit
             if owner_route(self.store.setting('paper_auto_1h',{}),args.get('isin')):
@@ -551,15 +554,10 @@ class Features:
         self.symbol.set(self.watchlist[0]['name']);self.refresh_chart()
 
     def add_stock_dialog(self):
-        win=tk.Toplevel(self.root);win.title(tr('Поиск и добавление акции'));win.geometry('770x560')
-        body=ttk.Frame(win,padding=16);body.pack(fill='both',expand=True)
-        ttk.Label(body,text=tr('Поиск по названию, тикеру или ISIN. Для GETTEX нужен ISIN; EUR proxy указывается отдельно.')).pack(anchor='w')
-        query=tk.StringVar();ttk.Entry(body,textvariable=query).pack(fill='x',pady=8)
-        results=ttk.Treeview(body,height=6,show='tree',selectmode='browse');results.pack(fill='x'); candidates=[]
-        fields={};selection_generation=0;confirmed_identity={}
-        for key,label in [('name','Название'),('isin','ISIN'),('symbol','Тикер / обозначение'),('venue','Биржа'),('currency','Валюта'),('history_symbol','Тикер истории'),('profile_symbol','Тикер карточки')]:
-            row=ttk.Frame(body);row.pack(fill='x',pady=4);ttk.Label(row,text=tr(label),width=47).pack(side='left');fields[key]=tk.StringVar();ttk.Entry(row,textvariable=fields[key]).pack(side='left',fill='x',expand=True)
-        state=tk.StringVar();ttk.Label(body,textvariable=state,wraplength=720).pack(anchor='w',pady=8)
+        from instrument_dialog import Dialog
+        dialog=Dialog(self);self._instrument_dialog=dialog
+        win=dialog.win;query=dialog.query;results=dialog.results;fields=dialog.fields;state=dialog.state;candidates=[]
+        selection_generation=0;confirmed_identity={}
         def selected(_):
             nonlocal selection_generation
             if not results.selection():return
@@ -567,7 +565,8 @@ class Features:
             confirmed_identity.clear()
             for value in fields.values():value.set('')
             add_button.configure(state='disabled')
-            item=copy.deepcopy(candidates[int(results.selection()[0])]);symbol=item['symbol']
+            selected_id=results.selection()[0]
+            item=copy.deepcopy(candidates[int(selected_id)]);symbol=item['symbol']
             fields['name'].set(item.get('longname') or item.get('shortname') or symbol)
             fields['profile_symbol'].set(symbol)
             requested_isin=query.get().strip().upper()
@@ -579,6 +578,7 @@ class Features:
                 if re.fullmatch(r'[A-Z]{2}[A-Z0-9]{9}\d',requested_isin) and requested_isin!=details['isin']:
                     state.set(tr('Identity BLOCKED: ISIN результата не совпадает с запросом'));return
                 confirmed_identity.update(details)
+                dialog.confirmed(selected_id,details)
                 if details.get('name'):fields['name'].set(details['name'])
                 for key in ('isin','symbol','venue','currency'):fields[key].set(details[key])
                 fields['history_symbol'].set(details['symbol']);fields['profile_symbol'].set(details['symbol'])
@@ -588,14 +588,14 @@ class Features:
                 if not win.winfo_exists() or selection_generation!=generation:return
                 state.set('Identity BLOCKED: '+rendered_message(msg)[:160])
             from eur_listings import resolve_for_add
-            self.job(lambda:resolve_for_add(symbol,DATA_DIR/'provider_cache',item,requested_isin),resolved,resolve_failed)
+            self.job(lambda:resolve_for_add(symbol,DATA_DIR/'provider_cache',item,requested_isin),resolved,resolve_failed,lane='read',key=('instrument-identity',id(win),generation))
         results.bind('<<TreeviewSelect>>',selected)
         def found(items):
             if not win.winfo_exists():return
             candidates[:]=items
             for item in results.get_children():results.delete(item)
             for index,q in enumerate(items):
-                item=results.insert('','end',iid=str(index),text=tr('{p0} • {p1} • {p2}',p0=q['symbol'],p1=q.get('longname') or q.get('shortname', ''),p2=q.get('exchDisp', '')))
+                item=dialog.insert(index,q)
                 self.attach_logo(results,item,q)
             state.set(rendered_message(f'Результатов: {len(items)}. Выберите строку для подтверждения identity.'))
         def find():
@@ -610,7 +610,7 @@ class Features:
                 if selection_generation==generation:found(items)
             def current_failed(msg):
                 if win.winfo_exists() and selection_generation==generation:state.set(tr('Identity BLOCKED: Search недоступен: ')+rendered_message(msg)[:100])
-            state.set(tr('Поиск…'));self.job(lambda:market.search(q),current_found,current_failed)
+            state.set(tr('Поиск…'));self.job(lambda:market.search(q),current_found,current_failed,lane='read',key=('instrument-search',id(win),generation))
         def add():
             item={k:v.get().strip() for k,v in fields.items()};item['isin']=item['isin'].upper()
             if not confirmed_identity or any(item[k]!=confirmed_identity[k] for k in ('isin','symbol','venue','currency')) or any(item[k]!=confirmed_identity['symbol'] for k in ('history_symbol','profile_symbol')):
@@ -624,8 +624,13 @@ class Features:
             # base interval (and therefore all supported derived TF) for this item.
             self.refresh_chart()
             self.source_status.set(tr('Данные: LOADING • история нового инструмента загружается'))
-        ttk.Button(body,text=tr('Найти'),command=find).pack(side='left')
-        add_button=ttk.Button(body,text=tr('Добавить'),command=add,state='disabled');add_button.pack(side='right')
+        def clear():
+            nonlocal selection_generation
+            selection_generation+=1;confirmed_identity.clear();query.set('')
+            for variable in fields.values():variable.set('')
+            results.delete(*results.get_children());state.set('');add_button.configure(state='disabled')
+        add_button=dialog.add_button
+        return dialog.wire(find,add,clear)
 
     def position_dialog(self):
         item=copy.deepcopy(self.instrument_cfg());win=tk.Toplevel(self.root);win.title(tr('Позиция, уровни и источники'));win.geometry('650x470')

@@ -8,6 +8,15 @@ import benchmarks as bm
 import data_quality as quality
 from analytics import resample
 
+def position_focus(app):
+    """Scheduling hints from the existing drafts, without reading source policy.
+
+    owner_history_info only overlays history_venue_lock; it never changes a
+    position. Trade calculations still use user_state and their normal guards.
+    """
+    return [info['isin'] for info in app.watchlist
+            if float(app.drafts.get(info['isin'],info).get('position',{}).get('quantity') or 0)!=0]
+
 class BenchmarkMixin:
     def apply_benchmark_labels(self,info,archive):
         meta=bm.identity(info)
@@ -27,13 +36,17 @@ class BenchmarkMixin:
 
     def build_ui(self):
         super().build_ui()
-        row=ttk.Frame(self.chart_outer);row.pack(fill='x',before=self.chart_body,padx=6,pady=2)
-        ttk.Label(row,text=tr('Benchmark:')).pack(side='left')
+        embedded=hasattr(self,'main_benchmark_host')
+        row=self.main_benchmark_host if embedded else ttk.Frame(self.chart_outer)
+        if not embedded:row.pack(fill='x',before=self.chart_body,padx=6,pady=2)
+        ttk.Label(row,text=tr('Benchmark:')).pack(anchor='w') if embedded else ttk.Label(row,text=tr('Benchmark:')).pack(side='left')
         self.benchmark_choice=tk.StringVar()
         self.benchmark_box=ttk.Combobox(row,textvariable=self.benchmark_choice,state='readonly',width=25,
             values=['—']+[x['name'] for x in bm.CATALOG.values() if x['return_basis']!='volatility'])
-        self.benchmark_box.pack(side='left',padx=5);self.benchmark_box.bind('<<ComboboxSelected>>',self.change_benchmark)
-        self.relative_status=ttk.Label(row,text=tr(''),wraplength=1050);self.relative_status.pack(side='left',fill='x',expand=True)
+        self.benchmark_box.pack(side='top' if embedded else 'left',padx=5)
+        self.benchmark_box.bind('<<ComboboxSelected>>',self.change_benchmark)
+        self.relative_status=ttk.Label(row,text=tr(''),wraplength=250 if embedded else 1050)
+        self.relative_status.pack(side='top' if embedded else 'left',fill='x',expand=not embedded)
 
     def change_benchmark(self,_=None):
         info=self.instrument_cfg();draft=copy.deepcopy(self.user_state(info))
@@ -87,7 +100,7 @@ class BenchmarkMixin:
             if info.get('kind')=='benchmark' and self.timeframe.get() not in ('1D','1W','1M'):
                 self.timeframe.set('1D')
             self._benchmark_opened_isin=info['isin']
-        self.dispatcher.focus(info['isin'],[i['isin'] for i in self.watchlist if float(self.user_state(i).get('position',{}).get('quantity') or 0)!=0])
+        self.dispatcher.focus(info['isin'],position_focus(self))
         # Immutable UI capture: feed workers must never read Tk variables.
         focus=getattr(self,'_cp_focus',{})
         if focus.get('isin')!=info['isin'] or focus.get('timeframe')!=self.timeframe.get():
@@ -113,8 +126,37 @@ class BenchmarkMixin:
         self._accepted_trading_chart=None
         bind_engine(self,None)
         self.status.set(tr('Загрузка: {name} · {timeframe}',name=info['name'],timeframe=self.timeframe.get()))
-        if self._chart_jobs.running and not self.dispatcher.cancel('chart'):self.compute_chart.interrupt('chart')
-        self._chart_jobs.request(lambda:(values,self.compute_chart.calculate('chart',{**values,'_chart_phase':'display'})))
+        if self._chart_jobs.running and not self.dispatcher.cancel('chart'):self._supersede_chart_read()
+        self._chart_jobs.request(lambda:(values,self._calculate_chart_read(values,'display')))
+
+    def _calculate_chart_read(self,values,phase):
+        import time
+        active=(object(),phase,time.monotonic())
+        self._active_chart_read=active
+        try:return self.compute_chart.calculate('chart',{**values,'_chart_phase':phase})
+        finally:
+            if getattr(self,'_active_chart_read',None) is active:self._active_chart_read=None
+
+    def _supersede_chart_read(self):
+        # A short CORE tail often finishes sooner than restarting this readonly
+        # process and importing the entire calculation stack again. LatestRequest
+        # still discards its superseded result; no permission survives selection.
+        import time
+        active=getattr(self,'_active_chart_read',None)
+        if active is None or active[1]!='engine':
+            self.compute_chart.interrupt('chart');return
+        pending=getattr(self,'_chart_read_cancel',None)
+        if pending and pending[0] is active:return
+        if pending:self.root.after_cancel(pending[1])
+        delay=max(1,round((5-(time.monotonic()-active[2]))*1000))
+        def cancel_old():
+            pending=getattr(self,'_chart_read_cancel',None)
+            if pending and pending[0] is active:self._chart_read_cancel=None
+            if not self.closing and getattr(self,'_active_chart_read',None) is active:
+                self.compute_chart.interrupt('chart')
+        self._chart_read_cancel=(active,self.root.after(delay,cancel_old))
+        emit=getattr(self.root,'_performance_emit',None)
+        if emit:emit('chart_read_handoff',phase='engine',grace_seconds=delay/1000)
 
     def _chart_failed(self,error):
         if self.closing:return
@@ -123,6 +165,23 @@ class BenchmarkMixin:
         bind_engine(self,None)
         self.relative_status.configure(text=tr('Расчёт недоступен: {error}',error=str(error)))
         self.status.set(tr('Ошибка подготовки графика: {error}',error=str(error)))
+        if hasattr(self,'main_screen'):
+            self.main_screen.sync_text.set(tr('Синхронизация: ошибка'))
+            self.main_screen.sync_label.configure(style='DeskSyncBad.TLabel')
+        if 'InputRevisionChanged:' in str(error):
+            from chart_worker import capture
+            self._retry_current_chart(capture(self))
+
+    def _retry_current_chart(self,values):
+        """Reject stale output, then request the current view on the same lane."""
+        from chart_worker import capture
+        def view(v):return (v['watchlist'][0]['isin'],v['timeframe'],v['period'])
+        if self.closing or view(capture(self))!=view(values) or getattr(self,'_chart_retry_pending',False):return
+        self._chart_retry_pending=True
+        def retry():
+            self._chart_retry_pending=False
+            if not self.closing and view(capture(self))==view(values):self.refresh_chart()
+        self.root.after(500,retry)
 
     def _apply_chart(self,payload):
         from chart_worker import capture
@@ -130,16 +189,20 @@ class BenchmarkMixin:
         if self.closing:return
         try:current=capture(self)
         except StopIteration:return
-        if values!=current:return
+        if values!=current:
+            self._retry_current_chart(values);return
         token=prepared.get('_input_revisions')
-        if token is None or not self.store.read_cache.current(token):return
+        if token is None or not self.store.read_cache.current(token):
+            self._retry_current_chart(values);return
         from partial_chart import current as files_current
         if prepared.get('_chart_engine'):
             accepted=getattr(self,'_accepted_trading_chart',None)
             if not accepted or accepted[0]!=values:return
             display=accepted[1]
-            if not self.store.read_cache.current(display.get('_input_revisions',{})):return
-            if not files_current(display['frame'].attrs.get('partial_chart',{}).get('files',[])):return
+            if not self.store.read_cache.current(display.get('_input_revisions',{})):
+                self._retry_current_chart(values);return
+            if not files_current(display['frame'].attrs.get('partial_chart',{}).get('files',[])):
+                self._retry_current_chart(values);return
             merged={**display,**{k:prepared[k] for k in ('trading_engine','context')},
                 '_core_pending':False,'_input_revisions':{**display['_input_revisions'],**token}}
             self._accepted_trading_chart=(values,merged)
@@ -148,18 +211,37 @@ class BenchmarkMixin:
             self._apply_benchmark_context(merged['context'])
             self._chart_timing('core',prepared)
             return
-        if not files_current(prepared['frame'].attrs.get('partial_chart',{}).get('files',[])):return
+        if not files_current(prepared['frame'].attrs.get('partial_chart',{}).get('files',[])):
+            self._retry_current_chart(values);return
         self._accepted_trading_chart=(values,prepared)
         self._cp_focus={'isin':values['watchlist'][0]['isin'],'timeframe':values['timeframe'],
                         'source':prepared['frame'].attrs.get('source')}
         self._cp_chart_inputs={'isin':values['watchlist'][0]['isin'],'timeframe':values['timeframe'],
             'scopes':[s for s in token if s.startswith('market:'+values['watchlist'][0]['isin']+':')]}
         self._prepared_chart=prepared
-        try:self._render_prepared_chart()
+        try:self._render_current_display(prepared)
         finally:self._prepared_chart=None
+        if hasattr(self,'main_screen'):self.main_screen.bind_chart(prepared)
         self._chart_timing('display',prepared)
         if prepared.get('_core_pending'):
-            self._chart_jobs.request(lambda:(values,self.compute_chart.calculate('chart',{**values,'_chart_phase':'engine'})))
+            self._chart_jobs.request(lambda:(values,self._calculate_chart_read(values,'engine')))
+
+    def _render_current_display(self,prepared):
+        # Called only after selection, live revisions and receipt files passed
+        # _apply_chart. Retain existing artists for unchanged pixel inputs;
+        # CORE is cleared/recomputed/bound independently as before.
+        revision=prepared.get('_visual_revision')
+        mode=getattr(self,'chart_mode',None)
+        key=(revision,mode.get() if mode is not None else None)
+        if revision and getattr(self,'_display_revision',None)==key:
+            self.status.set(self._display_status)
+            emit=getattr(self.root,'_performance_emit',None)
+            if emit:emit('chart_reused',timeframe=self.timeframe.get())
+            return
+        self._display_revision=None
+        self._render_prepared_chart()
+        if revision:
+            self._display_revision=key;self._display_status=self.status.get()
 
     def _chart_timing(self,stage,prepared):
         import time
@@ -219,3 +301,4 @@ class BenchmarkMixin:
         result=super().snapshot();result['market_context']=self.market_context()
         result['benchmark_catalog']=list(bm.CATALOG.values())
         return result
+

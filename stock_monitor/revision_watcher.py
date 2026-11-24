@@ -81,6 +81,262 @@ def _official_window(db,isin,first,end,now,allow_zero_rows=False):
  return dict(rows=result,trades=trades,proof=scoped)
 
 
+def _five_minute_empty_plan(db,job,inputs,now,policy):
+ """Prove an empty5m slot using complete exact5m AND15m native windows."""
+ from cp_controls import read,digest
+ from cp_reconciliation import SOURCE_POLICY
+ import data_quality as dq
+ from history_service import parent_provenance_key
+ sp=read(db,SOURCE_POLICY,{})
+ if not (sp.get('approved') is True and sp.get('version')==1 and sp.get('scope')=='registered_stocks' and sp.get('exclusive_venue')=='GETTEX'):return None
+ a=pd.Timestamp(job['first']);end=pd.Timestamp(job['end']);before=inputs['neighbors']['before'];after=inputs['neighbors']['after']
+ if inputs['rows'] or not pd.Timedelta(0)<end-a<=pd.Timedelta(minutes=15):return None
+ authority={**inputs['proof'].get('identity',{}),'absence_evidence':inputs['proof']}
+ if not dq.no_trades_proof(authority,a,end,now):return None
+ if job.get('observation') and job['observation'].get('result')!='ABSENT':raise ValueError('RETIME_VISUAL_REFERENCE_CONFLICT_OR_CHANGED')
+ lo=a.floor('15min');hi=end.ceil('15min');windows=[]
+ if before and after and pd.Timestamp(before[0])==a-pd.Timedelta(minutes=5) and pd.Timestamp(after[0])==end:
+  windows.append((pd.Timestamp(before[0]).floor('15min'),(pd.Timestamp(after[0])+pd.Timedelta(minutes=5)).ceil('15min')))
+ windows.extend(((lo,hi),(lo-pd.Timedelta(minutes=15),hi),(lo,hi+pd.Timedelta(minutes=15))))
+ found=False
+ for first,last in dict.fromkeys(windows):
+  if first.normalize()!=last.normalize() or last-first>pd.Timedelta(minutes=45):continue
+  try:
+   source=_official_window(db,job['isin'],str(first),str(last),now,allow_zero_rows=True)
+   native={base:_native(db,job['isin'],job['identity'],base,str(first),str(last)) for base in ('5m','15m')}
+   if any(native[b]!=source['rows'][b] for b in native):continue
+   found=True;break
+  except (ValueError,KeyError,TypeError):continue
+ if not found:return None
+ lineage={}
+ for b,rows in native.items():
+  saved=read(db,parent_provenance_key(job['isin'],job['identity'],b),{})
+  lineage[b]={r[0]:saved.get(r[0]) for r in rows}
+ return dict(version=RETIME_VERSION,mode='VERIFIED_NATIVE_EMPTY',reviewed_tf='5m',isin=job['isin'],identity=job['identity'],
+   first=str(first),end=str(last),empty_first=str(a),empty_end=str(end),job_id=job['id'],policy_digest=digest(policy),source_policy_digest=digest(sp),
+   input_fingerprint=inputs['fingerprint'],before=native,source=source,source_digest=digest(source),created_at=now.isoformat(),
+   zero_observations_corroborated=True,lineage_before=lineage,
+   origin='Complete paired official GETTEX tape; exact full native5m/15m parent windows prove this5m absence; no prices replaced or synthetic observations')
+
+
+def _reviewed_positive_price_extreme(db,job,inputs,now,policy):
+ """A current visual5m discrepancy plus one fully confirmed interior price.
+
+ The quantity was already counted. Restore only an omitted positive trade's
+ H/L within one complete unchanged native parent. Never use TV prices as data.
+ """
+ from cp_controls import read,digest
+ from cp_reconciliation import SOURCE_POLICY,_observation_current
+ from history_service import parent_provenance_key
+ obs=job.get('observation') or {};meta=job['identity'];sp=read(db,SOURCE_POLICY,{})
+ if not (job['tf']=='5m' and job['first']==job['last'] and len(inputs['rows'])==1
+     and obs.get('result')=='DIFFERENT' and _observation_current(job,inputs)
+     and sp.get('approved') is True and sp.get('version')==1 and sp.get('scope')=='registered_stocks' and sp.get('exclusive_venue')=='GETTEX'):return None
+ a=pd.Timestamp(job['first']).floor('15min');end=a+pd.Timedelta(minutes=15)
+ try:
+  source=_official_window(db,job['isin'],str(a),str(end),now)
+  if len(source['trades'])>5000:return None
+  native={base:_native(db,job['isin'],meta,base,str(a),str(end)) for base in ('5m','15m')}
+  if any([r[0] for r in native[b]]!=[r[0] for r in source['rows'][b]] for b in native) or len(native['15m'])!=1:return None
+  if _aggregate(native['5m'])!=list(native['15m'][0][1:]):return None
+  changed=False
+  for original,confirmed in zip(native['5m'],source['rows']['5m']):
+   if original==confirmed:continue
+   if (original[0]!=job['first'] or original[1]!=confirmed[1] or original[4:]!=confirmed[4:]
+       or confirmed[2]<original[2] or confirmed[3]>original[3]):return None
+   ticks=[t for t in source['trades'] if pd.Timestamp(original[0])<=pd.Timestamp(t[0])<pd.Timestamp(original[0])+pd.Timedelta(minutes=5)]
+   if any(t[2]<=0 for t in ticks):return None
+   omitted=[t for t in ticks if not original[3]<=t[1]<=original[2]]
+   kept=[t[1] for t in ticks if original[3]<=t[1]<=original[2]]
+   if (len(omitted)!=1 or not kept or [kept[0],max(kept),min(kept),kept[-1]]!=list(original[1:5])
+       or sum(t[2] for t in ticks)!=original[5]):return None
+   changed=True
+  if not changed:return None
+  old=native['15m'][0];new=source['rows']['15m'][0]
+  if old[1]!=new[1] or old[4:]!=new[4:]:return None
+  _protect_visual_references(db,job,inputs,dict(first=str(a),end=str(end),source=source))
+  lineage={base:{r[0]:read(db,parent_provenance_key(job['isin'],meta,base),{}).get(r[0]) for r in rows} for base,rows in native.items()}
+  return dict(version=RETIME_VERSION,mode='VERIFIED_NATIVE_POSITIVE_PRICE_EXTREME',reviewed_tf='5m',isin=job['isin'],identity=meta,
+    first=str(a),end=str(end),job_id=job['id'],policy_digest=digest(policy),source_policy_digest=digest(sp),input_fingerprint=inputs['fingerprint'],
+    before=native,source=source,source_digest=digest(source),created_at=now.isoformat(),lineage_before=lineage,
+    origin='Current5m visual discrepancy; complete paired official tape confirms one omitted positive interior price; exact O/C/V, all native timestamps and parent-child aggregation; original values retained')
+ except (KeyError,TypeError,IndexError):return None
+
+
+def _five_minute_partition_plan(db,job,inputs,now,policy):
+ """Reuse the unique conserved native/tape partition, not a guessed5m shift."""
+ from cp_controls import read,digest
+ from cp_reconciliation import SOURCE_POLICY,_observation_current
+ from history_service import parent_provenance_key
+ sp=read(db,SOURCE_POLICY,{})
+ if not (sp.get('approved') is True and sp.get('version')==1 and sp.get('scope')=='registered_stocks' and sp.get('exclusive_venue')=='GETTEX'):return None
+ a=pd.Timestamp(job['first']);end=pd.Timestamp(job['end']);obs=job.get('observation')
+ opening_review=bool(job['first']==job['last'] and len(inputs['rows'])==1 and obs and obs.get('result')=='DIFFERENT' and _observation_current(job,inputs))
+ if (inputs['rows'] and not opening_review) or not pd.Timedelta(0)<end-a<=pd.Timedelta(minutes=30):return None
+ if obs and (obs.get('result') not in ('ABSENT','PRESENT','DIFFERENT') or not _observation_current(job,inputs)):return None
+ plan=_reviewed_partition_plan(db,{**job,'first':str(a.floor('15min'))},inputs,now,policy)
+ if not plan:plan=_reviewed_session_tail_plan(db,job,inputs,now,policy)
+ if not plan:
+  if obs and obs['result']=='PRESENT':
+   import data_quality as dq
+   authority={**inputs['proof'].get('identity',{}),'absence_evidence':inputs['proof']}
+   if dq.no_trades_proof(authority,a,end,now):raise ValueError('RETIME_VISUAL_REFERENCE_CONFLICT_OR_CHANGED')
+  return None
+ if not (pd.Timestamp(plan['first'])<=a<end<=pd.Timestamp(plan['end'])):return None
+ present=any(a<=pd.Timestamp(r[0])<end for r in plan['source']['rows']['5m'])
+ if obs and ((obs['result']=='ABSENT' and present) or (obs['result']=='PRESENT' and not present)):
+  raise ValueError('RETIME_VISUAL_REFERENCE_CONFLICT_OR_CHANGED')
+ lineage={}
+ for base,rows in plan['before'].items():
+  saved=read(db,parent_provenance_key(job['isin'],job['identity'],base),{})
+  lineage[base]={r[0]:saved.get(r[0]) for r in rows}
+ _protect_visual_references(db,job,inputs,plan)
+ return dict(plan,reviewed_tf='5m',source_policy_digest=digest(sp),lineage_before=lineage,
+   origin=plan['origin']+'; full current5m review and other current visual references protected')
+
+
+def _automatic_zero_plan(db,job,inputs,now,policy):
+ """An exact, independently proved <=5m zero-price timestamp convention.
+
+ No external observation is claimed. All positive candles stay identical;
+ existing flat zero observations map bijectively to the complete tape.
+ """
+ from cp_controls import read,digest
+ from cp_reconciliation import SOURCE_POLICY
+ from history_service import parent_provenance_key
+ sp=read(db,SOURCE_POLICY,{})
+ if not (job['tf']=='5m' and not job.get('observation') and not inputs['rows']
+     and sp.get('approved') is True and sp.get('version')==1 and sp.get('scope')=='registered_stocks' and sp.get('exclusive_venue')=='GETTEX'):return None
+ a=pd.Timestamp(job['first']).floor('15min');meta=job['identity']
+ from eur_listings import stored_identity
+ if not all(stored_identity(db,inputs['info'],meta,b) for b in ('5m','15m')):return None
+ for width in (30,45,60):
+  for offset in range(0,width,15):
+   left=a-pd.Timedelta(minutes=offset);end=left+pd.Timedelta(minutes=width)
+   if left.normalize()!=end.normalize() or not left<=pd.Timestamp(job['first'])<pd.Timestamp(job['end'])<=end:continue
+   try:
+    source=_official_window(db,job['isin'],str(left),str(end),now,allow_zero_rows=True)
+    native={b:_native(db,job['isin'],meta,b,str(left),str(end)) for b in ('5m','15m')}
+    if any(not native[b] or _aggregate(native[b])!=_aggregate(source['rows'][b]) for b in native):continue
+    if not 1<=len(native['5m'])<=9 or len(source['trades'])>5000:continue
+    if {str(pd.Timestamp(r[0]).floor('15min')) for r in native['5m']}!={r[0] for r in native['15m']}:continue
+    if any(_aggregate([r for r in native['5m'] if pd.Timestamp(p[0])<=pd.Timestamp(r[0])<pd.Timestamp(p[0])+pd.Timedelta(minutes=15)])!=list(p[1:]) for p in native['15m']):continue
+    if [r for r in native['5m'] if r[5]>0]!=[r for r in source['rows']['5m'] if r[5]>0]:continue
+    old=[r for r in native['5m'] if r[5]==0];actual=[r for r in source['rows']['5m'] if r[5]==0]
+    if not old or len(old)!=len(actual) or any(len(set(r[1:5]))!=1 for r in old+actual):continue
+    used=set();mapping={}
+    for row in old:
+     if row in actual:used.add(row[0]);mapping[row[0]]=row[0]
+    valid=True
+    for row in old:
+     if row[0] in mapping:continue
+     matches=[r for r in actual if r[0] not in used and r[1:]==row[1:] and pd.Timedelta(0)<=pd.Timestamp(row[0])-pd.Timestamp(r[0])<=pd.Timedelta(minutes=5)]
+     if len(matches)!=1:valid=False;break
+     used.add(matches[0][0]);mapping[row[0]]=matches[0][0]
+    if not valid or len(used)!=len(actual) or not any(k!=v for k,v in mapping.items()):continue
+    partition=_trade_partition(native['5m'],source['trades'],max_delay=5)
+    if partition is None:continue
+    stamps={b:{r[0] for r in source['rows'][b]} for b in native};moves=[]
+    for row in native['5m']:
+     if row[0] not in stamps['5m']:moves.append(dict(base_tf='5m',old_at=row[0],new_at=mapping[row[0]],ohlcv=list(row[1:]),binding='unique existing flat zero observation shifted at most5minutes; all positive candles unchanged'))
+    for row in native['15m']:
+     if row[0] in stamps['15m']:continue
+     children=[r for r in native['5m'] if pd.Timestamp(row[0])<=pd.Timestamp(r[0])<pd.Timestamp(row[0])+pd.Timedelta(minutes=15)]
+     targets={str(pd.Timestamp(mapping[r[0]]).floor('15min')) for r in children if r[0] in mapping}
+     if row[5]!=0 or len(set(row[1:5]))!=1 or len(children)!=sum(r[0] in mapping for r in children) or not targets<=stamps['15m'] or not targets:valid=False;break
+     moves.append(dict(base_tf='15m',old_at=row[0],new_at=min(targets),ohlcv=list(row[1:]),binding='exact original zero parent recomposed only from its bijectively matched zero children',recomposed_into=sorted(targets)))
+    if not valid:continue
+    plan=dict(first=str(left),end=str(end),source=source)
+    _protect_visual_references(db,job,inputs,plan)
+    lineage={b:{r[0]:read(db,parent_provenance_key(job['isin'],meta,b),{}).get(r[0]) for r in rows} for b,rows in native.items()}
+    return dict(version=RETIME_VERSION,mode='VERIFIED_NATIVE_TRADE_PARTITION',reviewed_tf='5m',isin=job['isin'],identity=meta,
+      first=str(left),end=str(end),job_id=job['id'],policy_digest=digest(policy),source_policy_digest=digest(sp),
+      input_fingerprint=inputs['fingerprint'],before=native,source=source,source_digest=digest(source),created_at=now.isoformat(),
+      native_trade_partition=partition,relocations=moves,lineage_before=lineage,zero_observations_corroborated=True,
+      automatic_zero_timebase=True,automatic_zero_version=1,zero_timestamp_mapping=mapping,
+      origin='Complete paired primary GETTEX proof; unique full event partition and bijective existing flat zero observations delayed<=5minutes; every positive5m candle unchanged, exact original parents and conserved whole5m/15mOHLCV; no TV observation claimed')
+   except (ValueError,KeyError,TypeError):continue
+ return None
+
+
+def _partition_co_reviews(db,job,inputs,plan):
+ """Bind disjoint current DIFFERENT diagnoses to one fully proved partition.
+
+ A unique conserved partition may reconcile disjoint diagnoses of the same
+ TF together. It never accepts contradictory presence facts or overlap.
+ """
+ from cp_reconciliation import PREFIX,_input,_observation_current
+ from cp_controls import digest
+ if not (plan.get('sampled_positive_opening_burst') or (job['tf']=='15m' and plan.get('native_partition_proved'))) or (job.get('observation') or {}).get('result')!='DIFFERENT' or not _observation_current(job,inputs):return {}
+ prefix=PREFIX+job['isin']+':'
+ rows=db.execute("SELECT value FROM settings WHERE key>=? AND key<? AND json_extract(value,'$.observation.result')='DIFFERENT' AND json_extract(value,'$.first')>=? AND json_extract(value,'$.end')<=? LIMIT 9",(prefix,prefix+'\uffff',plan['first'],plan['end'])).fetchall()
+ if len(rows)>8:return {}
+ result={}
+ for raw, in rows:
+  review=json.loads(raw)
+  if review['id']==job['id'] or review.get('identity')!=job['identity'] or review.get('tf')!=job['tf']:continue
+  if not (review['end']<=job['first'] or job['end']<=review['first']):continue
+  checked=_input(db,review)
+  if not _observation_current(review,checked) or not review['observation'].get('identity_confirmed'):continue
+  actual=[r for r in plan['source']['rows'][job['tf']] if review['first']<=r[0]<review['end']]
+  original=[r for r in plan['before'][job['tf']] if review['first']<=r[0]<review['end']]
+  if checked['rows']!=original or original==actual:continue
+  result[review['id']]=dict(job_digest=digest(review),input_fingerprint=checked['fingerprint'],first=review['first'],end=review['end'])
+ return result
+
+
+def _protect_visual_references(db,job,inputs,plan):
+ """Never retime a different current TV-confirmed scope or its bound context."""
+ from cp_reconciliation import PREFIX,_input,_observation_current
+ meta=job['identity'];prefix=PREFIX+job['isin']+':'
+ rows=db.execute("""SELECT value FROM settings WHERE key>=? AND key<?
+   AND json_extract(value,'$.observation.result') IN ('ABSENT','PRESENT','DIFFERENT','ZERO_VOLUME')
+   AND json_extract(value,'$.tf') IN ('5m','15m')
+   AND json_extract(value,'$.identity.source')=? AND json_extract(value,'$.identity.symbol')=?
+   AND json_extract(value,'$.identity.venue')=? AND json_extract(value,'$.identity.currency')=?
+   AND json_extract(value,'$.identity.timezone')=?
+   AND ((json_extract(value,'$.first')<? AND json_extract(value,'$.end')>?)
+     OR (json_extract(value,'$.native_neighbors.before[0]')>=? AND json_extract(value,'$.native_neighbors.before[0]')<?)
+     OR (json_extract(value,'$.native_neighbors.after[0]')>=? AND json_extract(value,'$.native_neighbors.after[0]')<?)) LIMIT 33""",
+   (prefix,prefix+'\uffff',*[meta[k] for k in ('source','symbol','venue','currency','timezone')],plan['end'],plan['first'],plan['first'],plan['end'],plan['first'],plan['end'])).fetchall()
+ if len(rows)>32:raise ValueError('RETIME_VISUAL_REFERENCE_WINDOW_TOO_DENSE')
+ own=job.get('observation') or {};own_at=pd.Timestamp(own['at']) if own.get('at') else None
+ for raw, in rows:
+  review=json.loads(raw)
+  if review['id']==job['id']:continue
+  checked=_input(db,review)
+  if not _observation_current(review,checked):continue
+  obs=review['observation'];base=review['tf'];canonical=plan['source']['rows'][base]
+  binding=plan.get('co_review_inputs',{}).get(review['id'])
+  if binding and obs['result']=='DIFFERENT':
+   from cp_controls import digest
+   if digest(review)==binding['job_digest'] and checked['fingerprint']==binding['input_fingerprint']:continue
+  # A proved partition may update only the context of a disjoint diagnosis;
+  # it does not change that diagnosis's subject rows or contradict its fact.
+  # The unchanged subject can reuse its observation only through the exact
+  # current primary-receipt binding below, never by moving its timestamp.
+  disjoint=review['end']<=plan['first'] or plan['end']<=review['first']
+  if (obs['result']=='DIFFERENT' and disjoint and plan.get('native_partition_proved')
+      and own.get('result')=='DIFFERENT' and own_at is not None
+      and obs.get('at')):continue
+  present=any(review['first']<=r[0]<review['end'] for r in canonical)
+  covered=plan['first']<=review['first'] and review['end']<=plan['end']
+  if (obs['result']=='ABSENT' and present
+      or obs['result']=='PRESENT' and covered and not present
+      or obs['result']=='ZERO_VOLUME' and any(review['first']<=r[0]<review['end'] and r[5]>0 for r in canonical)
+      or obs['result']=='DIFFERENT'):
+   raise ValueError('RETIME_OTHER_CURRENT_TV_REFERENCE_CONFLICT')
+  if obs['result']!='ABSENT':continue
+  # An absence review binds its surrounding native context. A newer exact
+  # DIFFERENT diagnosis can supersede that context, never its absence fact.
+  newer=own.get('result')=='DIFFERENT' and own_at is not None and obs.get('at') and own_at>pd.Timestamp(obs['at'])
+  if newer:continue
+  expected={r[0]:list(r[1:]) for r in canonical}
+  for old in checked['neighbors'].values():
+   if old and plan['first']<=old[0]<plan['end'] and expected.get(old[0])!=list(old[1:]):
+    raise ValueError('RETIME_CURRENT_TV_BOUND_CONTEXT_CHANGED')
+
+
 def empty_native_span(job,inputs):
  """Exact two-sided hole, or the final slot at a verified session boundary."""
  from timeframes import schedule
@@ -97,7 +353,7 @@ def empty_native_span(job,inputs):
  return None
 
 
-def _trade_partition(native,trades):
+def _trade_partition(native,trades,max_delay=15):
  """Unique ordered tape partition reproducing every original 5m OHLCV."""
  if not native or len(native)>9 or len(trades)>5000:return None
  solutions=[];attempts=0
@@ -112,7 +368,7 @@ def _trade_partition(native,trades):
    attempts+=1
    if attempts>20000:raise ValueError('RETIME_PARTITION_COMPLEXITY_LIMIT')
    stamp,price,qty=trades[k];t=pd.Timestamp(stamp)
-   if not at-pd.Timedelta(minutes=15)<=t<at+pd.Timedelta(minutes=5):break
+   if not at-pd.Timedelta(minutes=max_delay)<=t<at+pd.Timedelta(minutes=5):break
    volume+=qty;prices.append(price)
    if volume>row[5]:break
    if [prices[0],max(prices),min(prices),prices[-1],volume]==list(row[1:]):
@@ -121,33 +377,218 @@ def _trade_partition(native,trades):
  return solutions[0] if len(solutions)==1 else None
 
 
+def _sampled_price_partition(native,trades,max_delay=45):
+ """Unique full-quantity partition with one omitted positive interior price.
+
+ No event quantity is removed. This models a sampled native extreme only;
+ the caller must conserve the whole window and verify every native parent.
+ """
+ if not native or len(native)>9 or len(trades)>5000:return None
+ solutions=[];attempts=0
+ def visit(i,j,parts,omitted):
+  nonlocal attempts
+  if len(solutions)>1:return
+  if i==len(native):
+   if j==len(trades) and len(omitted)==1:solutions.append((parts,omitted))
+   return
+  row=native[i];at=pd.Timestamp(row[0]);volume=0.;prices=[]
+  for k in range(j,len(trades)):
+   attempts+=1
+   if attempts>20000:raise ValueError('RETIME_PARTITION_COMPLEXITY_LIMIT')
+   stamp,price,qty=trades[k];t=pd.Timestamp(stamp)
+   if not at-pd.Timedelta(minutes=max_delay)<=t<at+pd.Timedelta(minutes=5):break
+   volume+=qty;prices.append(price)
+   if volume>row[5]:break
+   if volume!=row[5]:continue
+   expected=list(row[1:5]);actual=[prices[0],max(prices),min(prices),prices[-1]]
+   if actual==expected:visit(i+1,k+1,parts+[(j,k+1)],omitted)
+   elif not omitted:
+    for x in range(1,len(prices)-1):
+     if trades[j+x][2]<=0 or row[3]<=prices[x]<=row[2]:continue
+     kept=prices[:x]+prices[x+1:]
+     if kept and [kept[0],max(kept),min(kept),kept[-1]]==expected:
+      visit(i+1,k+1,parts+[(j,k+1)],[dict(native_at=row[0],event_index=j+x,event=trades[j+x])])
+ visit(0,0,[],[])
+ return solutions[0] if len(solutions)==1 else None
+
+
+def _opening_price_partition(native,trades,max_delay=45):
+ """One short identical-price opening burst, with every quantity retained."""
+ if not native or len(native)>9 or len(trades)>5000:return None
+ solutions=[];attempts=0
+ def visit(i,j,parts,omitted):
+  nonlocal attempts
+  if len(solutions)>1:return
+  if i==len(native):
+   if j==len(trades) and omitted:solutions.append((parts,omitted))
+   return
+  row=native[i];at=pd.Timestamp(row[0]);volume=0.;prices=[]
+  for k in range(j,len(trades)):
+   attempts+=1
+   if attempts>20000:raise ValueError('RETIME_PARTITION_COMPLEXITY_LIMIT')
+   stamp,price,qty=trades[k];t=pd.Timestamp(stamp)
+   if not at-pd.Timedelta(minutes=max_delay)<=t<at+pd.Timedelta(minutes=5):break
+   volume+=qty;prices.append(price)
+   if volume>row[5]:break
+   if volume!=row[5]:continue
+   expected=list(row[1:5]);actual=[prices[0],max(prices),min(prices),prices[-1]]
+   if actual==expected:visit(i+1,k+1,parts+[(j,k+1)],omitted)
+   elif not omitted and not row[3]<=prices[0]<=row[2]:
+    # A bounded positive burst at one price, never a missing quantity or
+    # arbitrary trimming. Its end is uniquely the first different price.
+    count=next((n for n,p in enumerate(prices) if p!=prices[0]),len(prices))
+    if not 1<=count<=3 or count==len(prices):continue
+    burst=trades[j:j+count];kept=prices[count:]
+    if any(t[2]<=0 for t in burst) or len({pd.Timestamp(t[0]).floor('5min') for t in burst})!=1:continue
+    if [kept[0],max(kept),min(kept),kept[-1]]==expected:
+     visit(i+1,k+1,parts+[(j,k+1)],[dict(native_at=row[0],event_index=j+n,event=trades[j+n]) for n in range(count)])
+ visit(0,0,[],[])
+ return solutions[0] if len(solutions)==1 else None
+
+
+def _reviewed_session_tail_plan(db,job,inputs,now,policy):
+ """Recover a fully published session tail after a unique native prefix.
+
+ This is explicitly missing-source-data recovery, not conserved retiming.
+ Every old event/quantity must map first; only a positive final <=15m suffix
+ may be new. Two unchanged leading children and exact parents anchor it.
+ """
+ from cp_controls import read,digest
+ from cp_reconciliation import SOURCE_POLICY,_observation_current
+ from history_service import parent_provenance_key
+ from timeframes import schedule
+ sp=read(db,SOURCE_POLICY,{});obs=job.get('observation') or {};a=pd.Timestamp(job['first'])
+ if not (job['tf']=='5m' and not inputs['rows'] and obs.get('result') in ('PRESENT','DIFFERENT') and _observation_current(job,inputs)
+     and sp.get('approved') is True and sp.get('version')==1 and sp.get('scope')=='registered_stocks' and sp.get('exclusive_venue')=='GETTEX'):return None
+ sessions=schedule(job['identity'],a,a)
+ if len(sessions)!=1:return None
+ end=sessions.close.iloc[0].tz_convert(job['identity']['timezone']).tz_localize(None)
+ if not pd.Timedelta(0)<end-a<=pd.Timedelta(minutes=60):return None
+ for width in (30,45,60):
+  left=end-pd.Timedelta(minutes=width)
+  if not left<=a<pd.Timestamp(job['end'])<=end:continue
+  try:
+   source=_official_window(db,job['isin'],str(left),str(end),now,allow_zero_rows=True);ticks=source['trades']
+   native={b:_native(db,job['isin'],job['identity'],b,str(left),str(end)) for b in ('5m','15m')}
+   if not 2<=len(native['5m'])<=9 or not native['15m'] or len(ticks)>5000:continue
+   if {str(pd.Timestamp(r[0]).floor('15min')) for r in native['5m']}!={r[0] for r in native['15m']}:continue
+   if any(_aggregate([r for r in native['5m'] if pd.Timestamp(p[0])<=pd.Timestamp(r[0])<pd.Timestamp(p[0])+pd.Timedelta(minutes=15)])!=list(p[1:]) for p in native['15m']):continue
+   if not {r[0] for r in native['15m']}<={r[0] for r in source['rows']['15m']}:continue
+   anchored=0
+   actual={r[0]:r for r in source['rows']['5m']}
+   if not {r[0] for r in native['5m']}<=set(actual):continue
+   for row in native['5m']:
+    if row[0]>=job['first'] or actual.get(row[0])!=row:break
+    anchored+=1
+   if anchored<2:continue
+   volume=sum(r[5] for r in native['5m']);running=0.;cuts=[]
+   for k,tick in enumerate(ticks):
+    running+=tick[2]
+    if running==volume and 0<len(ticks)-k-1<=64 and all(t[2]>0 for t in ticks[k+1:]):cuts.append(k+1)
+    if running>volume:break
+   if len(cuts)!=1:continue
+   cut=cuts[0];tail=ticks[cut:]
+   if pd.Timestamp(tail[0][0])<end-pd.Timedelta(minutes=15):continue
+   partition=_trade_partition(native['5m'],ticks[:cut],max_delay=15)
+   if partition is None:continue
+   _protect_visual_references(db,job,inputs,dict(first=str(left),end=str(end),source=source))
+   lineage={b:{r[0]:read(db,parent_provenance_key(job['isin'],job['identity'],b),{}).get(r[0]) for r in rows} for b,rows in native.items()}
+   return dict(version=RETIME_VERSION,mode='VERIFIED_NATIVE_SESSION_TAIL',isin=job['isin'],identity=job['identity'],
+     first=str(left),end=str(end),job_id=job['id'],policy_digest=digest(policy),source_policy_digest=digest(sp),
+     input_fingerprint=inputs['fingerprint'],before=native,source=source,source_digest=digest(source),created_at=now.isoformat(),
+     native_trade_partition=partition,recovered_session_tail=tail,session_tail_version=1,lineage_before=lineage,
+     zero_observations_corroborated=True,origin='Current exact visual review; complete paired GETTEX final session files; two exact leading children, unique full native prefix within15m, exact original parents; only positive final15m source events recovered, original values retained')
+  except ValueError as error:
+   if str(error) in ('RETIME_OTHER_CURRENT_TV_REFERENCE_CONFLICT','RETIME_CURRENT_TV_BOUND_CONTEXT_CHANGED','RETIME_VISUAL_REFERENCE_WINDOW_TOO_DENSE'):raise
+  except (KeyError,TypeError,IndexError):continue
+ return None
+
+
 def _reviewed_partition_plan(db,job,inputs,now,policy):
  """A real timestamp redistribution, proved by every original native value."""
  from cp_controls import digest
- a=pd.Timestamp(job['first']);meta=job['identity']
- for left,end in ((a,a+pd.Timedelta(minutes=30)),(a-pd.Timedelta(minutes=15),a+pd.Timedelta(minutes=15))):
-  if left.normalize()!=end.normalize():continue
+ from cp_reconciliation import _observation_current,SOURCE_POLICY
+ from cp_controls import read
+ a=pd.Timestamp(job['first']);meta=job['identity'];obs=job.get('observation') or {}
+ reviewed=bool(job['tf'] in ('5m','15m') and obs.get('result') in ('PRESENT','DIFFERENT') and _observation_current(job,inputs))
+ sp=read(db,SOURCE_POLICY,{})
+ reviewed=reviewed and sp.get('approved') is True and sp.get('version')==1 and sp.get('scope')=='registered_stocks' and sp.get('exclusive_venue')=='GETTEX'
+ widths=(30,45,60,75) if reviewed and obs.get('result')=='DIFFERENT' else (30,45,60)
+ windows=[(a-pd.Timedelta(minutes=offset),a+pd.Timedelta(minutes=width-offset)) for width in widths for offset in range(0,width,15)]
+ for left,end in windows:
+  if left.normalize()!=end.normalize() or not (left<=pd.Timestamp(job.get('interval_start',job['first']))<pd.Timestamp(job['end'])<=end):continue
+  opening=None
   try:
-   source=_official_window(db,job['isin'],str(left),str(end),now)
+   source=_official_window(db,job['isin'],str(left),str(end),now,allow_zero_rows=True)
    native={base:_native(db,job['isin'],meta,base,str(left),str(end)) for base in ('5m','15m')}
    if any(not native[base] or _aggregate(native[base])!=_aggregate(source['rows'][base]) for base in native):continue
-   if [r[0] for r in native['15m']]!=[r[0] for r in source['rows']['15m']]:continue
+   if not reviewed and [r[0] for r in native['15m']]!=[r[0] for r in source['rows']['15m']]:continue
    if native==source['rows']:continue
    # The original parent must itself be exactly built from its native children.
    if any(_aggregate([r for r in native['5m'] if pd.Timestamp(p[0])<=pd.Timestamp(r[0])<pd.Timestamp(p[0])+pd.Timedelta(minutes=15)])!=list(p[1:]) for p in native['15m']):continue
-   partition=_trade_partition(native['5m'],source['trades'])
+   partition=_trade_partition(native['5m'],source['trades'],max_delay=45 if reviewed else 15);sampled=None;opening=None
+   if partition is None and reviewed and obs.get('result')=='DIFFERENT':
+    sampled=_sampled_price_partition(native['5m'],source['trades'])
+    if sampled:partition=sampled[0]
+    elif job['tf']=='5m':
+     opening=_opening_price_partition(native['5m'],source['trades'])
+     if opening:partition=opening[0]
    if partition is None:continue
    official_stamps={r[0] for r in source['rows']['5m']};moves=[]
+   if reviewed:
+    # A vanished native parent is deletable only as a unique exact parent
+    # relocation into an empty native slot, never a discarded aggregate.
+    old_stamps={r[0] for r in native['15m']};new_stamps={r[0] for r in source['rows']['15m']};used=set();invalid=False
+    for parent in native['15m']:
+     if parent[0] in new_stamps:continue
+     matches=[r for r in source['rows']['15m'] if r[0] not in old_stamps and list(r[1:])==list(parent[1:]) and pd.Timedelta(0)<=pd.Timestamp(parent[0])-pd.Timestamp(r[0])<=pd.Timedelta(minutes=45)]
+     if len(matches)!=1 or matches[0][0] in used:
+      # A flat zero parent can be recomposed into an existing real parent
+      # only through its own distinct zero-quantity source events. Every
+      # original child/parent and the full tape were already conserved.
+      children=[(r,edge) for r,edge in zip(native['5m'],partition) if pd.Timestamp(parent[0])<=pd.Timestamp(r[0])<pd.Timestamp(parent[0])+pd.Timedelta(minutes=15)]
+      events=[(k,source['trades'][k]) for r,(start,stop) in children for k in range(start,stop)]
+      target={str(pd.Timestamp(t[0]).floor('15min')) for k,t in events}
+      positive_single=(parent[5]>0 and len(children)==1 and len(target)==1 and events
+        and _aggregate([(t[0],t[1],t[1],t[1],t[1],t[2]) for k,t in events])==list(parent[1:])
+        and target<=new_stamps and all(pd.Timedelta(0)<=pd.Timestamp(parent[0])-pd.Timestamp(t)<=pd.Timedelta(minutes=15) for t in target))
+      if positive_single:
+       moves.append(dict(base_tf='15m',old_at=parent[0],new_at=min(target),ohlcv=list(parent[1:]),binding='unique exact single-child positive events recomposed in actual source parent',recomposed_into=sorted(target),child_event_ranges=[dict(old_at=r[0],start=edge[0],stop=edge[1]) for r,edge in children]));continue
+      if (parent[5]!=0 or len(set(parent[1:5]))!=1 or not events or len({k for k,t in events})!=len(events)
+          or any(t[1]!=parent[1] or t[2]!=0 for k,t in events) or not target<=new_stamps
+          or any(not pd.Timedelta(0)<=pd.Timestamp(parent[0])-pd.Timestamp(t)<=pd.Timedelta(minutes=45) for t in target)):
+       invalid=True;break
+      moves.append(dict(base_tf='15m',old_at=parent[0],new_at=min(target),ohlcv=list(parent[1:]),binding='unique zero-quantity child events recomposed in actual source parents',recomposed_into=sorted(target),child_event_ranges=[dict(old_at=r[0],start=edge[0],stop=edge[1]) for r,edge in children]));continue
+     used.add(matches[0][0]);moves.append(dict(base_tf='15m',old_at=parent[0],new_at=matches[0][0],ohlcv=list(parent[1:]),binding='unique exact parent within full native trade partition'))
+    if invalid:continue
    for row,(start,stop) in zip(native['5m'],partition):
     if row[0] not in official_stamps:
      target=str(pd.Timestamp(source['trades'][start][0]).floor('5min'))
      moves.append(dict(base_tf='5m',old_at=row[0],new_at=target,ohlcv=list(row[1:]),
        binding='exact unique ordered official trade partition'))
+   lineage={}
+   if reviewed:
+    guard_plan=dict(first=str(left),end=str(end),source=source,before=native,native_partition_proved=True,**(dict(sampled_positive_opening_burst=opening[1]) if opening else {}))
+    co_reviews=_partition_co_reviews(db,job,inputs,guard_plan);guard_plan['co_review_inputs']=co_reviews
+    _protect_visual_references(db,job,inputs,guard_plan)
+    from history_service import parent_provenance_key
+    for base,rows in native.items():
+     saved=read(db,parent_provenance_key(job['isin'],meta,base),{})
+     lineage[base]={r[0]:saved.get(r[0]) for r in rows}
    return dict(version=RETIME_VERSION,mode='VERIFIED_NATIVE_TRADE_PARTITION',isin=job['isin'],identity=meta,
+     **(dict(reviewed_window_partition=True,source_policy_digest=digest(sp),max_native_delay_minutes=45,lineage_before=lineage) if reviewed else {}),
      first=str(left),end=str(end),job_id=job['id'],policy_digest=digest(policy),input_fingerprint=inputs['fingerprint'],
      before=native,source=source,source_digest=digest(source),created_at=now.isoformat(),relocations=moves,
-     native_trade_partition=partition,origin='Current visual discrepancy; complete official tape uniquely reproduces all original OHLCV with bounded native timestamp delay; conserved 5m/15m window')
-  except (ValueError,KeyError,TypeError):continue
+     native_trade_partition=partition,zero_observations_corroborated=True,
+     **(dict(sampled_positive_interior_price=sampled[1],sampled_price_version=1) if sampled else {}),
+     **(dict(sampled_positive_opening_burst=opening[1],opening_burst_version=1) if opening else {}),
+     **(dict(co_review_inputs=co_reviews) if reviewed and co_reviews else {}),
+     origin=('Current DIFFERENT review; complete paired official tape uniquely partitions every native quantity and reproduces native prices except one positive interior extreme already counted in volume; exact native parents and conserved full5m/15m window' if sampled else 'Current DIFFERENT review; complete paired tape uniquely reproduces all native quantities and closes with one identical positive opening-price burst omitted only from sampling; exact native parents and conserved5m/15m window' if opening else 'Current visual discrepancy; complete official tape uniquely reproduces all original OHLCV with bounded native timestamp delay; conserved 5m/15m window'))
+  except ValueError as error:
+   if opening and str(error)=='RETIME_OTHER_CURRENT_TV_REFERENCE_CONFLICT':continue # try a whole jointly reviewed window, never ignore a conflicting fact
+   if str(error) in ('RETIME_OTHER_CURRENT_TV_REFERENCE_CONFLICT','RETIME_CURRENT_TV_BOUND_CONTEXT_CHANGED','RETIME_VISUAL_REFERENCE_WINDOW_TOO_DENSE'):raise
+   continue
+  except (KeyError,TypeError):continue
  return None
 
 
@@ -194,6 +635,170 @@ def _reviewed_positive_extreme(db,job,inputs,now,policy):
  except (ValueError,KeyError,TypeError,IndexError):return None
 
 
+def _reviewed_closing_tick(db,job,inputs,now,policy):
+ """Recover one omitted final published price/quantity, never arbitrary values.
+
+ A current visual discrepancy is only the trigger. The full official tape,
+ paired publication coverage and both native TF must prove that precisely the
+ LAST tick is missing. Every preceding tick, timestamp and OHLCV stays exact.
+ """
+ from cp_controls import read,digest
+ from cp_reconciliation import SOURCE_POLICY
+ source_policy=read(db,SOURCE_POLICY,{})
+ if not (source_policy.get('approved') is True and source_policy.get('version')==1
+     and source_policy.get('scope')=='registered_stocks'
+     and source_policy.get('exclusive_venue')=='GETTEX'):return None
+ a=pd.Timestamp(job['first']);end=a+pd.Timedelta(minutes=15);meta=job['identity']
+ try:
+  source=_official_window(db,job['isin'],str(a),str(end),now)
+  ticks=source['trades']
+  if len(ticks)<2 or pd.Timestamp(ticks[-1][0]).floor('5min')!=pd.Timestamp(ticks[-2][0]).floor('5min'):return None
+  native={base:_native(db,job['isin'],meta,base,str(a),str(end)) for base in ('5m','15m')}
+  raw=pd.DataFrame(ticks[:-1],columns=['ts','price','volume']);raw.index=pd.to_datetime(raw.pop('ts'),format='mixed')
+  for base,old in native.items():
+   expected=[(str(t),float(g.price.iloc[0]),float(g.price.max()),float(g.price.min()),float(g.price.iloc[-1]),float(g.volume.sum()))
+     for t,g in raw.groupby(pd.Grouper(freq=base.replace('m','min'))) if not g.empty]
+   if old!=expected or [r[0] for r in old]!=[r[0] for r in source['rows'][base]]:return None
+  if native==source['rows']:return None
+  return dict(version=RETIME_VERSION,mode='VERIFIED_NATIVE_CLOSING_TICK',isin=job['isin'],identity=meta,
+    first=str(a),end=str(end),job_id=job['id'],policy_digest=digest(policy),source_policy_digest=digest(source_policy),
+    input_fingerprint=inputs['fingerprint'],before=native,source=source,source_digest=digest(source),
+    created_at=now.isoformat(),recovered_closing_tick=ticks[-1],
+    origin='Current visual discrepancy; complete paired official GETTEX tape exactly reproduces every native 5m/15m value when only its final published tick is excluded; original values retained')
+ except (ValueError,KeyError,TypeError,IndexError):return None
+
+
+def _reviewed_price_samples(db,job,inputs,now,policy):
+ """Full quantities, but one opening price and at most one extreme not sampled.
+
+ Only the first 5m child may differ. Its unchanged close and full quantity
+ must be exact; omitting the independently published first positive price
+ and at most one isolated interior extreme must reproduce ALL old prices.
+ """
+ from cp_controls import read,digest
+ from cp_reconciliation import SOURCE_POLICY
+ sp=read(db,SOURCE_POLICY,{})
+ if not (sp.get('approved') is True and sp.get('version')==1
+     and sp.get('scope')=='registered_stocks' and sp.get('exclusive_venue')=='GETTEX'):return None
+ a=pd.Timestamp(job['first']);end=a+pd.Timedelta(minutes=15);meta=job['identity']
+ try:
+  source=_official_window(db,job['isin'],str(a),str(end),now)
+  native={base:_native(db,job['isin'],meta,base,str(a),str(end)) for base in ('5m','15m')}
+  if len(native['15m'])!=1 or not native['5m']:return None
+  for base in native:
+   if [r[0] for r in native[base]]!=[r[0] for r in source['rows'][base]]:return None
+   if any(old[4:]!=confirmed[4:] for old,confirmed in zip(native[base],source['rows'][base])):return None
+  if native['5m'][1:]!=source['rows']['5m'][1:]:return None
+  original=native['5m'][0];confirmed=source['rows']['5m'][0]
+  if original==confirmed or original[1]==confirmed[1] or _aggregate(native['5m'])!=list(native['15m'][0][1:]):return None
+  ticks=[t for t in source['trades'] if pd.Timestamp(original[0])<=pd.Timestamp(t[0])<pd.Timestamp(original[0])+pd.Timedelta(minutes=5)]
+  if not 2<=len(ticks)<=64 or any(t[2]<=0 for t in ticks):return None
+  if sum(t[2] for t in ticks)!=original[5] or original[3]<=ticks[0][1]<=original[2]:return None
+  matches=[]
+  for interior in [None]+[k for k in range(1,len(ticks)-1) if not original[3]<=ticks[k][1]<=original[2]]:
+   removed={0} if interior is None else {0,interior}
+   prices=[t[1] for k,t in enumerate(ticks) if k not in removed]
+   if prices and [prices[0],max(prices),min(prices),prices[-1]]==list(original[1:5]):matches.append(removed)
+  if len(matches)!=1:return None
+  return dict(version=RETIME_VERSION,mode='VERIFIED_NATIVE_PRICE_SAMPLES',isin=job['isin'],identity=meta,
+    first=str(a),end=str(end),job_id=job['id'],policy_digest=digest(policy),source_policy_digest=digest(sp),
+    input_fingerprint=inputs['fingerprint'],before=native,source=source,source_digest=digest(source),created_at=now.isoformat(),
+    omitted_price_ticks=[ticks[k] for k in sorted(matches[0])],
+    origin='Current visual discrepancy; complete paired official GETTEX tape uniquely reproduces every native price when only its first positive child price and at most one isolated interior extreme are not sampled; all quantities and closes conserved; original values retained')
+ except (ValueError,KeyError,TypeError,IndexError):return None
+
+
+def _reviewed_price_closing_partition(db,job,inputs,native,source,now,policy):
+ """Existing zero price delayed <=15m plus exactly one missing final tick.
+
+ The unique complete prefix reproduces EVERY original child; native parents
+ must exactly aggregate those children. Only independently published values
+ are written, including the observed zero price. No arbitrary provider merge.
+ """
+ from cp_controls import read,digest
+ from cp_reconciliation import SOURCE_POLICY
+ sp=read(db,SOURCE_POLICY,{})
+ if not (sp.get('approved') is True and sp.get('version')==1
+     and sp.get('scope')=='registered_stocks' and sp.get('exclusive_venue')=='GETTEX'):return None
+ ticks=source['trades'];a=pd.Timestamp(job['first'])
+ if len(ticks)<2 or ticks[-1][2]<=0 or not native['5m'] or not native['15m']:return None
+ if native==source['rows']:return None
+ if pd.Timestamp(ticks[-1][0]).floor('5min')!=pd.Timestamp(native['5m'][-1][0]):return None
+ partition=_trade_partition(native['5m'],ticks[:-1])
+ if partition is None:return None
+ parents={r[0] for r in native['15m']}
+ if {str(pd.Timestamp(r[0]).floor('15min')) for r in native['5m']}!=parents:return None
+ for parent in native['15m']:
+  if _aggregate([r for r in native['5m'] if pd.Timestamp(parent[0])<=pd.Timestamp(r[0])<pd.Timestamp(parent[0])+pd.Timedelta(minutes=15)])!=list(parent[1:]):return None
+ if not parents<={r[0] for r in source['rows']['15m']}:return None
+ quoted=[r for r in source['rows']['15m'] if r[0]==str(a)]
+ if len(quoted)!=1 or quoted[0][5]!=0 or len(set(quoted[0][1:5]))!=1:return None
+ actual={r[0]:r for r in source['rows']['5m']};reassigned=[]
+ for original in native['5m']:
+  if original[5]>0:
+   if original[0] not in actual:return None
+   continue
+  matches=[r for r in actual.values() if list(r[1:])==list(original[1:])
+    and pd.Timedelta(0)<=pd.Timestamp(original[0])-pd.Timestamp(r[0])<=pd.Timedelta(minutes=15)]
+  if len(matches)!=1 or len(set(original[1:5]))!=1:return None
+  if original!=matches[0]:reassigned.append(dict(old_at=original[0],confirmed_at=matches[0][0],ohlcv=list(original[1:])))
+ if not reassigned:return None
+ # No additional zero-price observation may be introduced without its exact
+ # already existing native value; zero quantity is never invented turnover.
+ for actual_row in actual.values():
+  if actual_row[5]==0 and not any(list(r[1:])==list(actual_row[1:]) for r in native['5m']):return None
+ return dict(version=RETIME_VERSION,mode='VERIFIED_PRICE_CLOSING_TICK_PARTITION',isin=job['isin'],identity=job['identity'],
+   first=str(a),end=str(pd.Timestamp(inputs['neighbors']['after'][0])+pd.Timedelta(minutes=15)),
+   job_id=job['id'],policy_digest=digest(policy),source_policy_digest=digest(sp),input_fingerprint=inputs['fingerprint'],
+   before=native,source=source,source_digest=digest(source),created_at=now.isoformat(),
+   native_trade_partition=partition,recovered_closing_tick=ticks[-1],zero_price_reassignments=reassigned,
+   zero_observations_corroborated=True,
+   origin='Current zero-price review; complete paired official GETTEX tape uniquely reproduces all native children and parents except its final positive tick, including bounded delayed existing zero prices; original values retained')
+
+
+def _primary_window_plan(db,job,inputs,now,policy):
+ """Recover one exact primary parent corroborated by a bound manual review.
+
+ Missing native quantities are explicit here; no conservation claim or TV
+ price import. Every written value comes from the complete primary tape.
+ """
+ from cp_controls import read,digest
+ from cp_reconciliation import SOURCE_POLICY,_observation_current
+ from history_service import parent_provenance_key
+ from pathlib import Path
+ from eur_listings import stored_identity
+ obs=job.get('observation') or {};confirmation=obs.get('primary_window_confirmation') or {};sp=read(db,SOURCE_POLICY,{})
+ if not (job['tf']=='15m' and job['first']==job['last'] and obs.get('result')=='DIFFERENT' and _observation_current(job,inputs)
+     and confirmation.get('version')==1 and confirmation.get('first')==job['first'] and confirmation.get('end')==job['end']
+     and confirmation.get('matched_fields')==['timestamp','open','high','low','close','volume']
+     and (confirmation.get('native_input_fingerprint')==inputs['fingerprint']
+          or inputs.get('review_context_fingerprint') and confirmation.get('native_input_fingerprint')==inputs['review_context_fingerprint'])
+     and sp.get('approved') is True and sp.get('version')==1 and sp.get('scope')=='registered_stocks' and sp.get('exclusive_venue')=='GETTEX'):return None
+ if not stored_identity(db,inputs['info'],job['identity'],'5m'):return None
+ native={b:_native(db,job['isin'],job['identity'],b,job['first'],job['end']) for b in ('5m','15m')}
+ if digest(native)!=confirmation.get('native_window_digest'):return None
+ missing_window=not native['5m'] and not native['15m']
+ # The exact parent confirmation independently covers a wholly absent
+ # native window too. Partial/mismatched existing aggregates still require
+ # their original consistency checks; absence never supplies source values.
+ if not missing_window:
+  if not 1<=len(native['5m'])<=3 or len(native['15m'])!=1:return None
+  if _aggregate(native['5m'])!=list(native['15m'][0][1:]):return None
+ source=_official_window(db,job['isin'],job['first'],job['end'],now,allow_zero_rows=True)
+ if digest(source)!=confirmation.get('source_digest') or len(source['rows']['15m'])!=1 or source['rows']['15m'][0][5]<=0 or native==source['rows']:return None
+ for file in obs.get('evidence',[]):
+  path=Path(file['path'])
+  if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest()!=file['sha256']:return None
+ if not obs.get('evidence'):return None
+ _protect_visual_references(db,job,inputs,dict(first=job['first'],end=job['end'],source=source))
+ lineage={b:{r[0]:read(db,parent_provenance_key(job['isin'],job['identity'],b),{}).get(r[0]) for r in rows} for b,rows in native.items()}
+ superseded=[dict(base_tf=b,old_at=r[0],new_at=None,ohlcv=list(r[1:]),superseded=True,binding='Exact complete primary parent corroborated against TV; this old slot is independently confirmed empty, original preserved') for b,rows in native.items() for r in rows if r[0] not in {x[0] for x in source['rows'][b]}]
+ return dict(version=RETIME_VERSION,mode='VERIFIED_PRIMARY_WINDOW',reviewed_tf='15m',isin=job['isin'],identity=job['identity'],first=job['first'],end=job['end'],
+   job_id=job['id'],policy_digest=digest(policy),source_policy_digest=digest(sp),input_fingerprint=inputs['fingerprint'],before=native,source=source,
+   source_digest=digest(source),created_at=now.isoformat(),lineage_before=lineage,zero_observations_corroborated=True,relocations=superseded,
+   primary_window_confirmation=confirmation,**({'missing_native_window':True} if missing_window else {}),origin='One exact closed15m TV parent independently corroborates complete paired primary GETTEX tape; source values only, superseded native values and lineage retained; no conservation or trading grant claimed')
+
+
 def retime_plan(db,job,inputs,now):
  """Bounded verified same-session repairs, retaining original native OHLCV."""
  from cp_controls import read,digest
@@ -202,9 +807,28 @@ def retime_plan(db,job,inputs,now):
  policy=read(db,RETIME_POLICY,{})
  if policy.get('version')!=RETIME_VERSION or policy.get('approved') is not True:return None
  meta=job['identity'];a=pd.Timestamp(job['first']);after=inputs['neighbors']['after']
- if (job['tf']!='15m' or meta['source']!='gettex_chart' or meta['venue']!='GETTEX'
+ if (job['tf'] not in ('5m','15m') or meta['source']!='gettex_chart' or meta['venue']!='GETTEX'
      or meta['currency']!='EUR' or meta['timezone']!='Europe/Berlin'):return None
+ if (job.get('observation') or {}).get('primary_window_confirmation'):
+  return _primary_window_plan(db,job,inputs,now,policy)
+ if job['tf']=='5m':
+  automatic=_automatic_zero_plan(db,job,inputs,now,policy)
+  if automatic:return automatic
+  extreme=_reviewed_positive_price_extreme(db,job,inputs,now,policy)
+  if extreme:return extreme
+  observation=job.get('observation') or {}
+  if observation.get('result') in (None,'ABSENT'):
+   empty=_five_minute_empty_plan(db,job,inputs,now,policy)
+   if empty:return empty
+  return _five_minute_partition_plan(db,job,inputs,now,policy)
  observation=job.get('observation')
+ # A current exact visual discrepancy may identify a missing native parent.
+ # The full official tape must still uniquely reproduce EVERY original child
+ # and conserve all5m/15m OHLCV; observation alone cannot supply any price.
+ if (observation and observation.get('result') in ('PRESENT','DIFFERENT')
+     and _observation_current(job,inputs) and (not inputs['rows'] or observation['result']=='DIFFERENT')):
+  reviewed_partition=_reviewed_partition_plan(db,job,inputs,now,policy)
+  if reviewed_partition:return reviewed_partition
  if inputs['rows']:
   if (len(inputs['rows'])==1 and job['last']==str(a) and observation
       and observation.get('result')=='DIFFERENT' and _observation_current(job,inputs)):
@@ -212,6 +836,10 @@ def retime_plan(db,job,inputs,now):
    if partition:return partition
    opening=_reviewed_positive_extreme(db,job,inputs,now,policy)
    if opening:return opening
+   closing=_reviewed_closing_tick(db,job,inputs,now,policy)
+   if closing:return closing
+   samples=_reviewed_price_samples(db,job,inputs,now,policy)
+   if samples:return samples
   # An explicitly reviewed existing candle can omit a real traded extreme.
   # Keep this narrower than a general provider overwrite: identical timestamps,
   # open/close/volume, unchanged neighbour and conserved complete parent window.
@@ -276,6 +904,9 @@ def retime_plan(db,job,inputs,now):
   raise ValueError('RETIME_VISUAL_REFERENCE_CONFLICT_OR_CHANGED')
  source=_official_window(db,job['isin'],str(a),str(b),now,allow_zero_rows=zero_observed)
  before={base:_native(db,job['isin'],meta,base,str(a),str(b)) for base in ('5m','15m')}
+ if zero_observed:
+  closing=_reviewed_price_closing_partition(db,job,inputs,before,source,now,policy)
+  if closing:return closing
  if any(not before[base] or _aggregate(before[base])!=_aggregate(source['rows'][base]) for base in before):
   raise ValueError('RETIME_NOT_CONSERVED')
  if zero_observed:
@@ -316,17 +947,103 @@ def retime_plan(db,job,inputs,now):
   origin='official GETTEX trade publications; TV observation is diagnostic only')
 
 
+def receipt_source_current(source,receipt):
+ """Exact existing receipt, scoped to its immutable historical window.
+
+ Revalidate the entire source in _official_window first. Only equivalent
+ interval geometry and an exchange notice OUTSIDE that window can differ.
+ Prices, trades, required file hashes, identity and unknown facts stay exact.
+ """
+ import copy
+ from cp_controls import digest
+ try:
+  saved=receipt['source'];expected=receipt['source_digest']
+  # A modified receipt must not lend a forged authority to unchanged data.
+  if digest(saved)!=expected:return False
+  if digest(source)==expected:return True
+  a,b=pd.Timestamp(receipt['first']),pd.Timestamp(receipt['end'])
+  if a.tzinfo is not None or b.tzinfo is not None or pd.isna(a) or pd.isna(b) or a>=b:return False
+  def scoped(value):
+   result=copy.deepcopy(value);proof=result['proof']
+   for field in ('no_trades','trade_intervals','zero_quantity_intervals','incomplete_publication_intervals'):
+    if field not in proof:continue
+    clipped=[]
+    for x,y in proof[field]:
+     x,y=pd.Timestamp(x),pd.Timestamp(y)
+     if x.tzinfo is not None or y.tzinfo is not None or pd.isna(x) or pd.isna(y) or x>=y:raise ValueError('INVALID_EVIDENCE_RANGE')
+     if x<b and y>a:clipped.append((max(x,a),min(y,b)))
+    merged=[]
+    for x,y in sorted(clipped):
+     if merged and x<=merged[-1][1]:merged[-1]=(merged[-1][0],max(y,merged[-1][1]))
+     else:merged.append((x,y))
+    proof[field]=[(str(x),str(y)) for x,y in merged]
+   if 'exchange_closures' in proof:
+    relevant=[]
+    for entry in proof['exchange_closures']:
+     x,y=pd.Timestamp(entry['start']),pd.Timestamp(entry['end'])
+     if pd.isna(x) or pd.isna(y) or x.tzinfo is not None or y.tzinfo is not None or x>=y:raise ValueError('INVALID_CLOSURE')
+     if x<b and y>a:relevant.append(entry)
+    if relevant:proof['exchange_closures']=relevant
+    else:
+     proof.pop('exchange_closures');proof.pop('closure_checked_at',None)
+   return result
+  return digest(scoped(source))==digest(scoped(saved))
+ except (ValueError,KeyError,TypeError):return False
+
+
+def reviewed_context_fingerprint(db,job,inputs):
+ """Reuse an unchanged subject only when a current receipt proves its new neighbour.
+
+ Reconstruct the entire original visual hash first. Every changed neighbour
+ must be an exact before/after row of one disjoint, independently validated
+ conserved source correction. Never renew observations or their deadlines.
+ """
+ from cp_reconciliation import _fingerprint,FINGERPRINT_VERSION
+ obs=job.get('observation') or {};old=job.get('native_neighbors')
+ if obs.get('fingerprint_version')!=FINGERPRINT_VERSION or not old:return None
+ if _fingerprint(dict(inputs,neighbors=old))!=obs.get('input_fingerprint'):return None
+ changed=[k for k in ('before','after') if json.dumps(old.get(k))!=json.dumps(inputs['neighbors'].get(k))]
+ if not changed:return None
+ prefix=RETIME_PREFIX+job['isin']+':';meta=job['identity']
+ for side in changed:
+  previous,current=old.get(side),inputs['neighbors'].get(side)
+  if not previous or not current:return None
+  first,end=min(previous[0],current[0]),max(previous[0],current[0])
+  rows=db.execute("""SELECT value FROM settings WHERE key>=? AND key<?
+   AND json_extract(value,'$.state')='APPLIED'
+   AND json_extract(value,'$.mode')='VERIFIED_NATIVE_TRADE_PARTITION'
+   AND json_extract(value,'$.reviewed_window_partition')=1
+   AND json_extract(value,'$.first')<=? AND json_extract(value,'$.end')>?
+   ORDER BY key LIMIT 9""",(prefix,prefix+'\uffff',first,end)).fetchall()
+  if len(rows)>8:return None
+  proved=False
+  for raw, in rows:
+   receipt=json.loads(raw)
+   if receipt.get('identity')!=meta or not (receipt['end']<=job['first'] or job['end']<=receipt['first']):continue
+   before=receipt.get('before',{}).get(job['tf'],[]);after=receipt.get('source',{}).get('rows',{}).get(job['tf'],[])
+   if (not any(list(r)==list(previous) for r in before)
+       or not any(list(r)==list(current) for r in after)
+       or not retime_current(db,receipt)):continue
+   proved=True;break
+  if not proved:return None
+ return obs['input_fingerprint']
+
+
 def retime_current(db,receipt,now=None):
  from cp_controls import read,digest
  from eur_listings import stored_identity
  try:
   policy=read(db,RETIME_POLICY,{})
   if policy.get('approved') is not True or digest(policy)!=receipt['policy_digest']:return False
+  if receipt.get('mode') in ('VERIFIED_NATIVE_CLOSING_TICK','VERIFIED_PRICE_CLOSING_TICK_PARTITION','VERIFIED_NATIVE_PRICE_SAMPLES','VERIFIED_PRIMARY_WINDOW') or receipt.get('reviewed_tf')=='5m' or receipt.get('reviewed_window_partition'):
+   from cp_reconciliation import SOURCE_POLICY
+   if digest(read(db,SOURCE_POLICY,{}))!=receipt.get('source_policy_digest'):return False
   row=db.execute('SELECT payload FROM instruments WHERE isin=?',(receipt['isin'],)).fetchone()
   if not row or not stored_identity(db,json.loads(row[0]),receipt['identity'],'15m'):return False
+  if (receipt.get('reviewed_tf')=='5m' or receipt.get('mode')=='VERIFIED_PRIMARY_WINDOW') and not stored_identity(db,json.loads(row[0]),receipt['identity'],'5m'):return False
   source=_official_window(db,receipt['isin'],receipt['first'],receipt['end'],pd.Timestamp(now or pd.Timestamp.now(tz='UTC')),
-   allow_zero_rows=receipt.get('mode') in ('VERIFIED_NATIVE_EMPTY','VERIFIED_PRICE_OBSERVATION_TIMEBASE') and receipt.get('zero_observations_corroborated') is True)
-  if digest(source)!=receipt['source_digest']:return False
+   allow_zero_rows=receipt.get('mode') in ('VERIFIED_NATIVE_EMPTY','VERIFIED_NATIVE_TRADE_PARTITION','VERIFIED_NATIVE_SESSION_TAIL','VERIFIED_PRIMARY_WINDOW','VERIFIED_PRICE_OBSERVATION_TIMEBASE','VERIFIED_PRICE_CLOSING_TICK_PARTITION') and receipt.get('zero_observations_corroborated') is True)
+  if not receipt_source_current(source,receipt):return False
   return all(digest(_native(db,receipt['isin'],receipt['identity'],base,receipt['first'],receipt['end']))==digest(rows)
              for base,rows in source['rows'].items())
  except (ValueError,KeyError,TypeError):return False
@@ -341,7 +1058,7 @@ def publish_retime(db,job,inputs,plan,now):
  if digest(current)!=digest(plan):raise ValueError('RETIME_INPUT_CHANGED')
  key=RETIME_PREFIX+job['isin']+':'+job['id']
  if read(db,key,{}):raise ValueError('RETIME_RECEIPT_ALREADY_EXISTS')
- added=changed=relocated=0;meta=job['identity'];isin=job['isin']
+ added=changed=relocated=superseded=0;meta=job['identity'];isin=job['isin']
  for base,rows in plan['source']['rows'].items():
   lineage_key=parent_provenance_key(isin,meta,base);lineage=read(db,lineage_key,{})
   old_rows={r[0]:list(r[1:]) for r in plan['before'][base]}
@@ -354,7 +1071,9 @@ def publish_retime(db,job,inputs,plan,now):
    after=(db.execute('SELECT revision FROM input_revisions WHERE scope=?',(scope,)).fetchone() or [0])[0]
    db.execute('INSERT INTO candle_revision_history(detected_at,isin,identity,base_tf,ts,old_ohlcv,new_ohlcv,revision_before,revision_after) VALUES (?,?,?,?,?,?,?,?,?)',
     (now.isoformat(),isin,json.dumps(meta,sort_keys=True),base,at,json.dumps(dict(zip(FIELDS,old_rows[at]))),'{}',prior,after))
-   lineage.pop(at,None);relocated+=1
+   lineage.pop(at,None)
+   if move.get('superseded'):superseded+=1
+   else:relocated+=1
   for at,*values in rows:
    old=old_rows.get(at)
    # The entire corrected window retains lineage, even equal native rows.
@@ -368,9 +1087,11 @@ def publish_retime(db,job,inputs,plan,now):
     (now.isoformat(),isin,json.dumps(meta,sort_keys=True),base,at,json.dumps(dict(zip(FIELDS,old))) if old else '{}',json.dumps(dict(zip(FIELDS,values))),prior,after))
    added+=int(old is None and at not in {r['new_at'] for r in moves});changed+=int(old is not None)
   write(db,lineage_key,lineage)
- write(db,key,{**plan,'state':'APPLIED','added':added,'changed':changed,'relocated':relocated})
- progress=read(db,PROGRESS+isin,{});progress['analysis_requested_at']=now.isoformat();write(db,PROGRESS+isin,progress)
- return dict(state='APPLIED',receipt_key=key,added=added,changed=changed,relocated=relocated,first=plan['first'],end=plan['end'])
+ write(db,key,{**plan,'state':'APPLIED','added':added,'changed':changed,'relocated':relocated,'superseded':superseded})
+ from cp_reconciliation import _queue_repaired_scopes
+ _queue_repaired_scopes(db,key,plan,now)
+ progress=read(db,PROGRESS+isin,{});progress['analysis_requested_at']=now.isoformat();progress['native_source_published_at']=now.isoformat();write(db,PROGRESS+isin,progress)
+ return dict(state='APPLIED',receipt_key=key,added=added,changed=changed,relocated=relocated,superseded=superseded,first=plan['first'],end=plan['end'])
 
 
 def retimed_rows(db,isin,meta,base):

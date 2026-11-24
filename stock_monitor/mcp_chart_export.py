@@ -17,6 +17,23 @@ class PlotCapture:
             if np.isfinite(a) and 0<=int(a)<self.count:values[int(a)]=float(b) if np.isfinite(b) else None
         self.series[label]=values
         return [None]
+    @property
+    def transData(self):
+        from matplotlib.transforms import IdentityTransform
+        return IdentityTransform()
+    def add_artist(self,artist):
+        # Desktop volume uses two batched rectangle paths. Capture their
+        # original heights at candle centres, retaining zero and missing bars.
+        if self.name!='Объём':raise ValueError('UNSUPPORTED_CHART_ARTIST')
+        bodies=np.asarray(artist.get_path().vertices).reshape(-1,5,2)
+        values=self.series.setdefault('Volume',[None]*self.count)
+        for body in bodies:
+            centre=(body[0,0]+body[1,0])/2
+            index=int(round(centre));height=body[2,1]
+            if 0<=index<self.count and np.isfinite(height):values[index]=float(height)
+        self.number=max(self.number,1)
+        return artist
+    def update_datalim(self,*args,**kwargs):pass
     def set_ylabel(self,*args,**kwargs):pass
     def axhline(self,*args,**kwargs):pass
     def set_ylim(self,*args,**kwargs):pass
@@ -40,3 +57,4 @@ def export(frame,settings,timeframe):
                      'bins':[dict(price=float(p),volume=float(v),width=float(w)) for p,v,w in zip(prices,volumes,widths)]}
         except (ValueError,TypeError):profile={'status':'UNAVAILABLE','reason':'INVALID_PROFILE_INPUT'}
     return series,profile
+

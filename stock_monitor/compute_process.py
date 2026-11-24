@@ -72,6 +72,7 @@ def serve():
             if not self.path.is_file():raise FileNotFoundError(path)
             self.directory=self.path.parent;self.read_cache=ReadCache(path)
     class ReadOnlyStore(ExistingStore):
+        _serial_readonly=True
         @contextmanager
         def connect(self):
             db=sqlite3.connect(self.path.resolve().as_uri()+'?mode=ro',uri=True)
@@ -92,11 +93,26 @@ def serve():
                 from feed_worker import FeedContext
                 if feed_context is None:feed_context=FeedContext(store)
                 result=feed_context.calculate(values['info'])
+            elif kind=='feed_plan':
+                from candle_schedule import planned_feeds
+                result=planned_feeds(store,values['watchlist'],now=values.get('now'),focus=values.get('focus'))
+            elif kind=='watchlist_order':
+                from watchlist_order import collect
+                result=collect(store.path,values['watchlist'],now=values.get('now'))
             elif kind=='eligibility':
                 from calculation_window import calculate_eligibility
                 result=calculate_eligibility(store,values['info'])
                 if result is None:raise ValueError('ELIGIBILITY_INSTRUMENT_NOT_FOUND')
                 store.read_cache.assert_current(result.get('_input_revisions',{}))
+            elif kind in ('chart','read_analytics','feed'):
+                from analytical_read import calculate_consistent
+                if kind=='chart':
+                    from chart_worker import prepare
+                    result=calculate_consistent(store,values,prepare)
+                elif kind=='feed':
+                    from chart_worker import prepare_feed
+                    result=calculate_consistent(store,values,prepare_feed)
+                else:result=calculate_consistent(store,values)
             elif kind=='snapshot':
                 from snapshot_worker import calculate,validate_snapshot
                 from performance_cache import frozen_store
@@ -116,26 +132,7 @@ def serve():
                 from performance_cache import InputRevisionChanged
                 try:result=calculate_snapshot(store,values)
                 except InputRevisionChanged:result=calculate_snapshot(store,values)
-            else:
-                with store.read_cache.track_inputs() as dependencies:
-                    captured=values.get('instrument_revisions',{})
-                    store.read_cache.assert_current(captured)
-                    store.read_cache._record(captured)
-                    if kind=='chart':
-                        from chart_worker import prepare
-                        result=prepare(store,values)
-                    elif kind=='snapshot':
-                        from snapshot_worker import calculate
-                        result=calculate(store,values,last_client)
-                    elif kind=='read_analytics':
-                        from analytical_read import calculate
-                        result=calculate(store,values)
-                    elif kind=='feed':
-                        from chart_worker import prepare_feed
-                        result=prepare_feed(store,values)
-                    else:raise ValueError('Unknown calculation')
-                    store.read_cache.assert_current(dependencies)
-                    result['_input_revisions']=dict(dependencies)
+            else:raise ValueError('Unknown calculation')
             result.setdefault('_calculation_timing',{}).update(compute_seconds=round(time.monotonic()-calculation_started,3),finished_at=time.time())
             response=(True,result)
         except Exception as error:response=(False,diagnostic_error(error))
@@ -143,3 +140,4 @@ def serve():
     if store is not None:store.read_cache.close()
 
 if __name__=='__main__':serve()
+

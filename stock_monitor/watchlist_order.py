@@ -2,6 +2,7 @@
 import json
 import sqlite3
 import time
+from contextlib import closing
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -40,6 +41,17 @@ def ordered(infos, rows):
     return sorted(infos,key=key)
 
 
+def display_details(record,current,candidates):
+    """Presentation of already read metadata, never another readiness decision."""
+    charts=record.get('timeframes') or {}
+    tf={c['timeframe'] for c in candidates if c.get('analysis_ready')}
+    if current=='CURRENT':tf.update(k for k,v in charts.items() if v.get('chart_ready'))
+    identities=[v.get('identity') or {} for v in charts.values()]
+    return dict(timeframes=sorted(tf),venues=sorted({str(i['venue']) for i in identities if i.get('venue')}),
+                providers=sorted({str(i['source']) for i in identities if i.get('source')}),
+                assessment_checked_at=record.get('checked_at'),current_validity=current)
+
+
 def collect(path, infos, now=None):
     """Project compact metadata, not the ~70MB full diagnostic payload/archives."""
     from calculation_window import eligibility_state, candidate_state, execution_eligibility
@@ -53,7 +65,7 @@ def collect(path, infos, now=None):
     # Only positive candidates need their existing closed-input validation proof.
     paths = ','.join("'$."+k+"'" for k in headers)
     cpaths = ','.join("'$."+k+"'" for k in fields)
-    with sqlite3.connect(Path(path).resolve().as_uri()+'?mode=ro', uri=True, timeout=.2) as db:
+    with closing(sqlite3.connect(Path(path).resolve().as_uri()+'?mode=ro', uri=True, timeout=.2)) as db:
         db.execute('BEGIN'); db.execute('PRAGMA query_only=ON')
         records = {k.split(':',1)[1]: dict(zip(headers, json.loads(v))) for k,v in db.execute(
             "SELECT key,json_extract(value,"+paths+") FROM settings WHERE key LIKE 'cp_eligibility:%'")}
@@ -94,6 +106,7 @@ def collect(path, infos, now=None):
                 demo=read(db,STATUS+isin,{})
                 demo={**demo,'enabled':cfg.get('enabled',False),'expired':not 0<=now.timestamp()-(demo.get('at') or 0)<=120}
             rows[isin]=rank(info,record,current,candidates,demo)
+            rows[isin].update(display_details(record,current,candidates))
             rows[isin]['checked_at']=now.isoformat()
         token={s:(db.execute('SELECT revision FROM input_revisions WHERE scope=?',(s,)).fetchone() or (0,))[0] for s in scopes}
     return dict(rows=rows,token=token,checked_at=now.timestamp(),read_seconds=time.perf_counter()-started)
@@ -108,6 +121,7 @@ class Runtime:
     def ordered(self):return ordered(self.app.watchlist,self.rows)
 
     def apply(self):
+        if hasattr(self.app,'main_screen'):self.app.main_screen.sync_watchlist()
         box=getattr(self.app,'symbol_box',None)
         if box is None:return
         # Do not move dropdown items under an ongoing mouse/keyboard selection.
@@ -147,5 +161,8 @@ class Runtime:
             for fn in callbacks:fn()
         def failed(_):
             self.busy=False;self.next_try=time.time()+60
-        if app.job(lambda:collect(app.store.path,infos),done,failed,lane='misc',key='watchlist-order') is False:
+        # Closed-input proof checks are CPU-heavy: reuse the owned read worker,
+        # retaining the binding/token check above immediately before display.
+        if app.job(lambda:app.compute_feed.calculate('watchlist_order',{'watchlist':infos}),
+                done,failed,lane='misc',key='watchlist-order') is False:
             self.busy=False

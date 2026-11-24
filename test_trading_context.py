@@ -16,7 +16,7 @@ class ContextTests(unittest.TestCase):
         for tf in LABELS:
             p=context.plan(tf)
             self.assertEqual(tuple(p['required_tf']),profile(tf))
-            self.assertEqual(p['execution_tf'],['5m','15m'])
+            self.assertEqual(p['execution_tf'],['15m'])
             self.assertFalse(p['execution_authorized'])
         self.assertNotIn('5m',context.plan('1H')['required_tf'])
         self.assertNotIn('10m',context.plan('1H')['required_tf'])
@@ -43,7 +43,7 @@ class ContextTests(unittest.TestCase):
 
     def test_reject_incomplete_duplicate_unknown_and_unapproved_execution_tf(self):
         for tf,required,execution in [('1H',('1H','1D'),('5m',)),('1H',('1H','1H','1D'),('15m',)),
-                ('7m',('1H','4H','1D'),('15m',)),('1H',('1H','4H','1D'),('1m',))]:
+                ('7m',('1H','4H','1D'),('15m',)),('1H',('1H','4H','1D'),('5m','15m')),('1H',('1H','4H','1D'),('1m',))]:
             with self.assertRaises(ValueError):context.plan(tf,required,execution)
 
     def test_context_pins_selection_and_native_listing_without_touching_ui(self):
@@ -67,3 +67,4 @@ class ContextTests(unittest.TestCase):
 
 
 if __name__=='__main__':unittest.main()
+

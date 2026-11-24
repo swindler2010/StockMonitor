@@ -340,6 +340,11 @@ def verified_demo_warmup(store,info,current,now):
     def calculate():
         raw=load(store,info,'1D',now)
         if raw.empty or {k:raw.attrs.get(k) for k in quality.IDENTITY}!=meta:return current
+        # Use the same closed-period boundary as the analysis being warmed.
+        # A future daily row in a saved replay archive is not an input.
+        from trading_context import closed_parent_input
+        raw,input_clock=closed_parent_input(raw,'1D',tf,now)
+        if raw.empty:return current
         # Try complete calendar-year boundaries, oldest first. The full current
         # overlap and every older daily row must pass the existing quality gate.
         starts=[raw.index[0]]+[pd.Timestamp(year=y,month=1,day=1) for y in range(raw.index[0].year+1,current.index[0].year+1)]
@@ -347,7 +352,7 @@ def verified_demo_warmup(store,info,current,now):
             if start>=current.index[0]:break
             daily=raw.loc[raw.index>=start].copy();scope_archive_faults(daily,start)
             if daily.attrs.get('archive_invalid'):continue
-            report=quality.audit(daily,'1D',expected=meta,now=now,check_stale=False)
+            report=quality.audit(daily,'1D',expected=meta,now=input_clock,check_stale=False)
             if report['state']!='READY':continue
             daily.attrs['data_quality']=report
             derived=resample(daily,'1D',tf,now)
@@ -491,15 +496,18 @@ def retain_deeper(info, tf, previous, previous_base, proposed, proposed_base, no
         confirmed_listing(info,proposed.attrs) and previous.attrs.get('venue')!='GETTEX'):
         return proposed,proposed_base
     if previous.empty or not confirmed_listing(info,previous.attrs):return proposed,proposed_base
-    if previous.attrs.get('data_quality',{}).get('state') in ('INVALID','SOURCE_UNAVAILABLE','RECOVERING'):
+    from gettex_first import bind,bound
+    previous=bind(previous,info);proposed=bind(proposed,info)
+    factual=bound(previous)
+    if previous.attrs.get('data_quality',{}).get('state') in ('INVALID','SOURCE_UNAVAILABLE','RECOVERING') and not factual:
         return proposed,proposed_base
-    if quality.audit(previous,previous_base,now=now)['state']=='INVALID':return proposed,proposed_base
+    if quality.audit(previous,previous_base,now=now)['state']=='INVALID' and not factual:return proposed,proposed_base
     def usable(raw,base):
         if raw.empty:return raw
         out=resample(raw,base,tf,now)
         if out.empty:return out
         valid=endpoints(out)<=now
-        if 'bar_complete' in out:valid &= out.bar_complete.fillna(False).to_numpy()
+        if 'bar_complete' in out and not bound(out):valid &= out.bar_complete.fillna(False).to_numpy()
         return out.loc[valid]
     try:
         old=usable(previous,previous_base);new=usable(proposed,proposed_base)
@@ -551,7 +559,9 @@ def candidate(store, info, tf, current, current_base, now=None,analysis_at=None)
         from calculation_window import scope_raw
         frame=scope_raw(frame,base,analysis_at)
     report = frame.attrs.get('archive_invalid') or quality.audit(frame, base, now=now)
-    if report['state'] in ('INVALID', 'SOURCE_UNAVAILABLE'):
+    from gettex_first import bind,bound
+    frame=bind(frame,info);current=bind(current,info)
+    if report['state'] in ('INVALID', 'SOURCE_UNAVAILABLE') and not bound(frame):
         return current, current_base
     if not current.empty and current.attrs.get('venue')=='GETTEX' and quality.audit(current,current_base,now=now)['state']!='INVALID':
         old = current.copy(deep=False); old.attrs = dict(current.attrs, timeframe=current_base)
@@ -559,6 +569,8 @@ def candidate(store, info, tf, current, current_base, now=None,analysis_at=None)
             old_ends=endpoints(old);old_end=old_ends[old_ends<=now].max()
             new_end = endpoints(frame).max()
             if new_end < old_end or (len(frame) <= len(current) and new_end <= old_end):
+                if tf not in ('5m','15m'):
+                    return retain_deeper(info,tf,current,current_base,frame,base,now)
                 return current, current_base
         except (ValueError, KeyError):
             return current, current_base
@@ -571,7 +583,8 @@ def candidate(store, info, tf, current, current_base, now=None,analysis_at=None)
             if not previous.empty:
                 a=endpoints(proposed);b=endpoints(previous)
                 a=a[a<=now];b=b[b<=now]
-                if len(b) and (not len(a) or a.max()<b.max()):return current,current_base
+                if len(b) and (not len(a) or a.max()<b.max()):
+                    return retain_deeper(info,tf,current,current_base,frame,base,now)
     frame.attrs.update(data_quality=report, source_selection={
         'policy':'proxy_extended_eur_v1', 'requested_mode':'proxy', 'selected':'GETTEX_CHART_EUR',
         'session':'07:30–23:00 Europe/Berlin',
@@ -606,16 +619,18 @@ def daily_candidate(store,info,tf,current,current_base,official,official_base,no
             report=saved
         if raw.attrs.get('daily_origin') and raw.attrs.get('data_quality',{}).get('state') in ('INVALID','SOURCE_GAP','UNCONFIRMED'):
             report=raw.attrs['data_quality']
-        if report['state'] in ('INVALID','RECOVERING','SOURCE_UNAVAILABLE'):continue
+        from gettex_first import bind,bound
+        raw=bind(raw,info);factual=bound(raw)
+        if report['state'] in ('INVALID','RECOVERING','SOURCE_UNAVAILABLE') and not factual:continue
         try:
             raw=raw.copy();raw.attrs['data_quality']=report
             view=resample(raw,base,tf,now=now)
             closed=view.loc[endpoints(view)<=now]
-            if 'bar_complete' in closed:closed=closed.loc[closed.bar_complete.fillna(False)]
+            if 'bar_complete' in closed and not factual:closed=closed.loc[closed.bar_complete.fillna(False)]
         except (ValueError,KeyError,TypeError):continue
         if view.empty:continue
         # A blocked derived bucket stays blocked; no READY is manufactured.
-        score=(bool(len(closed)),report['state'] in ('READY','STALE'),len(closed),len(view))
+        score=(bool(len(closed)),factual or report['state'] in ('READY','STALE'),len(closed),len(view))
         choices.append((score,raw,base))
     if not choices:return current,current_base
     _,raw,base=max(choices,key=lambda x:x[0])
@@ -1032,3 +1047,4 @@ def _fetch_turn(info, store, now=None, client=None, preferred_tf=None):
         store.set_setting(state_key(isin,base),result)
         scheduler.finish(store,isin,planning_meta,base,plan,error,now)
         return dict(state='ERROR',reason=result['last_error'],base=base)
+

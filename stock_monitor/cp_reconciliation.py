@@ -20,6 +20,7 @@ INGEST_LIMIT = 4
 CHECK_LIMIT = 4
 SCAN_LIMIT = 64
 BATCH_LIMIT = 4
+REPAIR_RECHECK_VERSION = 2
 OBSERVATIONS = ('ABSENT', 'ZERO_VOLUME', 'PRESENT', 'DIFFERENT', 'UNCONFIRMED')
 SOURCE_POLICY = 'cp_gettex_source_policy'
 FAILURES = {'EMPTY_RESPONSE', 'INCOMPLETE_RESPONSE', 'INVALID_RESPONSE',
@@ -71,7 +72,25 @@ def due_observation(db, infos, now=None):
             # rotate using the last actual reconciliation turn, not polling.
             serviced=max(observed,pd.Timestamp(progress['last_turn'])) if progress.get('last_turn') else observed
             candidates.append((serviced,observed,isin,job['id']))
-    if not candidates:return None
+    if not candidates:
+        # A deployed repair may predate the dependent-scope wake-up. Read only
+        # bounded receipt metadata here; the owned feed worker revalidates the
+        # full source proof and performs the actual queue updates.
+        from revision_watcher import RETIME_PREFIX
+        rows=db.execute("""SELECT r.value FROM settings r LEFT JOIN settings p
+          ON p.key=? || json_extract(r.value,'$.isin')
+          WHERE r.key>=? AND r.key<? AND json_extract(r.value,'$.state')='APPLIED'
+          AND json_extract(r.value,'$.mode') IN ('VERIFIED_NATIVE_CLOSING_TICK','VERIFIED_PRICE_CLOSING_TICK_PARTITION','VERIFIED_NATIVE_PRICE_SAMPLES')
+          AND (COALESCE(json_extract(p.value,'$.native_repair_rechecks_version'),0)<>2 OR NOT EXISTS
+            (SELECT 1 FROM json_each(COALESCE(json_extract(p.value,'$.native_repair_rechecks_seen'),'[]')) WHERE value=r.key))
+          AND (json_extract(p.value,'$.last_turn') IS NULL OR julianday(json_extract(p.value,'$.last_turn'))<=julianday(?))
+          ORDER BY json_extract(r.value,'$.created_at'),r.key LIMIT 8""",
+          (PROGRESS,RETIME_PREFIX,RETIME_PREFIX+'\uffff',(clock-pd.Timedelta(minutes=5)).isoformat())).fetchall()
+        for raw, in rows:
+            receipt=json.loads(raw)
+            if receipt['isin'] in registered:
+                return dict(isin=receipt['isin'],job_id=receipt['job_id'],reason='NATIVE_REPAIR_FOLLOWUP')
+        return None
     _,at,isin,jid=min(candidates)
     return dict(isin=isin,job_id=jid,observed_at=at.isoformat(),reason='SAVED_OBSERVATION_RECHECK')
 
@@ -148,7 +167,29 @@ def _input(db, job):
     if correction and retime_current(db,correction):
         result['official_retiming_empty']=[dict(first=correction['first'],end=correction['end'],
             authority={**proof['identity'],'absence_evidence':{**correction['source']['proof'],'checked_at':proof['checked_at']}})]
+    # A mixed range can contain both real rows and a separately confirmed empty
+    # child. Current primary-source receipts validate BOTH native5m/15m
+    # windows. Visual observations alone never transfer between feeds/TF.
+    if tf in ('5m','15m') and rows and len(rows)<int((pd.Timestamp(job['last'])-pd.Timestamp(job['first']))/pd.Timedelta(minutes=5 if tf=='5m' else 15))+1:
+        prefix=RETIME_PREFIX+isin+':'
+        siblings=db.execute("""SELECT value FROM settings WHERE key>=? AND key<? AND key<>?
+          AND json_extract(value,'$.state')='APPLIED' AND json_extract(value,'$.mode') IN ('VERIFIED_NATIVE_EMPTY','VERIFIED_NATIVE_TRADE_PARTITION','VERIFIED_NATIVE_SESSION_TAIL','VERIFIED_NATIVE_POSITIVE_PRICE_EXTREME','VERIFIED_PRIMARY_WINDOW')
+          AND json_extract(value,'$.first')<? AND json_extract(value,'$.end')>?
+          AND json_extract(value,'$.identity.source')=? AND json_extract(value,'$.identity.symbol')=?
+          AND json_extract(value,'$.identity.venue')=? AND json_extract(value,'$.identity.currency')=?
+          AND json_extract(value,'$.identity.timezone')=? ORDER BY key LIMIT 8""",
+          (prefix,prefix+'\uffff',RETIME_PREFIX+isin+':'+job['id'],job['end'],job['first'],
+           *[meta[k] for k in ('source','symbol','venue','currency','timezone')])).fetchall()
+        for raw, in siblings:
+            sibling=json.loads(raw)
+            if retime_current(db,sibling):
+                result.setdefault('official_retiming_empty',[]).append(dict(first=sibling['first'],end=sibling['end'],
+                    authority={**proof['identity'],'absence_evidence':{**sibling['source']['proof'],'checked_at':proof['checked_at']}}))
     result['fingerprint']=_fingerprint(result)
+    if job.get('observation') and job['observation'].get('input_fingerprint')!=result['fingerprint']:
+        from revision_watcher import reviewed_context_fingerprint
+        context=reviewed_context_fingerprint(db,job,result)
+        if context:result['review_context_fingerprint']=context
     return result
 
 
@@ -179,6 +220,9 @@ def _observation_current(job, inputs):
     observation=job.get('observation') or {}
     if not observation:return False
     if observation.get('input_fingerprint')==inputs['fingerprint']:return True
+    if (observation.get('fingerprint_version')==FINGERPRINT_VERSION
+            and inputs.get('review_context_fingerprint') is not None
+            and inputs.get('review_context_fingerprint')==observation.get('input_fingerprint')):return True
     # Require the *old complete hash* before migration. Already stale reviews
     # cannot be revived merely by removing non-market fields from the binding.
     if (observation.get('fingerprint_version')==3 and
@@ -243,11 +287,13 @@ def _classify(job, inputs, now):
                 native_complete=complete,
                 confirmed_empty_intervals=len(confirmed),actual_candles=len(frame),
                 observation_current=True,evidence_digest=digest(proof),evidence_checked_at=proof.get('checked_at'))
-        return dict(state='NATIVE_ROWS_CONFIRMED' if complete else 'NATIVE_ROWS_PRESENT' if check['state']!='INVALID' else 'INVALID',
+        result=dict(state='NATIVE_ROWS_CONFIRMED' if complete else 'NATIVE_ROWS_PRESENT' if check['state']!='INVALID' else 'INVALID',
                     reason='Штатный DQ обнаружил строки; окончательная полнота и допуск проверяются существующим pipeline',
                     native_dq=check['state'],market_state=market,can_affect_dq=False,
                     confirmed_empty_intervals=len(confirmed),actual_candles=len(frame),
                     observation_current=current)
+        if result['state']=='NATIVE_ROWS_PRESENT':result.update(_publication_wait(job,inputs))
+        return result
     # Identity alone omits TF; otherwise historical daily reviews incorrectly
     # take the narrower intraday calendar and fail before comparing evidence.
     sessions=schedule({**meta,'timeframe':job['tf']},a,b)
@@ -298,12 +344,38 @@ def _classify(job, inputs, now):
     visual=observation.get('result') if _observation_current(job,inputs) else None
     discrepancy=('TV_ROW_MISSING_IN_SM' if visual in ('PRESENT','ZERO_VOLUME') else
                  'TV_DIFFERENCE' if visual=='DIFFERENT' else 'MISSING_IN_BOTH' if visual=='ABSENT' else None)
-    return dict(state=state,reason=reason,market_state=market,discrepancy=discrepancy,
+    result=dict(state=state,reason=reason,market_state=market,discrepancy=discrepancy,
         can_affect_dq=state in ('NO_TRADES','MARKET_CLOSED'),
         traded_volume=0 if market=='NO_TRADES' else None,event_count=0 if market=='NO_TRADES' else None,
         zero_values_are='metadata only; no OHLCV row',
         evidence_digest=digest(proof),evidence_checked_at=proof.get('checked_at'),
         observation_current=bool(visual),indicator_timebase='Actual closed candles only; confirmed empty intervals add no observations or warmup')
+    if state=='UNCONFIRMED':result.update(_publication_wait(job,inputs))
+    return result
+
+
+def _publication_wait(job,inputs):
+    """A known partial official publication needs source recovery, not a click.
+
+    This describes an existing GETTEX acquisition task. It supplies no absence
+    proof, candle, waiver or new request; chart-vendor gaps remain independent.
+    """
+    import pandas as pd
+    meta=job['identity'];proof=inputs['proof']
+    if (meta.get('source')!='gettex' or meta.get('venue')!='GETTEX' or meta.get('currency')!='EUR'
+            or meta.get('symbol')!=job['isin'] or meta.get('timezone')!='Europe/Berlin'
+            or proof.get('isin')!=job['isin'] or proof.get('identity')!=meta
+            or proof.get('basis')!='complete_published_trade_files'):return {}
+    try:
+        a,b=pd.Timestamp(job['interval_start']),pd.Timestamp(job['end'])
+        if a.tzinfo is not None or b.tzinfo is not None or a>=b:return {}
+        for first,last in proof.get('incomplete_publication_intervals',[]):
+            left,right=pd.Timestamp(first),pd.Timestamp(last)
+            if left.tzinfo is None and right.tzinfo is None and left<right and left<b and right>a:
+                return dict(provider_wait=True,source_action='existing_gettex_acquisition',
+                    reason='SOURCE_COVERAGE_UNCONFIRMED: неполная публикация GETTEX; штатная очередь ждёт подтверждённую полную пару MUNC/MUND, пустой ответ не доказывает отсутствие сделок')
+    except (ValueError,TypeError):pass
+    return {}
 
 
 def _enqueue(db, spec, origin, now):
@@ -477,18 +549,176 @@ def _seed_official_empty_checks(db,info,clock,progress,limit):
     return queued
 
 
-def turn(store, info, now=None):
+def _queue_repaired_scopes(db,receipt_key,receipt,clock,limit=16):
+    """Local input change, not a provider retry or a refreshed TV observation."""
+    changed={}
+    for base,rows in receipt['source']['rows'].items():
+        old={r[0]:list(r[1:]) for r in receipt['before'][base]}
+        changed[base]={r[0] for r in rows if old.get(r[0])!=list(r[1:])}
+        changed[base].update(m['old_at'] for m in receipt.get('relocations',[]) if m['base_tf']==base)
+    if receipt.get('mode')=='VERIFIED_NATIVE_EMPTY':
+        import pandas as pd
+        target=read(db,PREFIX+receipt['isin']+':'+receipt['job_id'],{})
+        if target.get('tf') in ('5m','15m'):
+            changed.setdefault(target['tf'],set()).update(str(t) for t in pd.date_range(target['first'],target['end'],freq=target['tf'].replace('m','min'),inclusive='left'))
+    if not any(changed.values()):return dict(queued=[],complete=True)
+    prefix=PREFIX+receipt['isin']+':'
+    # Projection is bounded to this exact listing and the repaired window.
+    candidates=db.execute("""SELECT key,value FROM settings WHERE key>=? AND key<?
+      AND json_extract(value,'$.status') IN ('AWAITING_SOURCE','AWAITING_USER','RESOLVED_NATIVE')
+      AND json_extract(value,'$.identity.source')=? AND json_extract(value,'$.identity.symbol')=?
+      AND json_extract(value,'$.identity.venue')=? AND json_extract(value,'$.identity.currency')=?
+      AND json_extract(value,'$.identity.timezone')=?
+      AND ((json_extract(value,'$.first')<? AND json_extract(value,'$.end')>?)
+       OR (json_extract(value,'$.observation.result') IN ('ABSENT','DIFFERENT') AND
+        ((json_extract(value,'$.native_neighbors.before[0]')>=? AND json_extract(value,'$.native_neighbors.before[0]')<?)
+         OR (json_extract(value,'$.native_neighbors.after[0]')>=? AND json_extract(value,'$.native_neighbors.after[0]')<?))))
+      ORDER BY key LIMIT ?""",(prefix,prefix+'\uffff',*[receipt['identity'][k] for k in ('source','symbol','venue','currency','timezone')],
+        receipt['end'],receipt['first'],receipt['first'],receipt['end'],receipt['first'],receipt['end'],limit+1)).fetchall()
+    queued=[]
+    for _,raw in candidates[:limit]:
+        job=json.loads(raw)
+        if job['id']==receipt['job_id']:continue
+        slots=changed.get(job['tf'],set());obs=job.get('observation') or {}
+        direct=any(job['first']<=at<job['end'] for at in slots)
+        neighbours=job.get('native_neighbors') or {}
+        adjacent=(obs.get('result') in ('ABSENT','DIFFERENT') and any((neighbours.get(k) or [None])[0] in slots for k in ('before','after')))
+        if not (direct or adjacent):continue
+        if _input(db,job)['fingerprint']==job.get('input_fingerprint'):continue
+        old=dict(job);job.update(status='RECHECK_QUEUED' if obs else 'QUEUED',next_check=clock.isoformat(),
+            recheck_due_to_native_repair=dict(receipt_key=receipt_key,at=clock.isoformat(),version=REPAIR_RECHECK_VERSION,
+                reason='LOCAL_EMPTY_PROOF_CONFIRMED' if receipt.get('mode')=='VERIFIED_NATIVE_EMPTY' else 'CURRENT_NATIVE_INPUT_CHANGED'))
+        # Preserve the original visual binding and source cooldown. The next
+        # ordinary turn must classify the newly changed inputs independently.
+        _save_job(db,job,old);queued.append(job['id'])
+    return dict(queued=queued,complete=len(candidates)<=limit)
+
+
+def _resume_repaired_scopes(db,isin,clock):
+    """Backfill pending follow-ups for the two newly deployed repair modes."""
+    from revision_watcher import RETIME_PREFIX,retime_current
+    p=read(db,PROGRESS+isin,{});seen=list(p.get('native_repair_rechecks_seen',[])) if p.get('native_repair_rechecks_version')==REPAIR_RECHECK_VERSION else [];prefix=RETIME_PREFIX+isin+':'
+    rows=db.execute("""SELECT key,value FROM settings WHERE key>=? AND key<?
+      AND json_extract(value,'$.state')='APPLIED'
+      AND json_extract(value,'$.mode') IN ('VERIFIED_NATIVE_CLOSING_TICK','VERIFIED_PRICE_CLOSING_TICK_PARTITION','VERIFIED_NATIVE_PRICE_SAMPLES')
+      ORDER BY json_extract(value,'$.created_at') DESC LIMIT 8""",(prefix,prefix+'\uffff')).fetchall()
+    count=0
+    for key,raw in rows:
+        if key in seen:continue
+        if count>=2:break
+        receipt=json.loads(raw);count+=1
+        if retime_current(db,receipt,clock):result=_queue_repaired_scopes(db,key,receipt,clock)
+        else:result=dict(queued=[],complete=True,reason='REPAIR_PROOF_CHANGED')
+        if result['complete']:seen.append(key)
+        p=read(db,PROGRESS+isin,{})
+        p.update(native_repair_rechecks_version=REPAIR_RECHECK_VERSION,native_repair_rechecks_seen=seen[-64:],last_native_repair_rechecks=dict(receipt_key=key,at=clock.isoformat(),**result))
+        write(db,PROGRESS+isin,p)
+
+
+NATIVE_EMPTY_ALGORITHM=8
+NATIVE_EMPTY_LIMIT=8
+
+
+def _native_empty_pending(db,isin,limit):
+    prefix=PREFIX+isin+':'
+    rows=db.execute("""SELECT key,value FROM settings WHERE key>=? AND key<?
+      AND (json_extract(value,'$.tf')='5m' OR (json_extract(value,'$.tf')='15m' AND json_extract(value,'$.observation.result') IN ('ABSENT','PRESENT','DIFFERENT','ZERO_VOLUME')))
+      AND julianday(json_extract(value,'$.last'))>=julianday(json_extract(value,'$.first'))
+      AND julianday(json_extract(value,'$.last'))-julianday(json_extract(value,'$.first'))<30.0/1440
+      AND json_extract(value,'$.identity.source')='gettex_chart'
+      AND json_extract(value,'$.identity.venue')='GETTEX'
+      AND json_extract(value,'$.identity.currency')='EUR'
+      AND ((json_extract(value,'$.status') IN ('RECHECK_QUEUED','QUEUED')
+        AND julianday(COALESCE(json_extract(value,'$.next_check'),json_extract(value,'$.created_at')))<=julianday('now')
+        AND (json_extract(value,'$.observation.result') IN ('ABSENT','PRESENT','DIFFERENT','ZERO_VOLUME')
+          OR COALESCE(json_extract(value,'$.native_empty_algorithm'),0)>0))
+       OR (json_extract(value,'$.status') IN ('AWAITING_USER','AWAITING_SOURCE')
+        AND ((json_extract(value,'$.finding.state') IN ('SOURCE_TIMEBASE_UNCONFIRMED','GAP','NATIVE_ROWS_PRESENT')
+        AND (COALESCE(json_extract(value,'$.native_empty_algorithm'),0)<?
+          OR (json_extract(value,'$.tf')='5m' AND json_extract(value,'$.observation.result') IN ('PRESENT','DIFFERENT')
+            AND julianday(COALESCE(json_extract(value,'$.next_check'),json_extract(value,'$.created_at')))<=julianday('now')
+            AND COALESCE(json_extract(value,'$.native_empty_algorithm'),0)<12)))
+        OR (json_extract(value,'$.tf')='5m' AND json_extract(value,'$.first')=json_extract(value,'$.last')
+          AND json_extract(value,'$.finding.state')='SOURCE_DISCREPANCY'
+          AND json_extract(value,'$.observation.result')='DIFFERENT'
+          AND julianday(COALESCE(json_extract(value,'$.next_check'),json_extract(value,'$.created_at')))<=julianday('now')
+          AND COALESCE(json_extract(value,'$.native_empty_algorithm'),0)<12)
+        OR (json_extract(value,'$.tf')='5m' AND json_extract(value,'$.observation') IS NULL
+          AND json_extract(value,'$.finding.state') IN ('SOURCE_TIMEBASE_UNCONFIRMED','GAP')
+          AND julianday(COALESCE(json_extract(value,'$.next_check'),json_extract(value,'$.created_at')))<=julianday('now')
+          AND COALESCE(json_extract(value,'$.automatic_zero_algorithm'),0)<1)
+        OR (json_extract(value,'$.tf')='15m' AND json_extract(value,'$.first')=json_extract(value,'$.last')
+          AND json_extract(value,'$.finding.state')='SOURCE_DISCREPANCY'
+          AND json_extract(value,'$.observation.result')='DIFFERENT'
+          AND julianday(COALESCE(json_extract(value,'$.next_check'),json_extract(value,'$.created_at')))<=julianday('now')
+          AND (COALESCE(json_extract(value,'$.current_difference_algorithm'),0)<1
+            OR (COALESCE(json_extract(value,'$.current_difference_algorithm'),0)<2
+              AND json_extract(value,'$.official_timebase_repair.reason')='RETIME_OTHER_CURRENT_TV_REFERENCE_CONFLICT'))))))
+      ORDER BY CASE json_extract(value,'$.status') WHEN 'RECHECK_QUEUED' THEN 0 WHEN 'QUEUED' THEN 1 ELSE 2 END,json_extract(value,'$.first') DESC,key LIMIT ?""",
+      (prefix,prefix+'\uffff',NATIVE_EMPTY_ALGORITHM,limit)).fetchall()
+    room=limit-len(rows)
+    if room<=0:return rows
+    # Extract the small range list once, not the full source ledger per job.
+    # The later writer still validates the complete, current proof.
+    saved=db.execute("SELECT json_extract(value,'$.isin','$.basis','$.identity','$.incomplete_publication_intervals') FROM settings WHERE key=?",('interval_evidence:'+isin,)).fetchone()
+    if not saved:return rows
+    try:
+        subject,basis,identity,intervals=json.loads(saved[0])
+        if (subject!=isin or basis!='complete_published_trade_files' or identity!=dict(source='gettex',venue='GETTEX',currency='EUR',symbol=isin,timezone='Europe/Berlin') or not intervals):return rows
+    except (ValueError,TypeError):return rows
+    # One cached reclassification of a known partial official pair must not
+    # wait behind the entire archive scan. Existing visual reviews keep their
+    # reserved precedence. This SQL nominates only; _input/final guards still
+    # validate the exact listing, source proof and native window on the writer.
+    rows+=db.execute("""SELECT j.key,j.value FROM settings j WHERE j.key>=? AND j.key<?
+      AND json_extract(j.value,'$.identity.source')='gettex'
+      AND json_extract(j.value,'$.identity.venue')='GETTEX'
+      AND json_extract(j.value,'$.identity.currency')='EUR'
+      AND json_extract(j.value,'$.identity.symbol')=?
+      AND json_extract(j.value,'$.tf') IN ('5m','15m')
+      AND json_extract(j.value,'$.observation') IS NULL
+      AND json_extract(j.value,'$.status') IN ('QUEUED','AWAITING_USER','AWAITING_SOURCE')
+      AND COALESCE(json_extract(j.value,'$.source_publication_wait_algorithm'),0)<1
+      AND julianday(COALESCE(json_extract(j.value,'$.next_check'),json_extract(j.value,'$.created_at')))<=julianday('now')
+      AND julianday(json_extract(j.value,'$.end'))>julianday(json_extract(j.value,'$.interval_start'))
+      AND julianday(json_extract(j.value,'$.end'))-julianday(json_extract(j.value,'$.interval_start'))<=30.0/1440
+      AND EXISTS (SELECT 1 FROM json_each(?) r
+        WHERE json_extract(r.value,'$[0]')<json_extract(j.value,'$.end')
+        AND json_extract(r.value,'$[1]')>json_extract(j.value,'$.interval_start'))
+      ORDER BY json_extract(j.value,'$.created_at'),j.key LIMIT ?""",
+      (prefix,prefix+'\uffff',isin,json.dumps(intervals),room)).fetchall()
+    return rows
+
+
+def native_empty_batches(db,infos,limit=8):
+    """Rotate saved 5m evidence on the existing writer, without any download."""
+    from revision_watcher import RETIME_POLICY,RETIME_VERSION
+    policy=read(db,RETIME_POLICY,{});source=read(db,SOURCE_POLICY,{})
+    if (policy.get('approved') is not True or policy.get('version')!=RETIME_VERSION
+        or source.get('approved') is not True or source.get('version')!=1
+        or source.get('scope')!='registered_stocks' or source.get('exclusive_venue')!='GETTEX'):return []
+    candidates=[]
+    for info in infos:
+        if info.get('kind')=='benchmark':continue
+        if _native_empty_pending(db,info['isin'],1):
+            candidates.append((read(db,PROGRESS+info['isin'],{}).get('native_empty_batch_at',''),info))
+    return [{**i,'_native_empty_only':True} for _,i in sorted(candidates,key=lambda x:(x[0],x[1]['isin']))[:limit]]
+
+
+def turn(store, info, now=None, native_empty_only=False):
     """At most four recovery events and four checks per existing feed turn."""
     import pandas as pd
     if info.get('kind')=='benchmark':return {'state':'NOT_APPLICABLE'}
     clock=pd.Timestamp(now or datetime.now(timezone.utc));isin=info['isin'];created=checked=0;segments=0
     from gettex_history import attach_known_interruptions
-    closure_updated=attach_known_interruptions(info,store,clock)
+    closure_updated=False if native_empty_only else attach_known_interruptions(info,store,clock)
     with store.connect() as db:
-        db.execute('BEGIN IMMEDIATE');progress=read(db,PROGRESS+isin,{})
+        db.execute('BEGIN IMMEDIATE')
+        if not native_empty_only:_resume_repaired_scopes(db,isin,clock)
+        progress=read(db,PROGRESS+isin,{})
         exists=db.execute("SELECT 1 FROM sqlite_master WHERE name='cp_recovery_experience'").fetchone()
         events=db.execute('SELECT rowid,event_id,identity,base_tf,method,outcome,first_at,last_at,reason FROM cp_recovery_experience WHERE isin=? AND rowid>? ORDER BY rowid LIMIT ?',
-                          (isin,progress.get('cursor',0),INGEST_LIMIT)).fetchall() if exists else []
+                          (isin,progress.get('cursor',0),INGEST_LIMIT)).fetchall() if exists and not native_empty_only else []
         for rowid,event,raw,tf,method,outcome,first,last,raw_reason in events:
             try:
                 reason=json.loads(raw_reason);meta=json.loads(raw)
@@ -513,27 +743,35 @@ def turn(store, info, now=None):
             except (ValueError,TypeError,KeyError) as error:
                 progress['cursor']=rowid;progress.pop('next_range_first',None)
                 progress['last_ineligible_event']={'event_id':event,'reason':str(error),'at':clock.isoformat()}
-        seeded=_seed_official_empty_checks(db,info,clock,progress,max(0,INGEST_LIMIT-segments))
+        if native_empty_only:
+            seeded=[]
+            for _,raw in _native_empty_pending(db,isin,NATIVE_EMPTY_LIMIT):
+                job=json.loads(raw);old=dict(job)
+                job.update(native_empty_algorithm=12 if job['tf']=='5m' and (job.get('observation') or {}).get('result') in ('PRESENT','DIFFERENT') else NATIVE_EMPTY_ALGORITHM,positive_price_algorithm=1,current_difference_algorithm=2 if job['tf']=='15m' else 1,status='RECHECK_QUEUED' if job['status']=='RECHECK_QUEUED' else 'QUEUED',next_check=clock.isoformat())
+                if job['tf']=='5m' and not job.get('observation'):job['automatic_zero_algorithm']=1
+                _save_job(db,job,old);seeded.append((key(job),json.dumps(job,ensure_ascii=False)))
+            progress['native_empty_batch_at']=clock.isoformat()
+        else:seeded=_seed_official_empty_checks(db,info,clock,progress,max(0,INGEST_LIMIT-segments))
         # Rotate a bounded page. New short-TF jobs cannot monopolize checks.
         cursor=progress.get('scan_cursor','');pattern=PREFIX+isin+':%'
-        page=db.execute('SELECT key,value FROM settings WHERE key LIKE ? AND key>? ORDER BY key LIMIT ?', (pattern,cursor,SCAN_LIMIT)).fetchall()
-        if not page:page=db.execute('SELECT key,value FROM settings WHERE key LIKE ? ORDER BY key LIMIT ?', (pattern,SCAN_LIMIT)).fetchall()
+        page=seeded if native_empty_only else db.execute('SELECT key,value FROM settings WHERE key LIKE ? AND key>? ORDER BY key LIMIT ?', (pattern,cursor,SCAN_LIMIT)).fetchall()
+        if not page and not native_empty_only:page=db.execute('SELECT key,value FROM settings WHERE key LIKE ? ORDER BY key LIMIT ?', (pattern,SCAN_LIMIT)).fetchall()
         # Explicit reviews must reach their reserved slots even outside this
         # rotating page. Keep ordinary progress independent and the same limit.
         explicit=db.execute("""SELECT key,value FROM settings WHERE key LIKE ?
             AND json_extract(value,'$.status')='RECHECK_QUEUED'
             AND julianday(COALESCE(json_extract(value,'$.next_check'),json_extract(value,'$.created_at')))<=julianday(?)
             ORDER BY COALESCE(json_extract(value,'$.checked_at'),''),json_extract(value,'$.created_at'),key LIMIT 2""",
-            (pattern,clock.isoformat())).fetchall()
+            (pattern,clock.isoformat())).fetchall() if not native_empty_only else []
         jobs=[json.loads(v) for v in dict(page+seeded+explicit).values()]
         due=sorted((j for j in jobs if closure_updated or j.get('fingerprint_version',1)<FINGERPRINT_VERSION or pd.Timestamp(j.get('next_check',j['created_at']))<=clock),key=lambda j:(j.get('checked_at',''),j['created_at'],j['id']))
         # Reserve two slots for explicit observations, two for ordinary work.
         manual=[j for j in due if j['status']=='RECHECK_QUEUED'][:2]
         ordinary=[j for j in due if j['status']!='RECHECK_QUEUED']
         remaining=[j for j in due if j not in manual and j not in ordinary]
-        due=(manual+ordinary+remaining)[:CHECK_LIMIT]
+        due=(manual+ordinary+remaining)[:NATIVE_EMPTY_LIMIT if native_empty_only else CHECK_LIMIT]
         progress['counts']=read(db,PROGRESS+isin,{}).get('counts',{})
-        if page:progress['scan_cursor']=page[-1][0]
+        if page and not native_empty_only:progress['scan_cursor']=page[-1][0]
         progress.update(last_ingested_at=clock.isoformat(),created_total=progress.get('created_total',0)+created)
         if closure_updated:progress['analysis_requested_at']=clock.isoformat()
         write(db,PROGRESS+isin,progress)
@@ -562,28 +800,33 @@ def turn(store, info, now=None):
                 old=dict(current)
                 if correction:
                     current['official_timebase_repair']=publish_retime(db,current,inputs,correction,clock)
-                    if correction.get('mode')=='VERIFIED_NATIVE_EMPTY':
-                        # No rows changed: finish the proof on this same writer
-                        # transaction instead of adding a second queued pass.
+                    if (correction.get('mode')=='VERIFIED_NATIVE_EMPTY'
+                            or correction.get('reviewed_tf')=='5m' and correction.get('mode') in ('VERIFIED_NATIVE_TRADE_PARTITION','VERIFIED_NATIVE_SESSION_TAIL','VERIFIED_NATIVE_POSITIVE_PRICE_EXTREME')):
+                        # Finish the current proof on this same writer transaction
+                        # instead of adding a second queued pass.
                         inputs=_input(db,current);result=_classify(current,inputs,clock)
-                        if result['state']!='NO_TRADES':raise ValueError('RETIME_EMPTY_PUBLICATION_RECHECK_FAILED')
+                        allowed=('NO_TRADES',) if correction.get('mode')=='VERIFIED_NATIVE_EMPTY' else ('NO_TRADES','NATIVE_ROWS_CONFIRMED')
+                        if result['state'] not in allowed:raise ValueError('RETIME_EMPTY_PUBLICATION_RECHECK_FAILED')
                     else:
                         current.update(status='RECHECK_QUEUED',next_check=clock.isoformat(),checked_at=clock.isoformat())
                         _save_job(db,current,old);checked+=1
                         continue
                 if correction_wait:current['official_timebase_repair']=dict(state='WAITING_EVIDENCE',reason=correction_wait)
-                if _observation_current(current,inputs) and current['observation']['input_fingerprint']!=inputs['fingerprint']:
+                if (_observation_current(current,inputs) and current['observation']['input_fingerprint']!=inputs['fingerprint']
+                        and not inputs.get('review_context_fingerprint')):
                     current['observation']={**current['observation'],'previous_input_fingerprint':current['observation']['input_fingerprint'],
                         'input_fingerprint':inputs['fingerprint'],'binding_updated_at':clock.isoformat(),
                         'fingerprint_version':FINGERPRINT_VERSION,
                         'binding_reason':'v4: exact native rows/neighbours/validated listing/proof; unrelated chart and portfolio settings are not market evidence'}
                 current.update(finding=result,input_fingerprint=inputs['fingerprint'],checked_at=clock.isoformat(),
                     fingerprint_version=FINGERPRINT_VERSION,
-                    native_rows=inputs['rows'],native_neighbors=inputs['neighbors'],
+                    native_rows=inputs['rows'],native_neighbors=current.get('native_neighbors') if inputs.get('review_context_fingerprint') else inputs['neighbors'],
                     checks=current.get('checks',0)+1,next_check=(clock+pd.Timedelta(hours=1)).isoformat(),
                     native_retry=inputs['native_retry'],capability=capability(),
-                    status='RESOLVED_NATIVE' if result['can_affect_dq'] or result['state']=='NATIVE_ROWS_CONFIRMED' else 'AWAITING_USER' if not current.get('observation') else 'AWAITING_SOURCE',
-                    review_required=not (result['can_affect_dq'] or result['state']=='NATIVE_ROWS_CONFIRMED' or result.get('observation_current',False)))
+                    status='RESOLVED_NATIVE' if result['can_affect_dq'] or result['state']=='NATIVE_ROWS_CONFIRMED' else 'AWAITING_SOURCE' if current.get('observation') or result.get('provider_wait') is True else 'AWAITING_USER',
+                    review_required=not (result['can_affect_dq'] or result['state']=='NATIVE_ROWS_CONFIRMED' or result.get('observation_current',False) or result.get('provider_wait') is True))
+                if native_empty_only and current['identity']['source']=='gettex':
+                    current['source_publication_wait_algorithm']=1
                 _queue_observed_recovery(db,current,inputs,result,clock.isoformat())
                 current['source_disposition']=_source_disposition(current,result,source_policy)
                 if current['source_disposition']:
@@ -603,6 +846,7 @@ def turn(store, info, now=None):
         progress.update(last_turn=clock.isoformat(),last_created=created,last_checked=checked,
             checked_total=progress.get('checked_total',0)+checked,mode='ASSISTED_ONLY')
         current_jobs=[read(db,k,{}) for k,_ in page]
+        update_suspicious(progress,current_jobs,clock.isoformat())
         previous=progress.get('review_batch')
         retained=[read(db,PREFIX+isin+':'+i['id'],{}) for i in (previous or {}).get('items',[])]
         stable=bool(retained) and pd.Timestamp(previous['valid_until'])>clock and all(
@@ -612,7 +856,8 @@ def turn(store, info, now=None):
         requested=progress.get('analysis_requested_at') if not progress.get('counts',{}).get('RECHECK_QUEUED',0) else None
         write(db,PROGRESS+isin,progress)
     return dict(state='PROCESSED' if created or checked else 'IDLE',created=created,checked=checked,
-                mode='ASSISTED_ONLY',analysis_requested_at=requested)
+                mode='ASSISTED_ONLY',analysis_requested_at=requested,
+                observations_checked=sum(bool(j.get('observation')) for j in due))
 
 
 def review_binding(job):
@@ -665,7 +910,7 @@ def _record_observation(db,job,inputs,result,symbol,note,files,at):
         actor='human_assisted',note=note,evidence=files,input_fingerprint=inputs['fingerprint'],
         fingerprint_version=FINGERPRINT_VERSION,evidence_checked_at=inputs['proof'].get('checked_at'),
         use='diagnostic only; no market-data import')
-    job.update(status='RECHECK_QUEUED',next_check=at)
+    job.update(status='RECHECK_QUEUED',next_check=at,native_rows=inputs['rows'],native_neighbors=inputs['neighbors'])
     _save_job(db,job,old)
     progress=read(db,PROGRESS+job['isin'],{})
     progress['analysis_requested_at']=at
@@ -739,6 +984,47 @@ def observe(store, job_id, isin, expected_digest, result, tv_symbol, confirmed, 
     return {'state':'RECHECK_QUEUED','id':job_id,'grants_changed':False,'candles_written':0}
 
 
+def confirm_primary_window(store,spec,native_reference,tv_symbol,screenshots,matched_fields,confirmed=False,note=''):
+    """Record exact manual agreement with one captured independent parent.
+
+    Metadata only. No caller-supplied OHLCV, candle write or trading grant.
+    The existing feed writer must independently revalidate the complete tape.
+    """
+    import pandas as pd
+    from revision_watcher import _official_window,_native,IDENTITY,RETIME_POLICY,RETIME_VERSION
+    from eur_listings import stored_identity
+    fields=['timestamp','open','high','low','close','volume']
+    if confirmed is not True or matched_fields!=fields or len(note)>1500:raise ValueError('EXACT_PRIMARY_PARENT_CONFIRMATION_REQUIRED')
+    review_url(tv_symbol)
+    spec=_spec(spec['isin'],spec['identity'],spec['tf'],spec['first'],spec['last'])
+    if spec['tf']!='15m' or spec['first']!=spec['last'] or spec['identity'].get('source')!='gettex_chart' or spec['identity'].get('venue')!='GETTEX' or spec['identity'].get('currency')!='EUR':raise ValueError('SINGLE_GETTEX_EUR_PARENT_REQUIRED')
+    path=Path(native_reference).resolve()
+    if not path.is_file() or path.suffix.lower()!='.json' or path.stat().st_size>10_000_000:raise ValueError('NATIVE_DIAGNOSTIC_REFERENCE_REQUIRED')
+    packet=json.loads(path.read_text(encoding='utf-8'));records=packet.get('records',[])
+    if len(records)!=1 or records[0].get('spec')!=spec:raise ValueError('NATIVE_REFERENCE_SCOPE_REQUIRED')
+    frozen=records[0]['native']
+    if (_fingerprint(frozen)!=frozen.get('fingerprint') or digest(packet.get('native_window'))!=packet.get('native_window_digest')
+            or digest(packet.get('source'))!=packet.get('source_digest')):raise ValueError('PRIMARY_REFERENCE_INVALID')
+    files=_evidence_files(screenshots)
+    if not files:raise ValueError('EXACT_PRIMARY_PARENT_SCREENSHOT_REQUIRED')
+    now=pd.Timestamp.now(tz='UTC')
+    with store.connect() as db:
+        db.execute('BEGIN IMMEDIATE');inputs=_input(db,spec);sp=read(db,SOURCE_POLICY,{});policy=read(db,RETIME_POLICY,{})
+        if not (sp.get('approved') is True and sp.get('version')==1 and sp.get('scope')=='registered_stocks' and sp.get('exclusive_venue')=='GETTEX' and policy.get('approved') is True and policy.get('version')==RETIME_VERSION):raise ValueError('PRIMARY_SOURCE_POLICY_REQUIRED')
+        native={b:_native(db,spec['isin'],spec['identity'],b,spec['first'],spec['end']) for b in ('5m','15m')}
+        if not stored_identity(db,inputs['info'],spec['identity'],'5m'):raise ValueError('PRIMARY_CHILD_IDENTITY_UNCONFIRMED')
+        if inputs['fingerprint']!=frozen['fingerprint'] or digest(native)!=packet['native_window_digest']:raise ValueError('PRIMARY_NATIVE_INPUT_CHANGED')
+        source=_official_window(db,spec['isin'],spec['first'],spec['end'],now,allow_zero_rows=True)
+        if digest(source)!=packet['source_digest']:raise ValueError('PRIMARY_SOURCE_INPUT_CHANGED')
+        job,_=_enqueue(db,spec,dict(kind='exact_primary_parent_visual_confirmation',native_reference=str(path)),now)
+        _record_observation(db,job,inputs,'DIFFERENT',tv_symbol,note,files,now.isoformat())
+        prior=dict(job);job['observation']={**job['observation'],'primary_window_confirmation':dict(version=1,first=spec['first'],end=spec['end'],matched_fields=fields,
+            source_digest=packet['source_digest'],native_window_digest=packet['native_window_digest'],native_input_fingerprint=inputs['fingerprint'],
+            meaning='Exact manual closed15m TV parent matches independently captured complete GETTEX source; no TV values imported')}
+        _save_job(db,job,prior)
+    return dict(state='RECHECK_QUEUED',id=spec['id'],candles_written=0,grants_changed=False)
+
+
 def register_prior_review(store, spec, native_reference, result, tv_symbol, screenshots, note=''):
     """Reuse a completed bounded human check; no repeating Desktop navigation.
 
@@ -782,6 +1068,38 @@ def register_prior_review(store, spec, native_reference, result, tv_symbol, scre
     return {'state':'RECHECK_QUEUED','id':job['id'],'grants_changed':False,'candles_written':0}
 
 
+def suspicious_finding(job):
+    """Evidence-based attention only; never DQ, NO_TRADES or permission."""
+    finding=job.get('finding',{});state=finding.get('state')
+    meta=job.get('identity',{})
+    if meta.get('source') not in ('gettex','gettex_chart') or meta.get('venue')!='GETTEX':return None
+    if state=='INVALID':return 'INVALID_NATIVE_DATA'
+    if state=='GAP' and finding.get('market_state')=='GAP':return 'CONFIRMED_TRADES_WITHOUT_NATIVE_BAR'
+    if state=='SOURCE_DISCREPANCY' and finding.get('material_difference') is True:
+        return 'CONFIRMED_MATERIAL_SOURCE_DIFFERENCE'
+    # Missing rows, source limits, delays, ordinary zero volume and uncertain
+    # observations are not the most suspicious anomalies. A matching TV hole
+    # remains uncertainty/accepted history, never fabricated exchange evidence.
+    return None
+
+
+def update_suspicious(progress,jobs,checked_at=None):
+    if checked_at is not None:
+        if progress.get('suspicious_version')!=2:
+            progress['suspicious']={};progress['suspicious_version']=2
+        jobs=[j for j in jobs if j.get('checked_at')==checked_at]
+    saved=dict(progress.get('suspicious',{}))
+    for job in jobs:
+        reason=suspicious_finding(job);identifier=job.get('id')
+        if not identifier:continue
+        if not reason:saved.pop(identifier,None);continue
+        saved[identifier]={k:job.get(k) for k in ('id','isin','identity','tf','first','last','end','checked_at','input_fingerprint')}
+        saved[identifier].update(state=reason,reason=job.get('finding',{}).get('reason'),severity='HIGH')
+    progress['suspicious_truncated']=len(saved)>256
+    progress['suspicious']=dict(sorted(saved.items(),key=lambda item:str(item[1].get('checked_at') or ''),reverse=True)[:256])
+    progress['suspicious_note']='Confirmed severe anomalies only; other DQ/jobs preserved separately. Cross-exchange gaps are context, not GETTEX evidence.'
+
+
 def collect(db, isin=None, page=0):
     from collections import Counter
     # Read-only; no job creation, source calls or reclassification on UI/MCP reads.
@@ -799,5 +1117,9 @@ def collect(db, isin=None, page=0):
     return dict(version=VERSION,capability=capability(),progress=progress,review_batches=batches,counts=dict(counts),
                 total=total,rows=rows,page=page,pages=max(1,(total+99)//100),
                 source_comparisons=_comparison_summary(comparisons),
+                suspicious=[row for i,p in progress.items() if (not isin or i==isin) and p.get('suspicious_version')==2 for row in p.get('suspicious',{}).values()][:100],
+                suspicious_count=sum(len(p.get('suspicious',{})) for i,p in progress.items() if (not isin or i==isin) and p.get('suspicious_version')==2),
+                suspicious_reviewed_stocks=sum(p.get('suspicious_version')==2 for i,p in progress.items() if not isin or i==isin),
+                suspicious_scope='Saved severe findings from ordinary CP turns; not a new audit or DQ override',
                 source_admission=read(db,SOURCE_POLICY,{}),
                 scope='Diagnostic jobs, not repaired candles or trading permissions',recovered_candles=0)

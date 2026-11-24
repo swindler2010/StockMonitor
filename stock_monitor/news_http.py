@@ -40,8 +40,11 @@ class FeedClient:
                     status=response.status_code
                     if status in (429,403):
                         retry=response.headers.get('Retry-After','3600')
-                        try:seconds=max(1800,min(86400,int(retry)))
-                        except ValueError:seconds=3600
+                        try:seconds=max(1800,int(retry))
+                        except (ValueError,TypeError):
+                            from email.utils import parsedate_to_datetime
+                            try:seconds=max(1800,parsedate_to_datetime(retry).timestamp()-self.clock())
+                            except (ValueError,TypeError,OverflowError):seconds=3600
                         self.blocked[host]=self.clock()+seconds
                         cooldown.write_text(json.dumps({'retry_at':self.blocked[host],'status':status}),encoding='utf-8')
                         raise FeedError('HTTP_'+str(status),self.blocked[host])
@@ -55,7 +58,7 @@ class FeedClient:
                             parts.append(chunk)
                         body=b''.join(parts).decode('utf-8-sig')
                     else:raise FeedError('HTTP_'+str(status))
-                    value={'at':self.clock(),'body':body,'etag':response.headers.get('ETag',cached.get('etag')),'modified':response.headers.get('Last-Modified',cached.get('modified'))}
+                    value={'at':self.clock(),'created_at':cached.get('created_at',cached.get('at',self.clock())) if status==304 else self.clock(),'body':body,'etag':response.headers.get('ETag',cached.get('etag')),'modified':response.headers.get('Last-Modified',cached.get('modified'))}
                     temp=path.with_suffix('.pending');temp.write_text(json.dumps(value,ensure_ascii=False),encoding='utf-8');temp.replace(path)
                     self.last_receipt={'status':'HTTP_'+str(status),'at':value['at'],'url':url}
                     return body.encode('utf-8')

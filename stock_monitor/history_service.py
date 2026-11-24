@@ -453,13 +453,37 @@ def attach_parent_provenance(store,frame,isin,base):
                 receipt=store.setting(key,{})
                 store.read_cache.depend('setting:'+RETIME_POLICY)
                 store.read_cache.depend('setting:interval_evidence:'+isin)
+                store.read_cache.depend('instrument:'+isin)
+                from gettex_chart import state_key
+                store.read_cache.depend('setting:'+state_key(isin,'15m'))
+                if receipt.get('reviewed_tf')=='5m':
+                    store.read_cache.depend('setting:'+state_key(isin,'5m'))
+                    store.read_cache.depend('setting:cp_gettex_source_policy')
                 for tf in ('5m','15m'):store.read_cache.depend('market:'+isin+':'+tf)
-                with store.connect() as db:valid=bool(receipt) and retime_current(db,receipt)
+                with store.connect() as db:
+                    view=getattr(store,'_lineage_read_view',None)
+                    if view and view[0] is db and db.in_transaction:
+                        memo_key=(key,_digest(receipt))
+                        if memo_key not in view[2]:
+                            view[2][memo_key]=bool(receipt) and retime_current(db,receipt,view[1])
+                        valid=view[2][memo_key]
+                    else:valid=bool(receipt) and retime_current(db,receipt)
                 retimed[key]=(receipt,valid)
                 if valid:
                     origins.append(dict(receipt_key=key,first=receipt['first'],end=receipt['end'],source='gettex',original_provider=frame.attrs['source'],
                         mode=receipt.get('mode','RETIMED')))
-                    current=store.setting('interval_evidence:'+isin,{})
+                    # retime_current already decoded this exact proof in the
+                    # same immutable WAL view. Reuse only its scalar header;
+                    # default/writer calls retain the ordinary setting read.
+                    readonly_view=(view and view[0] is db and db.in_transaction
+                        and db.execute('PRAGMA query_only').fetchone()[0])
+                    if readonly_view:
+                        current=view[2].get(('official_proof',isin))
+                        if current is None:
+                            header_key=('parent_proof_header',isin)
+                            if header_key not in view[2]:view[2][header_key]=store.setting('interval_evidence:'+isin,{})
+                            current=view[2][header_key]
+                    else:current=store.setting('interval_evidence:'+isin,{})
                     authority={**current['identity'],'absence_evidence':{**receipt['source']['proof'],'checked_at':current['checked_at']}}
                     empty.append(dict(first=receipt['first'],end=receipt['end'],authority=authority))
             receipt,valid=retimed[key]

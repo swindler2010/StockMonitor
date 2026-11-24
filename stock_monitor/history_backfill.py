@@ -18,7 +18,9 @@ def validate(frame):
         raise ValueError('Не подтверждены идентичность и timezone истории')
     if frame.index.has_duplicates or not frame.index.is_monotonic_increasing:
         raise ValueError('Некорректные timestamps истории')
-    values=frame[list(FIELDS)]
+    # Identity/index above use the original provenance. Pure numeric checks
+    # must not deep-copy archive evidence for each pandas operation.
+    values=pd.DataFrame(frame,copy=False)[list(FIELDS)]
     if not values.map(lambda x:math.isfinite(float(x))).all().all():
         raise ValueError('Неполные OHLCV')
     if (values[['open','high','low','close']]<=0).any().any() or (values.volume<0).any():

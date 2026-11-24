@@ -50,6 +50,7 @@ def facts(closed, support, resistance, stop):
         ema_cross=('UP' if b.ema10<=b.ema30 and a.ema10>a.ema30 else 'DOWN' if b.ema10>=b.ema30 and a.ema10<a.ema30 else 'NONE'),
         rsi=float(a.rsi), previous_rsi=float(b.rsi), macd=float(a.macd), macd_signal=float(a.macd_signal),
         histogram=hist, histogram_delta=hist-old_hist, atr=atr,
+        volume=float(a.volume),volume_mean20=avg,
         relative_volume=rv, volume_reliable=bool(reliable_volume), support=support, resistance=resistance,
         breakout=bool(breakout), breakdown=bool(breakdown), retest=bool(retest), bearish_retest=bool(bearish_retest),
         reclaim=bool(reclaim), near_resistance=bool(0<=resistance-a.close<=RULES['near_level_atr']*scale),
@@ -61,6 +62,7 @@ def facts(closed, support, resistance, stop):
 
 
 def evaluate(contexts, selected_tf, position=None, benchmark=None, required=None):
+    from gettex_first import calculation_allowed
     from cp_controls import analysis_quality_allowed, risk_summary, RISK_CONTEXT, TV_PRICE_MODEL
     required=tuple(required or profile(selected_tf)); benchmark=benchmark or {}
     bull=[]; bear=[]; blockers=[]; warnings=[]; score=0
@@ -70,10 +72,12 @@ def evaluate(contexts, selected_tf, position=None, benchmark=None, required=None
         score += side*weight
     for tf in required:
         c=contexts.get(tf,{})
-        if not c.get('sufficient_history') or not analysis_quality_allowed(c.get('data_quality',{}),c.get('accepted_risk')) or not c.get('ohlcv_valid') or not c.get('facts'):
+        if calculation_allowed(c) and c.get('data_quality',{}).get('state')!='READY':
+            warnings.append(tf+': предупреждение CandlePilot '+c.get('data_quality',{}).get('state','UNKNOWN')+'; расчёт по фактическим GETTEX-барам')
+        if not c.get('sufficient_history') or not (calculation_allowed(c) or analysis_quality_allowed(c.get('data_quality',{}),c.get('accepted_risk'))) or not c.get('ohlcv_valid') or not c.get('facts'):
             blockers.append(f'{tf}: DATA BLOCKED / '+c.get('data_quality',{}).get('state','UNVERIFIED')+'; '+c.get('reason','Нет проверенной истории'))
     selected=contexts.get(selected_tf,{})
-    if selected_tf not in required and (not selected.get('sufficient_history') or not analysis_quality_allowed(selected.get('data_quality',{}),selected.get('accepted_risk'))):
+    if selected_tf not in required and (not selected.get('sufficient_history') or not (calculation_allowed(selected) or analysis_quality_allowed(selected.get('data_quality',{}),selected.get('accepted_risk')))):
         blockers.append(selected_tf+': DATA BLOCKED / нет проверенного timing')
     for tf in required:
         f=contexts.get(tf,{}).get('facts',{})
@@ -132,7 +136,8 @@ def evaluate(contexts, selected_tf, position=None, benchmark=None, required=None
         confidence_meaning='Сила направленных подтверждений, не вероятность прибыли',
         bullish_reasons=bull,bearish_reasons=bear,blockers=blockers,
         entry_blockers=entry_blockers,warnings=warnings,position_state=position_state,
-        timeframe_context={tf:{k:contexts.get(tf,{}).get(k) for k in ('signal_at','facts','data_quality','closed_bar_count')} | ({'accepted_risk':accepted[tf]} if tf in accepted else {}) for tf in dict.fromkeys((*required,selected_tf))},
+        timeframe_context={tf:{k:contexts.get(tf,{}).get(k) for k in ('signal_at','facts','data_quality','closed_bar_count','calculation_availability')} | ({'accepted_risk':accepted[tf]} if tf in accepted else {}) for tf in dict.fromkeys((*required,selected_tf))},
         benchmark_context=benchmark,timestamp=selected.get('signal_at'),rules_version=VERSION,
         status='DATA BLOCKED' if blockers else 'READY',
         reason='; '.join(blockers or ([r['text'] for r in (bear if signal=='SELL' else bull)][:3]+entry_blockers[:2]+warnings[:1])) or 'Нет достаточных направленных подтверждений')
+

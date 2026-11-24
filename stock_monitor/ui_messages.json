@@ -240,8 +240,8 @@
     "de": "Kurs"
   },
   "Количество": {
-    "en": "Quantity",
-    "de": "Anzahl"
+    "de": "Menge",
+    "en": "Quantity"
   },
   "Валюта": {
     "en": "Currency",
@@ -2563,8 +2563,8 @@
     "de": "Offizieller Scalable MCP: https://mcp.scalable.capital/mcp\nOffizielle CLI: https://github.com/ScalableCapital/scalable-cli\n\nWählen Sie zum Lesen über die CLI deren ausführbare Datei in den Verbindungseinstellungen. Melden Sie sich selbst beim offiziellen Dienst an. Dokumentierte vorkompilierte CLI-Versionen sind für macOS/Linux; eine Windows-CLI ist hier nicht enthalten.\n\nStock Monitor erlaubt dem Adapter nur das Lesen von Übersicht, Positionen, Funktionen und Nachrichten.\n\n"
   },
   "Отчётность": {
-    "en": "Financial statements",
-    "de": "Finanzberichte"
+    "de": "Geschäftsergebnisse",
+    "en": "Earnings"
   },
   "Отчётность: KPI и графики": {
     "en": "Financial statements: KPIs and charts",
@@ -4094,5 +4094,1455 @@
   "неделя": {
     "de": "Woche",
     "en": "Week"
+  },
+  "Машинный перевод": {
+    "de": "Maschinelle Übersetzung",
+    "en": "Machine translation"
+  },
+  "На выбранном языке": {
+    "de": "In der gewählten Sprache",
+    "en": "In selected language"
+  },
+  "Перевод ожидается; показан оригинал": {
+    "de": "Übersetzung ausstehend; Original angezeigt",
+    "en": "Translation pending; showing original"
+  },
+  "Перевод недоступен; показан оригинал": {
+    "de": "Übersetzung nicht verfügbar; Original angezeigt",
+    "en": "Translation unavailable; showing original"
+  },
+  "Показать исходный текст": {
+    "de": "Quelltext anzeigen",
+    "en": "Show source text"
+  },
+  "Исходный текст": {
+    "de": "Quelltext",
+    "en": "Source text"
+  },
+  "Источник содержит повреждённые символы": {
+    "de": "Die Quelle enthält beschädigte Zeichen",
+    "en": "Source contains damaged characters"
+  },
+  "Чтение сохранённых новостей…": {
+    "de": "Gespeicherte Nachrichten werden gelesen…",
+    "en": "Reading saved news…"
+  },
+  "Состояние даты": {
+    "de": "Datumsstatus",
+    "en": "Date status"
+  },
+  "Возможные события по заголовку, не подтверждённый календарь": {
+    "de": "Mögliche Ereignisse laut Überschrift, kein bestätigter Kalender",
+    "en": "Possible headline events, not a confirmed calendar"
+  },
+  "Найдено": {
+    "de": "Gefunden",
+    "en": "Found"
+  },
+  "Получено": {
+    "de": "Abgerufen",
+    "en": "Retrieved"
+  },
+  "Ошибки": {
+    "de": "Fehler",
+    "en": "Errors"
+  },
+  "↻ Обновить": {
+    "de": "↻ Aktualisieren",
+    "en": "↻ Refresh"
+  },
+  "Тональность: не рассчитана": {
+    "de": "Stimmung: nicht berechnet",
+    "en": "Sentiment: not calculated"
+  },
+  "Компактный список": {
+    "de": "Kompakte Liste",
+    "en": "Compact list"
+  },
+  "Источники и ошибки": {
+    "de": "Quellen und Fehler",
+    "en": "Sources and errors"
+  },
+  "Тональность новостей": {
+    "de": "Nachrichtenstimmung",
+    "en": "News sentiment"
+  },
+  "Не рассчитана. Процент влияния на цену источник не предоставляет.": {
+    "de": "Nicht berechnet. Die Quelle liefert keine prozentuale Kurswirkung.",
+    "en": "Not calculated. The source does not provide percentage price impact."
+  },
+  "Упоминания событий": {
+    "de": "Ereigniserwähnungen",
+    "en": "Event mentions"
+  },
+  "По словам в заголовке. Это не подтверждённые события или календарь.": {
+    "de": "Nach Wörtern in der Überschrift. Keine bestätigten Ereignisse oder Kalenderdaten.",
+    "en": "Based on headline keywords. Not confirmed events or a calendar."
+  },
+  "Кэш новостей временно недоступен": {
+    "de": "Nachrichtencache vorübergehend nicht verfügbar",
+    "en": "News cache temporarily unavailable"
+  },
+  "Материалы отсутствуют или не подходят фильтрам. Это не означает отсутствия событий.": {
+    "de": "Keine passenden Artikel. Das bedeutet nicht, dass es keine Ereignisse gibt.",
+    "en": "No matching articles. This does not mean there are no events."
+  },
+  "Подробнее / источник": {
+    "de": "Details / Quelle",
+    "en": "Details / source"
+  },
+  "Оригинал ↗": {
+    "de": "Original ↗",
+    "en": "Original ↗"
+  },
+  "Цена: нет соответствующего открытого графика": {
+    "de": "Kurs: kein passender geöffneter Chart",
+    "en": "Price: no matching open chart"
+  },
+  "Публикаций в сохранённой ленте": {
+    "de": "Artikel im gespeicherten Feed",
+    "en": "Articles in saved feed"
+  },
+  "Архив открытого графика": {
+    "de": "Archiv des geöffneten Charts",
+    "en": "Open chart archive"
+  },
+  "Все": {
+    "de": "Alle",
+    "en": "All"
+  },
+  "Сначала новые": {
+    "de": "Neueste zuerst",
+    "en": "Newest first"
+  },
+  "Сначала старые": {
+    "de": "Älteste zuerst",
+    "en": "Oldest first"
+  },
+  "Прогноз": {
+    "de": "Ausblick",
+    "en": "Guidance"
+  },
+  "Дивиденды": {
+    "de": "Dividenden",
+    "en": "Dividends"
+  },
+  "Сделки": {
+    "de": "Transaktionen",
+    "en": "Deals"
+  },
+  "Руководство": {
+    "de": "Führung",
+    "en": "Management"
+  },
+  "Сохранённая лента: обновление не подтверждено": {
+    "de": "Gespeicherter Feed: Aktualisierung nicht bestätigt",
+    "en": "Saved feed: refresh not confirmed"
+  },
+  "Материал и первоисточник": {
+    "de": "Artikel und Originalquelle",
+    "en": "Article and original source"
+  },
+  "Источники новостей": {
+    "de": "Nachrichtenquellen",
+    "en": "News sources"
+  },
+  "Ошибка перевода": {
+    "de": "Übersetzungsfehler",
+    "en": "Translation error"
+  },
+  "Дата: последние 7 дней": {
+    "de": "Datum: letzte 7 Tage",
+    "en": "Date: last 7 days"
+  },
+  "Дата: старше 7 дней": {
+    "de": "Datum: älter als 7 Tage",
+    "en": "Date: older than 7 days"
+  },
+  "Дата источника в будущем": {
+    "de": "Quelldatum liegt in der Zukunft",
+    "en": "Source date is in the future"
+  },
+  "Веер Фибоначчи": {
+    "de": "Fibonacci-Fächer",
+    "en": "Fibonacci fan"
+  },
+  "Дуги Фибоначчи": {
+    "de": "Fibonacci-Bögen",
+    "en": "Fibonacci arcs"
+  },
+  "Временные зоны Фибоначчи": {
+    "de": "Fibonacci-Zeitzonen",
+    "en": "Fibonacci time zones"
+  },
+  "Фибоначчи: ручные опоры, не торговый сигнал": {
+    "de": "Fibonacci: manuelle Anker, kein Handelssignal",
+    "en": "Fibonacci: manual anchors, not a trading signal"
+  },
+  "Фибоначчи: вторая точка должна быть позже первой и иметь другую цену": {
+    "de": "Fibonacci: Der zweite Punkt muss später liegen und einen anderen Kurs haben",
+    "en": "Fibonacci: second point must be later and have a different price"
+  },
+  "Временные зоны: вторая точка должна быть позже первой": {
+    "de": "Zeitzonen: Der zweite Punkt muss später liegen",
+    "en": "Time zones: second point must be later"
+  },
+  "Фибоначчи: нужны две разные отметки времени": {
+    "de": "Fibonacci: zwei verschiedene Zeitpunkte erforderlich",
+    "en": "Fibonacci: two distinct time anchors required"
+  },
+  "Фибоначчи: требуется линейная шкала": {
+    "de": "Fibonacci: lineare Skalierung erforderlich",
+    "en": "Fibonacci: linear scale required"
+  },
+  "Временные зоны: интервалы баров, не календарные дни": {
+    "de": "Zeitzonen: Balkenintervalle, keine Kalendertage",
+    "en": "Time zones: bar intervals, not calendar days"
+  },
+  "Дуги: радиус A–B в экранном масштабе": {
+    "de": "Bögen: Radius A–B im Bildschirmmaßstab",
+    "en": "Arcs: radius A–B in screen scale"
+  },
+  "Веер: укажите начало и конец движения слева направо; уровни по линейной цене.": {
+    "de": "Fächer: Anfang und Ende von links nach rechts wählen; lineare Kursniveaus.",
+    "en": "Fan: choose start and end from left to right; linear price levels."
+  },
+  "Дуги: укажите A и B слева направо. Центр B; радиус зависит от масштаба экрана.": {
+    "de": "Bögen: A und B von links nach rechts wählen. Mittelpunkt B; Radius hängt vom Bildschirmmaßstab ab.",
+    "en": "Arcs: choose A and B from left to right. Center B; radius depends on screen scale."
+  },
+  "Временные зоны: укажите начало и конец базового интервала слева направо. Шаг — бары текущего ТФ.": {
+    "de": "Zeitzonen: Basisintervall von links nach rechts wählen. Einheit: Balken des aktuellen Zeitrahmens.",
+    "en": "Time zones: choose the base interval from left to right. Unit: bars of the current timeframe."
+  },
+  "Фибоначчи": {
+    "de": "Fibonacci",
+    "en": "Fibonacci"
+  },
+  "Линии тренда": {
+    "de": "Trendlinien",
+    "en": "Trend lines"
+  },
+  "Ганн": {
+    "de": "Gann",
+    "en": "Gann"
+  },
+  "Паттерны и волны": {
+    "de": "Muster und Wellen",
+    "en": "Patterns and waves"
+  },
+  "Фигуры и аннотации": {
+    "de": "Formen und Anmerkungen",
+    "en": "Shapes and annotations"
+  },
+  "Позиции и измерения": {
+    "de": "Positionen und Messungen",
+    "en": "Positions and measurements"
+  },
+  "Каналы": {
+    "de": "Kanäle",
+    "en": "Channels"
+  },
+  "Свободная разметка": {
+    "de": "Freies Zeichnen",
+    "en": "Freehand drawing"
+  },
+  "Регрессионный канал": {
+    "de": "Regressionskanal",
+    "en": "Regression channel"
+  },
+  "Кисть": {
+    "de": "Pinsel",
+    "en": "Brush"
+  },
+  "Ломаная": {
+    "de": "Polylinie",
+    "en": "Polyline"
+  },
+  "Многоугольник": {
+    "de": "Polygon",
+    "en": "Polygon"
+  },
+  "Калькулятор позиции": {
+    "de": "Positionsrechner",
+    "en": "Position calculator"
+  },
+  "Произвольное число точек, максимум 256": {
+    "de": "Variable Punktzahl, maximal 256",
+    "en": "Variable point count, maximum 256"
+  },
+  "Достигнут предел 256 точек. Завершите фигуру или нажмите Esc.": {
+    "de": "Limit von 256 Punkten erreicht. Figur abschließen oder Esc drücken.",
+    "en": "256-point limit reached. Finish the shape or press Esc."
+  },
+  "Многоугольнику нужны три неколлинеарные вершины": {
+    "de": "Das Polygon benötigt drei nicht kollineare Eckpunkte",
+    "en": "Polygon requires three non-collinear vertices"
+  },
+  "Кисть: удерживайте левую кнопку мыши; отпускание завершает штрих. Esc — отмена.": {
+    "de": "Pinsel: linke Maustaste halten; Loslassen beendet den Strich. Esc bricht ab.",
+    "en": "Brush: hold the left mouse button; release ends the stroke. Esc cancels."
+  },
+  "Многоугольник: клики добавляют вершины; двойной клик завершает. Esc — отмена.": {
+    "de": "Polygon: Klicks setzen Eckpunkte; Doppelklick beendet. Esc bricht ab.",
+    "en": "Polygon: clicks add vertices; double-click finishes. Esc cancels."
+  },
+  "Ломаная: клики добавляют вершины; двойной клик завершает. Esc — отмена.": {
+    "de": "Polylinie: Klicks setzen Punkte; Doppelklick beendet. Esc bricht ab.",
+    "en": "Polyline: clicks add vertices; double-click finishes. Esc cancels."
+  },
+  "Регрессия: укажите начало и конец участка. Снимок по close, канал ±2σ; не сигнал.": {
+    "de": "Regression: Anfang und Ende wählen. Schlusskurs-Schnappschuss, Kanal ±2σ; kein Signal.",
+    "en": "Regression: select interval start and end. Close-price snapshot, channel ±2σ; not a signal."
+  },
+  "Регрессия: требуется от 3 до 5000 корректных цен закрытия": {
+    "de": "Regression: 3 bis 5000 gültige Schlusskurse erforderlich",
+    "en": "Regression: 3 to 5000 valid closing prices required"
+  },
+  "Регрессия: канал выходит за допустимые цены": {
+    "de": "Regression: Kanal liegt außerhalb gültiger Preise",
+    "en": "Regression: channel exceeds valid prices"
+  },
+  "Расчёт снимка регрессии…": {
+    "de": "Regressions-Schnappschuss wird berechnet…",
+    "en": "Calculating regression snapshot…"
+  },
+  "Цены изменились. Повторите построение регрессии.": {
+    "de": "Kurse geändert. Regression erneut zeichnen.",
+    "en": "Prices changed. Draw the regression again."
+  },
+  "Очередь занята. Повторите построение регрессии.": {
+    "de": "Warteschlange belegt. Regression erneut zeichnen.",
+    "en": "Queue busy. Draw the regression again."
+  },
+  "Нет снимка регрессии": {
+    "de": "Kein Regressions-Schnappschuss",
+    "en": "No regression snapshot"
+  },
+  "Регрессия: требуется линейная шкала": {
+    "de": "Regression: lineare Skalierung erforderlich",
+    "en": "Regression: linear scale required"
+  },
+  "Снимок регрессии ±2σ": {
+    "de": "Regressions-Schnappschuss ±2σ",
+    "en": "Regression snapshot ±2σ"
+  },
+  "Позиционный калькулятор — модель": {
+    "de": "Positionsrechner — Modell",
+    "en": "Position calculator — model"
+  },
+  "Позиционный калькулятор": {
+    "de": "Positionsrechner",
+    "en": "Position calculator"
+  },
+  "Только ручная модель. Примеры не являются котировкой. Счёт, риск стратегии и заявки не изменяются.": {
+    "de": "Nur manuelles Modell. Beispiele sind keine Kurse. Konto, Strategierisiko und Aufträge bleiben unverändert.",
+    "en": "Manual model only. Examples are not quotes. Account, strategy risk and orders are unchanged."
+  },
+  "Направление модели": {
+    "de": "Modellrichtung",
+    "en": "Model direction"
+  },
+  "Покупка (Long)": {
+    "de": "Kauf (Long)",
+    "en": "Buy (Long)"
+  },
+  "Продажа (Short)": {
+    "de": "Verkauf (Short)",
+    "en": "Sell (Short)"
+  },
+  "Валюта всех сумм и цен": {
+    "de": "Währung aller Beträge und Preise",
+    "en": "Currency of all amounts and prices"
+  },
+  "Модельный капитал": {
+    "de": "Modellkapital",
+    "en": "Model capital"
+  },
+  "Доступные средства модели": {
+    "de": "Verfügbares Modellkapital",
+    "en": "Available model funds"
+  },
+  "Риск модели, %": {
+    "de": "Modellrisiko, %",
+    "en": "Model risk, %"
+  },
+  "Цена входа": {
+    "de": "Einstiegskurs",
+    "en": "Entry price"
+  },
+  "Цена стопа": {
+    "de": "Stoppkurs",
+    "en": "Stop price"
+  },
+  "Цена цели": {
+    "de": "Zielkurs",
+    "en": "Target price"
+  },
+  "Шаг количества": {
+    "de": "Mengenschritt",
+    "en": "Quantity step"
+  },
+  "Издержки полного цикла на акцию": {
+    "de": "Gesamtkosten je Aktie",
+    "en": "Round-trip costs per share"
+  },
+  "Фиксированные издержки полного цикла": {
+    "de": "Fixe Gesamtkosten",
+    "en": "Fixed round-trip costs"
+  },
+  "Риск / бюджет": {
+    "de": "Risiko / Budget",
+    "en": "Risk / budget"
+  },
+  "Результат у цели после издержек": {
+    "de": "Ergebnis am Ziel nach Kosten",
+    "en": "Result at target after costs"
+  },
+  "Прибыль / риск": {
+    "de": "Gewinn / Risiko",
+    "en": "Reward / risk"
+  },
+  "Номинал / резерв средств": {
+    "de": "Nominal / Kapitalreserve",
+    "en": "Notional / cash reserve"
+  },
+  "Издержки модели": {
+    "de": "Modellkosten",
+    "en": "Model costs"
+  },
+  "Рассчитать модель": {
+    "de": "Modell berechnen",
+    "en": "Calculate model"
+  },
+  "Введите конечные числа в пределах модели": {
+    "de": "Endliche Zahlen innerhalb der Modellgrenzen eingeben",
+    "en": "Enter finite numbers within model limits"
+  },
+  "Неверное направление модели": {
+    "de": "Ungültige Modellrichtung",
+    "en": "Invalid model direction"
+  },
+  "Проверьте положительные цены, капитал, шаг и риск 0–100%": {
+    "de": "Positive Kurse, Kapital, Mengenschritt und Risiko 0–100% prüfen",
+    "en": "Check positive prices, capital, step and risk 0–100%"
+  },
+  "Long: стоп < вход < цель. Short: цель < вход < стоп.": {
+    "de": "Long: Stopp < Einstieg < Ziel. Short: Ziel < Einstieg < Stopp.",
+    "en": "Long: stop < entry < target. Short: target < entry < stop."
+  },
+  "Средств или бюджета риска недостаточно для одного шага количества.": {
+    "de": "Kapital oder Risikobudget reicht nicht für einen Mengenschritt.",
+    "en": "Funds or risk budget do not cover one quantity step."
+  },
+  "Short — только модель: наличие акций, заём и разрешение торговли не проверяются.": {
+    "de": "Short ist nur ein Modell: Bestand, Leihe und Handelsfreigabe werden nicht geprüft.",
+    "en": "Short is a model only: holdings, borrowing and trading eligibility are not checked."
+  },
+  "Смещённый снимок регрессии ±2σ": {
+    "de": "Verschobener Regressions-Schnappschuss ±2σ",
+    "en": "Shifted regression snapshot ±2σ"
+  },
+  "Без разделителей тысяч. Точка или запятая — десятичный знак.": {
+    "de": "Keine Tausendertrennzeichen. Punkt oder Komma als Dezimalzeichen.",
+    "en": "No thousands separators. Dot or comma is the decimal mark."
+  },
+  "Параметры изменены. Нажмите «Рассчитать модель».": {
+    "de": "Parameter geändert. „Modell berechnen“ drücken.",
+    "en": "Parameters changed. Press Calculate model."
+  },
+  "Кисть и фигуры: Esc — отмена": {
+    "de": "Pinsel und Formen: Esc bricht ab",
+    "en": "Brush and shapes: Esc cancels"
+  },
+  "Все группы": {
+    "en": "All groups",
+    "de": "Alle Gruppen"
+  },
+  "Быстрый доступ": {
+    "en": "Quick access",
+    "de": "Schnellzugriff"
+  },
+  "Редактировать избранное": {
+    "en": "Edit favourites",
+    "de": "Favoriten bearbeiten"
+  },
+  "До 12 инструментов": {
+    "en": "Up to 12 tools",
+    "de": "Bis zu 12 Werkzeuge"
+  },
+  "Повторить сохранение": {
+    "en": "Retry saving",
+    "de": "Speichern wiederholen"
+  },
+  "Повторить загрузку": {
+    "en": "Retry loading",
+    "de": "Laden wiederholen"
+  },
+  "Не удалось загрузить избранное": {
+    "en": "Could not load favourites",
+    "de": "Favoriten konnten nicht geladen werden"
+  },
+  "Сохранение избранного…": {
+    "en": "Saving favourites…",
+    "de": "Favoriten werden gespeichert…"
+  },
+  "Линия с углом": {
+    "en": "Trend angle",
+    "de": "Trendwinkel"
+  },
+  "Смещённый канал": {
+    "en": "Offset channel",
+    "de": "Versetzter Kanal"
+  },
+  "Спираль Фибоначчи": {
+    "en": "Fibonacci spiral",
+    "de": "Fibonacci-Spirale"
+  },
+  "Выноска": {
+    "en": "Callout",
+    "de": "Sprechblase"
+  },
+  "Иконка (звезда)": {
+    "en": "Icon (star)",
+    "de": "Symbol (Stern)"
+  },
+  "Смайл (улыбка)": {
+    "en": "Smile",
+    "de": "Smiley"
+  },
+  "Флаг": {
+    "en": "Flag",
+    "de": "Flagge"
+  },
+  "Проекция цены": {
+    "en": "Price projection",
+    "de": "Preisprojektion"
+  },
+  "Проекция времени": {
+    "en": "Time projection",
+    "de": "Zeitprojektion"
+  },
+  "Экранный угол": {
+    "en": "Screen angle",
+    "de": "Bildschirmwinkel"
+  },
+  "баров": {
+    "en": "bars",
+    "de": "Balken"
+  },
+  "ручная модель, без издержек": {
+    "en": "manual model, excluding costs",
+    "de": "manuelles Modell, ohne Kosten"
+  },
+  "Вход": {
+    "en": "Entry",
+    "de": "Einstieg"
+  },
+  "Уровни модели должны быть положительными": {
+    "en": "Model levels must be positive",
+    "de": "Modellniveaus müssen positiv sein"
+  },
+  "Стоп и цель: укажите точки правее входа": {
+    "en": "Stop and target: choose points to the right of entry",
+    "de": "Stopp und Ziel: Punkte rechts vom Einstieg wählen"
+  },
+  "Проекция цены должна быть положительной": {
+    "en": "Projected price must be positive",
+    "de": "Der projizierte Preis muss positiv sein"
+  },
+  "Проекция времени: B должна быть позже A": {
+    "en": "Time projection: B must be later than A",
+    "de": "Zeitprojektion: B muss nach A liegen"
+  },
+  "Неизвестная версия ручной разметки": {
+    "en": "Unknown manual annotation version",
+    "de": "Unbekannte Version der manuellen Zeichnung"
+  },
+  "Спираль: 3 витка, экранный масштаб": {
+    "en": "Spiral: 3 turns, screen scale",
+    "de": "Spirale: 3 Windungen, Bildschirmmaßstab"
+  },
+  "Канал: требуется линейная шкала": {
+    "en": "Channel: linear scale required",
+    "de": "Kanal: lineare Skala erforderlich"
+  },
+  "Смещённый канал: A–B — центр": {
+    "en": "Offset channel: A–B is the centre",
+    "de": "Versetzter Kanal: A–B ist die Mitte"
+  },
+  "Угол измеряется на экране и меняется при масштабе; укажите A и B.": {
+    "en": "Angle is measured on screen and changes with zoom; select A and B.",
+    "de": "Der Winkel wird am Bildschirm gemessen und ändert sich beim Zoomen; A und B wählen."
+  },
+  "A–B — центр канала; третья точка задаёт смещение границы.": {
+    "en": "A–B is the channel centre; the third point sets the boundary offset.",
+    "de": "A–B ist die Kanalmitte; der dritte Punkt legt den Randabstand fest."
+  },
+  "Спираль: укажите центр и внешний конец; 3 витка в экранном масштабе.": {
+    "en": "Spiral: select centre and outer end; 3 turns at screen scale.",
+    "de": "Spirale: Mitte und äußeres Ende wählen; 3 Windungen im Bildschirmmaßstab."
+  },
+  "Проекция цены: движение A→B, затем точка начала C. Не прогноз.": {
+    "en": "Price projection: movement A→B, then start C. Not a forecast.",
+    "de": "Preisprojektion: Bewegung A→B, dann Start C. Keine Prognose."
+  },
+  "Проекция времени: интервал A→B, затем точка C; шаг в барах, не календарных днях.": {
+    "en": "Time projection: interval A→B, then C; bar steps, not calendar days.",
+    "de": "Zeitprojektion: Intervall A→B, dann C; Balkenschritte, keine Kalendertage."
+  },
+  "Ручная Long-модель: вход, затем стоп ниже и цель выше правее входа. Без заявки.": {
+    "en": "Manual Long model: entry, lower stop and higher target to its right. No order.",
+    "de": "Manuelles Long-Modell: Einstieg, tieferer Stopp und höheres Ziel rechts davon. Kein Auftrag."
+  },
+  "Ручная Short-модель: вход, затем стоп выше и цель ниже правее входа. Без заявки.": {
+    "en": "Manual Short model: entry, higher stop and lower target to its right. No order.",
+    "de": "Manuelles Short-Modell: Einstieg, höherer Stopp und tieferes Ziel rechts davon. Kein Auftrag."
+  },
+  "Long Position": {
+    "ru": "Длинная позиция",
+    "en": "Long Position",
+    "de": "Long-Position"
+  },
+  "Short Position": {
+    "ru": "Короткая позиция",
+    "en": "Short Position",
+    "de": "Short-Position"
+  },
+  "Цена ручной модели превышает допустимый предел": {
+    "en": "Manual model price exceeds the permitted limit",
+    "de": "Der Preis des manuellen Modells überschreitet die zulässige Grenze"
+  },
+  "Информация": {
+    "en": "Information",
+    "de": "Information"
+  },
+  "Пропуск свечей": {
+    "en": "Missing candles",
+    "de": "Fehlende Kerzen"
+  },
+  "CP проверит доступные источники": {
+    "en": "CP will check available sources",
+    "de": "CP prüft verfügbare Quellen"
+  },
+  "Сохранённое наблюдение; отсутствие в TV не доказывает отсутствие сделок.": {
+    "en": "Saved observation; absence in TV is not proof of no trades.",
+    "de": "Gespeicherte Beobachtung; Fehlen in TV beweist nicht, dass keine Geschäfte stattfanden."
+  },
+  "Данные или оценка устарели": {
+    "en": "Data or assessment outdated",
+    "de": "Daten oder Bewertung veraltet"
+  },
+  "Сверка TV": {
+    "en": "TV comparison",
+    "de": "TV-Abgleich"
+  },
+  "Подробная диагностика…": {
+    "en": "Advanced diagnostics…",
+    "de": "Erweiterte Diagnose…"
+  },
+  "Исторический риск принят": {
+    "en": "Historical risk accepted",
+    "de": "Historisches Risiko akzeptiert"
+  },
+  "Последняя проверка": {
+    "en": "Last check",
+    "de": "Letzte Prüfung"
+  },
+  "Данных недостаточно": {
+    "en": "Insufficient evidence",
+    "de": "Unzureichende Nachweise"
+  },
+  "Диагностика архива": {
+    "en": "Archive diagnostics",
+    "de": "Archivdiagnose"
+  },
+  "Следующая попытка": {
+    "en": "Next attempt",
+    "de": "Nächster Versuch"
+  },
+  "Дата / диапазон": {
+    "en": "Date / range",
+    "de": "Datum / Zeitraum"
+  },
+  "В очереди сверки": {
+    "en": "Queued for comparison",
+    "de": "Zum Abgleich vorgemerkt"
+  },
+  "Требуется проверка входов анализа": {
+    "en": "Analysis inputs need verification",
+    "de": "Analyseeingaben müssen verifiziert werden"
+  },
+  "Расходятся OHLCV": {
+    "en": "OHLCV differ",
+    "de": "OHLCV weichen ab"
+  },
+  "Ожидание штатного восстановления": {
+    "en": "Awaiting normal recovery",
+    "de": "Warten auf reguläre Wiederherstellung"
+  },
+  "Сохранённые проблемы": {
+    "en": "Saved problems",
+    "de": "Gespeicherte Probleme"
+  },
+  "Нужна повторная сверка": {
+    "en": "Recheck required",
+    "de": "Erneuter Abgleich erforderlich"
+  },
+  "Не проверено": {
+    "en": "Not checked",
+    "de": "Nicht geprüft"
+  },
+  "CandlePilot • проблемы выбранной акции": {
+    "en": "CandlePilot • selected stock problems",
+    "de": "CandlePilot • Probleme der gewählten Aktie"
+  },
+  "Высокая": {
+    "en": "High",
+    "de": "Hoch"
+  },
+  "Средняя": {
+    "en": "Medium",
+    "de": "Mittel"
+  },
+  "Исходные причины": {
+    "en": "Original reasons",
+    "de": "Ursprüngliche Gründe"
+  },
+  "Ограничение глубины источника": {
+    "en": "Source depth limit",
+    "de": "Begrenzte Quellentiefe"
+  },
+  "Ранее совпало наличие свечей": {
+    "en": "Candle presence matched previously",
+    "de": "Kerzenverfügbarkeit stimmte zuvor überein"
+  },
+  "Влияние": {
+    "en": "Impact",
+    "de": "Auswirkung"
+  },
+  "Очередь временно занята": {
+    "en": "Queue temporarily busy",
+    "de": "Warteschlange vorübergehend belegt"
+  },
+  "Низкая": {
+    "en": "Low",
+    "de": "Gering"
+  },
+  "Расходится наличие свечей": {
+    "en": "Candle presence differs",
+    "de": "Kerzenverfügbarkeit weicht ab"
+  },
+  "Пропуск у источника": {
+    "en": "Source gap",
+    "de": "Lücke bei der Quelle"
+  },
+  "Чтение сохранённых проблем…": {
+    "en": "Reading saved problems…",
+    "de": "Gespeicherte Probleme werden gelesen…"
+  },
+  "Требуется проверка анализа": {
+    "en": "Analysis inputs need checking",
+    "de": "Analyseeingaben müssen geprüft werden"
+  },
+  "Некорректные цены или объёмы": {
+    "en": "Invalid prices or volumes",
+    "de": "Ungültige Preise oder Volumina"
+  },
+  "Не удалось прочитать проблемы": {
+    "en": "Could not read problems",
+    "de": "Probleme konnten nicht gelesen werden"
+  },
+  "Серьёзность — категория диагностики, не вероятность убытка. TV не выдаёт торговый допуск.": {
+    "en": "Severity is a diagnostic category, not loss probability. TV does not grant trading permission.",
+    "de": "Schweregrad ist eine Diagnosekategorie, keine Verlustwahrscheinlichkeit. TV erteilt keine Handelsfreigabe."
+  },
+  "Интервал пока не подтверждён": {
+    "en": "Interval not confirmed yet",
+    "de": "Intervall noch nicht bestätigt"
+  },
+  "Что делает CP": {
+    "en": "What CP does",
+    "de": "Was CP tut"
+  },
+  "В сохранённых отчётах проблем не найдено. Это не подтверждает полноту истории или готовность торговли.": {
+    "en": "No problems found in saved reports. This does not prove complete history or trading readiness.",
+    "de": "Keine Probleme in gespeicherten Berichten gefunden. Dies bestätigt weder vollständige Historie noch Handelsbereitschaft."
+  },
+  "Серьёзность": {
+    "en": "Severity",
+    "de": "Schweregrad"
+  },
+  "Источник недоступен": {
+    "en": "Source unavailable",
+    "de": "Quelle nicht verfügbar"
+  },
+  "Ожидает повторной проверки": {
+    "en": "Awaiting recheck",
+    "de": "Erneute Prüfung ausstehend"
+  },
+  "Ранее совпали OHLCV": {
+    "en": "OHLCV matched previously",
+    "de": "OHLCV stimmten zuvor überein"
+  },
+  "Старый архив": {
+    "en": "Older archive",
+    "de": "Älteres Archiv"
+  },
+  "Показывать архив старше 5 лет": {
+    "en": "Show archive older than 5 years",
+    "de": "Archiv älter als 5 Jahre anzeigen"
+  },
+  "Источник / площадка": {
+    "en": "Source / venue",
+    "de": "Quelle / Handelsplatz"
+  },
+  "Показывать старые и другие архивы": {
+    "en": "Show old and other archives",
+    "de": "Alte und andere Archive anzeigen"
+  },
+  "Архив отдельно": {
+    "en": "Separate archive",
+    "de": "Separates Archiv"
+  },
+  "Нет сохранённого задания восстановления": {
+    "en": "No saved recovery request",
+    "de": "Kein gespeicherter Wiederherstellungsauftrag"
+  },
+  "Не удалось поставить задачу": {
+    "en": "Could not queue the task",
+    "de": "Aufgabe konnte nicht eingereiht werden"
+  },
+  "Решить": {
+    "en": "Resolve",
+    "de": "Beheben"
+  },
+  "Действие": {
+    "en": "Action",
+    "de": "Aktion"
+  },
+  "Нужна помощь": {
+    "en": "Help needed",
+    "de": "Hilfe erforderlich"
+  },
+  "Приоритетная задача поставлена в штатную очередь": {
+    "en": "Priority task added to the normal queue",
+    "de": "Prioritätsaufgabe in die reguläre Warteschlange gestellt"
+  },
+  "Проверить первой": {
+    "en": "Check first",
+    "de": "Zuerst prüfen"
+  },
+  "Нет штатного адресного исправления для этого источника или ТФ": {
+    "en": "No supported targeted repair for this source or timeframe",
+    "de": "Keine unterstützte gezielte Reparatur für diese Quelle oder Zeiteinheit"
+  },
+  "Автоисправление": {
+    "en": "Auto-repair",
+    "de": "Autoreparatur"
+  },
+  "СР сам проверит архив и источник; исправление зависит от подтверждённых данных": {
+    "en": "CP checks the archive and source automatically; repair requires confirmed data",
+    "de": "CP prüft Archiv und Quelle automatisch; die Reparatur erfordert bestätigte Daten"
+  },
+  "В очереди": {
+    "en": "Queued",
+    "de": "In Warteschlange"
+  },
+  "Исправляется": {
+    "en": "Repairing",
+    "de": "Wird repariert"
+  },
+  "Ждёт источник": {
+    "en": "Awaiting source",
+    "de": "Wartet auf Quelle"
+  },
+  "Не исправлено": {
+    "en": "Not repaired",
+    "de": "Nicht behoben"
+  },
+  "Перепроверить": {
+    "en": "Recheck",
+    "de": "Erneut prüfen"
+  },
+  "Перепроверка": {
+    "en": "Rechecking",
+    "de": "Erneute Prüfung"
+  },
+  "Приоритетная очередь": {
+    "en": "Priority queue",
+    "de": "Prioritätswarteschlange"
+  },
+  "Проверка и восстановление": {
+    "en": "Checking and recovering",
+    "de": "Prüfung und Wiederherstellung"
+  },
+  "Ожидание источника": {
+    "en": "Awaiting source",
+    "de": "Wartet auf Quelle"
+  },
+  "Исходные данные изменились": {
+    "en": "Source inputs changed",
+    "de": "Ausgangsdaten geändert"
+  },
+  "Результат записан; обновление списка": {
+    "en": "Result saved; updating list",
+    "de": "Ergebnis gespeichert; Liste wird aktualisiert"
+  },
+  "Оценка обновлена": {
+    "en": "Assessment updated",
+    "de": "Bewertung aktualisiert"
+  },
+  "Ещё не запускалось": {
+    "en": "Not started yet",
+    "de": "Noch nicht gestartet"
+  },
+  "Работа СР": {
+    "en": "CP progress",
+    "de": "CP-Fortschritt"
+  },
+  "Не удалось обновить ход исправления": {
+    "en": "Could not update repair progress",
+    "de": "Reparaturfortschritt konnte nicht aktualisiert werden"
+  },
+  "Постановка приоритетного задания…": {
+    "en": "Queuing priority task…",
+    "de": "Prioritätsaufgabe wird eingereiht…"
+  },
+  "Активные проблемы": {
+    "en": "Active problems",
+    "de": "Aktive Probleme"
+  },
+  "Принятые сверки TV": {
+    "en": "Accepted TV reviews",
+    "de": "Akzeptierte TV-Abgleiche"
+  },
+  "Принятых сверок TV пока нет": {
+    "en": "No accepted TV reviews yet",
+    "de": "Noch keine akzeptierten TV-Abgleiche"
+  },
+  "Принято по TV": {
+    "en": "Accepted after TV review",
+    "de": "Nach TV-Abgleich akzeptiert"
+  },
+  "Пропуск сверён с TV и принят; реальные свечи не изменены": {
+    "en": "The gap was reviewed against TV and accepted; actual candles are unchanged",
+    "de": "Die Lücke wurde mit TV abgeglichen und akzeptiert; echte Kerzen bleiben unverändert"
+  },
+  "Пропуск сверён с TV и принят": {
+    "en": "Gap reviewed against TV and accepted",
+    "de": "Lücke mit TV abgeglichen und akzeptiert"
+  },
+  "Совпало отсутствие свечей; принято": {
+    "en": "Matching absence of candles; accepted",
+    "de": "Übereinstimmendes Fehlen von Kerzen; akzeptiert"
+  },
+  "Сверка принята": {
+    "en": "Review accepted",
+    "de": "Abgleich akzeptiert"
+  },
+  "Подтверждено GETTEX": {
+    "en": "Confirmed by GETTEX",
+    "de": "Von GETTEX bestätigt"
+  },
+  "Отсутствие сделок подтверждено GETTEX; свечи не создавались": {
+    "en": "No trades confirmed by GETTEX; no candles were created",
+    "de": "Keine Geschäfte durch GETTEX bestätigt; keine Kerzen wurden erstellt"
+  },
+  "Отсутствие сделок подтверждено GETTEX": {
+    "en": "No trades confirmed by GETTEX",
+    "de": "Keine Geschäfte durch GETTEX bestätigt"
+  },
+  "Подтверждение источника": {
+    "en": "Source confirmation",
+    "de": "Quellenbestätigung"
+  },
+  "Подтверждённых интервалов GETTEX пока нет": {
+    "en": "No confirmed GETTEX intervals yet",
+    "de": "Noch keine bestätigten GETTEX-Intervalle"
+  },
+  "Проверено GETTEX": {
+    "en": "Verified by GETTEX",
+    "de": "Durch GETTEX bestätigt"
+  },
+  "Текущие свечи и пустые интервалы подтверждены полным источником GETTEX": {
+    "en": "Current candles and empty intervals are confirmed by the complete GETTEX source",
+    "de": "Aktuelle Kerzen und leere Intervalle sind durch die vollständige GETTEX-Quelle bestätigt"
+  },
+  "Текущий участок подтверждён полным источником GETTEX; исходные значения сохранены": {
+    "en": "The current range is confirmed by the complete GETTEX source; original values are retained",
+    "de": "Der aktuelle Abschnitt ist durch die vollständige GETTEX-Quelle bestätigt; ursprüngliche Werte bleiben erhalten"
+  },
+  "Участок подтверждён GETTEX": {
+    "en": "Range confirmed by GETTEX",
+    "de": "Abschnitt durch GETTEX bestätigt"
+  },
+  "{name} · вход {clock} · удержание {hours:g} ч": {},
+  "{name} · окна 4H {closes}": {},
+  "Для этой акции вход 4H разрешён в другом окне.": {},
+  "Дневной откат проверяется в начале торговой сессии.": {},
+  "Дневной откат V5 использует предыдущую закрытую дневную свечу и вторую закрытую свечу 15 мин для входа. Счёт общий.": {},
+  "Для дневного отката нужна вторая закрытая свеча 15 мин текущей сессии.": {},
+  "Для дневного отката пока недостаточно подтверждённой истории акции.": {},
+  "Дневная свеча пока не подтвердила вход после отката.": {},
+  "Дневной откат не прошёл фильтр волатильности и силы восстановления.": {},
+  "Для дневного отката нужны достаточная история группы и неотрицательная медиана её доходности за пять сессий.": {},
+  "Цена отклонилась от дневного закрытия больше чем на 0,8 ATR.": {},
+  "Ожидаем согласования последней закрытой дневной свечи.": {},
+  "Акция остаётся доступна для 4H. Дневной откат откалиброван на другом составе акций.": {},
+  "Окно входа по дневному откату закрылось.": {},
+  "Дневной откат подтвердил вход.": {},
+  "На этой свече исполнения позиция уже закрывалась.": {},
+  "V5 4H: недельный рост или дневное восстановление. Цена входа должна быть выше взвешенной цены двух торговых часов.": {},
+  "Для проверки недельного тренда не хватает подтверждённой истории.": {},
+  "Недельный рост и дневное восстановление пока не подтвердились.": {},
+  "Для проверки дневного восстановления не хватает подтверждённых свечей.": {},
+  "Для взвешенной цены нужны как минимум шесть свечей с объёмом за два торговых часа.": {},
+  "Цена входа пока не выше взвешенной цены последних двух торговых часов.": {},
+  "Архивные замечания не равны торговым блокировкам": {},
+  "V5 4H проверяет цену до четвёртой свечи 15 мин, если первая не подтвердила пробой или взвешенную цену. Для Micron действует первая проверка.": {},
+  "Для повторного входа пока не подтверждена первая котировка.": {},
+  "Подходящая цена уже была на предыдущей свече.": {},
+  "Цена восстановилась, повторный вход 4H подтверждён.": {},
+  "Все новости": {
+    "ru": "Все новости",
+    "en": "All news",
+    "de": "Alle Nachrichten"
+  },
+  "Избранные новости": {
+    "ru": "Избранные новости",
+    "en": "Favourite news",
+    "de": "Nachrichten-Favoriten"
+  },
+  "Закладки": {
+    "ru": "Закладки",
+    "en": "Bookmarks",
+    "de": "Lesezeichen"
+  },
+  "Нет превью": {
+    "ru": "Нет превью",
+    "en": "No preview",
+    "de": "Keine Vorschau"
+  },
+  "Превью предоставлено источником": {
+    "ru": "Превью предоставлено источником",
+    "en": "Source-provided preview",
+    "de": "Vorschau des Anbieters"
+  },
+  "Изображение не предоставлено источником": {
+    "ru": "Изображение не предоставлено источником",
+    "en": "Source does not provide an image",
+    "de": "Anbieter stellt kein Bild bereit"
+  },
+  "Сохранить материал": {
+    "ru": "Сохранить материал",
+    "en": "Save article",
+    "de": "Artikel speichern"
+  },
+  "Отметить важное": {
+    "ru": "Отметить важное",
+    "en": "Mark as important",
+    "de": "Als wichtig markieren"
+  },
+  "Избранное сверху": {
+    "ru": "Избранное сверху",
+    "en": "Favourites first",
+    "de": "Favoriten zuerst"
+  },
+  "Не удалось сохранить отметку": {
+    "ru": "Не удалось сохранить отметку",
+    "en": "Could not save the marker",
+    "de": "Markierung konnte nicht gespeichert werden"
+  },
+  "Отметки сохранены": {
+    "ru": "Отметки сохранены",
+    "en": "Markers saved",
+    "de": "Markierungen gespeichert"
+  },
+  "Сохранение…": {
+    "ru": "Сохранение…",
+    "en": "Saving…",
+    "de": "Wird gespeichert…"
+  },
+  "Достигнут лимит сохранённых элементов": {
+    "ru": "Достигнут лимит сохранённых элементов",
+    "en": "Saved item limit reached",
+    "de": "Maximale Anzahl gespeicherter Einträge erreicht"
+  },
+  "Хранение новостей — 7 дней": {
+    "en": "News retained for 7 days",
+    "de": "Nachrichten werden 7 Tage gespeichert"
+  },
+  "Чтение сохранённых данных…": {
+    "en": "Reading saved data…",
+    "de": "Gespeicherte Daten werden gelesen…"
+  },
+  "Данные временно недоступны. Повторите обновление.": {
+    "en": "Data temporarily unavailable. Try refreshing again.",
+    "de": "Daten sind vorübergehend nicht verfügbar. Aktualisierung erneut versuchen."
+  },
+  "Полная карточка в отдельном окне": {
+    "en": "Full company card in a separate window",
+    "de": "Vollständige Unternehmenskarte in einem eigenen Fenster"
+  },
+  "Подробная отчётность": {
+    "en": "Detailed financial statements",
+    "de": "Detaillierte Finanzberichte"
+  },
+  "Последняя свеча": {
+    "en": "Latest candle",
+    "de": "Letzte Kerze"
+  },
+  "Закрытых свечей": {
+    "en": "Closed candles",
+    "de": "Geschlossene Kerzen"
+  },
+  "Индикаторы последней свечи; формирующаяся свеча предварительная": {
+    "en": "Indicators of the latest candle; the forming candle is provisional",
+    "de": "Indikatoren der letzten Kerze; die laufende Kerze ist vorläufig"
+  },
+  "Отчётность ещё не загружена. Откройте подробную отчётность для обновления.": {
+    "en": "Financial statements have not been loaded. Open detailed statements to refresh.",
+    "de": "Finanzberichte wurden noch nicht geladen. Detaillierte Berichte zur Aktualisierung öffnen."
+  },
+  "Валюта указана у каждого показателя": {
+    "en": "Currency is shown for each metric",
+    "de": "Die Währung ist bei jeder Kennzahl angegeben"
+  },
+  "Signal MACD": {
+    "en": "MACD signal",
+    "de": "MACD-Signallinie"
+  },
+  "Публикации эмитента:": {
+    "de": "Veröffentlichungen des Emittenten:",
+    "en": "Issuer publications:"
+  },
+  "График": {
+    "en": "Chart",
+    "de": "Chart"
+  },
+  "Анализ": {
+    "en": "Analysis",
+    "de": "Analyse"
+  },
+  "Финансы": {
+    "en": "Financials",
+    "de": "Finanzen"
+  },
+  "События": {
+    "en": "Events",
+    "de": "Ereignisse"
+  },
+  "Актуально": {
+    "en": "Current",
+    "de": "Aktuell"
+  },
+  "Устарело": {
+    "en": "Outdated",
+    "de": "Veraltet"
+  },
+  "Дата в будущем": {
+    "en": "Future date",
+    "de": "Datum in der Zukunft"
+  },
+  "Данные эмитента · ISIN не проверен": {
+    "en": "Company data · ISIN unverified",
+    "de": "Unternehmensdaten · ISIN ungeprüft"
+  },
+  "Суммы округлены · точные значения при наведении": {
+    "en": "Rounded amounts · hover for exact values",
+    "de": "Gerundete Beträge · genaue Werte per Mauszeiger"
+  },
+  "Значение источника": {
+    "en": "Source value",
+    "de": "Originalwert"
+  },
+  "Валюта неизвестна": {
+    "en": "Currency unknown",
+    "de": "Währung unbekannt"
+  },
+  "Даты и прогнозы могут измениться": {
+    "en": "Dates and estimates may change",
+    "de": "Termine und Prognosen können sich ändern"
+  },
+  "История CP": {
+    "en": "CP history",
+    "de": "CP-Historie"
+  },
+  "Проверка истории": {
+    "en": "History audit",
+    "de": "Historienprüfung"
+  },
+  "Ожидание DQ": {
+    "en": "Awaiting DQ",
+    "de": "DQ wird erwartet"
+  },
+  "Анализ: ожидается расчёт": {
+    "en": "Analysis: awaiting calculation",
+    "de": "Analyse: Berechnung ausstehend"
+  },
+  "Анализ: данные блокируют расчёт": {
+    "en": "Analysis: blocked by data",
+    "de": "Analyse: durch Daten blockiert"
+  },
+  "Анализ доступен": {
+    "en": "Analysis available",
+    "de": "Analyse verfügbar"
+  },
+  "Цена и риск — перед сделкой": {
+    "en": "Price and risk checked before orders",
+    "de": "Preis und Risiko werden vor Orders geprüft"
+  },
+  "Неполных агрегатов: {count}": {
+    "en": "Incomplete aggregates: {count}",
+    "de": "Unvollständige Aggregate: {count}"
+  },
+  "Неподтверждённых интервалов: {count}": {
+    "en": "Unconfirmed intervals: {count}",
+    "de": "Unbestätigte Intervalle: {count}"
+  },
+  "Пропущенных свечей: {count}": {
+    "en": "Missing candles: {count}",
+    "de": "Fehlende Kerzen: {count}"
+  },
+  "Полнота публикации не подтверждена": {
+    "en": "Publication completeness unconfirmed",
+    "de": "Vollständigkeit der Veröffentlichung unbestätigt"
+  },
+  "Некорректные OHLCV": {
+    "en": "Invalid OHLCV",
+    "de": "Ungültige OHLCV"
+  },
+  "Причина не указана": {
+    "en": "Reason not supplied",
+    "de": "Grund nicht angegeben"
+  },
+  "Замечаний нет": {
+    "en": "No issues",
+    "de": "Keine Beanstandungen"
+  },
+  "Предупреждений: {count}": {
+    "en": "Warnings: {count}",
+    "de": "Warnungen: {count}"
+  },
+  "Ещё причин: {count}": {
+    "en": "More reasons: {count}",
+    "de": "Weitere Gründe: {count}"
+  },
+  "ТФ проверки DQ": {
+    "en": "DQ audit timeframe",
+    "de": "Zeitrahmen der DQ-Prüfung"
+  },
+  "Это проверка истории, не разрешение на сделку.": {
+    "en": "This is a history audit, not permission to execute orders.",
+    "de": "Dies ist eine Historienprüfung, keine Orderfreigabe."
+  },
+  "Временных отметок: {actual}/{expected}": {
+    "en": "Candle timestamps: {actual}/{expected}",
+    "de": "Kerzenzeitpunkte: {actual}/{expected}"
+  },
+  "Показаны первые {count} из {total}": {
+    "en": "Showing first {count} of {total}",
+    "de": "Die ersten {count} von {total} werden angezeigt"
+  },
+  "Причины": {
+    "en": "Reasons",
+    "de": "Gründe"
+  },
+  "Диапазоны": {
+    "en": "Ranges",
+    "de": "Bereiche"
+  },
+  "Проверено": {
+    "en": "Checked",
+    "de": "Geprüft"
+  },
+  "Предупреждения": {
+    "en": "Warnings",
+    "de": "Warnungen"
+  },
+  "Таймфрейм": {
+    "en": "Timeframe",
+    "de": "Zeitrahmen"
+  },
+  "Нет подтверждённого ряда": {
+    "en": "No confirmed series",
+    "de": "Keine bestätigte Zeitreihe"
+  },
+  "Группа": {
+    "en": "Group",
+    "de": "Gruppe"
+  },
+  "В группе есть закреплённый объект. Сначала снимите закрепление.": {
+    "en": "The group contains a locked object. Unlock it first.",
+    "de": "Die Gruppe enthält ein gesperrtes Objekt. Zuerst entsperren."
+  },
+  "Архив": {
+    "en": "Archive",
+    "de": "Archiv"
+  },
+  "Для группы нужны минимум два объекта": {
+    "en": "A group needs at least two objects",
+    "de": "Eine Gruppe benötigt mindestens zwei Objekte"
+  },
+  "Слой / группа": {
+    "en": "Layer / group",
+    "de": "Ebene / Gruppe"
+  },
+  "Экспорт рисунков": {
+    "en": "Export drawings",
+    "de": "Zeichnungen exportieren"
+  },
+  "Выбрано объектов: {count}": {
+    "en": "Selected objects: {count}",
+    "de": "Ausgewählte Objekte: {count}"
+  },
+  "Выбрать все": {
+    "en": "Select all",
+    "de": "Alle auswählen"
+  },
+  "Рисунки экспортированы. Свечи и счёт не включены.": {
+    "en": "Drawings exported. Candles and account are not included.",
+    "de": "Zeichnungen exportiert. Kerzen und Konto sind nicht enthalten."
+  },
+  "Позитивные слова": {
+    "en": "Positive wording",
+    "de": "Positive Formulierungen"
+  },
+  "Негативные слова": {
+    "en": "Negative wording",
+    "de": "Negative Formulierungen"
+  },
+  "Экспорт JSON…": {
+    "en": "Export JSON…",
+    "de": "JSON exportieren…"
+  },
+  "Выберите объекты": {
+    "en": "Select objects",
+    "de": "Objekte auswählen"
+  },
+  "Влияние на цену: нет подтверждённых данных": {
+    "en": "Price impact: no verified data",
+    "de": "Kursauswirkung: keine bestätigten Daten"
+  },
+  "Снять выделение": {
+    "en": "Clear selection",
+    "de": "Auswahl aufheben"
+  },
+  "Группировать": {
+    "en": "Group",
+    "de": "Gruppieren"
+  },
+  "Имя группы: от 1 до 40 символов": {
+    "en": "Group name: 1–40 characters",
+    "de": "Gruppenname: 1–40 Zeichen"
+  },
+  "Справочно. Не используется для исполнения GETTEX.": {
+    "en": "For information. Not used for GETTEX execution.",
+    "de": "Nur zur Information. Nicht für GETTEX-Ausführungen verwendet."
+  },
+  "Премаркет: нет данных": {
+    "en": "Premarket: no data",
+    "de": "Vorbörse: keine Daten"
+  },
+  "Экспорт превышает 3 МБ": {
+    "en": "Export exceeds 3 MB",
+    "de": "Export überschreitet 3 MB"
+  },
+  "Не удалось сохранить файл": {
+    "en": "Could not save the file",
+    "de": "Datei konnte nicht gespeichert werden"
+  },
+  "Источник карточки не предоставил подтверждённую цену премаркета. Это отдельная площадка, не котировка GETTEX.": {
+    "en": "The company card source provided no verified premarket price. This is a separate venue, not a GETTEX quote.",
+    "de": "Die Quelle der Firmenkarte liefert keinen bestätigten vorbörslichen Kurs. Separater Handelsplatz, kein GETTEX-Kurs."
+  },
+  "Имя группы": {
+    "en": "Group name",
+    "de": "Gruppenname"
+  },
+  "Без оценки": {
+    "en": "Unclassified",
+    "de": "Nicht bewertet"
+  },
+  "Заголовков: {count}": {
+    "en": "Headlines: {count}",
+    "de": "Schlagzeilen: {count}"
+  },
+  "Премаркет": {
+    "en": "Premarket",
+    "de": "Vorbörse"
+  },
+  "По словам исходных заголовков. Не прогноз цены; без оценки — недостаточно признаков.": {
+    "en": "Based on original headline wording. Not a price forecast; unclassified means insufficient evidence.",
+    "de": "Nach Wortwahl der Originaltitel. Keine Kursprognose; nicht bewertet bedeutet unzureichende Anhaltspunkte."
+  },
+  "Слишком много объектов для экспорта": {
+    "en": "Too many objects to export",
+    "de": "Zu viele Objekte für den Export"
+  },
+  "Разгруппировать": {
+    "en": "Ungroup",
+    "de": "Gruppierung aufheben"
+  },
+  "Ctrl / Shift — несколько объектов; действия применяются ко всей группе.": {
+    "en": "Ctrl / Shift selects multiple objects; actions affect the whole group.",
+    "de": "Strg / Umschalt wählt mehrere Objekte; Aktionen betreffen die gesamte Gruppe."
+  },
+  "Премаркет: ожидание открытия": {
+    "en": "Premarket: waiting for session",
+    "de": "Vorbörse: Sitzung abwarten"
+  },
+  "До начала указанной источником сессии.": {
+    "en": "Before the session specified by the source.",
+    "de": "Vor der von der Quelle angegebenen Sitzung."
+  },
+  "Негативные": {
+    "en": "Negative",
+    "de": "Negativ"
+  },
+  "Не указан тикер карточки.": {
+    "en": "No profile ticker configured.",
+    "de": "Kein Profil-Ticker konfiguriert."
+  },
+  "Источник не публикует премаркет этого тикера.": {
+    "en": "The source does not publish premarket for this ticker.",
+    "de": "Die Quelle veröffentlicht keine vorbörslichen Daten für diesen Ticker."
+  },
+  "Ожидание по требованию источника.": {
+    "en": "Waiting as requested by the source.",
+    "de": "Warten auf Anforderung der Quelle."
+  },
+  "Источник временно недоступен.": {
+    "en": "Source temporarily unavailable.",
+    "de": "Quelle vorübergehend nicht verfügbar."
+  },
+  "Последняя минутная цена до открытия. Привязка по настроенному тикеру; ISIN независимо не проверен.": {
+    "en": "Last premarket minute price. Linked by configured ticker; ISIN not independently verified.",
+    "de": "Letzter vorbörslicher Minutenkurs. Zuordnung über konfigurierten Ticker; ISIN nicht unabhängig geprüft."
+  },
+  "Премаркет: нет у источника": {
+    "en": "Premarket: not provided",
+    "de": "Vorbörse: nicht verfügbar"
+  },
+  "По финансовым фразам исходного заголовка. Учитываются расходы, прибыль, отрицания и смешанные факты. Не прогноз цены.": {
+    "en": "Financial phrases in the original headline, considering costs, profit, negation and mixed facts. Not a price forecast.",
+    "de": "Finanzbezogene Formulierungen des Originaltitels unter Berücksichtigung von Kosten, Gewinn, Verneinung und gemischten Fakten. Keine Kursprognose."
+  },
+  "Источник пока не прислал минутную цену до открытия.": {
+    "en": "The source has not provided a premarket minute price yet.",
+    "de": "Die Quelle hat noch keinen vorbörslichen Minutenkurs geliefert."
+  },
+  "Позитивные": {
+    "en": "Positive",
+    "de": "Positiv"
+  },
+  "Премаркет ещё не загружен.": {
+    "en": "Premarket not loaded yet.",
+    "de": "Vorbörse noch nicht geladen."
+  },
+  "Нейтральные": {
+    "en": "Neutral",
+    "de": "Neutral"
   }
 }

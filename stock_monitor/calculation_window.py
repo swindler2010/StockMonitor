@@ -69,7 +69,17 @@ def scope_session_rejects(frame,base,now):
         for stamp in rejected:
             utc=stamp.tz_localize(frame.attrs['timezone']).tz_convert('UTC')
             if any(row.open<=utc<row.close for _,row in sessions.iterrows()):return
-        current=data_quality.audit(frame,base,expected=frame.attrs,now=now)
+        # A replay can load the entire saved archive before it cuts the
+        # calculation to its as-of time. Future rows are outside this audit.
+        clock=pd.Timestamp(now).tz_convert(frame.attrs['timezone']).tz_localize(None)
+        index=frame.index
+        if index.tz is not None:index=index.tz_convert(frame.attrs['timezone']).tz_localize(None)
+        available=frame.loc[index.isna() | (index<=clock)].copy()
+        if available.empty:return
+        span=available.attrs.get('intraday_span')
+        if span and len(span)==2:
+            available.attrs['intraday_span']=[span[0],str(min(pd.Timestamp(span[1]),clock))]
+        current=data_quality.audit(available,base,expected=frame.attrs,now=now)
         if current['state'] in ('INVALID','SOURCE_UNAVAILABLE'):return
     except (ValueError,TypeError,KeyError):return
     frame.attrs.setdefault('archive_quality_before_scope',report)
@@ -195,6 +205,23 @@ def bounded_features(info, frame, tf, now):
             raise ValueError('NO_CLOSED_BARS')
         closed=exclude_verified_leading_partial(closed,tf,now)
         if closed.empty:raise ValueError('NO_CLOSED_BARS')
+        from gettex_first import bound,calculation_allowed,VERSION as GETTEX_FIRST
+        if bound(closed):
+            enriched,features=_safe_features(closed,info,now)
+            usable=calculation_allowed(features)
+            report=data_quality.audit(closed,tf,expected=identity,now=now)
+            result.update(context=GETTEX_FIRST,count=len(closed),first=str(closed.index[0]),last=str(closed.index[-1]),
+                chart_ready=bool(features.get('ohlcv_valid')),analysis_ready=usable,
+                calculation_availability=features.get('calculation_availability'),window_quality=report,
+                reference_quality=report,features=features,valid_until=context_deadline(identity,tf,now).isoformat(),
+                last_close_at=bar_ends(closed)[-1].isoformat(),
+                reliability='Actual GETTEX OHLCV; CP quality warnings retained separately; no execution grant')
+            result['full_reference']=dict(context='actual_gettex_reference_v1',analysis_ready=usable,
+                count=len(closed),first=str(closed.index[0]),last=str(closed.index[-1]),
+                last_close_at=result['last_close_at'],quality=report,features=features,
+                analysis_scope=meta.get('analysis_scope'),scope_initialization={'checked':False,'policy':GETTEX_FIRST})
+            if not usable:result['blockers'].append('INSUFFICIENT_COMPUTABLE_DATA: '+features.get('reason',''))
+            return result
         leading=closed.attrs.get('excluded_leading_partial')
         scoped_archive=closed.attrs.get('data_quality') if leading else None
         if leading:result['excluded_leading_partial']=leading
@@ -507,6 +534,7 @@ def _assess_all(context, info, now, benchmark=None):
             start=(pd.Timestamp(now).tz_convert('Europe/Berlin').normalize()-pd.DateOffset(years=5)).date().isoformat(),
             no_usable_input=True)
     return dict(context='bounded_200_exact_reference_v1', isin=info['isin'], checked_at=now.isoformat(),
+                calculation_policy='gettex_first_v1',
                 expires_at=expires.isoformat(), expiry_basis='Earliest next closed-bar boundary of usable TF/benchmark; revisions checked on every read', timeframes=rows, candidates=candidates,
                 benchmark=benchmark, full_reference_benchmark=full_benchmark, execution_version=1,
                 calendar_revision=data_quality.XFRA_SESSION_REVISION,
@@ -588,7 +616,7 @@ def calculate_eligibility(store, info):
         db.execute('BEGIN')
         prior=db.execute('SELECT value FROM settings WHERE key=?',(key,)).fetchone()
         prior=json.loads(prior[0]) if prior else None
-        if prior and prior.get('paper_universe_version')==UNIVERSE_VERSION and prior.get('input_binding_version')==2 and prior.get('closed_input_semantics')==2 and _owner_initialization_current(prior) and eligibility_state(db,prior,pd.Timestamp.now(tz='UTC'))=='CURRENT': reused=prior
+        if prior and prior.get('calculation_policy')=='gettex_first_v1' and prior.get('paper_universe_version')==UNIVERSE_VERSION and prior.get('input_binding_version')==2 and prior.get('closed_input_semantics')==2 and _owner_initialization_current(prior) and eligibility_state(db,prior,pd.Timestamp.now(tz='UTC'))=='CURRENT': reused=prior
     if reused is not None:return reused
     now=pd.Timestamp.now(tz='UTC')
     # The same WAL read view must serve both Store and dependency tracking.
@@ -606,6 +634,12 @@ def calculate_eligibility(store, info):
         captured_db=store.read_cache.db
         captured_db.execute('PRAGMA query_only=ON');captured_db.execute('BEGIN')
         with store.read_cache.track_inputs(isolated=True) as token:
+            # Publication always checks this policy, including a fully factual
+            # GETTEX-first path which never visits the legacy risk fallback.
+            # Capture it in the SAME snapshot; never bypass the final guard.
+            from cp_controls import DEMO_ALL_POLICY
+            store.read_cache.depend('setting:'+DEMO_ALL_POLICY)
+            store.read_cache.depend('setting:cp_manual_risk:'+isin)
             store.read_cache.depend('instrument:'+isin)
             with store.connect() as db:
                 row=db.execute('SELECT payload FROM instruments WHERE isin=?',(isin,)).fetchone()
@@ -625,6 +659,10 @@ def calculate_eligibility(store, info):
             specs=list(ctx.closed_specs.values())
             for candidate in result.get('candidates',[]):
                 specs.extend(item['spec'] for item in (candidate.get('closed_inputs') or {}).get('series',[]))
+            from gettex_first import audit_only_scopes
+            advisory=audit_only_scopes(specs)
+            token={k:v for k,v in token.items() if k not in advisory}
+            result['_input_revisions']=dict(token)
             proof=capture_closed_inputs(captured_db,specs,token)
         # Release the reader before validation; no database backup or writer
         # lock during analysis. Uncovered inputs stay strictly revision-bound.
@@ -702,7 +740,7 @@ def eligibility_due(store, infos, now):
             row=db.execute('SELECT value FROM settings WHERE key=?',('cp_eligibility:'+info['isin'],)).fetchone()
             prior=json.loads(row[0]) if row else None
             status=eligibility_state(db,prior,now)
-            upgrade=bool(prior and (prior.get('paper_universe_version')!=UNIVERSE_VERSION or prior.get('closed_input_semantics')!=2 or not _owner_initialization_current(prior)))
+            upgrade=bool(prior and (prior.get('calculation_policy')!='gettex_first_v1' or prior.get('paper_universe_version')!=UNIVERSE_VERSION or prior.get('closed_input_semantics')!=2 or not _owner_initialization_current(prior)))
             if status=='CURRENT' and prior.get('input_binding_version')==2 and not upgrade: continue
             if status=='ERROR' and pd.Timestamp(now)<pd.Timestamp(prior['expires_at']): continue
             # One-time rebind of existing usable proofs after the metadata
@@ -713,6 +751,8 @@ def eligibility_due(store, infos, now):
     return [i for _,_,_,_,i in sorted(pending,key=lambda r:r[:4])[:1]]
 
 def inspect(info, frame, tf, now):
+    from gettex_first import bound
+    factual=bound(frame)
     identity = {k: frame.attrs.get(k) for k in IDENTITY}
     archive = frame.attrs.get('data_quality', {})
     result = dict(identity=identity, archive_quality=archive, timeframe=tf, blockers=[])
@@ -720,10 +760,10 @@ def inspect(info, frame, tf, now):
     from eur_listings import confirmed_listing
     confirmed = confirmed_listing(info,frame.attrs)
     if not confirmed or identity['currency'] != 'EUR': blockers.append('IDENTITY_UNCONFIRMED')
-    if archive.get('state') != 'READY': blockers.append('ARCHIVE_' + str(archive.get('state', 'UNKNOWN')))
+    if archive.get('state') != 'READY' and not factual: blockers.append('ARCHIVE_' + str(archive.get('state', 'UNKNOWN')))
     try:
         ends = bar_ends(frame)
-        closed = frame.loc[(ends <= now) & frame.get('bar_complete', pd.Series(True, index=frame.index)).fillna(False)].copy()
+        closed = frame.loc[(ends <= now) & (True if factual else frame.get('bar_complete', pd.Series(True, index=frame.index)).fillna(False))].copy()
         window = closed.iloc[-200:].copy()
         if len(window) < 35: blockers.append('INSUFFICIENT_CLOSED_BARS')
         if window.empty: raise ValueError('NO_CLOSED_BARS')
@@ -732,7 +772,7 @@ def inspect(info, frame, tf, now):
         report = data_quality.audit(window, tf, expected=identity, now=now)
         result.update(window_quality=report, count=len(window), first=str(window.index[0]), last=str(window.index[-1]),
                       last_close_at=bar_ends(window)[-1].isoformat(), reference_close=float(window.iloc[-1]['close']))
-        if report['state'] != 'READY': blockers.append('WINDOW_' + report['state'])
+        if report['state'] != 'READY' and not factual: blockers.append('WINDOW_' + report['state'])
         enriched = indicators(window)
         names = ('ema10','ema30','rsi','macd','macd_signal','atr','volume_mean20')
         values = {k: float(enriched.iloc[-1][k]) for k in names}
@@ -793,7 +833,9 @@ def build(context, info, entry, state, now, require_smart=True):
     if require_smart:
         try:
             with context.store.connect() as db:
-                db.execute('BEGIN')
+                # An analytical read may already own a coherent query-only WAL
+                # transaction. Reuse it; BEGIN again would abort the bar page.
+                if not db.in_transaction:db.execute('BEGIN')
                 smart=execution_eligibility(db,info,entry,windows[entry]['identity'],now)
         except ValueError as error: blockers.append(str(error))
     return dict(status='BLOCKED' if blockers else 'READY', isin=info['isin'], windows=windows, blockers=blockers, smart_eligibility=smart,
@@ -805,7 +847,7 @@ def build(context, info, entry, state, now, require_smart=True):
 
 def attach_execution(context, info, assessment, now):
     """Existing execution gates are an additional intersection, never a bypass."""
-    from paper_account import instrument_allowed
+    from paper_account import EXECUTION_TF, instrument_allowed
     from snapshot_worker import Value
     from cp_controls import DEMO_ALL_INITIALIZATION
     if not instrument_allowed(info): return
@@ -818,8 +860,9 @@ def attach_execution(context, info, assessment, now):
         if candidate.get('analytical_only'):
             candidate['trade_ready']=False
             candidate['trade_blockers']=['IMPACT_ANALYTICAL_ONLY_NO_EXECUTION_CHANGE'];continue
-        if tf not in ('5m','15m'):
-            candidate['trade_blockers']=['PAPER_EUR_INTRADAY_REQUIRED'];continue
+        if tf!=EXECUTION_TF:
+            candidate['trade_ready']=False
+            candidate['trade_blockers']=['PAPER_EXECUTION_REQUIRES_15M'];continue
         if not candidate.get('signal_ready'):
             candidate['trade_blockers']=['CORE_SIGNAL_NOT_READY'];continue
         previous=context.timeframe
@@ -874,9 +917,18 @@ def _full_execution_proof(db, record, candidate, identity, now):
     for tf in required:
         row=rows.get(tf,{})
         ref=row.get('full_reference',{})
+        from gettex_first import VERSION as GETTEX_FIRST
+        availability=row.get('calculation_availability',{})
+        available_reference=(row.get('context')==GETTEX_FIRST
+            and availability.get('policy')==GETTEX_FIRST
+            and availability.get('source_contract') is True
+            and availability.get('analysis_available') is True
+            and ref.get('context')=='actual_gettex_reference_v1')
+        legacy_reference=(ref.get('context')=='full_closed_reference_v1'
+            and ref.get('quality',{}).get('state')=='READY'
+            and ref.get('scope_initialization',{}).get('stable'))
         if (row.get('identity')!=identity or not ref.get('analysis_ready') or
-                ref.get('context')!='full_closed_reference_v1' or ref.get('quality',{}).get('state')!='READY' or
-                not ref.get('scope_initialization',{}).get('stable') or ref.get('count',0)<35):
+                not (available_reference or legacy_reference) or ref.get('count',0)<35):
             raise ValueError('SMART_FULL_REFERENCE_BLOCKED:'+tf)
         if not (pd.Timestamp(ref['last_close_at'])<=now<pd.Timestamp(row['valid_until'])):
             raise ValueError('SMART_FULL_REFERENCE_EXPIRED:'+tf)
@@ -923,10 +975,10 @@ def execution_eligibility(db, info, tf, identity, now, side=None):
     """Called inside the execution transaction; persisted flags alone confer no rights."""
     import json
     from trading_engine import VERSION, profile
-    from paper_account import registered_instrument
+    from paper_account import EXECUTION_TF, registered_instrument
     registered_instrument(db,info['isin'])
-    if tf not in ('5m','15m'):
-        raise ValueError('SMART_PAPER_POLICY_BLOCKED')
+    if tf!=EXECUTION_TF:
+        raise ValueError('PAPER_EXECUTION_REQUIRES_15M')
     row=db.execute('SELECT value FROM settings WHERE key=?',('cp_eligibility:'+info['isin'],)).fetchone()
     record=json.loads(row[0]) if row else {}
     if record.get('context')!='bounded_200_exact_reference_v1' or record.get('isin')!=info['isin']:
@@ -964,3 +1016,4 @@ def execution_eligibility(db, info, tf, identity, now, side=None):
         raise ValueError('SMART_SIGNAL_MISMATCH')
     return dict(context=mode,strategy=candidate['strategy'],timeframe=tf,
                 checked_at=record['checked_at'],expires_at=candidate.get('execution_expires_at',record['expires_at']),signal=signal)
+

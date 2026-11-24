@@ -9,6 +9,8 @@ ALLOWED={'DE0005140008','DE0007236101','DE0007164600','DE0008404005','US03783310
 # it does not authorize a trade or accept any historical defect.
 UNIVERSE_VERSION='registered_eur_equities_v1'
 ACCOUNT='five-eur-10000-v1'
+EXECUTION_TF='15m'
+# Stored account contract; legacy rows retain the original description.
 POLICY={'currency':'EUR','starting_cash':'10000.00','commission':'1.00','spread_bps':'10','max_bar_age_seconds':900,'execution':'closed 5m/15m close +/- model half-spread; virtual only'}
 
 
@@ -41,30 +43,47 @@ def initialize(db):
 
 def ledger(db):
     if not db.execute("SELECT 1 FROM sqlite_master WHERE name='paper_accounts'").fetchone():return {'status':'NOT_INITIALIZED','virtual':True}
+    from paper_protection import management_key
+    from paper_hourly import read
     cash=money(POLICY['starting_cash']);realized=money(0);fees=money(0);positions={};fills=[]
     for (payload,) in db.execute('SELECT payload FROM paper_fills ORDER BY rowid'):
         e=json.loads(payload);qty=Decimal(e['quantity']);gross=Decimal(e['gross']);fee=Decimal(e['fee'])
         key=(e['isin'],json.dumps(e['identity'],sort_keys=True))
         p=positions.setdefault(key,{'isin':key[0],'identity':e['identity'],'quantity':Decimal(0),'cost':money(0)})
         p['timeframe']=e['timeframe']
+        smart=e.get('smart_eligibility',{})
         if e['side']=='BUY':
             p['quantity']+=qty;p['cost']+=gross+fee;cash-=gross+fee
-            p['protection']=e.get('smart_eligibility',{}).get('protection')
+            p['protection']=smart.get('protection')
+            p['partial_exit']=False
+            p.pop('auto_entry',None)
+            if smart.get('strategy_mode') and e.get('initiator') not in ('MANUAL','CHATGPT'):
+                p['auto_entry']=dict(strategy_mode=smart['strategy_mode'],timeframe=e['timeframe'],
+                    signal_at=smart['signal_at'],request_id=e['request_id'])
+                if smart.get('strategy_model'):
+                    p['auto_entry']['strategy_model']=smart['strategy_model']
         else:
+            if smart.get('protective_exit',{}).get('reason')=='PARTIAL_2R':
+                p['partial_exit']=True
             cost=p['cost']*qty/p['quantity'];p['quantity']-=qty;p['cost']-=cost;cash+=gross-fee;realized+=gross-fee-cost
         fees+=fee;fills.append(e)
     output=[]
     for p in positions.values():
+        if p['quantity'] and p.get('auto_entry') and p.get('protection'):
+            management=read(db,management_key(p['auto_entry']['request_id']),{})
+            if management:
+                p['active_stop']=management['stop']
         output.append({**p,'quantity':str(p['quantity']),'cost':str(money(p['cost'])),'unrealized':None if p['quantity'] else '0.00','mark_status':'REQUIRES_FRESH_READY_QUOTE' if p['quantity'] else 'FLAT'})
     flat=all(Decimal(p['quantity'])==0 for p in output)
     return {'status':'ACTIVE','virtual':True,'account':ACCOUNT,'policy':POLICY,'allowed_isins':registered_isins(db),
             'universe':{'version':UNIVERSE_VERSION,'automatic_new_instruments':True,'scope':'Registered stocks; verified EUR listing and all execution gates required'},
-            'cash':str(cash),'realized':str(money(realized)),'fees':str(fees),'unrealized':'0.00' if flat else None,'equity':str(cash) if flat else None,'positions':output,'fills':fills,'currency':'EUR','broker_orders':False}
+            'execution_timeframe':EXECUTION_TF,'cash':str(cash),'realized':str(money(realized)),'fees':str(fees),'unrealized':'0.00' if flat else None,'equity':str(cash) if flat else None,'positions':output,'fills':fills,'currency':'EUR','broker_orders':False}
 
 def quote(info,result,now,accepted_historical_risk=False,stored_listing=None):
     if not instrument_allowed(info) or result.get('isin')!=info['isin']:raise ValueError('PAPER_INSTRUMENT_BLOCKED')
     identity=result.get('identity',{})
-    if identity.get('currency')!='EUR' or result.get('timeframe') not in ('5m','15m'):raise ValueError('PAPER_EUR_INTRADAY_REQUIRED')
+    if result.get('timeframe')!=EXECUTION_TF:raise ValueError('PAPER_EXECUTION_REQUIRES_15M')
+    if identity.get('currency')!='EUR':raise ValueError('PAPER_EUR_INTRADAY_REQUIRED')
     from eur_listings import confirmed_listing
     meta={k:identity.get(k) for k in ('source','symbol','venue','currency','timezone')}
     if stored_listing and all(stored_listing.get(k)==identity.get(k) for k in ('source','symbol','venue','currency','timezone')):
@@ -72,14 +91,17 @@ def quote(info,result,now,accepted_historical_risk=False,stored_listing=None):
     confirmed=confirmed_listing(info,meta)
     if identity.get('source')=='gettex_chart' and not stored_listing:confirmed=False
     if not confirmed or identity.get('venue') not in ('GER','FRA','GETTEX'):raise ValueError('PAPER_IDENTITY_BLOCKED')
+    from gettex_first import source_contract
+    factual_gettex=source_contract(info,meta)
     quality=result.get('data_quality',{})
-    if quality.get('state')!='READY' and not accepted_historical_risk:
+    if quality.get('state')!='READY' and not accepted_historical_risk and not factual_gettex:
         detail='; '.join(str(issue) for issue in quality.get('issues', []))
         state=quality.get('state') or 'UNKNOWN'
         raise ValueError(f"PAPER_DATA_BLOCKED ({result['timeframe']}, {state})" + (f": {detail}" if detail else ""))
-    if any(quality.get('identity',{}).get(k)!=identity.get(k) for k in ('source','symbol','venue','currency','timezone')):raise ValueError('PAPER_DQ_IDENTITY_BLOCKED')
-    checked=datetime.fromisoformat(quality.get('checked_at',''))
-    if checked.tzinfo is None or not 0<=now-checked.timestamp()<=900:raise ValueError('PAPER_STALE_DQ')
+    if not factual_gettex:
+        if any(quality.get('identity',{}).get(k)!=identity.get(k) for k in ('source','symbol','venue','currency','timezone')):raise ValueError('PAPER_DQ_IDENTITY_BLOCKED')
+        checked=datetime.fromisoformat(quality.get('checked_at',''))
+        if checked.tzinfo is None or not 0<=now-checked.timestamp()<=900:raise ValueError('PAPER_STALE_DQ')
     bars=[b for b in result.get('bars',[]) if b.get('closed')]
     if not bars:raise ValueError('PAPER_NO_CLOSED_BAR')
     b=bars[-1];stamp=datetime.fromisoformat(b['close_at'])
@@ -88,7 +110,7 @@ def quote(info,result,now,accepted_historical_risk=False,stored_listing=None):
     if any(isinstance(v,bool) or not isinstance(v,(int,float)) or not math.isfinite(v) for v in vals):raise ValueError('PAPER_BAD_OHLCV')
     o,h,l,c,v=vals
     if min(o,h,l,c)<=0 or v<=0 or h<max(o,l,c) or l>min(o,h,c):raise ValueError('PAPER_BAD_OHLCV')
-    if accepted_historical_risk:
+    if accepted_historical_risk or (factual_gettex and quality.get('state')!='READY'):
         # The quote itself is NOT a waivable historical problem. Recheck its
         # actual session alignment, closed boundary and OHLCV independently.
         import pandas as pd
@@ -101,6 +123,25 @@ def quote(info,result,now,accepted_historical_risk=False,stored_listing=None):
         report=dq.audit(frame,result['timeframe'],identity,pd.Timestamp(now,unit='s',tz='UTC'))
         if report['state']!='READY' or bar_ends(frame)[0]!=pd.Timestamp(b['close_at']):raise ValueError('PAPER_QUOTE_DQ_BLOCKED')
     return identity,b
+
+def validate_session(identity,now):
+    from timeframes import schedule
+    import pandas as pd
+    instant=pd.Timestamp(now,unit='s',tz='UTC');local=instant.tz_convert(identity['timezone']).tz_localize(None)
+    sessions=schedule(identity,local.normalize(),local.normalize())
+    if not any(r.open<=instant<r.close and not (pd.notna(r.break_start) and r.break_start<=instant<r.break_end) for _,r in sessions.iterrows()):
+        raise ValueError('PAPER_SESSION_CLOSED')
+    return instant
+
+def validate_execution_inputs(db,result,isin):
+    token=result.get('_input_revisions')
+    if not token or 'instrument:'+isin not in token or not any(k.startswith('market:'+isin+':') for k in token):raise ValueError('PAPER_NO_INPUT_REVISIONS')
+    if db.execute("SELECT 1 FROM settings WHERE key='paper_epoch'").fetchone() and 'setting:paper_epoch' not in token:
+        raise ValueError('PAPER_ACCOUNT_RESET')
+    for scope,rev in token.items():
+        row=db.execute('SELECT revision FROM input_revisions WHERE scope=?',(scope,)).fetchone()
+        if (row[0] if row else 0)!=rev:raise ValueError('PAPER_STALE_INPUTS')
+    return token
 
 def execute(db,info,result,args,now=None):
     """Caller holds BEGIN IMMEDIATE on the same source DB through commit."""
@@ -128,16 +169,10 @@ def execute(db,info,result,args,now=None):
     if prior:
         if prior[0]!=digest:raise ValueError('PAPER_REQUEST_REUSED')
         return {'status':'COMPLETED','fill':json.loads(prior[1]),'idempotent':True,'archived':archived}
-    token=result.get('_input_revisions')
-    if not token or 'instrument:'+info['isin'] not in token or not any(k.startswith('market:'+info['isin']+':') for k in token):raise ValueError('PAPER_NO_INPUT_REVISIONS')
-    if db.execute("SELECT 1 FROM settings WHERE key='paper_epoch'").fetchone() and 'setting:paper_epoch' not in token:
-        raise ValueError('PAPER_ACCOUNT_RESET')
-    for scope,rev in token.items():
-        row=db.execute('SELECT revision FROM input_revisions WHERE scope=?',(scope,)).fetchone()
-        if (row[0] if row else 0)!=rev:raise ValueError('PAPER_STALE_INPUTS')
+    token=validate_execution_inputs(db,result,info['isin'])
     persisted=registered_instrument(db,info['isin'])
     contract=result.get('execution_context') or {}
-    hourly=result.get('timeframe') in ('1H','4H')
+    hourly=result.get('timeframe') in ('1H','4H') or 'hourly' in result
     hourly_receipt=None
     if hourly:
         if intent:
@@ -166,12 +201,7 @@ def execute(db,info,result,args,now=None):
     windows=contract.get('windows',{})
     if not hourly and manual is None and (set(windows)!={result['timeframe'],'1H','4H'} or any(w.get('status')!='READY' or w.get('identity')!=identity for w in windows.values())):
         raise ValueError('PAPER_WINDOW_IDENTITY_BLOCKED')
-    from timeframes import schedule
-    import pandas as pd
-    instant=pd.Timestamp(now,unit='s',tz='UTC');local=instant.tz_convert(identity['timezone']).tz_localize(None)
-    sessions=schedule(identity,local.normalize(),local.normalize())
-    if not any(r.open<=instant<r.close and not (pd.notna(r.break_start) and r.break_start<=instant<r.break_end) for _,r in sessions.iterrows()):
-        raise ValueError('PAPER_SESSION_CLOSED')
+    instant=validate_session(identity,now)
     if args.get('timeframe')!=result['timeframe']:raise ValueError('PAPER_TIMEFRAME_MISMATCH')
     from calculation_window import execution_eligibility
     smart=hourly_receipt if hourly else manual if manual is not None else execution_eligibility(db,persisted,result['timeframe'],identity,instant,args['side'])
@@ -186,11 +216,11 @@ def execute(db,info,result,args,now=None):
     fill={'request_id':args['request_id'],'at':datetime.fromtimestamp(now,timezone.utc).isoformat(),'isin':info['isin'],'identity':identity,'timeframe':result['timeframe'],'side':args['side'],'quantity':str(q),'reference_price':str(b['close']),'bar_close_at':b['close_at'],'price':str(price),'gross':str(gross),'fee':str(fee),'spread_bps':POLICY['spread_bps'],'virtual':True,'input_revisions':token,'smart_eligibility':smart}
     if manual is not None:fill['manual_risk']=manual
     if hourly:fill['execution_quote_timeframe']=quote_result['timeframe']
-    fill['initiator']=intent['initiator'] if intent else 'V1' if hourly else 'CHATGPT'
+    fill['initiator']=intent['initiator'] if intent else hourly_receipt.get('strategy_label','V1') if hourly else 'CHATGPT'
     db.execute('INSERT INTO paper_fills VALUES (?,?,?)',(args['request_id'],digest,json.dumps(fill,sort_keys=True)))
     return {'status':'COMPLETED','fill':fill,'account':ledger(db)}
 
-def status(path):
+def status(path, *, include_journal=False):
     from pathlib import Path
     with sqlite3.connect(Path(path).resolve().as_uri()+'?mode=ro',uri=True,timeout=.2) as db:
         db.execute('BEGIN')
@@ -201,6 +231,11 @@ def status(path):
         from paper_preparation import STATE
         state['automation']['preparation']=read(db,STATE,{})
         state['archived_fills']=db.execute('SELECT COUNT(*) FROM paper_fill_archive').fetchone()[0] if db.execute("SELECT 1 FROM sqlite_master WHERE name='paper_fill_archive'").fetchone() else 0
+        if include_journal:
+            from paper_journal import read as journal
+            from paper_v5_context_study import summary as context_study
+            state['journal']=journal(db,state.get('fills',[]))
+            state['v5_context_study']=context_study(db)
         return state
 
 def mark_positions(db,state,now=None):
@@ -220,15 +255,13 @@ def mark_positions(db,state,now=None):
         try:
             ident=p['identity'];isin=p['isin']
             info=json.loads(db.execute('SELECT payload FROM instruments WHERE isin=?',(isin,)).fetchone()[0])
-            candidates=[]
-            for tf in ('5m','15m'):
-                rows=db.execute('SELECT ts,open,high,low,close,volume FROM series WHERE isin=? AND source=? AND venue=? AND currency=? AND symbol=? AND base_tf=? ORDER BY ts DESC LIMIT 4',(isin,ident['source'],ident['venue'],ident['currency'],ident['symbol'],tf)).fetchall()
-                if not rows:continue
-                f=pd.DataFrame(rows,columns=['ts','open','high','low','close','volume']).set_index('ts').sort_index();f.index=pd.to_datetime(f.index);f.attrs={**ident,'timeframe':tf}
-                for (opening,row),end in zip(f.iterrows(),bar_ends(f)):
-                    if pd.notna(end) and end.timestamp()<=now:candidates.append((end,tf,opening,row))
+            tf=EXECUTION_TF
+            rows=db.execute('SELECT ts,open,high,low,close,volume FROM series WHERE isin=? AND source=? AND venue=? AND currency=? AND symbol=? AND base_tf=? ORDER BY ts DESC LIMIT 4',(isin,ident['source'],ident['venue'],ident['currency'],ident['symbol'],tf)).fetchall()
+            f=pd.DataFrame(rows,columns=['ts','open','high','low','close','volume']).set_index('ts').sort_index();f.index=pd.to_datetime(f.index);f.attrs={**ident,'timeframe':tf}
+            candidates=[(end,opening,row) for (opening,row),end in zip(f.iterrows(),bar_ends(f))
+                        if pd.notna(end) and end.timestamp()<=now] if not f.empty else []
             if not candidates:raise ValueError('PAPER_NO_CLOSED_BAR')
-            end,tf,opening,row=max(candidates,key=lambda candidate:candidate[0])
+            end,opening,row=max(candidates,key=lambda candidate:candidate[0])
             if not 0<=now-end.timestamp()<=POLICY['max_bar_age_seconds']:raise ValueError('PAPER_STALE_QUOTE')
             # Valuation of an existing holding depends on this real quote, not
             # on an indicator warmup or the full archive's trading eligibility.
@@ -258,3 +291,4 @@ def mark_positions(db,state,now=None):
     state['unrealized']=str(money(total)) if complete else None
     state['equity']=str(money(Decimal(state['cash'])+sum(Decimal(p.get('market_value','0')) for p in state['positions']))) if complete else None
     return state
+

@@ -389,7 +389,7 @@ def _revisions(db,scopes):
 
 
 def _reviewed_market_tail_current(db,isin,entry,token,current):
-    """Revalidate an issued exact gap receipt after ONLY its market clock moved.
+    """Revalidate a frozen gap after market-tail or review-service clock changes.
 
     New bars outside the reviewed neighbourhood are not a changed permission.
     Every policy, DQ, listing, observation and unknown scope remains strict.
@@ -400,12 +400,13 @@ def _reviewed_market_tail_current(db,isin,entry,token,current):
         market='market:'+isin+':'+p['tf']
         required={'instrument:'+isin,market,'setting:'+p['report_key'],
                   'setting:gettex_chart:'+isin+':'+p['tf']}
-        if (p['isin']!=isin or p['kind']!='archive' or p['tf']!='15m'
+        if (p['isin']!=isin or p['kind']!='archive' or p['tf'] not in ('5m','15m')
                 or meta.get('source')!='gettex_chart' or meta.get('venue')!='GETTEX'
-                or meta.get('currency')!='EUR' or not required<=set(token)
-                or {k for k in token if token[k]!=current[k]}!={market}
-                or not isinstance(token[market],int) or current[market]<=token[market]):return False
+                or meta.get('currency')!='EUR' or not required<=set(token)):return False
+        changed={k for k in token if token[k]!=current[k]}
         if entry['actor']==REVIEWED_ACTOR:
+            if changed!={market} or not isinstance(token[market],int) or current[market]<=token[market]:return False
+            if p['tf']!='15m':return False # Existing scoped price-risk policy is 15m only.
             if 'setting:'+REVIEWED_PREFIX+isin not in token:return False
             return _reviewed_binding(db,read_instrument(db,isin),p)==e['native_binding']
         if entry['actor']!=TV_ACTOR or e.get('native_binding_version')!=2:return False
@@ -414,6 +415,10 @@ def _reviewed_market_tail_current(db,isin,entry,token,current):
         jobs=e.get('job_ids',[])
         if len(jobs)!=1:return False
         job_key=rv.PREFIX+isin+':'+jobs[0]
+        proof_key='setting:interval_evidence:'+isin
+        allowed={market,'setting:'+job_key,proof_key}
+        if (not changed or not changed<=allowed
+                or any(not isinstance(token[k],int) or current[k]<=token[k] for k in changed)):return False
         if not {'setting:'+TV_POLICY,'setting:'+job_key,'setting:interval_evidence:'+isin,
                 'setting:history_identity:'+isin}<=set(token):return False
         job=read(db,job_key,{})
@@ -424,6 +429,16 @@ def _reviewed_market_tail_current(db,isin,entry,token,current):
                 or not _covered([p['range']],[[job['first'],job['last']]])):return False
         inputs=rv._input(db,job)
         if inputs['rows'] or _tv_native_binding(job,inputs)!=e['native_binding']:return False
+        if proof_key in changed:
+            # The full scoped visual fingerprint includes source identity,
+            # file hashes, relevant coverage/closures and native neighbours.
+            # Only a retained, still exact observation may survive a global
+            # proof revision. Never rebase a changed proof or renew a grant.
+            if not rv._observation_current(job,inputs):return False
+            checked=inputs['proof'].get('checked_at')
+            if checked is not None:
+                checked=pd.Timestamp(checked)
+                if checked.tzinfo is None or checked>pd.Timestamp.now(tz='UTC'):return False
         finding=rv._classify(job,inputs,pd.Timestamp.now(tz='UTC'))
         return (finding.get('state') in ('GAP','UNCONFIRMED','SOURCE_TIMEBASE_UNCONFIRMED')
                 and not finding.get('reason','').startswith('EXCHANGE_NOTICE_CONFLICT'))
@@ -570,6 +585,33 @@ def _problem_in_dependencies(problem,series):
     except (ValueError,KeyError,TypeError):return True
 
 
+def _official_empty_problem_current(db,problem,proof):
+    if (problem['kind']!='archive' or problem['tf'] not in ('5m','15m')
+            or problem['state'] not in ('GAP','SOURCE_GAP','UNCONFIRMED')
+            or not problem.get('range') or (problem['tf']=='15m' and problem['range'][0]!=problem['range'][1])):
+        return False
+    import pandas as pd
+    from cp_reconciliation import _spec
+    from revision_watcher import RETIME_POLICY, RETIME_PREFIX, retime_current
+    try:
+        job=_spec(problem['isin'],problem['identity'],problem['tf'],*problem['range'])
+        receipt_key=RETIME_PREFIX+problem['isin']+':'+job['id']
+        dependencies={'setting:'+receipt_key,'setting:'+RETIME_POLICY,
+                      'setting:interval_evidence:'+problem['isin']}
+        if problem['tf']=='5m':dependencies.add('setting:cp_gettex_source_policy')
+        if not dependencies<=proof.get('revisions',{}).keys():return False
+        receipt=read(db,receipt_key,{})
+        first=pd.Timestamp(problem['range'][0])
+        return (receipt.get('state')=='APPLIED' and receipt.get('mode')=='VERIFIED_NATIVE_EMPTY'
+            and receipt['isin']==problem['isin'] and receipt['identity']==problem['identity']
+            and receipt['job_id']==job['id'] and pd.Timestamp(receipt['empty_first'])==first
+            and receipt.get('reviewed_tf','15m')==problem['tf']
+            and pd.Timestamp(receipt['empty_end'])==pd.Timestamp(problem['range'][1])+pd.Timedelta(minutes=5 if problem['tf']=='5m' else 15)
+            and retime_current(db,receipt))
+    except (KeyError,TypeError,ValueError):
+        return False
+
+
 def manual_gate(db,isin,identity,entry_tf=None,dependency_proof=None):
     """Known historical risk only; execution must still validate the actual quote."""
     from paper_account import registered_instrument,ACCOUNT
@@ -606,6 +648,11 @@ def manual_gate(db,isin,identity,entry_tf=None,dependency_proof=None):
     current=[p for p in problems(db,isin) if p['kind']=='archive' and
              ((p['identity']==identity and (required is None or _problem_in_dependencies(p,own)))
               or not all(p['identity'].get(k) for k in IDENTITY))]
+    if dependency_proof is not None:
+        # The archive report can lag an independently proven empty slot.
+        # Recheck the exact repair and require its revision in this proof.
+        current=[p for p in current if p['id'] in accepted or
+                 not _official_empty_problem_current(db,p,dependency_proof)]
     if any(p['id'] not in accepted for p in current):raise ValueError('PAPER_MANUAL_NEW_OR_UNACCEPTED_PROBLEM')
     actual_only=all(accepted[p['id']].get('evidence',{}).get('price_model')==TV_PRICE_MODEL for p in current)
     result=dict(mode='MANUAL_RISK_ACCEPTED',isin=isin,identity=identity,account=ACCOUNT,
@@ -1126,21 +1173,65 @@ def _queue_repair(db,problem,at,origin=None):
     return item
 
 
-def request_repair(store,problem):
+def request_repair(store,problem,priority=False):
     isin=problem['isin']
     with store.connect() as db:
         db.execute('BEGIN IMMEDIATE');current={p['id']:p for p in problems(db,isin)}
         if problem['id'] not in current:raise ValueError('Проблема изменилась. Обновите список')
-        return _queue_repair(db,current[problem['id']],stamp())
+        at=stamp();item=_queue_repair(db,current[problem['id']],at)
+        if priority:
+            item={**item,'owner_priority_at':at}
+            requests=read(db,'cp_repair_requests:'+isin,{})
+            requests[repair_id(current[problem['id']])]=item
+            write(db,'cp_repair_requests:'+isin,requests)
+        return item
 
 def _automatic_request(item):
-    return (item.get('origin') or {}).get('kind')=='AUTOMATIC_DEPENDENCY'
+    return (item.get('origin') or {}).get('kind')=='AUTOMATIC_DEPENDENCY' and not item.get('owner_priority_at')
 
 
 def _automatic_repair_enabled(info,policy):
     return (info.get('kind','stock')=='stock' and policy.get('approved') is True
         and policy.get('version')==1 and policy.get('scope')=='registered_stocks'
         and policy.get('exclusive_venue')=='GETTEX')
+
+
+def repair_children_fingerprint(db,job):
+    """Recovery-only binding: TV observation fingerprints remain unchanged.
+
+    New exact-window children can unblock a failed parent. Global market
+    revisions and service timestamps cannot reset a provider attempt budget.
+    This is a retry hint only; the existing writer validates every candidate.
+    """
+    import pandas as pd
+    from timeframes import MINUTES
+    from history_service import parent_provenance_key
+    from eur_listings import stored_identity
+    from cp_experience import recovery_policy_digest
+    isin=job['isin'];meta=job['identity'];base=job['tf']
+    begin=pd.Timestamp(job['first']);end=pd.Timestamp(job['end'])
+    row=db.execute('SELECT payload FROM instruments WHERE isin=?',(isin,)).fetchone()
+    if not row:return None
+    info=json.loads(row[0]);result=['repair-children-v1',recovery_policy_digest()]
+    def setting(key):return read(db,key,{}) or {}
+    for child in ('1m','5m','15m','1H'):
+        if MINUTES[child]>=(1440 if base=='1D' else MINUTES[base]):continue
+        if meta['source']=='gettex':
+            sql='SELECT ts,open,high,low,close,volume FROM candles WHERE isin=? AND source=? AND base_tf=?'
+            args=(isin,'gettex',child)
+        else:
+            sql='SELECT ts,open,high,low,close,volume FROM series WHERE isin=? AND source=? AND venue=? AND currency=? AND symbol=? AND base_tf=?'
+            args=(isin,meta['source'],meta['venue'],meta['currency'],meta['symbol'],child)
+        rows=db.execute(sql+' AND ts>=? AND ts<? ORDER BY ts LIMIT 2001',(*args,str(begin),str(end))).fetchall()
+        if len(rows)>2000:return None
+        q=setting('data_quality:'+isin+':'+meta['symbol']+':'+child)
+        overlaps=[r for r in q.get('ranges',[]) if pd.Timestamp(r[0])<end and pd.Timestamp(r[1])>=begin]
+        quality={'state':q.get('state'),'ranges':overlaps} if overlaps else (
+            {'state':q.get('state'),'issues':q.get('issues')} if not q.get('ranges') and q.get('state') in ('INVALID','SOURCE_UNAVAILABLE','RECOVERING','SOURCE_GAP') else None)
+        coverage=setting('history_coverage:'+isin+':'+meta['symbol']+':'+child)
+        lineage={k:v for k,v in setting(parent_provenance_key(isin,meta,child)).items() if begin<=pd.Timestamp(k)<end}
+        result.append([child,rows,quality,coverage.get('intraday_blockers'),lineage,bool(stored_identity(db,info,meta,child))])
+    return digest(result)
 
 
 def automatic_repair_turn(store,info,now=None):
@@ -1162,7 +1253,7 @@ def automatic_repair_turn(store,info,now=None):
         active=[x for x in requests.values() if _automatic_request(x) and x.get('state') in ('QUEUED','RUNNING','WAITING')]
         if active:return dict(state='PENDING',request_id=repair_id(active[0]['problem']))
         assessment=read(db,'cp_eligibility:'+isin,{})
-        if assessment.get('isin')!=isin:return {'state':'AWAITING_ASSESSMENT'}
+        if assessment.get('isin')!=isin:assessment={}
         specs=[]
         for candidate in assessment.get('candidates',[]):
             if not candidate.get('analysis_ready'):
@@ -1186,13 +1277,22 @@ def automatic_repair_turn(store,info,now=None):
                 if pd.isna(start) or pd.isna(end) or start>end:continue
                 scopes.setdefault((digest(meta),base),set()).add((start,end))
             except (KeyError,TypeError,ValueError):continue
-        candidates={}
+        candidates={};dependencies=set()
         for problem in problems(db,isin):
-            if (problem['kind']!='archive' or not problem.get('range')
-                    or problem['state'] not in ('GAP','SOURCE_GAP','UNCONFIRMED','INVALID','SOURCE_UNAVAILABLE')):continue
+            if problem['kind']!='archive' or not problem.get('range'):continue
             meta=problem['identity'];base=problem['tf']
-            for first,last in scopes.get((digest(meta),base),[]):
-                a,b=map(pd.Timestamp,problem['range']);a=max(a,first);b=min(b,last)
+            if (base not in ('5m','15m','1H','1D') or meta.get('source') not in ('gettex','gettex_chart')
+                    or meta.get('venue')!='GETTEX' or meta.get('currency')!='EUR'
+                    or meta.get('timezone')!='Europe/Berlin'):continue
+            try:
+                begin,end=map(pd.Timestamp,problem['range'])
+                if begin.tzinfo is not None or end.tzinfo is not None or pd.isna(begin) or pd.isna(end) or begin>end:continue
+            except (ValueError,TypeError):continue
+            closed=clock.tz_convert('Europe/Berlin').tz_localize(None)-STEPS[base]
+            windows=[*( (first,last,True) for first,last in scopes.get((digest(meta),base),[]) ),(begin,min(end,closed),False)]
+            for first,last,dependency in windows:
+                a,b=begin,end;a=max(a,first);b=min(b,last)
+
                 if a>b:continue
                 # One date per request keeps fingerprints and native retries
                 # bounded even when a saved missing range spans months.
@@ -1200,14 +1300,15 @@ def automatic_repair_turn(store,info,now=None):
                     left=max(a,day);right=min(b,day+pd.Timedelta(days=1)-STEPS[base])
                     if left>right:continue
                     part=dict(problem,range=[str(left),str(right)])
-                    part['id']=digest(part);candidates[repair_id(part)]=part
+                    part['id']=digest(part);target=repair_id(part);candidates[target]=part
+                    if dependency:dependencies.add(target)
         progress=read(db,key,{})
         # Timestamp cursor survives restart; no fixed first bad interval loop.
-        ordered=sorted(candidates,key=lambda k:(candidates[k]['range'][0],k),reverse=True)
+        ordered=sorted(candidates,key=lambda k:(k in dependencies,candidates[k]['range'][0],k),reverse=True)
         cursor=progress.get('cursor')
         if cursor in ordered:
             index=ordered.index(cursor)+1;ordered=ordered[index:]+ordered[:index]
-        result=dict(state='NO_ADDRESSABLE_DEPENDENCY' if not ordered else 'CHECKED',checked=0,candidates=len(ordered))
+        result=dict(state='NO_ADDRESSABLE_DEPENDENCY' if not ordered else 'CHECKED',checked=0,candidates=len(ordered),dependency_candidates=len(dependencies))
         for target in ordered[:4]:
             problem=candidates[target];progress['cursor']=target;result['checked']+=1
             try:
@@ -1215,20 +1316,33 @@ def automatic_repair_turn(store,info,now=None):
                 inputs=_input(db,job)
             except (ValueError,TypeError,KeyError) as error:
                 result['reason']=str(error);continue
-            origin=dict(kind='AUTOMATIC_DEPENDENCY',version=1,fingerprint=inputs['fingerprint'])
+            children=repair_children_fingerprint(db,job)
+            if children is None:
+                result['reason']='RECOVERY_CHILD_WINDOW_LIMIT';continue
+            origin=dict(kind='AUTOMATIC_DEPENDENCY',version=1,fingerprint=inputs['fingerprint'],children_fingerprint=children)
             prior=requests.get(target,{})
+            old=prior.get('origin') or {}
+            # Legacy receipts have no historical child snapshot. Establish a
+            # baseline without requeuing or resetting their attempts/deadline.
+            if (old.get('kind')=='AUTOMATIC_DEPENDENCY' and old.get('fingerprint')==inputs['fingerprint']
+                    and 'children_fingerprint' not in old):
+                prior={**prior,'origin':{**old,'children_fingerprint':children}}
+                requests[target]=prior;write(db,'cp_repair_requests:'+isin,requests)
             if prior.get('origin')==origin:
                 deadline=prior.get('recheck_after')
                 if not deadline or clock<pd.Timestamp(deadline):continue
                 origin['retry_after']=deadline
             # retry_after records the last bounded retry epoch, not each poll.
-            elif (_automatic_request(prior) and prior['origin'].get('fingerprint')==origin['fingerprint']):
+            elif (_automatic_request(prior) and prior['origin'].get('fingerprint')==origin['fingerprint']
+                    and prior['origin'].get('children_fingerprint')==children):
                 deadline=prior.get('recheck_after')
                 if not deadline or clock<pd.Timestamp(deadline):continue
                 origin['retry_after']=deadline
             item=_queue_repair(db,problem,clock.isoformat(),origin)
             result.update(state=item['state'],request_id=target,range=problem['range'],identity=problem['identity'],base=problem['tf'])
             break
+        for field in ('request_id','range','identity','base','reason','priority'):
+            progress.pop(field,None)
         progress.update(result,last_turn=clock.isoformat());write(db,key,progress)
         return result
 
@@ -1248,7 +1362,9 @@ def due_request(db,isin=None,now=None,include_automatic=True):
     # contain attempts/started_at, so no queue migration or reset is necessary.
     def order(item):
         attempted=item.get('last_attempt_at') or item.get('legacy_rotation_at') or (item.get('started_at') if item.get('attempts',0)>0 else None)
-        return _automatic_request(item),pd.Timestamp(attempted or item['requested_at']),pd.Timestamp(item['requested_at'])
+        priority=item.get('owner_priority_at')
+        return (0 if priority else 1,-pd.Timestamp(priority).value if priority else 0,
+                _automatic_request(item),pd.Timestamp(attempted or item['requested_at']),pd.Timestamp(item['requested_at']))
     return min(pending,key=order) if pending else None
 
 def service_request(info,store,recover_gettex,now=None):

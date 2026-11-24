@@ -1,5 +1,6 @@
 """BUY/protective SELL use the real executor over isolated in-memory fixtures."""
 import copy,sqlite3,unittest
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 from types import SimpleNamespace
 import test_paper_sizing as fixture
@@ -27,6 +28,248 @@ class ProtectionTests(unittest.TestCase):
 
     def command(self):
         f=self.f;return order_command(f.db,f.info,f.result,f.now)
+
+    def use_strategy(self,mode,timeframe='1H'):
+        from paper_hourly import CONFIG,read,set_trading_mode
+        f=self.f
+        f.db.commit()
+        set_trading_mode(f.db,mode,timeframe)
+        f.db.commit()
+        f.cfg=read(f.db,CONFIG)
+
+    def strategy_facts(self,mode, *, falling=False):
+        from test_paper_strategy_v2 import engine
+        e=engine()
+        for context in e['timeframe_context'].values():
+            context['data_quality']={'state':'READY'}
+        h=e['timeframe_context']['1H']['facts']
+        h.update(ema10=99.,candle_up=True,previous_rsi=40.)
+        if mode=='PULLBACK':
+            h.update(breakout=False,reclaim=True,histogram=-.1)
+            e['timeframe_context']['4H']['facts']['regime']='BULLISH'
+        elif mode=='MOMENTUM':
+            h.update(breakout=False,relative_volume=1.3)
+        elif mode=='AGGRESSIVE':
+            h.update(breakout=False,ema10=104.,support=99.,histogram=-.3,rsi=46.)
+        if falling:
+            h.update(breakdown=True,histogram=-1.,histogram_delta=-.5,rsi=40.)
+        target=self.f.result['execution_context']['trading_engine']
+        target.update(timeframe_context=e['timeframe_context'])
+        if mode=='AGGRESSIVE':
+            from test_paper_strategy_v2 import opening_range
+            opening_range(target)
+        elif mode=='MOMENTUM' and not falling:
+            self.v4_context(target)
+
+    def v4_context(self, engine, timeframe='1H'):
+        instant=datetime.fromtimestamp(self.f.now,timezone.utc)
+        closed=datetime.fromisoformat(self.f.result['execution_quote']['bars'][0]['close_at'])
+        engine['v4_selected_context']=dict(signal_at=engine['timestamp'],timeframe=timeframe,
+            checked_at=instant.isoformat(),closed=closed.isoformat(),session_end=(instant+timedelta(hours=5)).isoformat(),
+            elapsed=120,complete=True,open=99.,high=100.25,low=98.9,close=100.,atr=1.5,
+            volume=150.,vol_med=100.,prev_close=99.,prev_high=99.8,open_high=99.5,open_low=98.5,
+            breadth_available=4,breadth_positive=3,breadth_required=3,breadth_inputs=['A','B','C','D'])
+
+    def test_selected_strategies_use_main_ledger_and_pin_exit_across_switch(self):
+        from paper_entry_modes import STRATEGY_CODES
+        f=self.f
+        start=f.now
+        for mode in ('V2','PULLBACK','MOMENTUM','AGGRESSIVE'):
+            with self.subTest(mode=mode):
+                f.now=start
+                f.db.execute('DELETE FROM paper_fills')
+                self.use_strategy(mode)
+                self.s.prepare('WAIT')
+                self.strategy_facts(mode)
+                entry=self.buy()
+                self.assertEqual(entry['initiator'],STRATEGY_CODES[mode])
+                self.assertEqual(entry['smart_eligibility']['protection']['strategy_mode'],mode)
+                self.assertEqual(fixture.paper.ledger(f.db)['positions'][0]['auto_entry']['strategy_mode'],mode)
+                self.use_strategy('V1','4H')
+                self.advance(96 if mode in ('AGGRESSIVE','MOMENTUM') else 100)
+                self.strategy_facts(mode,falling=True)
+                f.result['execution_context']['trading_engine']['timestamp']='2026-11-04 10:30:00'
+                f.args=self.command()
+                sell=f.trade()['fill']
+                self.assertEqual(sell['initiator'],STRATEGY_CODES[mode])
+                self.assertEqual(sell['timeframe'],'1H')
+                self.assertEqual(len(fixture.paper.ledger(f.db)['fills']),2)
+                self.assertEqual(fixture.paper.ledger(f.db)['positions'][0]['quantity'],'0')
+
+    def test_switch_rejects_unfilled_order_based_on_previous_pair(self):
+        f=self.f
+        self.use_strategy('V2')
+        self.s.prepare('WAIT');self.strategy_facts('V2')
+        f.args=self.command()
+        self.assertEqual(f.args['side'],'BUY')
+        sizing=copy.deepcopy(f.cfg['sizing'])
+        self.use_strategy('AGGRESSIVE','1H')
+        with self.assertRaisesRegex(ValueError,'PAPER_STALE_INPUTS'):
+            f.trade()
+        self.assertEqual(f.cfg['sizing'],sizing)
+        self.assertFalse(fixture.paper.ledger(f.db)['fills'])
+
+    def test_v5_rejects_weak_breadth_and_thin_quote_before_buy(self):
+        f=self.f
+        self.use_strategy('AGGRESSIVE')
+        self.s.prepare('WAIT')
+        self.strategy_facts('AGGRESSIVE')
+        engine=f.result['execution_context']['trading_engine']
+        opening=engine['v5_opening_range']
+        opening['breadth_positive']=2
+        self.assertEqual(fixture.hourly.strategy_signal(f.cfg,f.result)[1]['reason'],'V5_BREADTH_TOO_WEAK')
+        self.assertIsNone(self.command())
+        opening['breadth_positive']=3
+        f.result['execution_quote']['bars'][0]['volume']=9
+        with self.assertRaisesRegex(ValueError,'V5_QUOTE_VOLUME_BELOW_SIZE'):
+            self.command()
+        f.result['execution_quote']['bars'][0]['volume']=20
+        self.assertEqual(self.buy()['quantity'],'10')
+
+    def test_v5_exit_at_target_or_three_hours_and_preserve_five_hour_plan(self):
+        from datetime import datetime, timezone
+        f=self.f
+        self.use_strategy('AGGRESSIVE')
+        self.s.prepare('WAIT')
+        self.strategy_facts('AGGRESSIVE')
+        fill=self.buy()
+        receipt=fill['smart_eligibility']
+        plan=receipt['protection']
+        self.assertEqual((plan['hold_minutes'],receipt['entry_evidence']['breadth_positive']),(180,3))
+        self.assertEqual((plan['stop'],plan['target']),('98.20','103.45'))
+        self.use_strategy('V1','4H')
+        self.advance(100)
+        f.now+=3*3600-900
+        self.s.prepare('WAIT')
+        bar=f.result['execution_quote']['bars'][0]
+        bar.update(open_at=datetime.fromtimestamp(f.now-900,timezone.utc).isoformat(),
+                   close_at=datetime.fromtimestamp(f.now,timezone.utc).isoformat())
+        self.assertEqual(self.command()['_protection']['reason'],'STRATEGY_TIME_EXIT')
+        from paper_v5 import LEGACY_VERSION
+        legacy=dict(plan,model=LEGACY_VERSION,hold_minutes=300)
+        position=fixture.paper.ledger(f.db)['positions'][0]
+        from decimal import Decimal
+        self.assertIsNone(protection.strategy_trigger(f.db,position,fill,legacy,bar,Decimal(100))[0])
+        bar.update(open=104,high=105,low=103,close=104)
+        self.assertEqual(self.command()['_protection']['reason'],'TAKE_PROFIT')
+        f.args=self.command()
+        self.assertEqual(f.trade()['fill']['initiator'],'V5')
+
+    def test_v5_buy_reversal_requires_confirmed_prior_days_and_records_reason(self):
+        f=self.f
+        self.use_strategy('AGGRESSIVE')
+        self.s.prepare('WAIT')
+        self.strategy_facts('AGGRESSIVE')
+        engine=f.result['execution_context']['trading_engine']
+        candle=engine['v5_opening_range']
+        candle.update(number=9,open=98.9,close=100.,high=100.25,low=98.6,prev_high=99.8,
+                      daily_down_closes=None)
+        self.assertEqual(fixture.hourly.strategy_signal(f.cfg,f.result)[1]['reason'],'V5_REVERSAL_DAILY_UNCONFIRMED')
+        candle['daily_down_closes']=1
+        self.assertIsNone(self.command())
+        candle['daily_down_closes']=2
+        candle['volume']=105
+        self.assertIsNone(self.command())
+        candle['volume']=115
+        quote=f.result['execution_quote']['bars'][0]
+        quote['close']=99.8
+        with self.assertRaisesRegex(ValueError,'PAPER_V5_REVERSAL_LEVEL_LOST'):
+            self.command()
+        quote['close']=100
+        fill=self.buy()
+        evidence=fill['smart_eligibility']['entry_evidence']
+        self.assertEqual((evidence['setup'],evidence['daily_down_closes'],fill['quantity']),('DAILY_REVERSAL',2,'10'))
+        self.assertEqual(evidence['entry_level'],99.8)
+
+    def test_v5_macro_day_blocks_new_orders_but_preserves_protective_sell(self):
+        from unittest.mock import patch
+        from paper_v5 import MACRO_DATES
+        f=self.f
+        self.use_strategy('AGGRESSIVE')
+        self.s.prepare('WAIT')
+        self.strategy_facts('AGGRESSIVE')
+        with patch.dict(MACRO_DATES,{'2026-11-04':('CPI','08:30','https://www.bls.gov/')}):
+            with self.assertRaisesRegex(ValueError,'PAPER_V5_MACRO_RELEASE_DAY:CPI'):
+                self.command()
+            self.assertEqual(fixture.paper.ledger(f.db)['fills'],[])
+        self.buy()
+        self.advance(96)
+        with patch.dict(MACRO_DATES,{'2026-11-04':('CPI','08:30','https://www.bls.gov/')}):
+            f.args=self.command()
+            fill=f.trade()['fill']
+            self.assertEqual(fill['side'],'SELL')
+            self.assertEqual(fill['smart_eligibility']['protective_exit']['reason'],'STOP_LOSS')
+
+    def test_v2_partial_then_stop_share_main_ledger(self):
+        f=self.f
+        self.use_strategy('V2')
+        self.s.prepare('WAIT');self.strategy_facts('V2')
+        entry=self.buy()
+        self.advance(107);self.strategy_facts('V2')
+        f.args=self.command()
+        self.assertEqual(f.args['_protection']['reason'],'PARTIAL_2R')
+        first=f.trade()['fill']
+        self.assertGreater(float(entry['quantity']),float(first['quantity']))
+        self.assertTrue(f.trade()['idempotent'])
+        self.assertNotEqual((self.command() or {}).get('_protection',{}).get('reason'),'PARTIAL_2R')
+        self.advance(96);self.strategy_facts('V2')
+        f.args=self.command();self.assertEqual(f.args['_protection']['reason'],'STOP_LOSS')
+        f.trade()
+        ledger=fixture.paper.ledger(f.db)
+        self.assertEqual(ledger['positions'][0]['quantity'],'0')
+        self.assertEqual(len(ledger['fills']),3)
+
+    def test_v4_trailing_stop_persists_and_does_not_trigger_against_same_quote(self):
+        f=self.f
+        self.use_strategy('MOMENTUM')
+        self.s.prepare('WAIT');self.strategy_facts('MOMENTUM')
+        # Seed a fill with the previous V4 logic, then exercise its live legacy exits.
+        from paper_entry_modes import decision as previous_decision
+        with patch('paper_v4.decide',side_effect=lambda e,tf:previous_decision(e,'MOMENTUM',tf)):
+            self.buy()
+        self.advance(104);self.strategy_facts('MOMENTUM')
+        e=f.result['execution_context']['trading_engine'];e['timestamp']='2026-11-04 10:30:00'
+        self.assertIsNone(order_command(f.db,f.info,f.result,f.now,manage=True))
+        self.assertIsNone(order_command(f.db,f.info,f.result,f.now,manage=True))
+        self.assertEqual(fixture.paper.ledger(f.db)['positions'][0]['active_stop'],'102.50')
+        self.advance(102);self.strategy_facts('MOMENTUM')
+        f.args=self.command()
+        self.assertEqual(f.args['_protection']['reason'],'STOP_LOSS')
+        f.trade()
+        self.assertEqual(fixture.paper.ledger(f.db)['positions'][0]['quantity'],'0')
+
+    def test_v4_selected_30m_executes_fresh_quote_and_retains_bracket_after_switch(self):
+        from decimal import Decimal
+        from trading_context import plan
+        from paper_v4 import VERSION
+        f=self.f
+        self.use_strategy('MOMENTUM','30m')
+        self.s.prepare('WAIT')
+        e=f.result['execution_context']['trading_engine']
+        e['timeframe_context']['30m']=copy.deepcopy(e['timeframe_context']['1H'])
+        contract=plan('30m')
+        f.result['timeframe']='30m'
+        f.result['hourly'].update(required_tf=contract['required_tf'],timeframe_contract=contract)
+        for spec in f.result['hourly']['proof']['series']:
+            if spec['spec']['timeframe']=='1H':
+                spec['spec']['timeframe']='30m'
+        self.v4_context(e,'30m')
+        bar=e['v4_selected_context']
+        initial=bar['closed']
+        bar['closed']=(datetime.fromisoformat(initial)+timedelta(seconds=1)).isoformat()
+        with self.assertRaisesRegex(ValueError,'PAPER_V4_QUOTE_BEFORE_SIGNAL'):
+            self.command()
+        bar['closed']=initial
+        fill=self.buy()
+        self.assertEqual((fill['initiator'],fill['timeframe'],fill['quantity']),('V4','30m','10'))
+        bracket=fill['smart_eligibility']['protection']
+        self.assertEqual((bracket['model'],bracket['hold_minutes']),(VERSION,180))
+        self.use_strategy('V1','4H')
+        position=fixture.paper.ledger(f.db)['positions'][0]
+        self.assertEqual(fixture.hourly.turn_timeframes(f.cfg,position),('30m',))
+        close_at=(datetime.fromisoformat(fill['at'])+timedelta(hours=3)).isoformat()
+        self.assertEqual(protection.strategy_trigger(f.db,position,fill,bracket,{'close_at':close_at},Decimal(100))[0],
+                         'STRATEGY_TIME_EXIT')
 
     def test_buy_arms_exact_bracket_wait_stop_and_idempotent_sell(self):
         f=self.f;entry=self.buy();plan=entry['smart_eligibility']['protection']
@@ -150,3 +393,4 @@ class ProtectionTests(unittest.TestCase):
 
 
 if __name__=='__main__':unittest.main()
+

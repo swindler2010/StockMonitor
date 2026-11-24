@@ -1,6 +1,6 @@
 """Auxiliary news only. Call from the existing Dispatcher, never the Tk thread.
 
-No portfolio/market writes, paid APIs or article translation.
+No portfolio/market writes, paid APIs or translation of original source records.
 Caller persists returned snapshots in news:<ISIN> / news:market.
 """
 from datetime import datetime, timezone
@@ -55,9 +55,10 @@ def timestamp(value):
         return None
 
 
-def normalize(rows, now=None):
+def normalize(rows, now=None, *, maximum=100):
     now = time.time() if now is None else now
     result, seen, headlines = [], set(), set()
+    from news_media import image_url
     for raw in rows:
         title = plain(raw.get('title'), 500)
         url = safe_url(raw.get('url'))
@@ -70,16 +71,17 @@ def normalize(rows, now=None):
         seen.add(key); headlines.add(headline)
         published = timestamp(raw.get('published'))
         age = now - datetime.fromisoformat(published).timestamp() if published else None
-        result.append({**raw, 'title': title, 'url': url, 'summary': plain(raw.get('summary')),
+        result.append({**raw, 'title': title, 'url': url, 'summary': plain(raw.get('summary')), 'image_url': image_url(raw.get('image_url')),
                        'published': published, 'date_status': 'UNKNOWN' if age is None else 'FUTURE' if age < -300 else 'STALE' if age > 7*86400 else 'CURRENT',
                        'events': [k for k, pattern in EVENTS.items() if re.search(pattern, title, re.I)],
                        'event_basis': 'HEADLINE_KEYWORDS_NOT_CONFIRMED_EVENT',
                        'text_quality': 'UPSTREAM_REPLACEMENT_CHARACTERS' if '\ufffd' in title+plain(raw.get('summary')) else 'AS_PROVIDED',
-                       'translation': {'status': 'DISABLED_BY_OWNER', 'text_is_original': True}})
-    return sorted(result, key=lambda x: x['published'] or '', reverse=True)[:100]
+                       'translation': {'status': 'ORIGINAL_UNTRANSLATED', 'text_is_original': True}})
+    return sorted(result, key=lambda x: x['published'] or '', reverse=True)[:maximum]
 
 
 def parse_feed(data, provider):
+    from news_media import feed_image
     if len(data) > 2_000_000 or b'<!DOCTYPE' in data.upper() or b'<!ENTITY' in data.upper():
         raise ValueError('UNSAFE_OR_OVERSIZE_FEED')
     root = ET.fromstring(data)
@@ -88,7 +90,7 @@ def parse_feed(data, provider):
         link=safe_url(item.findtext('link'))
         publisher=item.findtext('source')
         rows.append(dict(title=item.findtext('title'), url=item.findtext('link'),
-                         summary=item.findtext('description'), published=item.findtext('pubDate'),
+                         summary=item.findtext('description'), published=item.findtext('pubDate'), image_url=feed_image(item),
                          provider=publisher or (urlsplit(link).hostname if link else None) or provider, feed_provider=provider, scope='market', language=None,
                          publisher_status='NAMED_BY_FEED' if publisher else 'LINK_DOMAIN_ONLY_ORIGINAL_PUBLISHER_UNCONFIRMED',
                          publisher_url=safe_url(item.find('source').get('url','')) if item.find('source') is not None else '',
@@ -98,7 +100,7 @@ def parse_feed(data, provider):
         links=item.findall('a:link',ns)
         url=next((x.get('href') for x in links if x.get('rel','alternate')=='alternate'),None)
         rows.append(dict(title=item.findtext('a:title',namespaces=ns),url=url,
-                         summary=item.findtext('a:summary',namespaces=ns),
+                         summary=item.findtext('a:summary',namespaces=ns), image_url=feed_image(item),
                          published=item.findtext('a:published',namespaces=ns) or item.findtext('a:updated',namespaces=ns),
                          provider=provider,feed_provider=provider,scope='market',language=None,relevance='Market/economy; no company association'))
     return rows
@@ -122,15 +124,15 @@ def download_feed(url):
 
 def snapshot(rows, errors, previous=None, now=None):
     now = time.time() if now is None else now
-    items = normalize(rows, now)
-    retained = not items and bool((previous or {}).get('articles'))
-    if retained:
-        items = normalize(previous['articles'], now)
+    from news_retention import merge,digest
+    incoming=normalize(rows,now,maximum=None)
+    items,seen=merge(incoming,previous,now)
+    retained=not incoming and bool(items)
     return dict(articles=items, errors=errors,
                 status='STALE_CACHE' if retained else 'PARTIAL' if items and errors else 'AVAILABLE' if items else 'UNAVAILABLE' if errors else 'EMPTY',
                 attempted_at=datetime.fromtimestamp(now, timezone.utc).isoformat(),
                 fetched_at=previous.get('fetched_at') if retained else datetime.fromtimestamp(now, timezone.utc).isoformat() if items else None,
-                retained_previous=retained)
+                retained_previous=retained,first_seen=seen,retention_days=7,content_digest=digest(items))
 
 
 def market_news(previous=None, fetch=download_feed):
@@ -148,7 +150,7 @@ def market_news(previous=None, fetch=download_feed):
     result=snapshot(rows, errors, previous)
     times=[a.get('fetched_at') for a in rows if a.get('fetched_at')]
     if times:result['fetched_at']=max(times)
-    return {**result,'source_attempts':attempts,'translation_policy':'ORIGINAL_ONLY_BY_OWNER_REQUEST'}
+    return {**result,'source_attempts':attempts,'translation_policy':'ORIGINAL_SOURCE_WITH_SEPARATE_DISPLAY_TRANSLATION'}
 
 
 def company_news(instrument, client, previous=None):
@@ -193,8 +195,7 @@ def company_news(instrument, client, previous=None):
     result=snapshot(rows,errors,previous)
     if rows and attempts[-1].get('transport',{}).get('at'):
         result['fetched_at']=timestamp(attempts[-1]['transport']['at'])
-    result['articles']=result['articles'][:30]
     return {**result,'schema_version':2,'identity':identity,'isin':isin,'symbol':symbol,'source_attempts':attempts,
             'fallback_status':'USED' if any(a.get('matched',0)>0 for a in attempts[1:]) else 'EXHAUSTED' if len(attempts)>1 or not rows else 'NOT_NEEDED',
-            'translation_policy':'ORIGINAL_ONLY_BY_OWNER_REQUEST',
+            'translation_policy':'ORIGINAL_SOURCE_WITH_SEPARATE_DISPLAY_TRANSLATION',
             'identity_notice':'News name matching does not verify the watchlist security, ISIN or exchange listing.'}

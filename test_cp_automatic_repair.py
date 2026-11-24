@@ -41,6 +41,30 @@ class AutomaticRepair(unittest.TestCase):
  def stages(self,stack):
   for n in ('cp_controls.automatic_turn','cp_controls.tv_risk_turn','cp_controls.reviewed_risk_turn','cp_reconciliation.turn','history_service.inspect_changed_official_archive'):
    stack.enter_context(patch(n,return_value={}))
+ def test_fresh_gettex_slots_defer_historical_grants_but_keep_history_and_requests(self):
+  with ExitStack() as stack:
+   calls={name:stack.enter_context(patch('cp_controls.'+name,return_value={})) for name in ('automatic_turn','tv_risk_turn','reviewed_risk_turn','automatic_repair_turn')}
+   for name in ('cp_reconciliation.turn','history_service.inspect_changed_official_archive','cp_diagnostic_cleanup.turn'):
+    stack.enter_context(patch(name,return_value={}))
+   request=stack.enter_context(patch('cp_assessment.request',return_value={'deferred':True}))
+   pending={'analysis_requested_at':self.now.isoformat()};self.s.set_setting('cp_reconciliation_progress:'+self.isin,pending)
+   host=self.host()
+   for count in (53,200):
+    for _ in range(count):
+     result=FeedContext.calculate(host,dict(self.info,_gettex_poll_only=True))
+     self.assertEqual(result['cp_tv_risk']['state'],'DEFERRED_HISTORY')
+   self.assertEqual(host._calculate.call_count,253);self.assertEqual(request.call_count,253)
+   for name in calls:calls[name].assert_not_called()
+   self.assertEqual(self.s.setting('cp_reconciliation_progress:'+self.isin),pending)
+   self.assertIsNone(self.s.setting('cp_manual_risk:'+self.isin))
+   self.s.set_setting('cp_reconciliation_progress:'+self.isin,{})
+   FeedContext.calculate(host,self.info)
+   for name in ('automatic_turn','tv_risk_turn','reviewed_risk_turn'):calls[name].assert_called_once()
+   # Older/non-exclusive policies retain their immediate grant maintenance.
+   self.s.set_setting('cp_gettex_source_policy',{})
+   FeedContext.calculate(host,dict(self.info,_gettex_poll_only=True))
+   for name in ('automatic_turn','tv_risk_turn','reviewed_risk_turn'):self.assertEqual(calls[name].call_count,2)
+
  def test_saved_blocked_dependency_enters_existing_queue_without_user_button(self):
   with ExitStack() as stack:
    self.stages(stack);FeedContext.calculate(self.host(),self.info)
@@ -71,6 +95,7 @@ class AutomaticRepair(unittest.TestCase):
  def test_identity_window_and_optional_tfs_never_create_permissions(self):
   for change in ('foreign_isin','currency','venue','source','outside','optional','ready','unconfirmed_identity'):
    with self.subTest(change=change):
+    self.s.set_setting(self.key,{});self.s.set_setting(self.qkey,self.q)
     spec=copy.deepcopy(self.spec);row=dict(analysis_ready=False,blockers=['blocked'],_closed_input=spec);tf='4H'
     if change=='foreign_isin':spec['isin']='OTHER'
     if change in ('currency','venue','source'):
@@ -81,7 +106,11 @@ class AutomaticRepair(unittest.TestCase):
     if change=='unconfirmed_identity':
      spec['identity']['source']='gettex_chart';q=copy.deepcopy(self.q);q['identity']=spec['identity'];self.s.set_setting(self.qkey,q)
     self.s.set_setting('cp_eligibility:'+self.isin,dict(isin=self.isin,timeframes={tf:row}))
-    self.plan();self.assertFalse(self.jobs())
+    result=self.plan()
+    # Invalid/ready calculation scopes do not prevent independent recovery of
+    # a valid saved GETTEX archive; they must not become dependency authority.
+    self.assertEqual(result['dependency_candidates'],1 if change=='unconfirmed_identity' else 0)
+    self.assertEqual(bool(self.jobs()),change!='unconfirmed_identity')
   self.assertIsNone(self.s.setting('cp_manual_risk:'+self.isin));self.assertEqual(self.s.db.execute('SELECT count(*) FROM candles').fetchone()[0],0)
  def test_actual_5m_dependency_allowed_but_foreign_benchmark_not_planned(self):
   spec=dict(self.spec,base_tf='5m');q=dict(self.q,base_tf='5m');qkey=self.qkey[:-3]+'5m';self.s.set_setting(qkey,q)

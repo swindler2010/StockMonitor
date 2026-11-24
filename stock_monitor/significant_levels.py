@@ -4,7 +4,9 @@ import pandas as pd
 
 def zones(frame,limit=3):
     if len(frame)<15:return []
-    f=frame.dropna(subset=['high','low','close']).iloc[:-1].tail(100000)
+    # Pivots only use numbers/index; preserve the caller's provenance without
+    # copying its potentially large receipt tree into each temporary frame.
+    f=pd.DataFrame(frame,copy=False).dropna(subset=['high','low','close']).iloc[:-1].tail(100000)
     if len(f)<14:return []
     current=float(f.close.iloc[-1]);width=max(float((f.high-f.low).tail(30).median())*.35,abs(current)*.002)
     if not np.isfinite(width) or width<=0:return []

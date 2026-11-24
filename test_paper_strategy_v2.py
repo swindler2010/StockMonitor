@@ -12,6 +12,14 @@ def engine():
         breakout=True,reclaim=False,breakdown=False,bearish_retest=False,extended=False)
     proof=dict(stable=True,basis='Exact terminal indicators and CORE facts with first in-scope seed omitted; no older data')
     return dict(status='READY',signal='WAIT',timeframe_context={t:dict(facts=copy.deepcopy(f),scope_initialization=proof.copy()) for t in ('1H','4H','1D')})
+def opening_range(e):
+    from paper_v5 import VERSION
+    e.setdefault('timestamp','2026-11-04 09:30:00')
+    e['v5_opening_range']=dict(version=VERSION,signal_at=e['timestamp'],number=2,complete=True,atr=1.5,
+        open_high=99.5,open_low=98.5,prev_close=99.25,close=100.,open=99.25,volume=150.,vol_med=100.,
+        checked_at='2026-11-04T09:35:00+00:00',session_end='2026-11-04T22:00:00+00:00',
+        breadth_available=4,breadth_positive=3,breadth_required=3,breadth_inputs=['A','B','C','D'])
+
 def event(n=0,action='BUY'):
     from datetime import datetime,timedelta,timezone
     end=datetime(2026,11,10,10,tzinfo=timezone.utc)+timedelta(minutes=15*n)

@@ -123,12 +123,12 @@ class PreparationTests(unittest.TestCase):
             self.assertEqual(fixture.paper.ledger(clone)['fills'],[])
         finally:clone.close()
 
-    def test_fresh_pair_required_to_start_but_waiting_candidate_continues(self):
+    def test_other_stock_quality_does_not_stop_sequential_preparation(self):
         f=self.f
         f.write(fixture.hourly.STATUS+self.anchor,dict(self.status,core='DATA BLOCKED'))
         self.assertEqual(prep.choose(f.db,f.now+301)['isin'],f.isin)
         f.db.execute('DELETE FROM settings WHERE key=?',(prep.STATE,))
-        self.assertIsNone(prep.choose(f.db,f.now+601))
+        self.assertEqual(prep.choose(f.db,f.now+601)['isin'],f.isin)
 
     def test_53_200_instruments_select_one_and_maintenance_has_no_execution(self):
         f=self.f
@@ -312,3 +312,4 @@ class PreparationTests(unittest.TestCase):
 
 
 if __name__=='__main__':unittest.main()
+

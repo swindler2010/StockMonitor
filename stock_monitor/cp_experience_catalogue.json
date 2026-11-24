@@ -4,6 +4,321 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "joint_disjoint_tv_diagnoses_and_proved_neighbour_context",
+      "title": "�������� DIFFERENT-����������� ������� ����������� ������������� ������",
+      "sources": [
+        "gettex_chart"
+      ],
+      "states": [
+        "RETIME_OTHER_CURRENT_TV_REFERENCE_CONFLICT"
+      ],
+      "status": "IMPLEMENTED IN WINDOWS TEST; exact public code 9eed266 targeted7 PASS; ordinary CP joint/primary/empty chain completed23Nov12:36:05CET and read-only MCP verified",
+      "evidence": [
+        "stock_monitor/revision_watcher.py",
+        "stock_monitor/cp_reconciliation.py",
+        "test_cp_joint_review_context.py"
+      ],
+      "steps": [
+        "Use an already unique complete conserved GETTEX5m/15m partition to bind disjoint current15m DIFFERENT diagnoses with exact job/native digests. Presence contradictions and overlapping diagnoses remain blocking.",
+        "A proved partition may change only the neighbour context of a disjoint DIFFERENT diagnosis; original subject, listing and entire original visual fingerprint must remain unchanged. Reconstruct the complete original hash; each changed neighbour must be exact before/after of a current disjoint reviewed partition receipt. Do not renew visual timestamps or deadlines.",
+        "Requeue affected DIFFERENT neighbours through the existing bounded serial repair-followup route; no provider retry/deadline bypass, new worker, source merge or permission change.",
+        "Exact primary parent confirmation still requires unchanged captured native-window/source digests, screenshot hash, policy, identity and final writer revalidation. Real changes revoke reuse.",
+        "Targeted isolated scenario includes joint redistribution then ordinary queued primary-parent correction, changed native/source/policy/presence negatives; bounded53/200 followups. No production direct candle writes or trading grant.",
+        "Independent exact parent confirmation can precede or follow the disjoint partition diagnoses; both tested. Only pre-existing due15m visual-conflict receipts below algorithm2 get one new local pass, preserving future retry times and all unrelated completed jobs.",
+        "Natural Schneider19Nov chain: joint14:00-14:45 at23Nov12:28:15CET (changed3/relocated2), exact15:00-15:15 at12:31:37CET (changed3), ordinary follow-up12:36:05CET resolved all four jobs and confirmed14:45 NO_TRADES from complete primary files without inserting an empty candle.14:15 uses the joint receipt, not an additional repair. MCP returned corrected14:15/14:30/15:00; PAPER account/fills hashes unchanged. See docs/CP_CANDLE_RECOVERY_CURRENT_RU.md#cp-tv-joint-20261123."
+      ]
+    },
+    {
+      "id": "official_native_five_minute_empty",
+      "title": "Подтверждённые пустые 5m оставались в ожидании при поддержке только 15m",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "SOURCE_TIMEBASE_UNCONFIRMED"
+      ],
+      "status": "IMPLEMENTED; normal Windows serial CP batch, all registered stocks; exact acceptance in checkpoint",
+      "steps": [
+        "Approved current GETTEX/EUR listing and owner policies; only closed exact5m native gaps, complete paired official tape and explicit NO_TRADES.",
+        "Require exact entire native5m AND15m source windows, immediate real5m neighbours, same-day maximum45min; reject conflicting TV presence, partial files, changed policy/identity/native inputs.",
+        "Reuse transactional publisher with final proof/current-input check; zero added/changed OHLCV. Receipt carries reviewed_tf5m; UI and consumers validate exactTF, live source proof and revocations.",
+        "Existing planner rotates up to8 registered stocks, at most8 saved scopes per serial writer turn, no network/CORE/archive work. Fresh price and explicit owner reservations stay ahead.",
+        "Successful proof requests the existing assessment queue. Failed evidence remains unconfirmed, retries through existing mechanism; no blanket data-quality or trade permission change."
+      ],
+      "tests": [
+        "test_cp_five_minute_empty",
+        "test_cp_pending_observation_route",
+        "test_candle_schedule.Schedule.test_aged_feed_jobs_53",
+        "test_candle_schedule.Schedule.test_aged_feed_jobs_200",
+        "test_cp_official_timebase.OfficialTimebase.test_exact_empty_window_is_corroborated_without_replacing_native_bars"
+      ],
+      "limits": [
+        "Only exact proved scopes are closed; no claim every stock/history/TF was visually checked against TradingView.",
+        "Long holes, different5m/15m source windows, missing complete source coverage and current TV conflict remain explicit.",
+        "Resolved native absence adds no synthetic observations or indicator warmup."
+      ],
+      "implementation_commit": "fff70c2df25b4c3c50fc158e63a9bd70a7348bc2"
+    },
+    {
+      "id": "official_native_price_sampling",
+      "title": "Полный объём, но отдельные реальные цены не попали в родную свечу",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "SOURCE_DISCREPANCY"
+      ],
+      "status": "IMPLEMENTED; Windows CP Siemens16Nov09:00 APPLIED22Nov16:15:01 CET, RESOLVED_NATIVE16:20:56. Source proof current; scoped rollback eligible1. MCP exact OHLCV and finite CORE indicators;30.703s calculation is not a global performance PASS.",
+      "steps": [
+        "Current exact DIFFERENT review, closed15m, confirmed same GETTEX/EUR identity, owner source and correction policies required.",
+        "Complete paired official tape, exact unchanged timestamp sets, all child/parent quantities and closes conserved. Only the first5m child may differ.",
+        "Excluding exactly the first positive price and at most one unique isolated interior extreme must reproduce every native price; all original parent values must aggregate original children. Bound64positive events; no general provider overwrite.",
+        "Existing transactional publisher rechecks inputs/policies/proof, preserves originals and provenance, and wakes only exact affected jobs."
+      ],
+      "evidence": [
+        "test_cp_native_price_sampling.py",
+        "test_cp_positive_opening_extreme.py"
+      ],
+      "limits": [
+        "Current source proof must remain valid. Missing pair, changed quantity/close, unrelated price/identity, ambiguity or changed revisions reject. No synthetic candles or trading grant."
+      ],
+      "automatic_action": "Existing CandlePilot revision_watcher / serial feed writer",
+      "manual_action": "Saved current assisted TV discrepancy; no autonomous TV access rights granted."
+    },
+    {
+      "id": "native_repairs_requeue_only_affected_scopes",
+      "title": "После подтверждённого ремонта связанные проверки не ждут старого срока",
+      "sources": [
+        "revision_watcher.publish_retime",
+        "cp_reconciliation._queue_repaired_scopes",
+        "cp_reconciliation._resume_repaired_scopes"
+      ],
+      "states": [
+        "APPLIED",
+        "RECHECK_QUEUED"
+      ],
+      "steps": [
+        "После штатной записи сравнить исходные и подтверждённые строки внутри точного listing/ISIN/TF. Повторно поставить только пересекающиеся задания и ABSENT-задания, у которых изменилась сохранённая соседняя свеча.",
+        "Не менять первоначальный TV fingerprint, исходные наблюдения, native retry и cooldown поставщика. Следующий существующий ход заново проверяет данные/identity/качество и допустимость подтверждения.",
+        "Ограничить один вызов16заданиями. Для уже опубликованных двух новых видов ремонта восстанавливать follow-up по не более2актуальным receipt за ход; старые DONE-аудиты не повторять.",
+        "Одна и та же квитанция не должна бесконечно обновлять next_check. Сохранять отметку причины и идемпотентность; неподтверждённые соседние интервалы остаются заблокированными после честной проверки.",
+        "A bounded metadata-only existing planner wake handles already applied current repair receipts; the owned feed revalidates proof before requeueing. Changed proofs are recorded once without source calls or false repair."
+      ],
+      "evidence": [
+        "test_cp_native_closing_tick.ClosingTick.test_current_review_and_complete_tape_repair_only_exact_closing_tick",
+        "test_cp_delayed_closing_tick.DelayedClosing.test_complete_tape_unique_native_prefix_and_review_restore_price_and_close",
+        "test_cp_repaired_scope_wakeup.py"
+      ],
+      "limits": "Только очередь текущих локальных зависимостей после доказанного изменения native. Не загрузка, не изменение разрешений и не повторная ручная сверка TV. Никакого второго writer или обхода TTL/DQ/freshness.",
+      "status": "IMPLEMENTED; ordinary TEST22Nov16:11/16:13 dependent rechecks; version2 only changed input fingerprints. Mixed-parent false wait resolved by CP16:30:25 CET."
+    },
+    {
+      "id": "delayed_zero_price_and_missing_final_tick",
+      "title": "Нулевая цена с задержкой и ровно одна пропущенная последняя запись",
+      "sources": [
+        "revision_watcher._reviewed_price_closing_partition",
+        "revision_watcher.publish_retime",
+        "cp_reconciliation.turn"
+      ],
+      "states": [
+        "ZERO_QUANTITY_UNCONFIRMED",
+        "VERIFIED_PRICE_CLOSING_TICK_PARTITION"
+      ],
+      "steps": [
+        "Только текущее ZERO_VOLUME наблюдение одной закрытой15m-свечи GETTEX/EUR при обеих действующих политиках.",
+        "Полные парные официальные публикации должны содержать эту нулевую цену и положительную последнюю запись. Уникальное упорядоченное разбиение всех записей кроме последней точно воспроизводит каждую исходную5m-свечу; все исходные15m точно строятся из них.",
+        "Каждая задержанная нулевая цена уже существует в native с теми же OHLCV и подтверждается в официальном слоте не далее15минут. Никакие дополнительные нулевые цены, неизвестный оборот либо удаление положительных свечей не допускаются.",
+        "Сохранить исходные значения, метки перераспределения нулевых цен и конечную перепроверку перед штатной публикацией. Нулевое количество остаётся нулевым; это не NO_TRADES. Индикаторы/допуск пересчитывает обычная очередь."
+      ],
+      "evidence": [
+        "test_cp_delayed_closing_tick.DelayedClosing.test_complete_tape_unique_native_prefix_and_review_restore_price_and_close",
+        "test_cp_native_closing_tick",
+        "test_cp_price_observation"
+      ],
+      "limits": "Не произвольная замена всех данных. Только полностью объяснённое уникальное временное перераспределение существующей цены и одна последняя запись из подтверждённого GETTEX. Нет новых торговых разрешений/изменения счёта. При изменении входов, недостаточных парных файлах или отзыве политики — отказ.",
+      "status": "IMPLEMENTED; Windows CP Palantir22Oct19:30/19:45 APPLIED22Nov15:27:56 CET,3rows added/3changed/0relocated; source proof current; no manual OHLCV writes."
+    },
+    {
+      "id": "mixed_range_reuses_current_empty_child",
+      "title": "Смешанный диапазон учитывает подтверждённый пустой интервал",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "NATIVE_ROWS_PRESENT",
+        "SOURCE_TIMEBASE_UNCONFIRMED"
+      ],
+      "status": "IMPLEMENTED; FAIL before, targeted PASS1.700s. Ordinary Windows CP Palantir22Oct19:15--19:30 RESOLVED_NATIVE/NATIVE_ROWS_CONFIRMED22Nov16:30:25 CET;1actual candle+1confirmed empty interval.",
+      "steps": [
+        "Partial existing15m ranges may reuse up to8 overlapping APPLIED VERIFIED_NATIVE_EMPTY receipts with exactly the same source/symbol/venue/currency/timezone.",
+        "Every receipt revalidates complete official coverage and exact native rows with retime_current; no cross-TF/provider proof transfer.",
+        "Existing publisher queues affected mixed parents, including proof-only changes. Only changed input fingerprints requeue; original TV observations, provider cooldown and serial lane preserved."
+      ],
+      "evidence": [
+        "test_cp_official_timebase.py",
+        "test_cp_native_closing_tick.py",
+        "test_cp_repaired_scope_wakeup.py"
+      ],
+      "limits": [
+        "Changed5m input revokes proof. No synthetic row, warmup observation, freshness extension or trading permission."
+      ],
+      "automatic_action": "Existing CP reconciliation and ordinary re-evaluation",
+      "manual_action": "No repeated visual check when independent evidence stays exact."
+    },
+    {
+      "id": "saved_observation_survives_deduplicated_fresh_feed",
+      "title": "Приоритетная сохранённая сверка действительно получает исторический ход",
+      "sources": [
+        "desktop014.Desktop014._scheduled_refresh",
+        "desktop014.Desktop014._gettex_worker",
+        "feed_worker.FeedContext.calculate"
+      ],
+      "states": [
+        "RECHECK_QUEUED"
+      ],
+      "steps": [
+        "Планировщик передаёт существующий due_observation и время его выбора в текущий процесс.",
+        "Перед исполнением одного уже ожидающего serial feed проверить актуальный точный ISIN/job_id и срок90с. Сохранённая сверка получает прежний _review_only-маршрут; старый payload свежей загрузки не должен вытеснять это назначение.",
+        "Иная акция, отсутствующий или просроченный запрос не меняют fresh-маршрут. Не запускать второй writer, не прерывать текущий, не менять данные/разрешения; обычные fresh acquisition и оценки остаются в очереди."
+      ],
+      "evidence": [
+        "test_cp_pending_observation_route.PendingObservationRoute.test_live_saved_review_replaces_queued_fresh_payload_but_stale_or_other_review_does_not",
+        "test_cp_observation_priority.ObservationPriority.test_priority_existing_serial_queue_53",
+        "test_cp_observation_priority.ObservationPriority.test_priority_existing_serial_queue_200"
+      ],
+      "limits": "Выбор маршрута, не гарантия получения источником данных или торгового допуска. Сохраняются cooldown, DQ, identity, freshness, ревизии и последовательный writer.",
+      "status": "Installed Windows TEST after normal restart. New scenario4variants and53/200 queue checks PASS0.042s. Two newly saved observations reached normal CP checks in42.483514/40.235998s, AWAITING_SOURCE with precise data reasons; no manual turn or fake READY. This is one observed batch, not an overall latency guarantee."
+    },
+    {
+      "id": "official_exact_missing_closing_tick",
+      "title": "Восстановление ровно одной пропущенной последней записи GETTEX",
+      "sources": [
+        "revision_watcher._reviewed_closing_tick",
+        "revision_watcher.retime_plan",
+        "revision_watcher.publish_retime",
+        "cp_reconciliation.turn"
+      ],
+      "states": [
+        "SOURCE_DISCREPANCY",
+        "VERIFIED_NATIVE_CLOSING_TICK"
+      ],
+      "steps": [
+        "Только текущая точная сверка DIFFERENT для одной закрытой GETTEX/EUR 15m-свечи при действующих разрешениях официального источника и штатных исправлений.",
+        "Полные парные публикации и реальные GETTEX-сделки должны точно воспроизводить существующие 5m и 15m OHLCV после удаления лишь последней записи. Последняя запись остаётся в том же 5m-слоте; наборы временных отметок не меняются.",
+        "Восстанавливать значения только из независимо проверенного официального архива, не из текста или изображения TV. Количество последней записи может быть положительным или нулевым; нулевая запись не создаёт оборот и не доказывает NO_TRADES.",
+        "Повторить существующую проверку всех входов и обеих политик непосредственно перед публикацией; сохранить старые OHLCV, происхождение и обычную переоценку DQ/CORE. Любое другое расхождение не подпадает под этот узкий маршрут."
+      ],
+      "evidence": [
+        "test_cp_native_closing_tick.ClosingTick.test_current_review_and_complete_tape_repair_only_exact_closing_tick",
+        "test_cp_native_extrema.NativeExtrema.test_only_current_isolated_positive_trade_extreme_is_repaired_by_cp"
+      ],
+      "limits": "Не произвольная замена поставщика или OHLCV; без участия Work при конкретном повторе с уже сохранённым актуальным DIFFERENT и полными данными. Desktop самостоятельно не управляется. Не меняет счёт, торговые разрешения, DQ/freshness/risk проверки. Утрата исходных сведений либо разрешения оставляет блокировку.",
+      "status": "Installed Windows TEST: both real15m targets RESOLVED_NATIVE; 4 existing5m/15m rows changed by ordinary CP,0 added/relocated. Official current proof true; all8 protected checks true; scoped rollback dry-run eligible2. New positive/zero final-tick scenario PASS /2.168s; affected extrema PASS. Full all-stock request IN_PROGRESS."
+    },
+    {
+      "id": "official_empty_confirmation_supersedes_stale_archive_diagnostic",
+      "title": "Подтверждённый GETTEX-пропуск не возвращается в активные ошибки старого DQ",
+      "sources": [
+        "cp_problem_view.native_empty_resolution",
+        "cp_controls._official_empty_problem_current",
+        "revision_watcher.retime_current"
+      ],
+      "states": [
+        "RESOLVED_NATIVE",
+        "NO_TRADES",
+        "UNCONFIRMED"
+      ],
+      "steps": [
+        "Не повторять ручную сверку TV для уже доказанного официальным источником пустого интервала. Терминальной строки RESOLVED_NATIVE самой по себе недостаточно.",
+        "В readonly-транзакции проверить тот же ISIN/source/venue/currency/TF/одиночный диапазон, текущий APPLIED VERIFIED_NATIVE_EMPTY receipt, полные парные публикации, текущую политику и реальные строки через существующий валидатор.",
+        "Подтверждённый интервал сохранить в общем реестре, убрать только из активного списка и показать в разделе «Подтверждено GETTEX». DQ/OHLCV/разрешения не переписывать.",
+        "Если политика отозвана, источник/родной ряд изменился или DQ INVALID — оставить/вернуть активную проблему. TV-статус показывать отдельно, не выдавать официальный receipt за проведённую TV-сверку.",
+        "Новое действующее PRESENT/ZERO_VOLUME/DIFFERENT наблюдение TV не скрывать за старым официальным подтверждением пустого интервала; возвращать в активную сверку без изменения DQ/OHLCV."
+      ],
+      "evidence": [
+        "test_cp_problem_view.ProblemEvidenceTests.test_live_official_empty_receipt_resolves_stale_dq_and_changed_inputs_reopen",
+        "Readonly Windows TEST reproduction: Apple 10.11.2026 22:45 and Broadcom 16.11.2026 22:45 had UNCONFIRMED while the existing official-empty validator returned true."
+      ],
+      "limits": "Только отображение и повторная проверка существующего подтверждения. Нет новых свечей, обхода freshness/торговых защит или разрешения по одному статусу очереди. Весь запрос всех акций остаётся IN_PROGRESS.",
+      "status": "7 affected scenarios PASS /2.295s; normal Windows restart and Siemens details verified, protected hashes unchanged. Additional current-TV-conflict branch: same integration scenario failed before guard and PASS /1.860s after; 0 current production conflicts found. Overall task IN_PROGRESS."
+    },
+    {
+      "id": "current_tv_acceptance_separate_from_active_errors",
+      "title": "Действующая сверка TV хранится в реестре, а не в активных ошибках",
+      "sources": [
+        "cp_controls.view",
+        "cp_problem_view.accepted_tv_absence",
+        "cp_problem_view.read"
+      ],
+      "states": [
+        "OWNER_ACCEPTED_TV_ABSENCE",
+        "UNCONFIRMED",
+        "GAP",
+        "SOURCE_GAP"
+      ],
+      "steps": [
+        "Использовать только действующее effective_accepted с проверенной identity, TF, диапазоном и native_binding; сохранённого скриншота или старой квитанции BLOCKED недостаточно.",
+        "Принятый диапазон убрать из активного списка проблем, сохранив исходный DQ, свечи и запись подтверждения в общем реестре акции. Показать запись в разделе «Принятые сверки TV».",
+        "При отзыве подтверждения или существенном изменении входов диапазон автоматически возвращается в активные проблемы. INVALID не маскировать. Не ставить повторное восстановление уже принятого неизменного диапазона по кнопке."
+      ],
+      "evidence": [
+        "test_cp_problem_view.ProblemEvidenceTests.test_accepted_tv_reviews_leave_active_errors_but_remain_readable_and_reopen",
+        "test_cp_problem_view.ProblemEvidenceTests.test_current_tv_acceptance_supersedes_waiting_receipt_without_changing_dq"
+      ],
+      "limits": "Только отображение действующего подтверждения. Не NO_TRADES, не изменение DQ/OHLCV или торговых допусков; расхождение объёмов и неподтверждённая история остаются отдельными проблемами.",
+      "status": "3 targeted scenarios PASS /1.324s; Windows normal restart: active/accepted views and persistent Meta reviews verified; all-stock review remains IN_PROGRESS"
+    },
+    {
+      "id": "source_files_missing_is_not_absent_trades",
+      "title": "Нет файлов периода — не утверждение об отсутствии сделок",
+      "sources": [
+        "gettex_history._download",
+        "cp_experience.failure_evidence"
+      ],
+      "states": [
+        "UNCONFIRMED",
+        "SOURCE_LIMITED"
+      ],
+      "steps": [
+        "Посчитать только опубликованные или кешированные файлы, попавшие в точное запрошенное окно.",
+        "Если подходящих файлов нет, вернуть SOURCE_LIMITED с причиной отсутствия доступного покрытия; не утверждать отсутствие EUR-сделок и не создавать NO_TRADES.",
+        "Если подходящий файл прочитан, но для ISIN нет строк, это отдельный результат, не отсутствие самого файла; подтверждение пустоты возможно только прежним проверенным полным парным MUNC/MUND механизмом."
+      ],
+      "evidence": [
+        "test_cp_file_availability.py: out-of-window manifest versus an actually selected file"
+      ],
+      "limits": "Никаких новых свечей, допусков, снятия DQ, обхода cooldown или утверждений о максимальной глубине источника.",
+      "status": "2 targeted cases PASS; code/runtime stage recorded in checkpoint"
+    },
+    {
+      "id": "reopen_parent_repair_on_scoped_child_arrival",
+      "title": "Новые младшие свечи возобновляют terminal-восстановление родителя",
+      "sources": [
+        "cp_controls.repair_children_fingerprint",
+        "cp_controls.automatic_repair_turn",
+        "data_quality.repair"
+      ],
+      "states": [
+        "BLOCKED",
+        "UNCONFIRMED"
+      ],
+      "steps": [
+        "Сохранять отдельный отпечаток реально имеющихся младших свечей того же ISIN/source/venue/currency внутри точного окна родителя; не менять отпечаток визуальной сверки TV.",
+        "Учитывать существенные DQ/lineage/listing входы и версию валидаторов; чужие данные, другие даты и checked_at не являются основанием сброса попыток.",
+        "Старым terminal-квитанциям без детского отпечатка записать baseline без новой постановки, сброса attempts либо изменения weekly deadline.",
+        "При существенном изменении дочернего входа — одна штатная повторная оценка/восстановление; все финальные проверки writer, cooldown, identity, DQ и риск сохраняются."
+      ],
+      "evidence": [
+        "test_cp_child_requeue.py: reproduced CHECKED instead of QUEUED before fix",
+        "Local saved GETTEX 19.11.2026 08:00: complete 5m children recover missing 15m without HTTP in isolated SQLite"
+      ],
+      "limits": "Это разрешение повторной попытки, не разрешение свечи или сделки. Пустые ответы и неполные/чужие дети не являются подтверждением; рабочая история тестом не изменяется.",
+      "status": "4 new + 2 affected PASS; published objects c8d7c23b: 6 PASS /1.518s; Windows normal restart, positive natural child arrival remains to be observed"
+    },
+    {
       "id": "official_exact_five_minute_relocation",
       "title": "Точный перенос ошибочно датированной 5m свечи GETTEX",
       "sources": [
@@ -1607,6 +1922,470 @@
       ],
       "automatic_action": "Existing revision_watcher and reconciliation lane",
       "manual_action": "Confirmed current visual discrepancy remains required."
+    },
+    {
+      "id": "gettex_first_nonblocking_audit",
+      "title": "GETTEX-first: ����������� ������� ���������� �� �������������� ��",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "GAP",
+        "UNCONFIRMED",
+        "INVALID",
+        "STALE",
+        "SOURCE_GAP",
+        "RECOVERING"
+      ],
+      "status": "IMPLEMENTED in TEST for verified source contracts; issue20 acceptance ongoing",
+      "steps": [
+        "Validate exact registered listing/provider/ISIN/GETTEX/EUR/timezone and actual numeric OHLCV independently of CP classifications.",
+        "Use existing actual bars for aggregation/indicators/CORE; preserve factual incomplete-coverage flags and original DQ warnings.",
+        "Keep price-only observations at zero volume; never create a missing candle or infer NO_TRADES from absence.",
+        "Audit the entire archive in the existing CP queue and errors view; preserve receipts/corrections; recompute real affected revisions.",
+        "Keep independent quote/session/identity/revision/balance/risk guards; availability is never an execution grant.",
+        "Write bounded decision-time source/input digests, indicators and warnings to the existing journal; do not rewrite previous fills.",
+        "Use one coherent WAL view for analytical reads, retaining final live candle/listing/policy revisions; DQ opinions for explicitly bound factual inputs are audit-only dependencies.",
+        "Keep the deeper whole provider archive for higher TF even when a shorter provider has a newer last bar; never splice its tail.",
+        "Reserve a sequential preparation slot after two operational turns when due, so an expanding admitted universe cannot starve its next candidate.",
+        "Reuse an existing coherent read transaction for optional execution diagnostics; insufficient parent history must return explicit blockers without aborting the candle page.",
+        "Capture observed batched volume paths in the existing MCP indicator exporter, preserving zeros, missing values and the unchanged volume average; never fabricate bars for continuity.",
+        "Deliver heavy full-history CP diagnostics through the existing bounded read-page lease: reply INDETERMINATE first, coalesce repeated requests, then expose the detached as-of result. Keep 120-second expiry and explicit UNAVAILABLE on failure, never inferred zero counts.",
+        "Under explicit GETTEX-first policy, reserve fresh acquisition slots for actual prices and durable reassessment requests. Defer automatic/TV/reviewed historical grant maintenance to ordinary history turns; preserve consumer-time revision/identity/quote/risk validation and legacy-policy behaviour.",
+        "Bound runtime overhead: poll semantic input revisions instead of decoding full historical DQ on Tk; read post-feed analysis from one WAL view; coalesce automatic freshness diagnostics with a 60-second cooldown and publish explicit as-of results; reuse lineage checks only inside the same immutable WAL transaction. Recheck on the next read and retain final live revision validation. Do not warm all legacy archives on Tk startup.",
+        "Validate exact numeric/index/source fields through metadata-free pandas views; retain original source contract and evidence, reject malformed OHLCV/identity as before. Large evidence trees must not be deep-copied for each numeric column.",
+        "After an ordinary official fresh acquisition, ingest one recent already saved complete MUNC/MUND pair for the registered EUR universe before old archive backlog. Reuse atomic source/identity/conflict checks; enqueue existing assessment requests only for changed stocks. Keep old-history turns and separate provider archives. Save only evidence-backed severe anomalies in the existing progress: invalid native rows or confirmed trades without a native bar. Ordinary gaps/zero volume/delays and matching TV absences are not severe; a cross-exchange gap is context, never GETTEX proof.",
+        "Retain the bounded ReadCache only in an owned serial readonly compute child across WAL views, rolling back the view before final live revision checks. Reuse unchanged chart artists only after source/file/selection/revision validation; recompute CORE separately. Use metadata-free numeric plotting views. Yield historical HTTP acquisition between files after a soft time budget, preserve durable cursor/cooldown, and never cancel an active writer or infer data readiness from cache reuse.",
+        "Issue16: obtain market event time only from the existing committed validated official MUNC/MUND positive-quantity trade path. Bind exact UTC-anchored time and file SHA256; persist monotonic confirmed_latest in the existing diagnostic journal. Cached replay, backfill, zero quantity, EMPTY and errors never renew that event clock. Bootstrap at most one recent saved pair per registered universe, preserve candles. Keep provider/venue clocks separate, inclusive age limits and UNKNOWN/MARKET_CLOSED; diagnostic age never grants PAPER execution. Legacy receipts cannot be retroactively promoted to confirmed events."
+      ],
+      "evidence": [
+        "test_gettex_first.py",
+        "test_paper_preparation.py",
+        "test_cp_automatic_repair.py",
+        "test_ui_runtime_budget.py",
+        "test_cp_fresh_priority.py",
+        "test_issue16_event_freshness.py"
+      ],
+      "limits": [
+        "Malformed actual data, missing bars and mathematically insufficient indicator inputs remain unavailable.",
+        "No universal source certification or artificial READY quality; no real broker activation.",
+        "Preserve complete separate provider archives; do not select a shorter archive merely because the longer has a CP suspicion."
+      ],
+      "automatic_action": "Existing source selection, aggregation, analytics/CORE, sequential PAPER preparation and CP audit",
+      "manual_action": "Unconfirmed anomalies remain visible for later evidence-backed review."
+    },
+    {
+      "id": "official_receipt_scope_stability_issue19",
+      "title": "Подтверждение точного GETTEX-окна не зависит от постороннего биржевого извещения",
+      "sources": [
+        "revision_watcher.retime_current",
+        "revision_watcher.receipt_source_current",
+        "cp_assessment.request",
+        "dq_evidence.collect",
+        "calculation_window.calculate_eligibility"
+      ],
+      "states": [
+        "RECHECK_REQUIRED",
+        "SOURCE_TIMEBASE_UNCONFIRMED",
+        "VERIFIED_NATIVE_EMPTY"
+      ],
+      "steps": [
+        "Повторно проверить полные официальные входы, identity, политику и точные native OHLCV; сверить целостность сохранённого source_digest.",
+        "Нормализовать только покрытие внутри исходного закрытого окна; сведения о закрытии другой сессии не меняют факт этого окна. Локальные сделки, файлы, OHLCV и неизвестные авторитетные поля остаются строгими.",
+        "Показать старую TV-сверку как SUPERSEDED_BY_OFFICIAL только при действующей официальной квитанции того же job/ISIN. Это не новое подтверждение NO_TRADES.",
+        "Для повторной оценки использовать cp_assessment_request и существующую справедливую ротацию 2:1; не создавать отдельные разрешения и не менять историю.",
+        "Если GETTEX-first оценка становится STALE при публикации без изменения данных, проверить обязательные policy/grant scopes: они должны быть захвачены в той же WAL-транзакции даже без legacy owner-risk fallback. Не убирать окончательную проверку и не продлевать сроки."
+      ],
+      "evidence": [
+        "test_issue19_scoped_receipts.py",
+        "docs/DQ_EVIDENCE_ISSUE19_RU.md",
+        "test_issue19_scoped_receipts.PolicyPublication"
+      ],
+      "limits": "GETTEX-first: DQ аудит отдельно от доступности анализа всех зарегистрированных акций. Свежесть цены исполнения, identity и риск сохраняются. Реальный DQ не подменяется READY. Живой каталог не является разрешением произвольно импортировать OHLCV.",
+      "status": "9 адресных тестов опубликованного3dd60db PASS21.398с; старый policy-publication дефект воспроизведён STALE, исправленный путь CURRENT и реальное изменение политики отклоняется. Многодневная полная приёмка Issue19 не завершена. Windows: штатная очередьNVIDIA опубликовалаCURRENT20.11 20:03:35 CET,9 аналитическихTF;1H/4H сохраняют независимуюCURRENT-проверку при новых5m/15m. ВнешнийMCP подтвердил актуальные времена, не продлевая срок."
+    },
+    {
+      "id": "official_verified_5m_windows_and_review_completion",
+      "title": "Подтверждение5m, восстановление родителей и завершение сверок в коротком ходе СР",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "SOURCE_TIMEBASE_UNCONFIRMED",
+        "GAP",
+        "UNCONFIRMED",
+        "NATIVE_ROWS_PRESENT"
+      ],
+      "status": "Implemented in TEST; scope145 at22Nov20:51CET:95 processed,50 unresolved. Work0 manual candle writes; CP92 primary confirmations and3 current owner-TV acceptances. Overall task ongoing.",
+      "steps": [
+        "Reuse complete paired GETTEX publications, exact listing/ISIN/EUR/timezone and actual closed5m/15m inputs. Prove an empty5m range from complete exact parent windows, not a missing provider reply.",
+        "Uniquely partition every original native5m OHLCV against every real source event, preserve exact native parents and full-window OHLCV conservation. Try bounded30/45/60-minute windows;9 native bars,5000 events,20000 search steps; default delay15minutes.",
+        "For a current fingerprint-bound PRESENT/DIFFERENT15m review under approved registered GETTEX source policy, allow up to45minutes native delay. Missing original parent timestamps require unique exact OHLCV relocation into an absent native parent; no discarded parent aggregate.",
+        "Reject current conflicting visual facts and bound neighboring context. Keep before values, source files/hashes, original lineage, final transaction revalidation and normal dependent DQ/CORE rechecks.",
+        "Finish existing owner-TV historical policy on the same short reconciliation turn and persist its assessment request, without provider or CORE work in that route.",
+        "Allow only harmless own-review timestamp/job service revisions or unrelated later tails when complete frozen native bindings remain identical; retain actual data/source/policy/identity guards and never renew a permission from a read.",
+        "Separate currently validated full-source repairs and accepted TV absences from active errors. Refresh the open view for changed source/native/policy/evidence inputs; preserve raw DQ records and new disputes.",
+        "Revalidate a bound visual fingerprint after repair; a pre-repair saved source_comparison current flag must not hold an already repaired interval in active errors. Keep unbound legacy conflicts conservatively."
+      ],
+      "evidence": [
+        "test_cp_five_minute_partition.py",
+        "test_cp_scoped_tail.py",
+        "test_cp_five_minute_empty.py",
+        "test_cp_problem_view.py",
+        "test_cp_pending_observation_route.py"
+      ],
+      "limits": [
+        "TV visual use remains assisted; no autonomous TV scraping, fabricated bars, inferred exchange NO_TRADES or blanket trading grant. Missing evidence, ambiguous partition, changed original values, source coverage or policy remain explicit. Counts are overlapping scoped diagnostic ranges, not a sum of independent physical candles. Source proof views remain slow on large per-stock registries; no250ms claim."
+      ],
+      "automatic_action": "Existing serial CandlePilot feed/reconciliation writer and current primary-source validators",
+      "manual_action": "Visual TradingView comparison only where independent saved evidence is insufficient; direct candle writes by Work are not used."
+    },
+    {
+      "id": "official_positive_interior_price_extreme",
+      "title": "Пропущенная цена внутри свечи при уже учтённом объёме",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "SOURCE_DISCREPANCY"
+      ],
+      "status": "TEST normal CP queue verified22Nov21:28:16CET, SAP27Oct08:20 5m; one additional exact scope outside original145. Work0 direct candle writes; CP2 physical rows changed (child and parent),0added.",
+      "steps": [
+        "Require a current fingerprint-bound DIFFERENT5m review, exact listing/ISIN/GETTEX/EUR/timezone and approved source policy.",
+        "Use complete paired primary GETTEX tape for one15m parent. Every native/source timestamp, all sibling values, exact native parent-child aggregation and unchanged O/C/V must match.",
+        "Exactly one independently published positive-quantity interior price outside nativeH/L may be omitted; excluding its price must reproduce every original O/H/L/C while its quantity is already counted. Restore confirmed extrema only.",
+        "Reject changed source/native/policy inputs and conflicting current visual facts immediately before publication. Retain original values, source digests and lineage.",
+        "Use one bounded versioned pass on the existing serial worker, finish normal source resolution, persist dependent DQ/CORE requests. Do not wait for the full hourly retry or replay already completed jobs."
+      ],
+      "evidence": [
+        "test_cp_positive_price_extreme.py",
+        "test_cp_five_minute_empty.py",
+        "test_cp_problem_view.py"
+      ],
+      "limits": [
+        "No TV OHLCV import, invented volume, arbitrary supplier merge, unconditional trading grant, per-stock writer or background thread. Incomplete publication, ambiguous/multiple omitted prices and changed close/volume remain blocked."
+      ],
+      "automatic_action": "Existing bounded CandlePilot reconciliation/source writer",
+      "manual_action": "Current visual DIFFERENT observation where absent; no direct candle edit by Work"
+    },
+    {
+      "id": "official_reviewed_five_minute_parent_recovery",
+      "title": "Сверка5m использует полное доказательство восстановления родительского15m",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "GAP",
+        "SOURCE_TIMEBASE_UNCONFIRMED"
+      ],
+      "status": "Normal TEST CP queue verified22Nov21:42:22CET: DeutscheBoerse28Oct13:30-13:40 5m RESOLVED_NATIVE; CP1added,1changed,1relocated physical row. Work0 direct candle writes.",
+      "steps": [
+        "For a current bound PRESENT/DIFFERENT5m review use the same approved primary-source conserved-window rule as15m. Every old native child and parent must be reproduced uniquely by all real source events.",
+        "Require full paired GETTEX publication, exact native parent-child aggregation, full-window OHLCV conservation, unique exact relocation of any disappearing parent and final source/native/policy revalidation.",
+        "Allow the existing reviewed delay bound45minutes and retain all original values and lineage. An ABSENT review keeps the narrower rule; it cannot create present candles.",
+        "Propagate conflicting current visual facts or changed bound context as explicit refusal rather than silently swallowing those guards while looking for another window.",
+        "Use a one-time bounded reviewed5m rule version on the existing serial writer. Skip completed jobs and preserve ordinary priority, provider and CORE routes."
+      ],
+      "evidence": [
+        "test_cp_five_minute_partition.py",
+        "test_cp_five_minute_empty.py",
+        "test_cp_adaptive_recovery.py"
+      ],
+      "limits": [
+        "Visual comparison still assisted. No new source entitlement, fabricated bars, missing volume, relaxed current quote or trading permission. Ambiguous or non-conserved histories remain pending."
+      ],
+      "automatic_action": "Existing serial CP short source/reconciliation batch",
+      "manual_action": "Current visual review only when evidence is unavailable"
+    },
+    {
+      "id": "short_due_review_uses_existing_native_batch",
+      "title": "Новая сверка и повтор после ремонта не ждут полного обхода истории",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "QUEUED",
+        "RECHECK_QUEUED"
+      ],
+      "status": "TEST normal queue verified22Nov22:14:18CET. JNJ13Nov14:45 5m reached source check and retained AWAITING_SOURCE / RETIME_INCOMPLETE_PUBLICATION. Queue fixed, data not declared repaired.",
+      "steps": [
+        "Select due queued/recheck GETTEX/EUR5m/15m scopes up to30minutes with an existing observation or prior native algorithm in the existing serial native batch.",
+        "Prioritize explicit review, then queued follow-up, then bounded algorithm retry. Preserve RECHECK_QUEUED when seeding and keep the shared8-job bound.",
+        "Do not select future source deadlines or completed jobs; do not renew the review or source cooldown. Finish existing owner policy and dependent assessment persistence.",
+        "Revalidate approved source policy, exact identity, source/native inputs and current visual facts immediately before any write. Persist a precise waiting reason if confirmation remains insufficient."
+      ],
+      "evidence": [
+        "test_cp_short_review_queue.py",
+        "test_cp_five_minute_empty.py"
+      ],
+      "limits": [
+        "53/200 isolated jobs verified. No new thread, global replay, market-data import, DQ/freshness bypass or promise that every source wait is eliminated."
+      ],
+      "automatic_action": "Existing CP serial short native batch",
+      "manual_action": "Only genuinely missing visual/source evidence"
+    },
+    {
+      "id": "official_zero_parent_unique_child_recomposition",
+      "title": "Родитель без объёма перенесён вместе с доказанными событиями младших свечей",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "GAP",
+        "SOURCE_TIMEBASE_UNCONFIRMED"
+      ],
+      "status": "Normal TEST CP queue22Nov22:24:59CET, Nordex28Oct13:50-14:00 5m RESOLVED_NATIVE; current receipt verified. CP1added,1changed,3relocated physical rows; Work0 direct candle writes.",
+      "steps": [
+        "Require current fingerprint-bound PRESENT/DIFFERENT review and complete paired primary GETTEX publication. Candidate window must cover the whole reviewed interval.",
+        "Every native5m observation must have a unique exact ordered source-event partition; native15m parents must exactly aggregate their native children, with conserved full-window OHLCV and bounded45minute delay.",
+        "A disappearing flat zero-volume15m parent may be recomposed only from its uniquely mapped zero-quantity child events at the exact same price into actual existing source parents. Preserve original values, child-event ranges, target parents and lineage.",
+        "Keep the stricter exact unique relocation rule for positive-volume disappearing parents. Reject conflicting current TV facts or changed source/native/policy inputs before publication.",
+        "Run one bounded versioned retry through the existing serial writer, queue normal DQ/CORE reassessment, and leave completed jobs untouched."
+      ],
+      "evidence": [
+        "test_cp_zero_parent_composition.py",
+        "test_cp_five_minute_partition.py",
+        "test_cp_short_review_queue.py"
+      ],
+      "limits": [
+        "No arbitrary positive-parent merge, invented empty candle, quantity, TV price import or blanket historical/trading grant. Ambiguous partitions, incomplete publication and conflicting current evidence remain blocked."
+      ],
+      "automatic_action": "Existing source-confirmed conserved-window CP writer",
+      "manual_action": "Current specific visual observation if none is available"
+    },
+    {
+      "id": "official_unique_partition_one_sampled_interior_price",
+      "title": "Одна потерянная внутренняя цена при полном учтённом объёме и сдвиге времени",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "GAP",
+        "SOURCE_TIMEBASE_UNCONFIRMED"
+      ],
+      "status": "Normal TEST CP queue22Nov23:05:26CET: Alphabet21Oct13:25-13:50 5m RESOLVED_NATIVE, current receipt. CP4added,7changed,1relocated physical5m/15m rows. Work0 direct candle writes.",
+      "steps": [
+        "Require current fingerprint-bound DIFFERENT review and approved exact ISIN/GETTEX/EUR primary source. Existing complete paired publication, actual trade-built5m/15m candles and coverage checks are unchanged.",
+        "Try the existing exact event partition first. Only if it fails, allow exactly one independently published positive interior price to be omitted from native price sampling while every event quantity stays counted.",
+        "Require a unique ordered complete partition reproducing every original quantity, open, close and all other prices within45minute delay. Exactly one extreme price must explain the difference; opening/final prices, zero-quantity extremes, ambiguous partitions, multiple missing prices and changed quantities are rejected.",
+        "Native parents must exactly aggregate original children, the whole checked5m/15m window must conserve OHLCV, candidate must cover the full review. Retain before/lineage, exact sampled event and final source/native/policy/current-TV guards.",
+        "Use one bounded reviewed5m version11 pass on the existing serial CP lane. Completed jobs stay skipped. Persist dependent DQ/CORE reassessment without artificial warmup or trading grant."
+      ],
+      "evidence": [
+        "test_cp_sampled_price_partition.py",
+        "test_cp_zero_parent_composition.py",
+        "test_cp_short_review_queue.py",
+        "test_cp_five_minute_partition.py"
+      ],
+      "limits": [
+        "Four exact-public-commit tests PASS5.422s including53/200queue. No arbitrary source replacement, missing-volume invention, opening-price exception, positive-parent merge, TV price import or current-quote/risk bypass."
+      ],
+      "automatic_action": "Existing verified conserved-window CP writer and normal reassessment",
+      "manual_action": "Current bounded DIFFERENT visual evidence if unavailable; never a direct Work candle write"
+    },
+    {
+      "id": "current_fifteen_minute_difference_due_lane",
+      "title": "Зависшие текущие расхождения соседних 15m-свечей",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "SOURCE_DISCREPANCY",
+        "GAP"
+      ],
+      "status": "Normal TEST CP22Nov23:31:11CET Apple20Oct22:30 and23Oct18:15;23:31:52 NVIDIA21Oct13:45. All RESOLVED_NATIVE by23:33:39 and current receipts verified. Work0 direct candle writes.",
+      "steps": [
+        "Select an existing due single15m current DIFFERENT request in AWAITING_SOURCE/AWAITING_USER for one versioned pass on the existing serial eight-job native route. Preserve future next_check and skip completed/handled requests.",
+        "Keep the actual conflicting current neighbour review guard. Process that neighbour's own diagnosis instead of suppressing it to repair a gap.",
+        "For a current DIFFERENT only, include a75minute candidate window with unchanged9native-bar/5000event/20000attempt and45minute maximum native delay bounds. Other observations retain the prior window widths.",
+        "Require complete paired primary GETTEX publications, unique event-to-native partition, exact native parent aggregation, full-window OHLCV conservation, current identity/policy/source/native/visual guards immediately before publication, original lineage and ordinary DQ/CORE reassessment."
+      ],
+      "evidence": [
+        "test_cp_sampled_price_partition.py",
+        "test_cp_short_review_queue.py",
+        "test_cp_five_minute_partition.py"
+      ],
+      "limits": [
+        "Exact proposed public commit3c36d64:6tests PASS7.015s including53/200due/future/completed cases. No TV price import, permission or expiry renewal, new feed worker or trade."
+      ],
+      "automatic_action": "One bounded existing-queue proof and guarded source repair; ordinary dependent reassessment",
+      "manual_action": "A new visual diagnosis only when no current suitable evidence exists; missing independent source proof remains blocked"
+    },
+    {
+      "id": "official_unique_opening_price_burst_partition",
+      "title": "Пропущенная начальная цена при сохранённом объёме и сдвиге родителя",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "GAP",
+        "SOURCE_DISCREPANCY",
+        "SOURCE_TIMEBASE_UNCONFIRMED"
+      ],
+      "status": "Normal TEST CP23Nov00:07:17CET Novartis23Oct17:50-18:10 and17:40 5m RESOLVED_NATIVE. Current receipt verified;2added3changed3relocated physical5m/15m rows;Work0direct candle writes.",
+      "steps": [
+        "Require exact approved ISIN/GETTEX/EUR, complete paired primary files and current fingerprint-bound5m DIFFERENT evidence. Try existing exact and single-interior-price partitions first.",
+        "A unique complete ordered partition may omit only the price of one opening burst of1-3consecutive positive events at one identical price in the same5m source bin. Every quantity remains counted; all other native OHLC and closes must be reproduced. Max9native bars,5000events,20000attempts,45minute native delay; full-window5m/15mOHLCV conserved and original parents exact.",
+        "A positive disappearing15mparent can recompose into an existing source parent only with exactly one native child and its distinct mapped events reproducing that complete parent's exact OHLCV within15minutes. Retain event ranges, original values and lineage; never discard an unexplained positive parent.",
+        "Only in this fully proved opening-burst case, bind disjoint wholly covered current5m DIFFERENT diagnoses atomically to the same source plan. Each source interval must actually differ, original rows must match, and exact job/input digests are recomputed immediately before publication. Overlapping diagnoses, conflicting ABSENT/PRESENT/ZERO_VOLUME and changed bindings remain blocked.",
+        "Try a larger bounded candidate when a smaller window cannot contain the whole linked review. Apply through the existing CP writer, then queue dependent DQ/CORE and ordinary policy reassessment. No TV price import or forced grant."
+      ],
+      "evidence": [
+        "test_cp_opening_session_tail.py",
+        "test_cp_five_minute_partition.py",
+        "test_cp_short_review_queue.py"
+      ],
+      "limits": [
+        "Exact public19b0383:9targeted tests PASS9.358s including53/200. A different opening price, zero-quantity burst, altered parent, contradictory review or source change cannot use this rule."
+      ],
+      "automatic_action": "Version12bounded serial review pass and final guarded primary-source repair",
+      "manual_action": "Current suitable TV observation where independent source matching alone is insufficient; ASSISTED_ONLY rights unchanged"
+    },
+    {
+      "id": "official_unique_session_prefix_missing_tail",
+      "title": "Последняя часть сессии отсутствовала в старом ряду",
+      "sources": [
+        "gettex",
+        "gettex_chart"
+      ],
+      "states": [
+        "GAP",
+        "SOURCE_TIMEBASE_UNCONFIRMED"
+      ],
+      "status": "Normal TEST CP22Nov23:49:45CET SAP20Oct22:25-22:30;23:56:15Micron20Oct22:25 RESOLVED_NATIVE. Both current receipts verified. SAP2added6changed;Micron1added9changed physical5m/15m rows. Work0direct candle writes.",
+      "steps": [
+        "Require a current exact5m PRESENT/DIFFERENT empty review in the last session hour, approved same-listing primary source and complete independently trade-built paired GETTEX files through the verified calendar close.",
+        "Use only30/45/60minute final-session windows. Two unchanged leading5mchildren before the review anchor the identity/timebase. Every original parent must aggregate all native children exactly and all old timestamps must remain represented.",
+        "A unique ordered complete source prefix must reproduce every original5mOHLCV and quantity within15minute delay. Only1-64positive final events within the last15minutes may remain as a new suffix. No missing original quantity, fabricated zero observation, interior omission or incomplete source is accepted.",
+        "Persist explicit VERIFIED_NATIVE_SESSION_TAIL provenance, the exact recovered events, original5m/15mvalues and lineage. This is missing source data recovery, not a false claim of full-window volume conservation. Recompute all input/source/policy/visual guards before writing and reassess dependent scopes normally.",
+        "Reuse the ordinary due-only version12short lane,8jobs; skip completed or handled requests and preserve future deadlines. No new feed threads, synthetic bars, account or trading permission changes."
+      ],
+      "evidence": [
+        "test_cp_opening_session_tail.py",
+        "test_cp_short_review_queue.py",
+        "test_cp_five_minute_partition.py"
+      ],
+      "limits": [
+        "Exact public19b0383:9tests PASS9.358s. Normal isolated writes/readback plus source/parent/volume/absence failures and53/200queue checked. Isolated explicit rollback restored exact originals and rejected changed inputs; no working-data rollback performed."
+      ],
+      "automatic_action": "Recover the independently published positive closing suffix with original lineage and ordinary reassessment",
+      "manual_action": "Current visual review if unavailable; missing complete source files or ambiguous mapping remains blocked"
+    },
+    {
+      "id": "official_automatic_zero_timebase",
+      "title": "Полностью доказанный перенос существующего нулевого наблюдения без внешнего подтверждения",
+      "sources": [
+        "gettex_chart",
+        "gettex"
+      ],
+      "states": [
+        "SOURCE_TIMEBASE_UNCONFIRMED"
+      ],
+      "status": "IMPLEMENTED;9 normal autonomous source repairs verified,6 using new zero-only rule; no TV automation or trading permission",
+      "steps": [
+        "Complete paired GETTEX tape must exactly conserve all native OHLCV and every15m parent; every positive5m row unchanged.",
+        "Unique bijection of existing flat zero-volume observations only, maximum5m delay; no new observations or NO_TRADES inference.",
+        "Bounded due version pass on existing serial writer; retain future/completed requests, identity/policy/source/input final guards and rollback."
+      ],
+      "tests": [
+        "test_cp_automatic_zero_timebase.AutomaticZero"
+      ]
+    },
+    {
+      "id": "official_exact_primary_parent_confirmation",
+      "title": "Неполное количество native: точный первичный родитель подтверждён визуально в TV",
+      "sources": [
+        "gettex_chart",
+        "gettex"
+      ],
+      "states": [
+        "SOURCE_DISCREPANCY",
+        "GAP"
+      ],
+      "status": "IMPLEMENTED;Alphabet26Oct16:30 parent and16:40 child repaired by normal CP; manual TV review remains assisted",
+      "steps": [
+        "Metadata API accepts no OHLCV, binds exact manually reviewed timestamp/O/H/L/C/V of one closed15m GETTEX/EUR parent to previously captured primary and native inputs.",
+        "Revalidate complete source tape,5m/15m listing, policy, screenshot hashes and all native rows before ordinary writer publication; conflicting current TV facts block.",
+        "Use only independently saved primary values; preserve superseded values and lineage separately from conserved relocations; queue DQ/CORE through normal pipeline."
+      ],
+      "tests": [
+        "test_cp_primary_window_confirmation.PrimaryWindow"
+      ]
+    },
+    {
+      "id": "tv_scope_global_source_revision_strict_recheck",
+      "title": "Глобальное обновление доказательств источника повторно снимало неизменившийся исторический допуск",
+      "sources": [
+        "gettex_chart"
+      ],
+      "states": [
+        "INPUT_REVISION_CHANGED"
+      ],
+      "status": "IMPLEMENTED IN WINDOWS TEST; exact public-code targeted tests PASS; ordinary CP verification recorded in current report",
+      "evidence": [
+        "stock_monitor/cp_controls.py",
+        "test_cp_scoped_proof_revision.py",
+        "test_cp_scoped_tail.py"
+      ],
+      "steps": [
+        "On an issued TV absence receipt only, allow a newer interval_evidence revision after the original complete scoped visual fingerprint and native binding both match.",
+        "Keep policy, DQ, listing, instrument and unknown revisions strict; reclassify now and reject real trades, recovered bars, changed neighbours, file hashes, closures or future proof times.",
+        "Read-only revalidation never changes the grant, original input revisions, accepted_at or expiry. An ordinary CP writer may independently renew the same accepted scope."
+      ]
+    },
+    {
+      "id": "official_partial_publication_awaits_source_not_user",
+      "title": "Неполная официальная публикация ошибочно требовала нажатия пользователя",
+      "sources": [
+        "gettex"
+      ],
+      "states": [
+        "UNCONFIRMED",
+        "NATIVE_ROWS_PRESENT"
+      ],
+      "status": "IMPLEMENTED IN WINDOWS TEST; exact public-code targeted tests PASS; ordinary CP verification recorded in current report",
+      "evidence": [
+        "stock_monitor/cp_reconciliation.py",
+        "test_cp_publication_wait.py"
+      ],
+      "steps": [
+        "Only exact GETTEX/EUR/ISIN official proof with an overlapping incomplete_publication interval enters AWAITING_SOURCE and describes the existing shared MUNC/MUND acquisition lane.",
+        "Keep the one-hour check deadline, DQ, complete-pair proof, final publication revisions and source cooldowns. No new worker, network pipeline, absence inference or data write.",
+        "When complete same-source evidence arrives, the ordinary turn reclassifies and resolves. Invalid native prices and independent chart-vendor gaps remain blocked; 404/empty answers do not prove NO_TRADES.",
+        "Use one due cached pass on the existing bounded evidence lane for known overlapping incomplete official publications, behind visual reviews. At most eight jobs per turn; preserve deadlines and mark the one-pass version only after final writer validation. Tested at53/200 pending jobs."
+      ]
+    },
+    {
+      "id": "exact_primary_parent_restores_wholly_missing_native_window",
+      "title": "Полностью отсутствующее native-окно отклонялось механизмом точного первичного подтверждения",
+      "sources": [
+        "gettex_chart"
+      ],
+      "states": [
+        "GAP",
+        "RETIME_NOT_CONSERVED"
+      ],
+      "status": "IMPLEMENTED IN WINDOWS TEST; exact public-code targeted tests PASS; ordinary CP verification recorded in current report",
+      "evidence": [
+        "stock_monitor/revision_watcher.py",
+        "stock_monitor/cp_reconciliation.py",
+        "test_cp_primary_window_confirmation.py"
+      ],
+      "steps": [
+        "A separately captured complete paired GETTEX tape and a bound exact closed15m manual TV confirmation of timestamp/O/H/L/C/V may restore a wholly absent native5m+15m window.",
+        "Retain original consistency checks for partially present native windows. Require exact original native and source digests, validated same listing on5m/15m, approved policies, positive primary parent and unchanged screenshot hash.",
+        "Use the ordinary serial CP writer and final guards; values come only from primary GETTEX. No synthetic bars, inferred NO_TRADES, TV OHLCV import or trading grant.",
+        "Preserve before/lineage and strict current receipt validation. Changed native/source/policy/evidence blocks publication; new isolated case recovers three real5m rows and one15m parent, no manual risk grant."
+      ]
     }
   ],
   "sources": [
@@ -2057,5 +2836,6 @@
       "kind": "5 target visual diagnosis and saved-source comparison; no import; no trading PASS",
       "sha256_at_import": "1cdb3ec4c375da282bcdcc62de0eeba30ea30f1c7d1bd76bcd03f37d62c8da57"
     }
-  ]
+  ],
+  "updated_at": "2026-11-23T12:37:22+01:00"
 }

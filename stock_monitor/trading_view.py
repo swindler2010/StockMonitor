@@ -54,6 +54,7 @@ def format_engine(engine):
 def bind_engine(view,engine):
     title,details=format_engine(engine)
     view.decision.set(title);view.explain.set(details)
+    if hasattr(view,'main_screen'):view.main_screen.bind_engine(engine)
 
 
 def accepted_chart(view,isin):
