@@ -55,9 +55,9 @@ class V2Transactions(unittest.TestCase):
         engine['v2_30m']=dict(action=action,reason='V2_30M_FROZEN_ENTRY',model=v2.MODEL,
             artifact_sha256=self.model['artifact_sha256'],cohort=[f.isin],setup='recovery',
             exit_rule='lock75',atr=2.,anchor=99.4,stop=97.7,target=108.625,quote=price,
-            quote_end=quote_end,signal_closed='2026-11-04T09:30:00+00:00',score=6.,personal_days=2,
+            quote_end=quote_end,signal_closed=(pd.Timestamp(quote_end)-pd.Timedelta(minutes=30)).isoformat(),score=6.,personal_days=2,
             hold_minutes=75)
-        engine['timestamp']='2026-11-04T09:30:00+00:00'
+        engine['timestamp']=engine['v2_30m']['signal_closed']
         h=f.result['hourly'];h['config_digest']=hourly.digest(paper.portfolio_config(f.cfg,'V2'))
         h['ledger_token']=hourly.ledger_token(f.db,'V2');h['timeframe_contract']=plan('30m')
         h['required_tf']=list(profile('30m'))
