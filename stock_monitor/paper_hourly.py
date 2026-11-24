@@ -1552,7 +1552,7 @@ class Runtime:
                 ready=[]
                 for p in maintained_positions(db):
                     isin,portfolio=p['isin'],p['portfolio']
-                    if (portfolio==active or isin not in watching
+                    if (portfolio in ('V1', active) or isin not in watching
                             or not (p.get('auto_entry') or p.get('protection'))):
                         continue
                     status=read(db,portfolio_status_key(portfolio,isin),{})
@@ -1759,7 +1759,7 @@ class Runtime:
                 due=[]
                 for p in positions:
                     book,isin=p['portfolio'],p['isin']
-                    if isin not in ids or not (p.get('auto_entry') or p.get('protection')):
+                    if book=='V1' or isin not in ids or not (p.get('auto_entry') or p.get('protection')):
                         continue
                     if now<self.failed_turns.get((book,isin),0):
                         continue
