@@ -28,6 +28,7 @@ class NewsRuntime:
         self.calendar_next = None
         self.company_next = 0
         self.premarket_next = 0
+        self.premarket_selection = None
         self.maintenance_next=0;self.news_streak=0;self.aux_turn=0
 
     def wake(self,delay=250):
@@ -75,6 +76,11 @@ class NewsRuntime:
         if self.busy:return
         now=time.time()
         if now>=self.maintenance_next:self.maintain();return
+        selected=getattr(self.app,'symbol',None)
+        name=selected.get() if selected is not None else None
+        if name and name!=self.premarket_selection and self.refresh_premarket():
+            self.premarket_selection=name
+            return
         targets=[('market',None)]+[(i['isin'],i.get('profile_symbol') or i.get('history_symbol'))
             for i in self.app.watchlist if i.get('kind')!='benchmark']
         due=due_targets(self.app.store,targets,now)

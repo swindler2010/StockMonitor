@@ -81,6 +81,12 @@ class RuntimeTests(unittest.TestCase):
             args[1](args[0]());self.assertFalse(runtime.busy);self.app.store.set_setting.assert_not_called()
         self.app.main_screen.load_premarket.assert_called_once_with(self.app.watchlist[0],force=True)
 
+    def test_new_selected_stock_gets_one_turn_before_background_news(self):
+        runtime=self.make();runtime.maintenance_next=float('inf')
+        runtime.refresh_premarket=Mock(return_value=True)
+        with patch('news_runtime.due_targets',side_effect=AssertionError('selected stock should be first')):runtime.tick()
+        runtime.refresh_premarket.assert_called_once();self.assertEqual(runtime.premarket_selection,'Apple')
+
     def test_53_and_200_old_mapping_replies_never_publish(self):
         for count in (53,200):
             runtime=self.make()
