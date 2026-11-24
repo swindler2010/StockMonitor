@@ -91,8 +91,8 @@ class Dialog:
         win.title(tr('Индикаторы • Все акции'))
         width=min(660,max(500,win.winfo_screenwidth()-80))
         height=min(870,max(560,win.winfo_screenheight()-100))
-        win.geometry(f'{width}x{height}')
-        win.minsize(500,500)
+        from design_layout import fit_window
+        fit_window(win,660,870,(500,500))
         win.iconphoto(False,photo(root,'indicators',32,color='#00c5ff'))
         self.prefix=p=styles(root,self.palette)
         bg=ttk.Style(root).lookup(p+'.TFrame','background')

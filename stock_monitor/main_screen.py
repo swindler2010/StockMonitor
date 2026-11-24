@@ -153,8 +153,9 @@ def decision_row(parent, decision, reason):
     row=ttk.Frame(parent,style='Desk.TFrame',height=3*font.Font(parent,font=status_font).metrics('linespace'))
     row.pack(fill='x',pady=5)
     row.pack_propagate(False)
-    ttk.Label(row,textvariable=decision,style='DeskSignal.TLabel',wraplength=135).pack(side='left',anchor='w')
-    ttk.Label(row,textvariable=reason,style='DeskMuted.TLabel',font=('Segoe UI',8),wraplength=140).pack(side='right',fill='x',expand=True,padx=(7,0))
+    a=ttk.Label(row,textvariable=decision,style='DeskSignal.TLabel',wraplength=135);a.pack(side='left',anchor='w')
+    b=ttk.Label(row,textvariable=reason,style='DeskMuted.TLabel',font=('Segoe UI',8),wraplength=140);b.pack(side='right',fill='x',expand=True,padx=(7,0))
+    row.bind('<Configure>',lambda event:(a.configure(wraplength=max(95,int(event.width*.43))),b.configure(wraplength=max(70,int(event.width*.48)))))
     return row
 
 
@@ -220,6 +221,7 @@ class Screen:
         self._news_key = None
         self._news_translation_timer = None
         self._logo_signature = None
+        self._premarket_key=None
         self._shown_isin = None
         self.logo_images = {}
         self.header_images = {}
@@ -273,6 +275,7 @@ class Screen:
         selected = next((x for x in infos if x['name'] == app.symbol.get()), None)
         if selected:
             iid = selected['isin']
+            self.load_premarket(selected)
             if self._shown_isin != iid:
                 self._shown_isin = iid
                 app.instrument.set(selected['name'])
@@ -311,6 +314,25 @@ class Screen:
             button.configure(style='DeskActive.TButton' if key == self.group.get() else 'DeskGroup.TButton')
         self.schedule_deltas()
         self.favorite_header()
+
+    def load_premarket(self,info):
+        if not hasattr(self,'premarket'):return
+        import time
+        from i18n import language
+        key=(info['isin'],info.get('profile_symbol') or info.get('history_symbol'),language(),int(time.time()//300))
+        if key==self._premarket_key:return
+        self._premarket_key=key
+        self.premarket.set(tr('Премаркет: нет данных'))
+        self._premarket_detail=tr('Источник карточки не предоставил подтверждённую цену премаркета. Это отдельная площадка, не котировка GETTEX.')
+        self.premarket_label.configure(foreground='#94a3b8')
+        def work():
+            from premarket_view import present
+            return present(info,self.app.store.setting('card:'+info['isin'],{}))
+        def done(result):
+            if self._closed or self._premarket_key!=key:return
+            self.premarket.set(result[0]);self._premarket_detail=result[1]
+            self.premarket_label.configure(foreground='#27df75' if result[2] is not None and result[2]>=0 else '#ff5966' if result[2] is not None else '#94a3b8')
+        self.app.job(work,done,lambda _:None,lane='read',key='premarket-card-view')
 
     def show_logos(self, values):
         if getattr(self.app, 'closing', False):
@@ -851,7 +873,11 @@ def build(app, periods, bg, text):
     screen.delta_label.grid(row=1, column=2, sticky='e', padx=6)
     header_context = ttk.Frame(screen.asset, style='Desk.TFrame')
     header_context.grid(row=0,column=3,rowspan=2,sticky='e',padx=(8,0))
-    ttk.Label(header_context, text=tr('Премаркет: —'), style='DeskMuted.TLabel', font=('Segoe UI', 8)).pack(anchor='e')
+    screen.premarket=tk.StringVar(app.root,tr('Премаркет: нет данных'))
+    screen._premarket_detail=tr('Источник карточки не предоставил подтверждённую цену премаркета. Это отдельная площадка, не котировка GETTEX.')
+    screen.premarket_label=ttk.Label(header_context,textvariable=screen.premarket,style='DeskMuted.TLabel',font=('Segoe UI',8),cursor='hand2')
+    screen.premarket_label.pack(anchor='e')
+    screen.premarket_label.bind('<Button-1>',lambda _:__import__('tkinter.messagebox',fromlist=['showinfo']).showinfo(tr('Премаркет'),screen._premarket_detail,parent=app.root))
     screen.header_volume = tk.StringVar(app.root, tr('Объём: —'))
     ttk.Label(header_context, textvariable=screen.header_volume, style='DeskMuted.TLabel', font=('Segoe UI', 8)).pack(anchor='e',pady=3)
     header_visible=[True]
@@ -1085,9 +1111,9 @@ def build(app, periods, bg, text):
         screen._body_width = marker
         sidebar_width=max(200,min(270,round(width*.16)))
         if int(screen.sidebar.cget('width'))!=sidebar_width:screen.sidebar.configure(width=sidebar_width)
-        right = max(250, min(380, round(width * .22)))
+        right = max(280, min(380, round(width * .22)))
         position = body_width-right if screen._split_ratio is None else round(body_width * screen._split_ratio)
-        position = min(body_width - 250, position)
+        position = min(body_width - 280, position)
         if position > 0 and body.sashpos(0)!=position:body.sashpos(0, position)
 
     def divider_changed(_):

@@ -40,8 +40,8 @@ class Dialog:
         from main_screen import native_titlebar
         self.app=app;self.closed=False
         self.win=win=tk.Toplevel(app.root);win.title(tr('Акции • Stock Monitor'))
-        win.geometry(f'{min(1540,win.winfo_screenwidth()-60)}x{min(840,win.winfo_screenheight()-90)}')
-        win.minsize(1000,600)
+        from design_layout import fit_window
+        fit_window(win,1540,840,(1000,600))
         self.palette=palette=THEMES.get(app.store.setting('theme','Тёмная'),THEMES['Тёмная'])
         self.p=p=styles(app.root,palette)
         style=ttk.Style(app.root)
@@ -119,13 +119,14 @@ class Dialog:
         listing=ttk.Frame(workspace);listing.pack(fill='both',expand=True)
         self.tree=tree=ttk.Treeview(listing,columns=('favorite','symbol','source','tf','state','at'),show='tree headings',selectmode='browse',style='Watchlist.Treeview')
         for key,label,width in [('#0','#  Акция / Компания',270),('favorite','☆',25),('symbol','Тикер',85),('source','Площадка',90),('tf','Таймфреймы',100),('state','Состояние анализа',260),('at','Обновлено',140)]:
-            tree.heading(key,text=tr(label));tree.column(key,width=width,minwidth=22 if key=='favorite' else 65 if key!='#0' else 160,stretch=key in ('#0','state'))
+            tree.heading(key,text=tr(label),command=lambda k=key:self.sort_heading(k));tree.column(key,width=width,minwidth=22 if key=='favorite' else 65 if key!='#0' else 160,stretch=key in ('#0','state'))
         scroll=ttk.Scrollbar(listing,command=tree.yview,style=p+'.Vertical.TScrollbar');scroll.pack(side='right',fill='y')
         xscroll=ttk.Scrollbar(listing,orient='horizontal',command=tree.xview,style='Watchlist.Horizontal.TScrollbar');xscroll.pack(side='bottom',fill='x')
         tree.configure(yscrollcommand=scroll.set,xscrollcommand=xscroll.set);tree.pack(fill='both',expand=True)
         tree.tag_configure('ready',foreground='#2be870');tree.tag_configure('wait',foreground='#f2b54b');tree.tag_configure('blocked',foreground='#ff6976')
         tree.bind('<<TreeviewSelect>>',self.details);tree.bind('<Double-1>',self.select);tree.bind('<Return>',self.select)
         tree.bind('<Button-1>',self.favorite_click,add='+')
+        tree.bind('<Button-3>',self.context_menu)
         win.bind('<Escape>',lambda _:self.close());win.protocol('WM_DELETE_WINDOW',self.close)
         win.after_idle(lambda:native_titlebar(win,palette))
         self.render();self.refresh()
@@ -156,7 +157,7 @@ class Dialog:
             tier=row.get('tier',6)
             favorites=getattr(getattr(app,'main_screen',None),'favorites',set())
             self.tree.item(iid,text=f'{index+1}  '+info['name'],values=('★' if iid in favorites else '☆',info.get('symbol','—'),', '.join(row.get('venues',[])) or '—',
-                ', '.join(sorted(row.get('timeframes',[]),key=lambda tf:list(LABELS).index(tf) if tf in LABELS else 99)) or '—',row.get('label',tr('Ожидается оценка')),timestamp(row.get('assessment_checked_at'))),
+                ', '.join(sorted(row.get('timeframes',[]),key=lambda tf:list(LABELS).index(tf) if tf in LABELS else 99)) or '—',__import__('design_layout').status_text(row),timestamp(row.get('assessment_checked_at'))),
                 tags=('ready' if tier in (1,2) else 'blocked' if tier==5 else 'wait' if tier in (0,3,4) else '',))
             if matches(info,row,self.query.get(),self.state.get(),self.tf.get(),self.venue.get()):self.tree.move(iid,'','end')
             else:self.tree.detach(iid)
@@ -189,6 +190,24 @@ class Dialog:
         selected=self.tree.selection()
         if selected and selected[0] in self.values:
             self.app.symbol.set(self.values[selected[0]]['name']);self.close();self.app.refresh_chart()
+
+    def sort_heading(self,key):
+        if key in ('#0','symbol'):self.sort.set('По названию' if key=='#0' else 'По тикеру')
+        elif key=='state':self.sort.set('По готовности')
+
+    def context_menu(self,event):
+        iid=self.tree.identify_row(event.y)
+        if not iid or iid not in self.values:return
+        self.tree.selection_set(iid);self.details()
+        menu=tk.Menu(self.win,tearoff=False,background=self.palette['panel'],foreground=self.palette['text'])
+        for label,command in [('Открыть график',self.select),('Индикаторы',self.app.show_indicators),('Обновить состояние',self.refresh),('Избранное',lambda:self.toggle_selected_favorite(iid))]:
+            menu.add_command(label=tr(label),command=command)
+        try:menu.tk_popup(event.x_root,event.y_root)
+        finally:menu.grab_release()
+
+    def toggle_selected_favorite(self,iid):
+        screen=getattr(self.app,'main_screen',None)
+        if screen is not None and iid in self.values:screen.toggle_favorite(iid);self.render()
 
     def favorite_click(self,event):
         if self.tree.identify_column(event.x)!='#1':return

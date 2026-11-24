@@ -123,11 +123,15 @@ def finish_drag(app,event):
     objects=saved['expected'];index=saved['index'];obj=objects[index]
     try:
         changed=copy.deepcopy(objects)
-        if obj['type']!='vline':changed=modify(changed,index,'price',obj['price']+event.ydata-saved['y'])
-        if obj['type']!='hline':
-            import pandas as pd
-            dates=saved['dates'];a=max(0,min(len(dates)-1,round(saved['x'])));b=max(0,min(len(dates)-1,round(event.xdata)))
-            changed=modify(changed,index,'at',pd.Timestamp(obj['at'])+(dates[b]-dates[a]))
+        from drawing_management import selection
+        indices=selection(objects,[index])
+        if any(objects[i].get('locked') for i in indices):raise ValueError('GROUP_LOCKED')
+        import pandas as pd
+        dates=saved['dates'];a=max(0,min(len(dates)-1,round(saved['x'])));b=max(0,min(len(dates)-1,round(event.xdata)))
+        for i in indices:
+            item=objects[i]
+            if item['type']!='vline':changed=modify(changed,i,'price',item['price']+event.ydata-saved['y'])
+            if item['type']!='hline':changed=modify(changed,i,'at',pd.Timestamp(item['at'])+(dates[b]-dates[a]))
         commit(app,saved['isin'],objects,changed)
     except (ValueError,TypeError,KeyError):app.status.set(tr('Нельзя переместить объект в эту точку'))
     return True

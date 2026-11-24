@@ -21,8 +21,8 @@ class Dialog:
         from main_screen import native_titlebar
         self.app=app;self.items={};self.original_photos={};self.decorated={};self.sort_column=None;self.descending=False;self.favorites_first=False
         self.win=win=tk.Toplevel(app.root);win.title(tr('Поиск и добавление акции'))
-        win.geometry(f'{min(1100,win.winfo_screenwidth()-80)}x{min(730,win.winfo_screenheight()-100)}')
-        win.minsize(900,600)
+        from design_layout import fit_window
+        fit_window(win,1100,730,(900,600))
         palette=THEMES.get(app.store.setting('theme','Тёмная'),THEMES['Тёмная'])
         p=self.prefix=styles(app.root,palette)
         style=ttk.Style(app.root)

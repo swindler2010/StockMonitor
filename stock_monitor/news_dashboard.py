@@ -104,7 +104,7 @@ class Dialog:
         self.p=p=styles(app.root,palette)
         self.targets=[(tr('Рынок и экономика'),'market',None)]+[(i['name'],i['isin'],i.get('profile_symbol') or i.get('history_symbol')) for i in app.watchlist if i.get('kind')!='benchmark']
         self.query=tk.StringVar(win);self.provider=tk.StringVar(win,tr('Все'));self.category=tk.StringVar(win,tr('Все'));self.sort=tk.StringVar(win,tr('Сначала новые'))
-        self.status=tk.StringVar(win);self.result_text=tk.StringVar(win);self.heading=tk.StringVar(win);self.compact=tk.BooleanVar(win,False)
+        self.tone=tk.StringVar(win,tr('Все'));self.status=tk.StringVar(win);self.result_text=tk.StringVar(win);self.heading=tk.StringVar(win);self.compact=tk.BooleanVar(win,False)
         base=ttk.Frame(win,padding=10,style=p+'.TFrame');base.pack(fill='both',expand=True)
         top=ttk.Frame(base,style=p+'.TFrame');top.pack(fill='x',pady=(0,10))
         self.choice=ttk.Combobox(top,values=[x[0] for x in self.targets],state='readonly',style=p+'.TCombobox',width=42)
@@ -132,7 +132,7 @@ class Dialog:
         filters=ttk.Frame(centre,style='Desk.TFrame');filters.pack(fill='x',pady=(0,8))
         self.provider_box=ttk.Combobox(filters,textvariable=self.provider,values=[tr('Все')],state='readonly',style=p+'.TCombobox',width=14 if self.embedded else 20);self.provider_box.pack(side='left',padx=(0,5))
         ttk.Combobox(filters,textvariable=self.category,values=[tr('Все'),*(tr(v) for v in EVENTS.values())],state='readonly',style=p+'.TCombobox',width=14 if self.embedded else 18).pack(side='left',padx=5)
-        ttk.Label(filters,text=tr('Тональность: не рассчитана'),style='DeskMuted.TLabel').pack(side='left',padx=8)
+        ttk.Combobox(filters,textvariable=self.tone,values=[tr(v) for v in ('Все','Позитивные слова','Негативные слова','Без оценки')],state='readonly',style=p+'.TCombobox',width=16).pack(side='left',padx=5)
         search=ttk.Entry(filters,textvariable=self.query,style=p+'.TEntry',font=('Segoe UI',10));search.pack(side='left',fill='x',expand=True,padx=(5,0))
         app.tooltip(search,'Поиск в заголовках и кратком содержании')
         filter_widgets=filters.winfo_children();filter_layout=[None]
@@ -174,7 +174,7 @@ class Dialog:
             target.yview_scroll(-int(event.delta/120) or (-1 if event.delta>0 else 1),'units')
         win.bind('<MouseWheel>',wheel)
         self.choice.bind('<<ComboboxSelected>>',lambda _:self.load())
-        for variable in (self.query,self.provider,self.category,self.sort):variable.trace_add('write',lambda *_:self.schedule())
+        for variable in (self.query,self.provider,self.category,self.sort,self.tone):variable.trace_add('write',lambda *_:self.schedule())
         self.listener=lambda key,value:self.project(key,value)
         if not self.embedded:
             app._news_listener=self.listener
@@ -244,6 +244,9 @@ class Dialog:
         category=next((v for v in EVENTS.values() if tr(v)==self.category.get()),'Все')
         visible=self.presentation.rows(self.rows)
         rows=filtered(visible,self.query.get(),self.days,provider,category,self.sort.get()==tr('Сначала старые'))
+        from news_sentiment import classify
+        tone=next((k for k,v in [('positive','Позитивные слова'),('negative','Негативные слова'),('unknown','Без оценки')] if tr(v)==self.tone.get()),None)
+        if tone:rows=[row for row in rows if classify(row)==tone]
         self.pages=max(1,(len(rows)+PAGE_SIZE-1)//PAGE_SIZE);self.page=min(self.page,self.pages-1)
         self.shown=rows[self.page*PAGE_SIZE:(self.page+1)*PAGE_SIZE]
         self.result_text.set(tr('Найдено')+f': {len(rows)} / {len(self.rows)}')
@@ -304,7 +307,9 @@ class Dialog:
         ttk.Label(frame,text=tr('Публикаций в сохранённой ленте')+f': {len(self.rows)}',style='Desk.TLabel',wraplength=280).pack(anchor='w',pady=7)
         tone=ttk.Frame(self.side,padding=14,style='DeskCard.TFrame');tone.pack(fill='x',pady=(0,10))
         ttk.Label(tone,text=tr('Тональность новостей'),style='DeskTitle.TLabel').pack(anchor='w')
-        ttk.Label(tone,text=tr('Не рассчитана. Процент влияния на цену источник не предоставляет.'),style='DeskMuted.TLabel',wraplength=280,justify='left').pack(anchor='w',pady=10)
+        from news_sentiment import draw
+        draw(tone,self.rows,self.palette['bg'])
+        ttk.Label(tone,text=tr('Влияние на цену: нет подтверждённых данных'),style='DeskMuted.TLabel',wraplength=280).pack(anchor='w',pady=(7,0))
         events=ttk.Frame(self.side,padding=14,style='DeskCard.TFrame');events.pack(fill='x',pady=(0,10))
         ttk.Label(events,text=tr('Упоминания событий'),style='DeskTitle.TLabel').pack(anchor='w')
         for key,label in EVENTS.items():

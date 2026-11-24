@@ -1,7 +1,7 @@
 """Drawing toolbox presentation over existing guarded draft operations."""
 import copy
 import tkinter as tk
-from tkinter import ttk, messagebox, simpledialog
+from tkinter import ttk, messagebox, simpledialog, filedialog
 from i18n import tr, rendered_message
 from indicator_dialog import styles
 from ui_icons import photo
@@ -18,12 +18,13 @@ NAMES={kind:value['name'] for kind,value in REGISTRY.items()}
 class Dialog:
     def __init__(self,app,info):
         from main_screen import native_titlebar
-        self.app=app;self.info=copy.deepcopy(info);self.isin=info['isin']
+        self.app=app;self.info=copy.deepcopy(info);self.isin=info['isin'];self.identity=chart_identity(app)
         self.listed=copy.deepcopy(app.user_state(info).get('drawings',[]))
         self.win=win=tk.Toplevel(app.root);app._drawing_windows[self.isin]=win
         win.title(tr('Рисование • {name}',name=info['name']))
         width=min(1080,max(900,app.root.winfo_width()-80));height=min(790,max(780,app.root.winfo_height()-90))
-        win.geometry(f'{width}x{height}+{max(0,app.root.winfo_rootx()+30)}+{max(0,app.root.winfo_rooty()+35)}');win.minsize(850,780)
+        from design_layout import fit_window
+        fit_window(win,1100,850,(850,590))
         palette=THEMES.get(app.store.setting('theme','Тёмная'),THEMES['Тёмная']);self.palette=palette;self.p=p=styles(app.root,palette)
         style=ttk.Style(win)
         style.layout(p+'.Tool.TButton',style.layout(p+'.Secondary.TButton'))
@@ -69,14 +70,17 @@ class Dialog:
         for label,operation in [('Скрыть','visible'),('Закрепить','locked'),('Вперёд','front'),('Назад','back'),('Слой…','layer')]:
             button=ttk.Button(searchbar,text=tr(label),command=lambda op=operation:self.change(op),style=p+'.Tool.TButton');button.pack(side='left',padx=(5,0));self.flags[operation]=button
         app.tooltip(entry,'Поиск по типу, дате, цене и источнику объекта')
+        selection_bar=ttk.Frame(panel,style=p+'.TFrame');selection_bar.pack(fill='x',pady=(0,5))
+        for label,command in [('Выбрать все',lambda:self.objects.selection_set(self.objects.get_children())),('Снять выделение',lambda:self.objects.selection_remove(self.objects.selection())),('Экспорт JSON…',self.export)]:
+            ttk.Button(selection_bar,text=tr(label),command=command,style=p+'.Tool.TButton').pack(side='left',padx=(0,5))
         host=ttk.Frame(panel,style=p+'.TFrame');host.pack(fill='both',expand=True)
         style=ttk.Style(win);style.configure(p+'.Drawing.Treeview',background=palette['bg'],fieldbackground=palette['bg'],foreground=palette['text'],font=('Segoe UI',10),rowheight=29)
         style.configure(p+'.Drawing.Treeview.Heading',background=palette['bg'],foreground=palette['text'],font=('Segoe UI',10,'bold'))
         style.layout(p+'.Drawing.Treeview.Heading',[('Treeheading.padding',{'sticky':'nswe','children':[('Treeheading.text',{'sticky':'we'})]})])
         style.configure(p+'.Drawing.Horizontal.TScrollbar',background=palette['grid'],troughcolor=palette['bg'],bordercolor=palette['bg'],lightcolor=palette['bg'],darkcolor=palette['bg'],arrowcolor=palette['muted'])
         style.map(p+'.Drawing.Treeview',background=[('selected','#075585')],foreground=[('selected','#ffffff')])
-        self.objects=ttk.Treeview(host,columns=('kind','at','price','source','currency','layer','state'),show='headings',selectmode='browse',style=p+'.Drawing.Treeview',height=3)
-        for key,label,width in [('kind','Объект',150),('at','Дата / время',180),('price','Цена',90),('source','Источник',150),('currency','Валюта',75),('layer','Слой',110),('state','Состояние',155)]:
+        self.objects=ttk.Treeview(host,columns=('kind','at','price','source','currency','layer','state'),show='headings',selectmode='extended',style=p+'.Drawing.Treeview',height=3)
+        for key,label,width in [('kind','Объект',150),('at','Дата / время',180),('price','Цена',90),('source','Источник',150),('currency','Валюта',75),('layer','Слой / группа',140),('state','Состояние',155)]:
             self.objects.heading(key,text=tr(label));self.objects.column(key,width=width,minwidth=70)
         scroll=ttk.Scrollbar(host,command=self.objects.yview,style=p+'.Vertical.TScrollbar');scroll.pack(side='right',fill='y');self.objects.configure(yscrollcommand=scroll.set)
         horizontal=ttk.Scrollbar(panel,orient='horizontal',command=self.objects.xview,style=p+'.Drawing.Horizontal.TScrollbar');horizontal.pack(side='bottom',fill='x');self.objects.configure(xscrollcommand=horizontal.set)
@@ -87,6 +91,10 @@ class Dialog:
         row=ttk.Frame(actions,style=p+'.TFrame');row.pack(fill='x');self.actions={}
         for label,operation in [('Дублировать','copy'),('Изменить цену','price'),('Изменить дату','at'),('Удалить выбранный','delete'),('Текст…','text')]:
             b=ttk.Button(row,text=tr(label),style=p+'.Secondary.TButton',command=lambda op=operation:self.change(op));b.pack(side='left',fill='x',expand=True,padx=(0,6));self.actions[operation]=b
+        grouping=ttk.Frame(actions,style=p+'.TFrame');grouping.pack(fill='x',pady=(5,0))
+        for label,operation in [('Группировать','group'),('Разгруппировать','ungroup')]:
+            b=ttk.Button(grouping,text=tr(label),style=p+'.Secondary.TButton',command=lambda op=operation:self.change(op));b.pack(side='left',fill='x',expand=True,padx=(0,6));self.actions[operation]=b
+        ttk.Label(grouping,text=tr('Ctrl / Shift — несколько объектов; действия применяются ко всей группе.'),style=p+'.TLabel',wraplength=440).pack(side='left',padx=6)
         footer=ttk.Frame(base,style=p+'.TFrame');footer.pack(side='bottom',fill='x',before=actions)
         for label,operation in [('↶ Отменить','undo'),('↷ Повторить','redo')]:
             ttk.Button(footer,text=tr(label),style=p+'.Secondary.TButton',command=lambda op=operation:self.history(op)).pack(side='left',padx=(0,8))
@@ -109,7 +117,7 @@ class Dialog:
         self.gallery.edit_favorites()
 
     def valid(self):
-        return self.app.instrument_cfg()['isin']==self.isin and self.app.user_state(self.app.instrument_cfg()).get('drawings',[])==self.listed
+        return chart_identity(self.app)==self.identity and self.app.instrument_cfg()['isin']==self.isin and self.app.user_state(self.app.instrument_cfg()).get('drawings',[])==self.listed
 
     def reject(self):self.note.set(tr('Акция или разметка изменились. Откройте окно рисования заново.'))
 
@@ -122,46 +130,78 @@ class Dialog:
     def render(self):
         selected=self.objects.selection();self.objects.delete(*self.objects.get_children());query=self.query.get().casefold()
         for n,obj in enumerate(self.listed):
-            values=(str(n+1)+'. '+tr(NAMES.get(obj.get('type'),obj.get('type','—'))),str(obj.get('at') or '—'),str(obj.get('price') or '—'),str(obj.get('source_mode') or '—'),str(obj.get('currency') or '—'),str(obj.get('layer','Основной')),tr('Скрыт') if obj.get('visible',True) is False else tr('Закреплён') if obj.get('locked',False) else tr('Видим'))
+            values=(str(n+1)+'. '+tr(NAMES.get(obj.get('type'),obj.get('type','—'))),str(obj.get('at') or '—'),str(obj.get('price') or '—'),str(obj.get('source_mode') or '—'),str(obj.get('currency') or '—'),str(obj.get('layer','Основной'))+(' · '+str(obj['group_name']) if obj.get('group_name') else ''),tr('Скрыт') if obj.get('visible',True) is False else tr('Закреплён') if obj.get('locked',False) else tr('Видим'))
             if query in ' '.join(values).casefold():self.objects.insert('','end',iid=str(n),values=values)
-        if selected and self.objects.exists(selected[0]):self.objects.selection_set(selected[0])
+        kept=[iid for iid in selected if self.objects.exists(iid)]
+        if kept:self.objects.selection_set(kept)
         self.count.set(tr('Список объектов')+f' ({len(self.objects.get_children())} / {len(self.listed)})');self.selection()
 
     def selection(self):
         selected=self.objects.selection();obj=self.listed[int(selected[0])] if selected else None
+        from drawing_management import selection
+        indices=selection(self.listed,[int(i) for i in selected]) if selected else []
+        locked=any(self.listed[i].get('locked') for i in indices)
+        single=len(indices)==1
         for operation,button in self.actions.items():
-            enabled=obj is not None and not(obj.get('locked',False) and operation!='copy') and not(operation=='price' and obj.get('type')=='vline') and not(operation=='at' and obj.get('type')=='hline') and not(operation=='text' and obj.get('type') not in ('text','note','callout'))
+            enabled=bool(indices) and (not locked or operation=='copy')
+            if operation in ('price','at','text'):enabled=enabled and single
+            if operation=='group':enabled=enabled and len(indices)>1
+            if operation=='ungroup':enabled=enabled and any(self.listed[i].get('group_id') for i in indices)
+            if operation=='price' and obj and obj.get('type')=='vline':enabled=False
+            if operation=='at' and obj and obj.get('type')=='hline':enabled=False
+            if operation=='text' and obj and obj.get('type') not in ('text','note','callout'):enabled=False
             button.configure(state='normal' if enabled else 'disabled')
-        self.style_button.configure(state='normal' if obj and not obj.get('locked',False) else 'disabled')
-        for op,button in self.flags.items():button.configure(state='normal' if obj and not(obj.get('locked',False) and op not in ('locked','visible')) else 'disabled')
-        self.flags['visible'].configure(text=tr('Показать') if obj and obj.get('visible',True) is False else tr('Скрыть'))
-        self.flags['locked'].configure(text=tr('Открепить') if obj and obj.get('locked',False) else tr('Закрепить'))
-        if obj:
-            end=obj.get('end',{})
-            self.detail.set(tr(NAMES.get(obj.get('type'),obj.get('type','—')))+' · '+str(obj.get('price','—'))+' · '+str(obj.get('at','—'))+
-                (' → '+str(end.get('price','—'))+' · '+str(end.get('at','—')) if end else '')+'\n'+str(obj.get('source_mode','—'))+' · '+str(obj.get('currency','—')))
+        self.style_button.configure(state='normal' if single and not locked else 'disabled')
+        for op,button in self.flags.items():button.configure(state='normal' if indices and (not locked or op in ('locked','visible')) else 'disabled')
+        self.flags['visible'].configure(text=tr('Показать') if indices and all(self.listed[i].get('visible',True) is False for i in indices) else tr('Скрыть'))
+        self.flags['locked'].configure(text=tr('Открепить') if locked else tr('Закрепить'))
+        if len(indices)>1:self.detail.set(tr('Выбрано объектов: {count}',count=len(indices)))
+        elif obj:self.detail.set(tr(NAMES.get(obj.get('type'),obj.get('type','—')))+' · '+str(obj.get('price','—'))+' · '+str(obj.get('at','—'))+'\n'+str(obj.get('source_mode','—'))+' · '+str(obj.get('currency','—')))
         else:self.detail.set(tr('Выберите объект в списке ниже'))
 
     def change(self,operation):
         selected=self.objects.selection()
         if not selected:return
         if not self.valid():self.reject();return
-        index=int(selected[0]);value=None;identity=chart_identity(self.app)
+        from drawing_management import batch,selection
+        indices=selection(self.listed,[int(i) for i in selected]);index=indices[0];value=None;identity=chart_identity(self.app)
+        if operation in ('price','at','text') and len(indices)!=1:return
         if operation=='price':value=simpledialog.askfloat(tr('Цена объекта'),tr('Новая цена начальной точки'),initialvalue=self.listed[index].get('price'),parent=self.win)
-        elif operation in ('visible','locked'):value=not self.listed[index].get(operation,operation=='visible')
+        elif operation in ('visible','locked'):value=not any(self.listed[i].get(operation,operation=='visible') for i in indices)
+        elif operation=='group':value=simpledialog.askstring(tr('Группировать'),tr('Имя группы'),initialvalue=tr('Группа'),parent=self.win)
         elif operation=='layer':value=simpledialog.askstring(tr('Слой объекта'),tr('Имя слоя'),initialvalue=self.listed[index].get('layer','Основной'),parent=self.win)
         elif operation=='text':value=simpledialog.askstring(tr('Текст рисунка'),tr('Введите текст (до 240 символов)'),initialvalue=self.listed[index].get('text',''),parent=self.win)
         elif operation=='at':value=simpledialog.askstring(tr('Дата объекта'),tr('Новая дата начальной точки'),initialvalue=self.listed[index].get('at'),parent=self.win)
-        if operation in ('price','at','layer','text') and value is None:return
+        if operation in ('price','at','layer','text','group') and value is None:return
         if not self.valid() or identity!=chart_identity(self.app):self.reject();return
         try:
-            changed=modify(self.listed,index,operation,value)
+            changed=batch(self.listed,indices,operation,value)
             if commit(self.app,self.isin,self.listed,changed):self.listed=copy.deepcopy(changed);self.render();self.note.set(tr('Разметка изменена. Нажмите «Сохранить» в главном окне.'))
             else:self.reject()
             if operation in ('front','back'):
                 target=str(len(changed)-1 if operation=='front' else 0)
                 if self.objects.exists(target):self.objects.selection_set(target);self.objects.see(target)
         except (ValueError,TypeError) as error:messagebox.showerror(tr('Разметка'),rendered_message(str(error)),parent=self.win)
+
+    def export(self):
+        if not self.valid():self.reject();return
+        identity=chart_identity(self.app)
+        from drawing_management import export_document
+        selected=self.objects.selection()
+        try:document=export_document(self.info,identity,self.listed,[int(i) for i in selected] if selected else None)
+        except (ValueError,TypeError) as exc:self.note.set(str(exc));return
+        from paths import APP_DIR
+        path=filedialog.asksaveasfilename(parent=self.win,title=tr('Экспорт рисунков'),initialdir=str(APP_DIR),initialfile='drawings-'+self.isin+'.json',defaultextension='.json',filetypes=[('JSON','*.json')])
+        if not path:return
+        if not self.valid() or identity!=chart_identity(self.app):self.reject();return
+        def work():
+            from pathlib import Path
+            Path(path).write_text(document,encoding='utf-8')
+        def done(_):
+            if self.win.winfo_exists():self.note.set(tr('Рисунки экспортированы. Свечи и счёт не включены.'))
+        def failed(_):
+            if self.win.winfo_exists():self.note.set(tr('Не удалось сохранить файл'))
+        if self.app.job(work,done,failed,lane='read',key=('drawing-export',self.isin)) is False:failed(None)
 
     def history(self,operation):
         if not self.valid():self.reject();return

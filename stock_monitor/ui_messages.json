@@ -5368,5 +5368,125 @@
   "Нет подтверждённого ряда": {
     "en": "No confirmed series",
     "de": "Keine bestätigte Zeitreihe"
+  },
+  "Группа": {
+    "en": "Group",
+    "de": "Gruppe"
+  },
+  "В группе есть закреплённый объект. Сначала снимите закрепление.": {
+    "en": "The group contains a locked object. Unlock it first.",
+    "de": "Die Gruppe enthält ein gesperrtes Objekt. Zuerst entsperren."
+  },
+  "Архив": {
+    "en": "Archive",
+    "de": "Archiv"
+  },
+  "Для группы нужны минимум два объекта": {
+    "en": "A group needs at least two objects",
+    "de": "Eine Gruppe benötigt mindestens zwei Objekte"
+  },
+  "Слой / группа": {
+    "en": "Layer / group",
+    "de": "Ebene / Gruppe"
+  },
+  "Экспорт рисунков": {
+    "en": "Export drawings",
+    "de": "Zeichnungen exportieren"
+  },
+  "Выбрано объектов: {count}": {
+    "en": "Selected objects: {count}",
+    "de": "Ausgewählte Objekte: {count}"
+  },
+  "Выбрать все": {
+    "en": "Select all",
+    "de": "Alle auswählen"
+  },
+  "Рисунки экспортированы. Свечи и счёт не включены.": {
+    "en": "Drawings exported. Candles and account are not included.",
+    "de": "Zeichnungen exportiert. Kerzen und Konto sind nicht enthalten."
+  },
+  "Позитивные слова": {
+    "en": "Positive wording",
+    "de": "Positive Formulierungen"
+  },
+  "Негативные слова": {
+    "en": "Negative wording",
+    "de": "Negative Formulierungen"
+  },
+  "Экспорт JSON…": {
+    "en": "Export JSON…",
+    "de": "JSON exportieren…"
+  },
+  "Выберите объекты": {
+    "en": "Select objects",
+    "de": "Objekte auswählen"
+  },
+  "Влияние на цену: нет подтверждённых данных": {
+    "en": "Price impact: no verified data",
+    "de": "Kursauswirkung: keine bestätigten Daten"
+  },
+  "Снять выделение": {
+    "en": "Clear selection",
+    "de": "Auswahl aufheben"
+  },
+  "Группировать": {
+    "en": "Group",
+    "de": "Gruppieren"
+  },
+  "Имя группы: от 1 до 40 символов": {
+    "en": "Group name: 1–40 characters",
+    "de": "Gruppenname: 1–40 Zeichen"
+  },
+  "Справочно. Не используется для исполнения GETTEX.": {
+    "en": "For information. Not used for GETTEX execution.",
+    "de": "Nur zur Information. Nicht für GETTEX-Ausführungen verwendet."
+  },
+  "Премаркет: нет данных": {
+    "en": "Premarket: no data",
+    "de": "Vorbörse: keine Daten"
+  },
+  "Экспорт превышает 3 МБ": {
+    "en": "Export exceeds 3 MB",
+    "de": "Export überschreitet 3 MB"
+  },
+  "Не удалось сохранить файл": {
+    "en": "Could not save the file",
+    "de": "Datei konnte nicht gespeichert werden"
+  },
+  "Источник карточки не предоставил подтверждённую цену премаркета. Это отдельная площадка, не котировка GETTEX.": {
+    "en": "The company card source provided no verified premarket price. This is a separate venue, not a GETTEX quote.",
+    "de": "Die Quelle der Firmenkarte liefert keinen bestätigten vorbörslichen Kurs. Separater Handelsplatz, kein GETTEX-Kurs."
+  },
+  "Имя группы": {
+    "en": "Group name",
+    "de": "Gruppenname"
+  },
+  "Без оценки": {
+    "en": "Unclassified",
+    "de": "Nicht bewertet"
+  },
+  "Заголовков: {count}": {
+    "en": "Headlines: {count}",
+    "de": "Schlagzeilen: {count}"
+  },
+  "Премаркет": {
+    "en": "Premarket",
+    "de": "Vorbörse"
+  },
+  "По словам исходных заголовков. Не прогноз цены; без оценки — недостаточно признаков.": {
+    "en": "Based on original headline wording. Not a price forecast; unclassified means insufficient evidence.",
+    "de": "Nach Wortwahl der Originaltitel. Keine Kursprognose; nicht bewertet bedeutet unzureichende Anhaltspunkte."
+  },
+  "Слишком много объектов для экспорта": {
+    "en": "Too many objects to export",
+    "de": "Zu viele Objekte für den Export"
+  },
+  "Разгруппировать": {
+    "en": "Ungroup",
+    "de": "Gruppierung aufheben"
+  },
+  "Ctrl / Shift — несколько объектов; действия применяются ко всей группе.": {
+    "en": "Ctrl / Shift selects multiple objects; actions affect the whole group.",
+    "de": "Strg / Umschalt wählt mehrere Objekte; Aktionen betreffen die gesamte Gruppe."
   }
 }
