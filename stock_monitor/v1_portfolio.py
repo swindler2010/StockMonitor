@@ -186,6 +186,7 @@ def analyze(snapshot, instruments, load_financials, load_news, now=None, currenc
     total = numeric((overview.get("valuation") or {}).get("total"))
     cash_available = numeric((cash.get("cash") or {}).get("buyingPowerWithoutCredit"))
     catalog = {item["isin"]: item for item in instruments if item.get("isin")}
+    costs = snapshot.get("cost_basis") or {}
     positions, candidates = [], []
     present = set()
     for row in holdings["holdings"]:
@@ -205,7 +206,13 @@ def analyze(snapshot, instruments, load_financials, load_news, now=None, currenc
         label, reason = decision(True, price, weight, facts, zone)
         if not current:
             label, reason = "Обновить данные", "Снимок брокера устарел."
-        positions.append(dict(isin=isin, name=row.get("name") or isin, quantity=quantity, price=price, value=value,
+        basis = costs.get(isin) or {}
+        average, cost = numeric(basis.get("average")), numeric(basis.get("cost"))
+        pnl = value - cost if value is not None and cost is not None else None
+        positions.append(dict(average=average, cost=cost, pnl=pnl,
+                              pnl_pct=pnl / cost if pnl is not None and cost else None,
+                              basis_status=basis.get("status") or snapshot.get("cost_basis_status"),
+                              isin=isin, name=row.get("name") or isin, quantity=quantity, price=price, value=value,
                               weight=weight, kind=info.get("kind", "stock") if info else None, facts=facts, zone=zone,
                               decision=label, reason=reason, articles=news_items(load_news(isin), isin, now)))
     for info in catalog.values():
@@ -226,6 +233,7 @@ def analyze(snapshot, instruments, load_financials, load_news, now=None, currenc
                     row["price"] / row["zone"]["buy_below"] if row["price"] and row["zone"] else float("inf"), row["name"])),
                 scenarios=stresses(positions, total), cash=cash_available, total=total, current=current,
                 synced_at=snapshot.get("synced_at"), crypto=crypto,
+                cost_covered=sum(row["average"] is not None for row in positions),
                 covered=sum(row["value"] is not None for row in positions),
                 valued=sum(row["value"] or 0 for row in positions), performance=overview.get("performance") or [])
 
