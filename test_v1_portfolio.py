@@ -94,6 +94,32 @@ def movement(id, hour, action, quantity, amount, reversal=False):
     return {**row, "kind": "non_trade_security", "nonTradeSecurity": {**values, "transactionType": action}}
 
 
+class NewsOverlayTest(unittest.TestCase):
+    def evaluate(self, articles):
+        stock = dict(isin=APPLE, name="Apple", kind="stock")
+        return analyze(packet(), [stock], financials, lambda _: {"articles": articles},
+                       NOW, {"USD": 1.25})["positions"][0]
+
+    def test_issuer_guidance_cut_changes_the_review_status(self):
+        story = dict(isin=APPLE, title="Apple cuts full-year guidance",
+                     url="https://apple.example/report", published=AT)
+        article = dict(story, relevance="OFFICIAL_ISSUER_FEED")
+        row = self.evaluate([story, article])
+        self.assertEqual(row["baseline"], "Рассмотреть докупку")
+        self.assertEqual(row["decision"], "Пересмотреть позицию")
+        self.assertEqual(row["news_reason"], "GUIDANCE_CUT")
+        self.assertTrue(row["articles"][0]["verified"])
+        self.assertEqual(len(row["articles"]), 1)
+
+    def test_unverified_media_and_issuer_rumor_leave_decision_unchanged(self):
+        story = dict(isin=APPLE, title="Apple cuts full-year guidance",
+                     url="https://publisher.example/report", published=AT)
+        row = self.evaluate([story, dict(story, title="Rumors: Apple cuts guidance?",
+                                       relevance="OFFICIAL_ISSUER_FEED")])
+        self.assertEqual(row["decision"], "Рассмотреть докупку")
+        self.assertIsNone(row["news_reason"])
+
+
 class CostBasisTest(unittest.TestCase):
     def test_partial_sell_keeps_open_fifo_lots_and_reports_pnl(self):
         rows = [movement("a", 8, "BUY", 2, -20), movement("b", 9, "BUY", 3, -60),
@@ -117,6 +143,19 @@ class CostBasisTest(unittest.TestCase):
     def test_ambiguous_reversal_with_identical_lots_stays_unknown(self):
         rows = [movement("a", 8, "TRANSFER_IN", 2, 90), movement("b", 9, "TRANSFER_IN", 2, 90),
                 movement("c", 10, "TRANSFER_IN", 2, 90, reversal=True)]
+        self.assertEqual(cost_basis(rows, packet()["holdings"]["holdings"])[APPLE],
+                         {"status": "INCOMPLETE_OR_AMBIGUOUS"})
+
+    def test_same_time_migration_consumes_older_lots(self):
+        rows = [movement("a", 8, "BUY", 2, -20),
+                movement("b", 9, "TRANSFER_IN", 2, 45),
+                movement("c", 9, "TRANSFER_OUT", 2, -45)]
+        self.assertEqual(cost_basis(rows, packet()["holdings"]["holdings"])[APPLE]["average"], 22.5)
+
+    def test_same_time_outgoing_cannot_assume_missing_old_lot(self):
+        rows = [movement("a", 8, "BUY", 1, -20),
+                movement("b", 9, "TRANSFER_IN", 3, 45),
+                movement("c", 9, "TRANSFER_OUT", 2, -45)]
         self.assertEqual(cost_basis(rows, packet()["holdings"]["holdings"])[APPLE],
                          {"status": "INCOMPLETE_OR_AMBIGUOUS"})
 
