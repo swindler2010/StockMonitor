@@ -10,7 +10,8 @@ import webbrowser
 from fundamentals_view import cache_matches
 from i18n import tr
 from v1_portfolio import analyze, simulate
-from v1_scalable import SyncError, read_local, refresh
+from v1_scalable import SyncError, read_local, refresh, transaction_detail
+from v1_transactions import transaction_rows, detail_lines, date_label, value
 
 ECB_RATES = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"
 
@@ -78,6 +79,7 @@ def show(app, parent=None):
 class Dashboard:
     POSITIONS = ("name", "quantity", "value", "pnl", "decision")
     CANDIDATES = ("name", "price", "entry", "decision")
+    TRANSACTIONS = ("date", "name", "side", "quantity", "amount", "state")
 
     def __init__(self, app, frame):
         self.app, self.frame = app, frame
@@ -85,6 +87,9 @@ class Dashboard:
         self.portfolios = []
         self.selected = None
         self.future = None
+        self.detail_future = None
+        self.detail_timer = None
+        self.detail_key = None
         self.cached_only = False
         self.section = "positions"
         frame.bind("<Destroy>", self.destroy, add="+")
@@ -113,6 +118,10 @@ class Dashboard:
         actions.add_command(label=tr("Сценарий для выбранной бумаги…"), command=self.what_if)
         self.analysis.configure(menu=actions)
 
+        navigation = ttk.Frame(frame)
+        navigation.pack(fill="x", pady=(2, 6))
+        ttk.Button(navigation, text=tr("Позиции"), command=lambda: self.show_section("positions")).pack(side="left")
+        ttk.Button(navigation, text=tr("Покупки и продажи"), command=lambda: self.show_section("transactions")).pack(side="left", padx=6)
         self.section_label = ttk.Label(frame, text=tr("Позиции SC"))
         self.section_label.pack(anchor="w", pady=(2, 6))
         panes = ttk.Panedwindow(frame, orient="vertical")
@@ -124,6 +133,8 @@ class Dashboard:
             ("value", "Стоимость", 112), ("pnl", "P/L", 112),
             ("decision", "Рекомендация V1", 186), ("price", "Цена", 112),
             ("entry", "Зона покупки", 116),
+            ("date", "Обновлено", 150), ("side", "Операция", 85),
+            ("amount", "Сумма SC", 110), ("state", "Статус", 135),
         )
         self.rows = ttk.Treeview(table, columns=[column for column, _, _ in columns],
                                  displaycolumns=self.POSITIONS, show="headings", selectmode="browse")
@@ -145,6 +156,8 @@ class Dashboard:
         if event.widget is self.frame:
             if self.timer:
                 self.frame.after_cancel(self.timer)
+            if self.detail_timer:
+                self.frame.after_cancel(self.detail_timer)
             self.pool.shutdown(wait=False, cancel_futures=True)
 
     def load(self, watchlist, interactive, selected, cached_only=False):
@@ -198,6 +211,10 @@ class Dashboard:
                 row.update(decision="Обновить данные", reason="Показан последний доступный снимок Scalable Capital.",
                            news_reason=None)
         report["portfolio_id"] = snapshot["holdings"]["portfolioId"]
+        names = {row["isin"]: row.get("name") or row["isin"] for row in watchlist}
+        names.update({row["isin"]: row.get("name") or row["isin"] for row in snapshot["holdings"]["holdings"]})
+        report["transactions"] = transaction_rows(snapshot.get("transactions") or [], names)
+        report["transactions_status"] = snapshot.get("transactions_status", "UNAVAILABLE")
         return report, status
 
     def select_portfolio(self, _event):
@@ -236,6 +253,7 @@ class Dashboard:
 
     def render(self, report, error):
         selection = self.rows.selection()
+        self.detail_key = None
         self.report = None
         self.sync.state(["!disabled"])
         self.analysis.state(["disabled"])
@@ -279,7 +297,11 @@ class Dashboard:
 
     def show_section(self, section, selected=None):
         self.section = section
+        self.detail_key = None
         self.rows.delete(*self.rows.get_children())
+        if section == "transactions":
+            self.show_transactions()
+            return
         positions = section == "positions"
         self.section_label.configure(text=tr("Позиции SC" if positions else "Кандидаты"))
         self.rows.configure(displaycolumns=self.POSITIONS if positions else self.CANDIDATES)
@@ -301,6 +323,53 @@ class Dashboard:
         else:
             self.write("")
 
+    def show_transactions(self):
+        self.section_label.configure(text=tr("Покупки и продажи"))
+        self.rows.configure(displaycolumns=self.TRANSACTIONS)
+        for row in self.report.get("transactions", ()) if self.report else ():
+            cells = {"date": date_label(row["at"]), "name": row["name"], "side": tr(row["side"]),
+                     "quantity": value(row["quantity"]), "amount": value(row["amount"], row["currency"]),
+                     "state": tr(row["status"])}
+            self.rows.insert("", "end", iid=row["id"], values=[
+                cells.get(column, "") for column in self.rows["columns"]])
+        if not self.report or self.report.get("transactions_status") != "COMPLETE":
+            self.write(tr("История операций пока не загружена. Обновите данные SC."))
+        elif not self.rows.get_children():
+            self.write(tr("Покупок и продаж за доступную историю SC нет."))
+        else:
+            self.write(tr("Выберите операцию, чтобы увидеть цену исполнения, комиссии и ход заявки."))
+
+    def transaction_selected(self):
+        selected = self.rows.selection()
+        if not selected or not self.report:
+            return
+        key = (self.report["portfolio_id"], selected[0])
+        self.detail_key = key
+        self.write(tr("Загрузка подробностей операции…"))
+        if self.detail_future is not None:
+            return
+        self.begin_detail(key)
+
+    def begin_detail(self, key):
+        self.detail_future = self.pool.submit(transaction_detail, *key)
+        self.detail_timer = self.frame.after(150, lambda: self.poll_detail(key))
+
+    def poll_detail(self, key):
+        if not self.detail_future.done():
+            self.detail_timer = self.frame.after(150, lambda: self.poll_detail(key))
+            return
+        try:
+            result = self.detail_future.result()
+            text = "\n".join(tr(label) + ("  " + item if item else "") for label, item in detail_lines(result))
+        except Exception:
+            text = tr("Не удалось загрузить подробности. Выберите операцию ещё раз.")
+        self.detail_future = None
+        self.detail_timer = None
+        if self.detail_key == key and self.section == "transactions":
+            self.write(text)
+        elif self.detail_key is not None and self.section == "transactions":
+            self.begin_detail(self.detail_key)
+
     def show_risk(self):
         if self.report:
             self.write(tr("Риск портфеля") + "\n\n" + scenario_lines(self.report["scenarios"]))
@@ -318,6 +387,9 @@ class Dashboard:
         return None
 
     def detail(self, _event=None):
+        if self.section == "transactions":
+            self.transaction_selected()
+            return
         row = self.active()
         if not row:
             return
