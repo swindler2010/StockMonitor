@@ -1,7 +1,7 @@
-"""V1 dashboard inside the Stock Monitor portfolio window."""
+"""Dedicated Scalable Capital portfolio window for V1."""
 from datetime import date, datetime, timezone
 from concurrent.futures import ThreadPoolExecutor
-from tkinter import StringVar, ttk
+from tkinter import Menu, StringVar, Toplevel, simpledialog, ttk
 from tkinter.scrolledtext import ScrolledText
 from urllib.request import urlopen
 from xml.etree import ElementTree
@@ -47,46 +47,86 @@ def scenario_lines(items):
     return "\n".join(lines)
 
 
+def show(app):
+    existing = getattr(app, "_scalable_v1_window", None)
+    if existing is not None and existing.winfo_exists():
+        existing.deiconify()
+        existing.lift()
+        return existing
+    window = Toplevel(app.root)
+    window.title(tr("V1 · Scalable Capital"))
+    window.geometry("980x630")
+    window.minsize(770, 500)
+    app._scalable_v1_window = window
+    frame = ttk.Frame(window, padding=(16, 12))
+    frame.pack(fill="both", expand=True)
+    Dashboard(app, frame)
+    return window
+
+
 class Dashboard:
-    def __init__(self, app, frame, tabs):
-        self.app, self.frame, self.tabs = app, frame, tabs
+    POSITIONS = ("name", "quantity", "value", "pnl", "decision")
+    CANDIDATES = ("name", "price", "entry", "decision")
+
+    def __init__(self, app, frame):
+        self.app, self.frame = app, frame
         self.report = None
         self.portfolios = []
         self.selected = None
         self.future = None
+        self.section = "positions"
         frame.bind("<Destroy>", self.destroy, add="+")
         self.pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="v1-scalable")
 
         toolbar = ttk.Frame(frame)
-        toolbar.pack(fill="x", padx=12, pady=8)
-        self.status = StringVar(value=tr("Подключение Scalable Capital"))
+        toolbar.pack(fill="x")
+        self.status = StringVar(frame, value=tr("Подключение Scalable Capital…"))
         ttk.Label(toolbar, textvariable=self.status).pack(side="left", fill="x", expand=True)
-        ttk.Button(toolbar, text=tr("Синхронизировать SC"), command=lambda: self.start(True)).pack(side="right")
-        self.picker = ttk.Combobox(toolbar, state="readonly")
+        self.sync = ttk.Button(toolbar, text=tr("Обновить"), command=lambda: self.start(True))
+        self.sync.pack(side="right")
+        self.picker = ttk.Combobox(toolbar, state="readonly", width=22)
         self.picker.bind("<<ComboboxSelected>>", self.select_portfolio)
 
-        columns = ("name", "quantity", "value", "weight", "average", "pnl", "decision", "entry")
-        self.rows = ttk.Treeview(frame, columns=columns, show="headings", height=9)
-        headers = ("Инструмент", "Количество", "Стоимость", "Вес", "Ср. цена", "Нереализ. P/L", "Рекомендация", "Зона входа")
-        for column, title, width in zip(columns, headers, (190, 75, 100, 65, 100, 115, 170, 100)):
+        overview = ttk.Frame(frame)
+        overview.pack(fill="x", pady=(10, 6))
+        self.summary = ttk.Label(overview)
+        self.summary.pack(side="left")
+        self.analysis = ttk.Menubutton(overview, text=tr("Анализ"), state="disabled")
+        self.analysis.pack(side="right")
+        actions = Menu(self.analysis, tearoff=False)
+        actions.add_command(label=tr("Позиции SC"), command=lambda: self.show_section("positions"))
+        actions.add_command(label=tr("Кандидаты"), command=lambda: self.show_section("candidates"))
+        actions.add_separator()
+        actions.add_command(label=tr("Риск портфеля"), command=self.show_risk)
+        actions.add_command(label=tr("Сценарий для выбранной бумаги…"), command=self.what_if)
+        self.analysis.configure(menu=actions)
+
+        self.section_label = ttk.Label(frame, text=tr("Позиции SC"))
+        self.section_label.pack(anchor="w", pady=(2, 6))
+        panes = ttk.Panedwindow(frame, orient="vertical")
+        panes.pack(fill="both", expand=True)
+        table = ttk.Frame(panes)
+        panes.add(table, weight=3)
+        columns = (
+            ("name", "Инструмент", 180), ("quantity", "Количество", 84),
+            ("value", "Стоимость", 112), ("pnl", "P/L", 112),
+            ("decision", "Рекомендация V1", 186), ("price", "Цена", 112),
+            ("entry", "Зона покупки", 116),
+        )
+        self.rows = ttk.Treeview(table, columns=[column for column, _, _ in columns],
+                                 displaycolumns=self.POSITIONS, show="headings", selectmode="browse")
+        for column, title, width in columns:
             self.rows.heading(column, text=tr(title))
-            self.rows.column(column, width=width, stretch=column in ("name", "decision"))
-        scroll = ttk.Scrollbar(frame, orient="vertical", command=self.rows.yview)
+            self.rows.column(column, width=width, minwidth=width - 20,
+                             stretch=column in ("name", "decision"),
+                             anchor="w" if column in ("name", "decision") else "e")
+        scroll = ttk.Scrollbar(table, orient="vertical", command=self.rows.yview)
         self.rows.configure(yscrollcommand=scroll.set)
         scroll.pack(side="right", fill="y")
-        self.rows.pack(fill="x", padx=12)
+        self.rows.pack(fill="both", expand=True)
         self.rows.bind("<<TreeviewSelect>>", self.detail)
-        self.summary = ttk.Label(frame, justify="left")
-        self.summary.pack(fill="x", padx=12, pady=6)
-
-        controls = ttk.Frame(frame)
-        controls.pack(fill="x", padx=12)
-        ttk.Label(controls, text=tr("Модель сделки в EUR (+ покупка, − продажа)")).pack(side="left")
-        self.amount = ttk.Entry(controls, width=12)
-        self.amount.pack(side="left", padx=6)
-        ttk.Button(controls, text=tr("До и после"), command=self.what_if).pack(side="left")
-        self.details = ScrolledText(frame, height=12, wrap="word", state="disabled")
-        self.details.pack(fill="both", expand=True, padx=12, pady=8)
+        self.details = ScrolledText(panes, height=8, wrap="word", state="disabled")
+        panes.add(self.details, weight=2)
         self.timer = frame.after(50, self.start)
 
     def destroy(self, event):
@@ -138,8 +178,9 @@ class Dashboard:
                          currency_rates=eur_rates(), load_quote=market_price)
         if status:
             report["current"] = False
-            for row in report["positions"]:
-                row.update(decision="Обновить данные", reason="Показан последний доступный снимок Scalable Capital.")
+            for row in report["positions"] + report["candidates"]:
+                row.update(decision="Обновить данные", reason="Показан последний доступный снимок Scalable Capital.",
+                           news_reason=None)
         report["portfolio_id"] = snapshot["holdings"]["portfolioId"]
         return report, status
 
@@ -154,10 +195,8 @@ class Dashboard:
             return
         if self.timer:
             self.frame.after_cancel(self.timer)
-        if not interactive and self.tabs.select() != str(self.frame):
-            self.timer = self.frame.after(3000, self.start)
-            return
         self.status.set(tr("Обновление Scalable Capital…"))
+        self.sync.state(["disabled"])
         self.future = self.pool.submit(self.load, [dict(row) for row in self.app.watchlist], interactive, self.selected)
         self.timer = self.frame.after(200, self.poll)
 
@@ -174,11 +213,13 @@ class Dashboard:
         self.render(report, error)
 
     def render(self, report, error):
+        selection = self.rows.selection()
         self.report = None
-        self.rows.delete(*self.rows.get_children())
+        self.sync.state(["!disabled"])
+        self.analysis.state(["disabled"])
         self.summary.configure(text="")
-        self.write("")
         if report and "selection" in report:
+            self.show_section("positions")
             self.portfolios = report["selection"]
             self.picker.configure(values=[p.get("displayName") or f'{tr("Портфель")} {index}'
                                           for index, p in enumerate(self.portfolios, 1)])
@@ -188,29 +229,58 @@ class Dashboard:
             return
         self.picker.pack_forget()
         status = {
-            "SC_DEPENDENCIES_MISSING": "Установите зависимости подключения V1",
-            "SC_AUTH_REQUIRED": "Нажмите «Синхронизировать SC» для входа",
-            "SC_AUTH_CANCELLED": "Вход не завершён",
-        }.get(error, "Связь со Scalable Capital недоступна" if error else "")
+            "SC_DEPENDENCIES_MISSING": "Подключение SC пока недоступно в этой сборке.",
+            "SC_AUTH_REQUIRED": "Подключите Scalable Capital, чтобы увидеть позиции.",
+            "auth_required": "Подключите Scalable Capital, чтобы увидеть позиции.",
+            "auth_invalid": "Войдите в Scalable Capital ещё раз.",
+            "SC_AUTH_CANCELLED": "Вход не завершён.",
+        }.get(error, "Связь со Scalable Capital недоступна." if error else "")
+        self.sync.configure(text=tr("Подключить SC" if not report or error else "Обновить"))
         if not report:
-            self.status.set(tr(status or "Нет данных Scalable Capital") + (f" · {error}" if error else ""))
+            self.status.set(tr(status or "Нет данных Scalable Capital."))
+            self.show_section("positions")
             return
         self.report = report
         self.selected = report["portfolio_id"]
-        self.status.set((tr(status) + " · " if status else "") + str(report["synced_at"]))
-        for row in report["positions"] + report["candidates"]:
+        try:
+            date_time = datetime.fromisoformat(report["synced_at"]).astimezone()
+            updated = date_time.strftime("%d.%m.%Y %H:%M")
+        except (TypeError, ValueError):
+            updated = "—"
+        prefix = "Последние данные SC" if error or not report["current"] else "Обновлено"
+        self.status.set(f"{tr(prefix)} {updated}")
+        self.analysis.state(["!disabled"])
+        self.summary.configure(text=f'{tr("Стоимость портфеля")} {money(report["total"])}    ·    '
+                                    f'{tr("Доступно без кредита")} {money(report["cash"])}')
+        self.show_section(self.section, selection[0] if selection else None)
+
+    def show_section(self, section, selected=None):
+        self.section = section
+        self.rows.delete(*self.rows.get_children())
+        positions = section == "positions"
+        self.section_label.configure(text=tr("Позиции SC" if positions else "Кандидаты"))
+        self.rows.configure(displaycolumns=self.POSITIONS if positions else self.CANDIDATES)
+        for row in self.report.get(section, ()) if self.report else ():
             zone = row.get("zone")
+            quantity = row.get("quantity")
             self.rows.insert("", "end", iid=row["isin"], values=(
-                row["name"], row.get("quantity", "—"), money(row.get("value")),
-                percent(row.get("weight")), money(row.get("average")), money(row.get("pnl")),
-                tr(row["decision"]), money(zone["buy_below"] if zone else None)))
-        value_coverage = report["valued"] / report["total"] if report["total"] else None
-        self.summary.configure(text=f'{tr("Оценка SC")} {money(report["total"])} · '
-                                    f'{tr("Средства без кредита")} {money(report["cash"])} · '
-                                    f'{tr("Оценены позиции")} {report["covered"]}/{len(report["positions"])} '
-                                    f'({percent(value_coverage)} {tr("от оценки SC")}) · '
-                                    f'{tr("Ср. цена")} {report["cost_covered"]}/{len(report["positions"])}')
-        self.write(tr("Стресс-тесты портфеля") + "\n" + scenario_lines(report["scenarios"]))
+                row["name"], f"{quantity:g}" if quantity is not None else "—",
+                money(row.get("value")), money(row.get("pnl")), tr(row["decision"]),
+                money(row.get("price")), money(zone["buy_below"] if zone else None)))
+        if selected and self.rows.exists(selected):
+            self.rows.selection_set(selected)
+            self.rows.see(selected)
+            self.detail()
+        elif self.rows.get_children():
+            self.write(tr("Выберите бумагу, чтобы увидеть причину рекомендации и новости."))
+        elif self.report:
+            self.write(tr("Нет открытых позиций в SC." if positions else "Нет кандидатов."))
+        else:
+            self.write("")
+
+    def show_risk(self):
+        if self.report:
+            self.write(tr("Риск портфеля") + "\n\n" + scenario_lines(self.report["scenarios"]))
 
     def write(self, text):
         self.details.configure(state="normal")
@@ -233,6 +303,8 @@ class Dashboard:
         if row.get("news_reason"):
             lines.append(f'{tr("До новости")} {tr(row["baseline"])} → {tr(row["decision"])}')
         if "basis_status" in row:
+            lines.append(f'{tr("Вес в портфеле")} {percent(row.get("weight"))} · '
+                         f'{tr("Цена SC")} {money(row.get("price"))}')
             statuses = {
                 "TRANSFER_ESTIMATE": "Оценка FIFO по операциям SC. Для переводов порядок считается по дате записи у брокера.",
                 "FIFO_ESTIMATE": "Оценка FIFO по суммам исполненных операций SC. Порядок по дате записи у брокера.",
@@ -249,7 +321,7 @@ class Dashboard:
                           f'{money(zone["low"])} / {money(zone["base"])} / {money(zone["high"])}',
                           f'{tr("Зона покупки до")} {money(zone["buy_below"])}',
                           tr("Исследовательская модель. Доходность денежного потока 10% / 7,5% / 5%.")])
-        lines.extend([str(facts.get("source_url") or ""), str(facts.get("updated") or "")])
+        lines.extend(str(value) for value in (facts.get("source_url"), facts.get("updated")) if value)
         for key, title in (("TotalRevenue", "Выручка"), ("FreeCashFlow", "Свободный денежный поток"),
                            ("OperatingIncomeMargin", "Операционная маржа"), ("TotalDebt", "Долг")):
             values = facts["series"].get(key, [])[:3]
@@ -274,9 +346,14 @@ class Dashboard:
     def what_if(self):
         row = self.active()
         if not row:
+            self.write(tr("Выберите бумагу, чтобы рассчитать сценарий."))
+            return
+        value = simpledialog.askstring(tr("Сценарий"), tr("Сумма в EUR (+ покупка, − продажа)"),
+                                       parent=self.frame)
+        if value is None:
             return
         try:
-            amount = float(self.amount.get().strip().replace(",", "."))
+            amount = float(value.strip().replace(",", "."))
             outcome = simulate(self.report, row["isin"], amount)
         except ValueError:
             self.write(tr("Проверьте сумму, свежесть данных, размер позиции и доступные средства без кредита."))
