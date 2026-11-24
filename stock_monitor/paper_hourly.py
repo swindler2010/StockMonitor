@@ -285,6 +285,9 @@ def order_size(db, info, result, side, now, *, allow_paused=False, strategy=None
     v1 = strategy is not None and strategy.get('model') == long_term.MODEL
     if v1 and (not long_term.enabled(cfg) or result['timeframe'] != '1D'):
         raise ValueError('PAPER_AUTO_STRATEGY_BLOCKED')
+    if strategy and strategy.get('model') and configured_strategy(cfg)=='V2':
+        from paper_v2_30m import size as frozen_size
+        return frozen_size(db,info,result,strategy,now)
     if strategy and strategy.get('model') and not v1:
         from datetime import datetime, timezone
         from paper_v5 import (PORTFOLIO_MAX_DISTANCE, MAX_SHARES, HELD_GAP,
@@ -555,6 +558,12 @@ def calculate(store, values, *, now=None, context_only=False, quote_cache=None):
     daily=None
     daily_quote={}
     entry_check=not context_only and not position and not values.get('_paper_order') and not preparing
+    if entry_check and signal_tf=='30m' and configured_strategy(cfg)=='V2':
+        from paper_v2_30m import screen as frozen_screen
+        screened=frozen_screen(store,info,identity,now)
+        if screened is not None:
+            if split:screened['paper_portfolio']=portfolio
+            return screened
     if (entry_check and signal_tf=='1D' and paper_v5_four_hour.enabled(cfg)
             and daily_pullback.enabled(cfg)):
         daily,daily_quote=screen_daily_pullback(store,info,identity,cfg,now,daily_inputs)
@@ -661,6 +670,13 @@ def calculate(store, values, *, now=None, context_only=False, quote_cache=None):
             result.update({k:v for k,v in quote_cache.items() if k!='inputs'})
     except ValueError as error:
         result['quote_blocker'] = str(error)
+    if entry_check and configured_strategy(cfg)=='V2' and signal_tf=='30m':
+        from paper_v2_30m import context as frozen_context
+        try:
+            engine['v2_30m']=frozen_context(store,info,identity,now,result.get('execution_quote'))
+            result.setdefault('_peer_inputs',{}).update(engine['v2_30m'].pop('_peer_inputs',{}))
+        except ValueError as error:
+            engine['v2_30m']=dict(action='BLOCKED',reason=str(error))
     return result
 
 
@@ -743,7 +759,7 @@ def calculate_snapshot(store, values):
                         context_only=context_only,quote_cache=quote_cache)
                     admission_only=values.get('_paper_prepare') and engine_available(
                         result['execution_context']['trading_engine'],result['hourly']['required_tf'])
-                    screened=result.get('_v5_entry_screen') or result.get('_v1_entry_screen')
+                    screened=result.get('_v5_entry_screen') or result.get('_v1_entry_screen') or result.get('_v2_entry_screen')
                     quote_rows=None if context_only or admission_only or screened else quote_tail(db,result)
                     listing='setting:gettex_chart:'+result['isin']+':'+EXECUTION_TF
                     saved=_setting_value(db,listing[len('setting:'):])
@@ -756,8 +772,8 @@ def calculate_snapshot(store, values):
     def validate_one(db,data,memo):
         from paper_v5 import peer_input_current
         result,token,quote_rows,listing,saved=data
-        if result.get('_v5_entry_screen') or result.get('_v1_entry_screen'):
-            version = 'V1' if result.get('_v1_entry_screen') else 'V5'
+        if result.get('_v5_entry_screen') or result.get('_v1_entry_screen') or result.get('_v2_entry_screen'):
+            version = 'V1' if result.get('_v1_entry_screen') else 'V2' if result.get('_v2_entry_screen') else 'V5'
             for scope,revision in token.items():
                 row=db.execute('SELECT revision FROM input_revisions WHERE scope=?',(scope,)).fetchone()
                 if (row[0] if row else 0)!=revision:
@@ -874,6 +890,9 @@ def validate_analysis(db, info, result, now, cfg):
         raise ValueError('PAPER_AUTO_DQ_BLOCKED')
     if not benchmark_ready(engine.get('benchmark_context', {})):
         raise ValueError('PAPER_AUTO_BENCHMARK_BLOCKED')
+    if configured_strategy(cfg)=='V2':
+        from paper_v2_30m import validate_context
+        validate_context(db,engine,now)
     daily = engine.get('v5_portfolio_context') or {}
     if 'cohort' in daily:
         from paper_v5 import daily_group
@@ -947,6 +966,9 @@ def validate(db, info, result, args, now):
                 receipt['entry_evidence']={k:buy_setup[k] for k in (
                     'setup','atr','support','entry_level','signal_day','signal_closed','weekly','relative_strength')
                     if k in buy_setup}
+            elif mode=='V2':
+                receipt['entry_evidence']={k:buy_setup[k] for k in (
+                    'setup','atr','anchor','signal_closed','quote_end','exit_rule','score','personal_days','artifact_sha256')}
             elif 'gap_evidence' in buy_setup:
                 receipt['entry_evidence']={k:buy_setup[k] for k in ('setup','atr','entry_level','gap_evidence')}
             elif buy_setup['model']==paper_v5_four_hour.MODEL:
@@ -975,6 +997,12 @@ def validate(db, info, result, args, now):
         else:
             protection=entry_plan(cfg,result,size,now)
         if protection:receipt['protection']=protection
+    if mode=='V2' and (buy_setup and buy_setup.get('model') or held and
+            (held.get('auto_entry') or {}).get('strategy_model')):
+        from paper_v2_30m import MODEL as V2_MODEL,COSTS as V2_COSTS
+        bound=buy_setup.get('model') if buy_setup else held['auto_entry']['strategy_model']
+        if bound!=V2_MODEL:raise ValueError('V2_30M_MODEL_CHANGED')
+        receipt['execution_policy']=V2_COSTS.copy()
     return receipt
 
 
@@ -1139,9 +1167,9 @@ def run_turn(app, info, values, cfg, *, v5_queue=None, manage_portfolio=None, en
                 reports[signal_tf]=report
                 continue
             report.update(compact(result))
-            screened=result.get('_v5_entry_screen') or result.get('_v1_entry_screen')
+            screened=result.get('_v5_entry_screen') or result.get('_v1_entry_screen') or result.get('_v2_entry_screen')
             if screened:
-                code='V1' if result.get('_v1_entry_screen') else 'V5'
+                code='V1' if result.get('_v1_entry_screen') else 'V2' if result.get('_v2_entry_screen') else 'V5'
                 report.update(strategy=code,state='WAIT',entry_screen=True)
                 needed=result.get('quote_request')
                 if needed and (signal_tf!='4H' or paper_v5_four_hour.individual_decision(

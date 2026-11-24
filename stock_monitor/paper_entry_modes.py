@@ -42,7 +42,8 @@ def decision(engine, mode, timeframe="1H", *, legacy_position=False):
     if engine.get('status') != 'READY':
         return dict(action='BLOCKED', reason='CORE_DATA_BLOCKED')
     if mode == 'V2':
-        return dict(action='WAIT', reason=V2_RESEARCH_BLOCKER if timeframe==V2_TIMEFRAME else 'V2_30M_ONLY')
+        from paper_v2_30m import decision as frozen_decision
+        return frozen_decision(engine,timeframe)
     if engine.get('demo_initialization') and not engine['demo_initialization'].get('consistent'):
         return dict(action='BLOCKED', reason='CORE_SEED_UNSTABLE')
     if mode == 'AGGRESSIVE' and not legacy_position:

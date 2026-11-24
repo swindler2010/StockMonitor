@@ -395,7 +395,12 @@ def execute(db,info,result,args,now=None):
     from calculation_window import execution_eligibility
     smart=hourly_receipt if hourly else manual if manual is not None else execution_eligibility(db,persisted,result['timeframe'],identity,instant,args['side'])
     if not hourly and manual is None and contract.get('smart_eligibility')!=smart:raise ValueError('PAPER_SMART_CONTEXT_CHANGED')
-    state=ledger(db,portfolio);fee=money(POLICY['commission']);half=Decimal(POLICY['spread_bps'])/Decimal(20000)
+    execution_policy=POLICY
+    if portfolio=='V2' and smart.get('execution_policy'):
+        from paper_v2_30m import COSTS
+        if smart['execution_policy']!=COSTS:raise ValueError('V2_EXECUTION_POLICY_CHANGED')
+        execution_policy={**POLICY,**COSTS}
+    state=ledger(db,portfolio);fee=money(execution_policy['commission']);half=Decimal(execution_policy['spread_bps'])/Decimal(20000)
     price=Decimal(str(b['close']))*(1+half if args['side']=='BUY' else 1-half);gross=money(price*q)
     if args['side']=='BUY' and gross+fee>Decimal(state['cash']):raise ValueError('PAPER_INSUFFICIENT_CASH')
     if args['side']=='SELL':
@@ -403,6 +408,7 @@ def execute(db,info,result,args,now=None):
         if held is None or Decimal(held['quantity'])<q:raise ValueError('PAPER_INSUFFICIENT_POSITION')
     if (time.time() if live_clock else now)>=args['_deadline']:raise ValueError('PAPER_EXPIRED')
     fill={'request_id':args['request_id'],'at':datetime.fromtimestamp(now,timezone.utc).isoformat(),'isin':info['isin'],'identity':identity,'timeframe':result['timeframe'],'side':args['side'],'quantity':str(q),'reference_price':str(b['close']),'bar_close_at':b['close_at'],'price':str(price),'gross':str(gross),'fee':str(fee),'spread_bps':POLICY['spread_bps'],'virtual':True,'input_revisions':token,'smart_eligibility':smart}
+    fill['spread_bps']=execution_policy['spread_bps']
     if manual is not None:fill['manual_risk']=manual
     if hourly:fill['execution_quote_timeframe']=quote_result['timeframe']
     fill['initiator']=intent['initiator'] if intent else hourly_receipt.get('strategy_label','V1') if hourly else 'CHATGPT'

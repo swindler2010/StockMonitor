@@ -44,6 +44,9 @@ def entry_plan(cfg,result,size,now):
 
 
 def strategy_plan(result, signal, mode, size, now):
+    if mode=='V2' and signal.get('model'):
+        from paper_v2_30m import protection_plan
+        return protection_plan(result,signal,size,now)
     from paper_account import POLICY as execution
     from paper_v5 import HELD_GAP
     q=result['execution_quote']
@@ -67,6 +70,10 @@ def strategy_plan(result, signal, mode, size, now):
 
 
 def strategy_trigger(db, position, entry, plan, bar, price, *, result=None):
+    if plan.get('strategy_mode')=='V2' and plan.get('model'):
+        from paper_v2_30m import MODEL,protection_trigger
+        if plan['model']!=MODEL:raise ValueError('PAPER_PROTECTION_BINDING_CHANGED')
+        return protection_trigger(db,position,entry,plan,bar,price)
     from datetime import datetime
     from paper_account import POLICY as execution, money
     from paper_hourly import read
