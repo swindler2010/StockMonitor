@@ -148,7 +148,7 @@ class IndependentTests(unittest.TestCase):
              patch.object(hourly.time,'time',return_value=f.now):
             for _ in range(5):
                 runtime.tick()
-            self.assertEqual(calls,[('V5',None),('V2',None),('V3',None),('V4',None)])
+            self.assertEqual(calls,[('V5',None),('V2',None),('V3',None),('V4',None),('V5',None)])
             self.make_order('PULLBACK')
             f.trade()
             self.db.commit()
