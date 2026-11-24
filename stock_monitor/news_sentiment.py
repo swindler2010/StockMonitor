@@ -6,8 +6,8 @@ Mixed wording, negation and unreadable titles remain unclassified.
 import re
 
 WORDS = {
-    'positive': r'\b(soars?|surges?|rall(?:y|ies)|record profit|beats? estimates|raises? (?:outlook|forecast)|upgrades?|rekordgewinn|gewinne steigen|повышает прогноз|рекордная прибыль|превысил[аи]? ожидания|акции растут)\b',
-    'negative': r'\b(plunges?|tumbles?|slumps?|misses? estimates|cuts? (?:outlook|forecast)|downgrades?|gewinnwarnung|verluste|снижает прогноз|убыток|убытки|акции падают)\b',
+    'positive': r'\b(soars?|surges?|rall(?:y|ies)|rises?|rose|rising|gains?|gained|steigt|steigen|gestiegen|растут|выросли|record profit|beats? estimates|raises? (?:outlook|forecast)|upgrades?|rekordgewinn|gewinne steigen|повышает прогноз|рекордная прибыль|превысил[аи]? ожидания|акции растут)\b',
+    'negative': r'\b(plunges?|tumbles?|slumps?|falls?|fell|falling|drops?|dropped|declines?|slips?|slid|fällt|fallen|gefallen|падают|упали|misses? estimates|cuts? (?:outlook|forecast)|downgrades?|gewinnwarnung|verluste|снижает прогноз|убыток|убытки|акции падают)\b',
 }
 
 

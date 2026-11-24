@@ -106,6 +106,8 @@ class Dialog:
         self.render()
 
     def reveal(self,widget):
+        active='Объекты' if widget is self.objects else 'Инструменты'
+        for key,button in self.tabs.items():button.configure(style=self.p+('.Primary.TButton' if key==active else '.Secondary.TButton'))
         self.win.update_idletasks()
         height=max(1,self.body_canvas.bbox('all')[3])
         at=widget.winfo_rooty()-self.body_canvas.winfo_rooty()+self.body_canvas.canvasy(0)
@@ -115,6 +117,8 @@ class Dialog:
     def favorites(self):
         self.reveal(self.tools_box)
         self.gallery.edit_favorites()
+        self.tabs['Инструменты'].configure(style=self.p+'.Secondary.TButton')
+        self.tabs['Избранное'].configure(style=self.p+'.Primary.TButton')
 
     def valid(self):
         return chart_identity(self.app)==self.identity and self.app.instrument_cfg()['isin']==self.isin and self.app.user_state(self.app.instrument_cfg()).get('drawings',[])==self.listed

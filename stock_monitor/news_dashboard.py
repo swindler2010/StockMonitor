@@ -130,9 +130,14 @@ class Dialog:
             b=ttk.Button(periods,text=tr(label),command=lambda value=days:self.period(value));b.pack(side='left',padx=(0,3));self.period_buttons[days]=b
         ttk.Label(periods,text=tr('Хранение новостей — 7 дней'),style='DeskMuted.TLabel').pack(side='right')
         filters=ttk.Frame(centre,style='Desk.TFrame');filters.pack(fill='x',pady=(0,8))
-        self.provider_box=ttk.Combobox(filters,textvariable=self.provider,values=[tr('Все')],state='readonly',style=p+'.TCombobox',width=14 if self.embedded else 20);self.provider_box.pack(side='left',padx=(0,5))
-        ttk.Combobox(filters,textvariable=self.category,values=[tr('Все'),*(tr(v) for v in EVENTS.values())],state='readonly',style=p+'.TCombobox',width=14 if self.embedded else 18).pack(side='left',padx=5)
-        ttk.Combobox(filters,textvariable=self.tone,values=[tr(v) for v in ('Все','Позитивные слова','Негативные слова','Без оценки')],state='readonly',style=p+'.TCombobox',width=16).pack(side='left',padx=5)
+        def filter_field(title,variable,values,width):
+            host=ttk.Frame(filters,style='Desk.TFrame');host.pack(side='left',padx=(0,5))
+            ttk.Label(host,text=tr(title),style='DeskMuted.TLabel',font=('Segoe UI',8)).pack(anchor='w')
+            box=ttk.Combobox(host,textvariable=variable,values=values,state='readonly',style=p+'.TCombobox',width=width);box.pack(fill='x')
+            return box
+        self.provider_box=filter_field('Источник',self.provider,[tr('Все')],14 if self.embedded else 20)
+        filter_field('Категория',self.category,[tr('Все'),*(tr(v) for v in EVENTS.values())],14 if self.embedded else 18)
+        filter_field('Тональность новостей',self.tone,[tr(v) for v in ('Все','Позитивные слова','Негативные слова','Без оценки')],16)
         search=ttk.Entry(filters,textvariable=self.query,style=p+'.TEntry',font=('Segoe UI',10));search.pack(side='left',fill='x',expand=True,padx=(5,0))
         app.tooltip(search,'Поиск в заголовках и кратком содержании')
         filter_widgets=filters.winfo_children();filter_layout=[None]

@@ -81,6 +81,8 @@ class InformationalFieldsTests(unittest.TestCase):
         self.assertEqual(classify({'original_title':'Shares surge after results','title':'Акции падают'}),'positive')
         for title in ['Shares surge, forecasts tumble','Does not raise forecast','Quarterly results','Bad \ufffd text']:
             self.assertEqual(classify({'title':title}),'unknown')
+        self.assertEqual(classify({'title':'Why ASML stock fell today'}),'negative')
+        self.assertEqual(classify({'title':'NVIDIA shares rise after results'}),'positive')
         data=summary([{'title':'Shares surge'},{'title':'Shares plunge'},{'title':'News'}])
         self.assertEqual(data['counts'],dict(positive=1,negative=1,unknown=1))
         self.assertAlmostEqual(sum(data['percentages'].values()),100)
@@ -127,6 +129,15 @@ class MultiSelectionDialogTests(unittest.TestCase):
         self.d.flags['locked'].invoke();self.root.update()
         self.assertEqual(str(self.d.actions['delete']['state']),'disabled')
         self.d.history('undo');self.assertFalse(self.d.listed[1].get('locked',False))
+
+    def test_object_navigation_reveals_table_and_marks_active_tab(self):
+        self.d.tabs['Объекты'].invoke();self.root.update()
+        top=self.d.objects.winfo_rooty()-self.d.body_canvas.winfo_rooty()
+        self.assertGreaterEqual(top,0)
+        self.assertLessEqual(top+self.d.objects.winfo_height(),self.d.body_canvas.winfo_height())
+        self.assertTrue(str(self.d.tabs['Объекты']['style']).endswith('.Primary.TButton'))
+        self.d.tabs['Инструменты'].invoke();self.root.update()
+        self.assertTrue(str(self.d.tabs['Инструменты']['style']).endswith('.Primary.TButton'))
 
     def test_export_modal_rejects_changed_chart_and_has_no_write_on_cancel(self):
         with patch('drawing_dialog.filedialog.asksaveasfilename',return_value=''):self.d.export()
