@@ -1,6 +1,7 @@
 """Reconstruct the open EUR lots from settled Scalable Capital transactions."""
 from collections import defaultdict, deque
 from decimal import Decimal, InvalidOperation
+from itertools import groupby
 
 from v1_portfolio import timestamp
 
@@ -59,10 +60,22 @@ def lot_history(entries):
         if len(matches) != 1:
             return None
         settled.pop(matches[0])
-    for earlier, later in zip(settled, settled[1:]):
-        if earlier[0] == later[0] and (earlier[1] in INWARD) != (later[1] in INWARD):
+    ordered = []
+    balance = ZERO
+    for _, same_time in groupby(settled, key=lambda event: event[0]):
+        group = list(same_time)
+        incoming = [event for event in group if event[1] in INWARD]
+        outgoing = [event for event in group if event[1] in OUTWARD]
+        out_quantity = sum((event[2] for event in outgoing), ZERO)
+        prices = {event[3] / event[2] if event[3] else None for event in incoming}
+        if len(prices) > 1 or (incoming and outgoing and out_quantity > balance + QUANTITY_TOLERANCE):
             return None
-    return settled
+        # If existing lots cover all outgoing shares, they are consumed first
+        # regardless of which same-time event the broker sent first.
+        ordered.extend(outgoing)
+        ordered.extend(incoming)
+        balance += sum((event[2] for event in incoming), ZERO) - out_quantity
+    return ordered
 
 
 def open_lots(events):
