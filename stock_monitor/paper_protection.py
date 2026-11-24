@@ -44,28 +44,41 @@ def entry_plan(cfg,result,size,now):
 
 
 def strategy_plan(result, signal, mode, size, now):
+    if mode=='V2' and signal.get('model'):
+        from paper_v2_30m import protection_plan
+        return protection_plan(result,signal,size,now)
     from paper_account import POLICY as execution
+    from paper_v5 import HELD_GAP
     q=result['execution_quote']
     price=Decimal(str(q['bars'][-1]['close']))
     half=Decimal(execution['spread_bps'])/20000
     stop=Decimal(str(size.get('stop',signal['stop'])))
     entry=price*(1+half)
     target=entry+2*(entry-stop) if mode=='V2' else Decimal(str(size.get('target',signal['target'])))
-    return dict(version=STRATEGY_VERSION,strategy_mode=mode,identity=result['identity'].copy(),
+    plan=dict(version=STRATEGY_VERSION,strategy_mode=mode,identity=result['identity'].copy(),
         signal_tf=result['timeframe'],quote_tf=q['timeframe'],stop=str(stop),target=str(target),
         entry=str(entry),atr=str(signal['atr']),planned_quantity=str(size['quantity']),armed_at=now,
         estimated_stop_risk=size['estimated_risk'],risk_is_estimate=True,
-        trigger=POLICY['trigger'],fill=POLICY['fill'],
-        **({'model':signal['model'],'hold_minutes':signal['hold_minutes']} if signal.get('model') else {}))
+        trigger=POLICY['trigger'],fill=POLICY['fill'])
+    if signal.get('model'):
+        plan['model']=signal['model']
+        if signal.get('setup')==HELD_GAP:
+            plan.update(setup=HELD_GAP,time_exit_at=signal['gap_evidence']['exit_at'])
+        else:
+            plan['hold_minutes']=signal['hold_minutes']
+    return plan
 
 
-def strategy_trigger(db, position, entry, plan, bar, price):
+def strategy_trigger(db, position, entry, plan, bar, price, *, result=None):
+    if plan.get('strategy_mode')=='V2' and plan.get('model'):
+        from paper_v2_30m import MODEL,protection_trigger
+        if plan['model']!=MODEL:raise ValueError('PAPER_PROTECTION_BINDING_CHANGED')
+        return protection_trigger(db,position,entry,plan,bar,price,result=result)
     from datetime import datetime
     from paper_account import POLICY as execution, money
     from paper_hourly import read
     mode=plan['strategy_mode']
     raw_stop=Decimal(plan['stop'])
-    target=Decimal(plan['target'])
     qty=Decimal(position['quantity'])
     close_at=datetime.fromisoformat(bar['close_at'])
     last=read(db,management_key(entry['request_id']),{})
@@ -75,6 +88,19 @@ def strategy_trigger(db, position, entry, plan, bar, price):
     # Retries on the same candle cannot trigger a freshly tightened stop.
     if last.get('quote_at')==bar['close_at']:
         stop=Decimal(last['prior_stop'])
+    from paper_v1_long_term import MODEL as V1_MODEL, trailing_level
+    if mode=='V1':
+        if (plan.get('model')!=V1_MODEL or entry['smart_eligibility'].get('strategy_model')!=V1_MODEL
+                or plan.get('target') is not None or result is None):
+            raise ValueError('PAPER_PROTECTION_BINDING_CHANGED')
+        trail = trailing_level(result,entry,close_at)
+        new_stop = max(stop, trail) if trail is not None else stop
+        if price<=new_stop:
+            return 'STOP_LOSS',qty,False,None
+        state = (dict(quote_at=bar['close_at'],stop=str(new_stop),prior_stop=str(stop))
+                 if new_stop>stop and last.get('quote_at')!=bar['close_at'] else None)
+        return None,qty,False,state
+    target=Decimal(plan['target'])
     half=Decimal(execution['spread_bps'])/20000
     fee=money(execution['commission'])
     breakeven=(Decimal(position['cost'])/qty+fee/qty)/(1-half)
@@ -84,6 +110,7 @@ def strategy_trigger(db, position, entry, plan, bar, price):
     reason=None
     part=False
     from paper_v4 import VERSION as V4_MODEL
+    from paper_v5 import HELD_GAP
     model=plan.get('model')
     v4=mode=='MOMENTUM' and model==V4_MODEL
     if mode=='MOMENTUM' and model and not v4:
@@ -99,12 +126,25 @@ def strategy_trigger(db, position, entry, plan, bar, price):
             part=True
     elif (v4 or mode in ('PULLBACK','AGGRESSIVE')) and price>=target:
         reason='TAKE_PROFIT'
+    elif mode=='AGGRESSIVE' and plan.get('setup')==HELD_GAP:
+        gap=entry['smart_eligibility']['entry_evidence']['gap_evidence']
+        exit_at=datetime.fromisoformat(gap['exit_at'])
+        if (not model or entry['smart_eligibility']['strategy_model']!=model
+                or plan.get('time_exit_at')!=gap['exit_at'] or exit_at.tzinfo is None
+                or exit_at<=datetime.fromisoformat(entry['at'])):
+            raise ValueError('PAPER_PROTECTION_BINDING_CHANGED')
+        if close_at>=exit_at:
+            reason='STRATEGY_TIME_EXIT'
     elif v4 or mode=='AGGRESSIVE' and plan.get('model'):
-        from paper_v5 import HOLD_BY_VERSION, HOLD_MINUTES
+        from paper_v5 import DAILY_PULLBACK_MODEL, FOUR_HOUR_MODEL, HOLD_BY_VERSION, HOLD_MINUTES
         minutes=HOLD_MINUTES if v4 else HOLD_BY_VERSION.get(plan['model'])
+        if model==FOUR_HOUR_MODEL:
+            from paper_v5_four_hour import position_minutes
+            minutes=position_minutes(entry)
         if minutes is None or plan.get('hold_minutes')!=minutes:
             raise ValueError('PAPER_PROTECTION_BINDING_CHANGED')
-        if close_at.timestamp()-datetime.fromisoformat(entry['at']).timestamp()>=minutes*60:
+        basis=entry['bar_close_at'] if model in (FOUR_HOUR_MODEL,DAILY_PULLBACK_MODEL) else entry['at']
+        if close_at.timestamp()-datetime.fromisoformat(basis).timestamp()>=minutes*60:
             reason='STRATEGY_TIME_EXIT'
     elif mode=='AGGRESSIVE':
         import pandas as pd
@@ -139,12 +179,13 @@ def write_management(db, state, entry_id):
 
 def decision(db,info,result,now):
     """Immutable entry receipt and verified execution price."""
-    from paper_account import ledger,quote
+    from paper_account import ledger,quote,result_portfolio
     from paper_hourly import authority,digest
     from eur_listings import stored_identity
     from datetime import datetime
-    cfg=authority(db,info['isin'],result.get('identity'))
-    state=ledger(db)
+    portfolio=result_portfolio(db,result)
+    cfg=authority(db,info['isin'],result.get('identity'),portfolio=portfolio)
+    state=ledger(db,portfolio)
     position=next((p for p in state['positions'] if p['isin']==info['isin'] and Decimal(p['quantity'])>0),None)
     if position is None:return None
     if position['identity']!=result['identity']:raise ValueError('PAPER_PROTECTION_IDENTITY_CHANGED')
@@ -162,16 +203,21 @@ def decision(db,info,result,now):
         raise ValueError('PAPER_PROTECTION_BINDING_CHANGED')
     if result.get('quote_blocker'):raise ValueError(result['quote_blocker'])
     q=result.get('execution_quote',{})
-    if q.get('identity')!=result['identity']:raise ValueError('PAPER_PROTECTION_QUOTE_IDENTITY')
-    _,bar=quote(info,q,now,stored_listing=stored_identity(db,info,result['identity'],q.get('timeframe')))
+    from paper_v2_quotes import bound_identity
+    origin=bound_identity(db,info,result)
+    _,bar=quote(info,q,now,stored_listing=stored_identity(db,info,origin,q.get('timeframe')))
     close_at=datetime.fromisoformat(bar['close_at']).timestamp()
     if close_at<=datetime.fromisoformat(entry['at']).timestamp():return None
-    stop,target=Decimal(plan['stop']),Decimal(plan['target'])
-    if not stop.is_finite() or not target.is_finite() or not 0<stop<target:
+    from paper_v1_long_term import MODEL as V1_MODEL
+    stop=Decimal(plan['stop'])
+    v1 = strategy and plan.get('model') == V1_MODEL
+    target=None if v1 else Decimal(plan['target'])
+    if (not stop.is_finite() or stop<=0
+            or target is not None and (not target.is_finite() or target<=stop)):
         raise ValueError('PAPER_PROTECTION_LEVEL_INVALID')
     price=Decimal(str(bar['close']))
     if strategy:
-        reason,qty,partial,management=strategy_trigger(db,position,entry,plan,bar,price)
+        reason,qty,partial,management=strategy_trigger(db,position,entry,plan,bar,price,result=result)
         if management:
             return dict(management=management,entry_request_id=entry['request_id'])
     else:

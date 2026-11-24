@@ -30,24 +30,62 @@ def _auto_refresh(parent,app,refresh,interval_ms=5000):
 def automation_summary(state):
     auto=state.get('automation',{})
     if not auto:return ''
-    from paper_entry_modes import STRATEGY_CODES
-    from paper_hourly import configured_strategy, configured_timeframes, variable_size
+    from paper_entry_modes import STRATEGY_CODES, V2_RESEARCH_BLOCKER
+    from paper_hourly import TIMEFRAME_POLICY, configured_strategy, configured_timeframes, variable_size
     size=('количество автоматически • до 45% свободных денег на вход • расчётный риск 1%'
         if variable_size(auto) else 'максимум по 1 акции')
     try:
-        signal_intervals=' + '.join(configured_timeframes(auto))
+        signal_intervals=' → '.join(configured_timeframes(auto))
         mode=configured_strategy(auto)
     except ValueError:
-        signal_intervals='выберите интервал'
+        signal_intervals='недоступно'
         mode='V1'
     if mode in ('MOMENTUM','AGGRESSIVE'):
         size='до 10 акций на позицию • доступные средства'
+    if mode=='V2':
+        size=tr('V2: одна позиция, до 10 акций, до 45% средств и 0,5% расчётного риска с издержками.')
     lines=['\nАвтоторговля демо: '+('ВКЛЮЧЕНА' if auto.get('enabled') else 'ПАУЗА')+
-        ' • '+STRATEGY_CODES[mode]+' / '+signal_intervals+' • только GETTEX/EUR\n'+size]
+        ' • '+STRATEGY_CODES[mode]+' • ТФ автоматически ('+signal_intervals+') • только GETTEX/EUR\n'+size]
+    if auto.get('independent'):
+        running=', '.join(state.get('automatic_portfolios',[]))
+        unready=[name for name,book in state.get('portfolios',{}).items()
+                 if book.get('readiness_blocker')=='V2_SEED_PROOF_MISSING']
+        if unready:
+            lines.append(', '.join(unready)+': ждут подтверждения устойчивости индикаторов.')
+        if mode=='V2' and state.get('portfolios',{}).get('V2',{}).get('readiness_blocker')==V2_RESEARCH_BLOCKER:
+            lines.append(tr('V2 30m проходит проверку. Автоматический вход приостановлен.'))
+        lines.insert(0,'\n'+(
+            'Фоновая демоторговля • '+running if running else
+            'Фоновая демоторговля на паузе'))
     from paper_protection import enabled
+    from paper_v1_long_term import enabled as long_term_enabled
     try:protection=enabled(auto)
     except ValueError:protection=False
     lines.append('Цена исполнения берётся с закрытой свечи 15 мин.')
+    from paper_v5_four_hour import (
+        enabled as four_hour_enabled, WEEKLY_UNAVAILABLE, WEEKLY_NOT_RISING,
+        RECOVERY_UNAVAILABLE, WEIGHTED_UNAVAILABLE, WEIGHTED_PRICE_WAIT,
+        INDIVIDUAL_KEY, INDIVIDUAL_WINDOW_WAIT, RECLAIM_KEY,
+        RECLAIM_DATA_WAIT, RECLAIM_EARLIER_WAIT, RECLAIM_BUY,
+    )
+    if long_term_enabled(auto):
+        lines.append(tr('Недельный тренд, дневной вход и подтягиваемый стоп.'))
+    elif four_hour_enabled(auto):
+        lines.append(tr('V5 4H: недельный рост или дневное восстановление. Цена входа должна быть выше взвешенной цены двух торговых часов.'))
+        if auto.get(RECLAIM_KEY,True) is True:
+            lines.append(tr('V5 4H проверяет цену до четвёртой свечи 15 мин, если первая не подтвердила пробой или взвешенную цену. Для Micron действует первая проверка.'))
+        for isin,rule in auto.get(INDIVIDUAL_KEY,{}).get('rules',{}).items():
+            name=auto.get('names',{}).get(isin,isin)
+            for clock,minutes in sorted(rule.get('hold_by_close',{}).items()):
+                lines.append(tr('{name} · вход {clock} · удержание {hours:g} ч',
+                                name=name,clock=clock,hours=minutes/60))
+            if rule.get('allowed_closes'):
+                lines.append(tr('{name} · окна 4H {closes}',name=name,closes=', '.join(rule['allowed_closes'])))
+        from paper_v5_daily_pullback import enabled as daily_pullback_enabled
+        if daily_pullback_enabled(auto):
+            lines.append(tr('Дневной откат V5 использует предыдущую закрытую дневную свечу и вторую закрытую свечу 15 мин для входа. Счёт общий.'))
+    elif mode=='AGGRESSIVE':
+        lines.append('V5 сверяет 11 ТФ. При одновременных BUY приоритет у подходящего сигнала 4H.')
     if mode in ('MOMENTUM','AGGRESSIVE'):
         from datetime import datetime, timezone
         from paper_v5 import MACRO_VERIFIED_THROUGH, macro_release_day
@@ -67,18 +105,79 @@ def automation_summary(state):
         lines.append('Цель: '+str(target)+' EUR • '+progress+' • достижение и предел убытка не гарантируются.')
     for isin,row in auto.get('instruments',{}).items():
         name=auto.get('names',{}).get(isin,isin)
-        if (row.get('signal_timeframe')!=auto.get('signal_timeframe')
+        if (row.get('timeframe_policy')!=TIMEFRAME_POLICY
                 or row.get('strategy_mode','V1')!=mode):
             lines.append(f'{name}: ожидается расчёт после смены режима.')
             continue
-        for tf, outcome in row.get('timeframes', {'1H': row}).items():
+        analysis=row.get('analysis_timeframes',{})
+        if analysis and mode=='AGGRESSIVE':
+            checked=datetime.fromisoformat(row['analysis_at']).astimezone(JOURNAL_ZONE)
+            context_only=[f"{tf} {data.get('quality') or data.get('core')}"
+                          for tf,data in analysis.items() if tf not in row['candidate_timeframes']]
+            lines.append(f"{name} • анализ {len(analysis)} ТФ, {checked:%d.%m %H:%M:%S}\n"+
+                         'Дополнительные графики: '+', '.join(context_only))
+        for tf, outcome in row.get('timeframes',{}).items():
+            selected = ' • основной результат' if tf==row.get('signal_timeframe') and len(row['timeframes'])>1 else ''
             code=outcome.get('execution_blocker') or outcome.get('quote_blocker')
             detail={'PAPER_STALE_QUOTE':'Цена исполнения устарела — ожидаем свежую свечу.',
                     'PAPER_DATA_BLOCKED':'Качество текущей цены не подтверждено.',
-                    'V5_SELECT_1H':'Для V5 выберите 1 час.',
+                    'V1_DAILY_HISTORY_WAIT':tr('Нужна полная история за 26 дневных сессий.'),
+                    'V1_WEEKLY_HISTORY_WAIT':tr('Нужна подтверждённая недельная история.'),
+                    'V1_WEEKLY_TREND_WAIT':tr('Недельный рост пока не подтверждён.'),
+                    'V1_DAILY_SETUP_WAIT':tr('Ждём дневного пробоя или восстановления после отката.'),
+                    'V1_NEXT_SESSION_WAIT':tr('Вход возможен в следующую торговую сессию.'),
+                    'V1_DAILY_TRAILING_STOP':tr('Позицию ведёт дневной подтягиваемый стоп.'),
+                    'PAPER_V1_ENTRY_LEVEL_LOST':tr('Цена исполнения потеряла уровень дневного входа.'),
+                    'PAPER_V1_QUOTE_OUTSIDE_SIGNAL_SESSION':tr('Нужна закрытая цена следующей сессии.'),
+                    'DAILY_20_SESSION_BREAKOUT':tr('Дневной пробой максимума 20 сессий.'),
+                    'DAILY_MA20_REBOUND':tr('Дневное восстановление после отката.'),
+                    'V5_SELECTED_CORE_WAIT':'На этом интервале CORE пока не подтвердил BUY.',
+                    'V5_PORTFOLIO_4H_BREAKOUT_ONLY':'На 4H ждём пробоя диапазона первого часа.',
+                    'V5_PORTFOLIO_52W_WAIT':'Предыдущее дневное закрытие дальше 5% от годового максимума.',
+                    'V5_PORTFOLIO_DAILY_DATA_WAIT':'Для правил V5 пока недостаточно подтверждённых дневных свечей.',
+                    'V5_PORTFOLIO_1D_STRENGTH_WAIT':'На дневке пока нет относительной силы или подтверждённого сжатия волатильности.',
+                    'V5_STEADY_DAILY_DATA_WAIT':'Для проверки плавного роста на 1H не хватает дневной истории акции или группы.',
+                    'V5_STEADY_GROWTH_WAIT':'Перед сигналом 1H акция не показала плавного роста относительно своей группы.',
+                    WEEKLY_UNAVAILABLE:tr('Для проверки недельного тренда не хватает подтверждённой истории.'),
+                    WEEKLY_NOT_RISING:tr('Недельный рост и дневное восстановление пока не подтвердились.'),
+                    RECOVERY_UNAVAILABLE:tr('Для проверки дневного восстановления не хватает подтверждённых свечей.'),
+                    WEIGHTED_UNAVAILABLE:tr('Для взвешенной цены нужны как минимум шесть свечей с объёмом за два торговых часа.'),
+                    WEIGHTED_PRICE_WAIT:tr('Цена входа пока не выше взвешенной цены последних двух торговых часов.'),
+                    RECLAIM_DATA_WAIT:tr('Для повторного входа пока не подтверждена первая котировка.'),
+                    RECLAIM_EARLIER_WAIT:tr('Подходящая цена уже была на предыдущей свече.'),
+                    RECLAIM_BUY:tr('Цена восстановилась, повторный вход 4H подтверждён.'),
+                    'V5_4H_WAIT_FIRST_QUOTE':'Для входа нужна первая закрытая котировка следующего интервала 4H.',
+                    'V5_4H_OUTSIDE_OPENING_WINDOW':tr('Ожидаем следующего окна входа после закрытия 4H.'),
+                    'V5_4H_OPENING_WINDOW_EXPIRED':'Окно входа после закрытия 4H прошло.',
+                    'V5_4H_SIGNAL_UNAVAILABLE':'Закрытая свеча для проверки пробоя на 4H ещё не подтверждена.',
+                    'V5_4H_SIGNAL_CANDLE_CHANGED':'Ожидаем согласования последней закрытой свечи 4H.',
+                    'V5_4H_NO_COMPRESSION_BREAKOUT':'На 4H нет пробоя узкого диапазона с подтверждением объёма.',
+                    'V5_4H_COMPRESSION_BREAKOUT':'На 4H подтверждён пробой узкого диапазона.',
+                    'V5_4H_TIMEFRAME_ONLY':'Текущий режим V5 открывает позиции по 4H.',
+                    INDIVIDUAL_WINDOW_WAIT:tr('Для этой акции вход 4H разрешён в другом окне.'),
+                    'V5_D1_OUTSIDE_OPENING_WINDOW':tr('Дневной откат проверяется в начале торговой сессии.'),
+                    'V5_D1_WAIT_SECOND_QUOTE':tr('Для дневного отката нужна вторая закрытая свеча 15 мин текущей сессии.'),
+                    'V5_D1_PULLBACK_DATA_WAIT':tr('Для дневного отката пока недостаточно подтверждённой истории акции.'),
+                    'V5_D1_PULLBACK_PATTERN_WAIT':tr('Дневная свеча пока не подтвердила вход после отката.'),
+                    'V5_D1_DEFENSIVE_SCORE_WAIT':tr('Дневной откат не прошёл фильтр волатильности и силы восстановления.'),
+                    'V5_D1_MARKET_CONTEXT_WAIT':tr('Для дневного отката нужны достаточная история группы и неотрицательная медиана её доходности за пять сессий.'),
+                    'V5_D1_PULLBACK_PRICE_WAIT':tr('Цена отклонилась от дневного закрытия больше чем на 0,8 ATR.'),
+                    'V5_D1_SIGNAL_CANDLE_CHANGED':tr('Ожидаем согласования последней закрытой дневной свечи.'),
+                    'V5_D1_OUTSIDE_FROZEN_COHORT':tr('Акция остаётся доступна для 4H. Дневной откат откалиброван на другом составе акций.'),
+                    'V5_D1_OPENING_WINDOW_EXPIRED':tr('Окно входа по дневному откату закрылось.'),
+                    'V5_D1_DEFENSIVE_PULLBACK':tr('Дневной откат подтвердил вход.'),
+                    'PAPER_V5_SAME_QUOTE_REENTRY':tr('На этой свече исполнения позиция уже закрывалась.'),
+                    'PAPER_V5_4H_ENTRY_TOO_FAR':'Цена ушла более чем на 0,75 ATR выше пробоя.',
+                    'PAPER_V5_GAP_ENTRY_QUOTE':'Для входа после гэпа нужна вторая закрытая 15m свеча сессии.',
+                    'PAPER_V5_GAP_ENTRY_WINDOW':'Окно входа после гэпа уже прошло.',
+                    'PAPER_V5_GAP_LEVEL_OR_DISTANCE':'Цена потеряла уровень гэпа или отклонилась больше чем на 0,50 ATR.',
+                    'PAPER_V5_DAILY_GROUP_CHANGED':'Изменился состав группы сравнения. Сигнал пересчитается.',
+                    'PAPER_V5_RANKING_PENDING':'Сравниваем подтверждённые BUY с той же ценой закрытия по времени.',
+                    'PAPER_V5_ENTRY_LEVEL_LOST':'Цена исполнения вернулась к пробитому уровню или ниже.',
                     'V4_SELECTED_CANDLE_UNCONFIRMED':'Закрытая свеча выбранного интервала ещё не подтверждена.',
                     'V4_ENTRY_NOT_CONFIRMED':'На выбранном интервале нет подтверждения пробоя, разворота или входа после отчёта.',
-                    'PAPER_V4_QUOTE_BEFORE_SIGNAL':'Ожидаем закрытую цену исполнения после сигнала.',
+                    'PAPER_V4_QUOTE_BEFORE_SIGNAL':'Ожидаем закрытую котировку 15 мин после сигнала.',
+                    'PAPER_QUOTE_BEFORE_STRATEGY_SIGNAL':'Ожидаем закрытую цену исполнения после сигнала.',
                     'PAPER_V4_EARNINGS_LEVEL_LOST':'Цена исполнения вернулась под уровень пробоя после отчёта.',
                     'V5_OUTSIDE_OPEN_RANGE_WINDOW':'V5 ищет пробой во 2–6-й час сессии.',
                     'V5_NO_FRESH_OPEN_RANGE_BREAK':'Свежего пробоя диапазона первого часа нет.',
@@ -93,7 +192,10 @@ def automation_summary(state):
                     'PAPER_V5_QUOTE_VOLUME_BELOW_SIZE':'Объём свечи исполнения меньше размера позиции.',
                     'PAPER_V5_REVERSAL_LEVEL_LOST':'Вход пропущен: закрытая цена 15 мин вернулась к пробитому максимуму или ниже.',
                     'V5_POSITION_MANAGED_BY_BRACKET':'Позиция сопровождается по стопу, цели и времени.'}
-            reason=code or outcome.get('reason') or 'Ожидается первая проверка'
+            strategy_reason=outcome.get('reason')
+            selection_wait=(WEEKLY_UNAVAILABLE,WEEKLY_NOT_RISING,RECOVERY_UNAVAILABLE,WEIGHTED_UNAVAILABLE)
+            reason=(strategy_reason if strategy_reason in selection_wait
+                    else code or strategy_reason or 'Ожидается первая проверка')
             normalized=reason.removeprefix('ValueError: ')
             macro='PAPER_V5_MACRO_RELEASE_DAY:'
             if normalized.startswith(macro):
@@ -103,7 +205,7 @@ def automation_summary(state):
             if outcome.get('state')=='COMPLETED':
                 reason='Виртуальная сделка • количество '+str(outcome.get('quantity'))
             lines.append(f"{name} {outcome.get('strategy',STRATEGY_CODES[mode])} / {tf}: "
-                f"{outcome.get('state','ОЖИДАНИЕ')} • {outcome.get('signal','WAIT')}\n"+reason)
+                f"{outcome.get('state','ОЖИДАНИЕ')} • {outcome.get('signal','WAIT')}{selected}\n"+reason)
     if state.get('archived_fills'):lines.append('Предыдущий прогон сохранён в архиве: '+str(state['archived_fills'])+' операций.')
     return '\n'.join(lines)
 
@@ -113,18 +215,28 @@ def summary(state):
     start=state['policy']['starting_cash'];equity=state.get('equity')
     change=tr('не определена') if equity is None else f'{(Decimal(equity)/Decimal(start)-1)*100:.2f}%'
     def value(key): return str(state[key])+' EUR' if state.get(key) is not None else tr('DATA BLOCKED / нет оценки')
-    universe=(f"\n{tr('Подключено акций: ')}{len(state.get('allowed_isins',[]))}"+
+    universe=(f"\nПодключено к демоторговле {len(state.get('automation',{}).get('identities',{}))}"
+              f" из {len(state.get('allowed_isins',[]))}."+
               tr(' • Новые подключаются автоматически; качество данных и допуск проверяются отдельно.')) if state.get('universe',{}).get('automatic_new_instruments') else ''
-    return (f"{state['account']}{tr(' • только виртуальные операции\nНачальный капитал: ')}{start}{tr(' EUR • Доходность: ')}{change}\nCash: {value('cash')} • Equity: {value('equity')}{tr('\nРеализованный P&L: ')}{value('realized')}{tr(' • Нереализованный: ')}{value('unrealized')}{tr(' • Комиссии: ')}{value('fees')}"+universe+automation_summary(state))
+    portfolios=state.get('portfolios',{})
+    balances=("\n"+tr('Свободные средства по счетам')+"  "+
+              "  |  ".join(f"{name} {book['cash']} EUR" for name,book in portfolios.items())
+              if portfolios else "")
+    return (f"{state['account']}{tr(' • только виртуальные операции\nНачальный капитал: ')}{start}{tr(' EUR • Доходность: ')}{change}\nCash: {value('cash')} • Equity: {value('equity')}{tr('\nРеализованный P&L: ')}{value('realized')}{tr(' • Нереализованный: ')}{value('unrealized')}{tr(' • Комиссии: ')}{value('fees')}"+balances+universe+automation_summary(state))
 
 def attach(app, parent):
+    from calendar_panel import label as translated_label
     from paper_orders import order_choices, submit
     from paper_entry_modes import MODES, STRATEGY_CODES
-    from paper_hourly import ENTRY_TIMEFRAME_KEY, STRATEGY_KEY, SELECTABLE_TIMEFRAMES, set_trading_mode
+    from paper_hourly import STRATEGY_KEY, set_trading_mode
+    from paper_v1_long_term import enabled as v1_enabled
+    from paper_v1_news_view import Panel as V1NewsPanel, show_saved as show_saved_news
     from uuid import uuid4
     order_box=ttk.LabelFrame(parent,text='Поручение владельца • только PAPER');order_box.pack(fill='x',padx=10,pady=4)
     row=ttk.Frame(order_box);row.pack(fill='x')
     choices={}
+    independent=False
+    viewed_book=None
     selected=tk.StringVar(value='');quantity=tk.StringVar(value='1')
     instrument_box=ttk.Combobox(row,textvariable=selected,values=[],state='readonly',width=24)
     instrument_box.pack(side='left',padx=4)
@@ -136,12 +248,16 @@ def attach(app, parent):
     selected.trace_add('write',changed);quantity.trace_add('write',changed)
     order_buttons=[]
     def place(side,preview=False):
+        if saving_mode:
+            return
         isin=next((k for k,v in choices.items() if v==selected.get()),None)
         if isin is None:message.set('Нет выбранной акции с действующим подключением к PAPER.');return
         try:qty=float(quantity.get().replace(',','.'))
         except ValueError:message.set('Укажите положительное количество акций.');return
         args=dict(isin=isin,side=side,quantity=qty,
             timeframe='AUTO',request_id='manual-'+str(uuid4()))
+        if independent and viewed_book:
+            args['_paper_portfolio']=viewed_book
         instrument_box.configure(state='disabled');quantity_box.configure(state='disabled')
         for button in order_buttons:button.configure(state='disabled')
         message.set('Проверяю данные, цену и риск…')
@@ -179,21 +295,17 @@ def attach(app, parent):
     auto_controls=ttk.Frame(auto_box)
     auto_controls.pack(fill='x',padx=4,pady=3)
     strategy_labels={key:label for key,label,_ in MODES}
-    timeframe_labels=dict(zip(SELECTABLE_TIMEFRAMES,('15 мин','30 мин','1 час','4 часа','1 день')))
     strategy=tk.StringVar()
-    timeframe=tk.StringVar()
     mode_state=tk.StringVar()
-    ttk.Label(auto_controls,text='Стратегия').pack(side='left',padx=(0,4))
+    selector_label=ttk.Label(auto_controls,text='Стратегия')
+    selector_label.pack(side='left',padx=(0,4))
     strategy_box=ttk.Combobox(auto_controls,textvariable=strategy,values=list(strategy_labels.values()),
         state='disabled',width=22)
     strategy_box.pack(side='left',padx=(0,12))
-    ttk.Label(auto_controls,text='Интервал').pack(side='left',padx=(0,4))
-    timeframe_box=ttk.Combobox(auto_controls,textvariable=timeframe,values=list(timeframe_labels.values()),
-        state='disabled',width=10)
-    timeframe_box.pack(side='left',padx=(0,8))
+    ttk.Label(auto_controls,text='ТФ автоматически').pack(side='left',padx=(0,8))
     mode_label=ttk.Label(auto_controls,textvariable=mode_state)
     mode_label.pack(side='left',padx=4)
-    saved_mode=('V1',None)
+    saved_mode='V1'
     editing_mode=False
     saving_mode=False
     mode_revision=0
@@ -221,13 +333,13 @@ def attach(app, parent):
     def render_study(state):
         nonlocal displayed_study
         report=state.get('v5_context_study',{})
-        active=state.get('automation',{}).get('enabled') and saved_mode==('AGGRESSIVE','1H')
+        active=state.get('automation',{}).get('enabled') and saved_mode=='AGGRESSIVE'
         if (report,active)==displayed_study:
             return
         displayed_study=(report,active)
         counts=report.get('states',{})
-        label=('Сбор во время автоторговли V5 / 1H.' if active else
-               'Сбор начнётся при включённой автоторговле V5 / 1H.')
+        label=('Факторы часовой ветви V5.' if active else
+               'Сбор начнётся при включении V5.')
         study_label.set(label+f" Закрыто {counts.get('CLOSED',0)}, открыто {counts.get('OPEN',0)}, "
                         f"неполных {counts.get('INCOMPLETE',0)}, отказов {counts.get('BLOCKED',0)}. "
                         "Оценки отдельных сигналов после издержек.")
@@ -241,10 +353,19 @@ def attach(app, parent):
 
     journal_tab=ttk.Frame(notebook)
     notebook.add(journal_tab,text='Журнал V1–V5')
+    news_tab=ttk.Frame(notebook)
+    notebook.add(news_tab,text=translated_label('Новости V1','V1-Nachrichten','V1 news'))
+    V1NewsPanel(app,notebook,news_tab)
+    notebook.hide(news_tab)
+
+    def show_news_tab(book):
+        notebook.tab(news_tab,state='normal' if book=='V1' else 'hidden')
+
     filter_row=ttk.Frame(journal_tab)
     filter_row.pack(fill='x',pady=2)
     scope=tk.StringVar(value='Текущий счёт')
     strategy_filter=tk.StringVar(value='Все стратегии')
+    legacy_label='До разделения'
     scope_box=ttk.Combobox(filter_row,textvariable=scope,values=('Текущий счёт','Архив'),
                            state='readonly',width=16)
     scope_box.pack(side='left',padx=(0,6))
@@ -311,6 +432,16 @@ def attach(app, parent):
         state='normal' if selected_fill and not note_busy else 'disabled'
         note_input.configure(state=state)
         note_button.configure(state=state)
+        news_button.configure(state='normal' if selected_news() else 'disabled')
+
+    def selected_news():
+        fill=visible_entries.get(selected_fill,{}).get('fill',{})
+        return (fill.get('smart_eligibility') or {}).get('news_background')
+
+    def open_saved_news():
+        background=selected_news()
+        if background:
+            show_saved_news(parent,background)
 
     def commit_note():
         nonlocal note_busy
@@ -342,10 +473,13 @@ def attach(app, parent):
 
     note_button=ttk.Button(note_row,text='Сохранить',command=commit_note,state='disabled')
     note_button.pack(side='left',padx=4)
+    news_button=ttk.Button(filter_row,text=translated_label('Новости сделки','Nachrichten zum Trade','Trade news'),
+                           command=open_saved_news,state='disabled')
+    news_button.pack(side='left',padx=4)
 
     def render_journal():
         nonlocal page
-        view='archive' if scope.get()=='Архив' else 'current'
+        view={'Архив':'archive',legacy_label:'legacy'}.get(scope.get(),'current')
         group=strategy_filter.get()
         group={'Ручные / другие':OTHER,'Все стратегии':'all'}.get(group,group)
         rows=journal.get('totals',{}).get(view,{})
@@ -385,6 +519,7 @@ def attach(app, parent):
             fills.selection_set(selected_fill)
         else:
             select_fill()
+        set_note_controls()
         fills.yview_moveto(offset)
 
     fills.bind('<<TreeviewSelect>>',select_fill)
@@ -396,23 +531,30 @@ def attach(app, parent):
     filter_box.bind('<<ComboboxSelected>>',lambda _:move_page(0))
     ttk.Label(controls,text=tr('Только демо. WAIT — ожидание условий стратегии; прибыль не гарантируется.')).pack(anchor='w')
     busy=False
+    v1_active=False
     def alive(): return bool(parent.winfo_exists()) and not app.closing
     def done(state,revision):
-        nonlocal busy,choices,saved_mode,journal
+        nonlocal busy,choices,saved_mode,journal,v1_active,independent,viewed_book
         busy=False
         if not alive(): return
         if revision!=mode_revision:
             refresh();return
         current=next((k for k,v in choices.items() if v==selected.get()),None)
         choices=order_choices(state)
+        auto=state.get('automation',{})
+        independent=bool(auto.get('independent'))
+        if independent:
+            viewed_book=state.get('account')
+            selector_label.configure(text='Счёт')
+            apply_button.pack_forget()
+            order_box.configure(text='Поручение владельца • '+str(viewed_book))
         if not (saving_mode or editing_mode):
-            auto=state.get('automation',{})
-            saved_mode=(auto.get(STRATEGY_KEY,'V1'),auto.get(ENTRY_TIMEFRAME_KEY))
-            strategy.set(strategy_labels.get(saved_mode[0],''))
-            timeframe.set(timeframe_labels.get(saved_mode[1],'1H + 4H' if auto.get('approved') else ''))
-            controls_state='readonly' if auto.get('approved') is True else 'disabled'
+            saved_mode=auto.get(STRATEGY_KEY,'V1')
+            v1_active=v1_enabled(auto)
+            strategy.set(strategy_labels.get(saved_mode,''))
+            controls_state='readonly' if independent or auto.get('approved') is True else 'disabled'
             strategy_box.configure(state=controls_state)
-            timeframe_box.configure(state=controls_state)
+        show_news_tab(viewed_book if independent else 'V1' if v1_active else None)
         instrument_box.configure(values=list(choices.values()))
         label=choices.get(current,next(iter(choices.values()),''))
         if selected.get()!=label:selected.set(label)
@@ -429,6 +571,8 @@ def attach(app, parent):
             mode_label=f"{STRATEGY_CODES[entry['strategy_mode']]} / {entry['timeframe']}" if entry else '—'
             positions.insert('','end',values=(p['isin'],mode_label,p['quantity'],p['cost'],p.get('mark','—'),price_text(p.get('active_stop',plan.get('stop'))),price_text(plan.get('target')),p.get('market_value','—'),p.get('unrealized','—'),ident['venue'],ident['currency'],p.get('mark_at','—'),detail))
         next_journal=state.get('journal',{})
+        if 'legacy' in next_journal.get('indices',{}):
+            scope_box.configure(values=('Текущий счёт','Архив',legacy_label))
         if next_journal!=journal:
             journal=next_journal
             render_journal()
@@ -443,32 +587,49 @@ def attach(app, parent):
         busy=True
         from paper_account import status
         revision=mode_revision
-        if app.job(lambda:status(app.store.path,include_journal=True),lambda state:done(state,revision),failed,
+        book=viewed_book if independent else None
+        if app.job(lambda:status(app.store.path,include_journal=True,portfolio=book),lambda state:done(state,revision),failed,
                    lane='read',key='paper_portfolio_read:'+str(parent)) is False:busy=False
     def draft_mode():
-        return (next((key for key,label in strategy_labels.items() if label==strategy.get()),None),
-                next((key for key,label in timeframe_labels.items() if label==timeframe.get()),None))
+        return next((key for key,label in strategy_labels.items() if label==strategy.get()),None)
     def edit_mode(_):
-        nonlocal editing_mode
-        if draft_mode()[0]=='AGGRESSIVE':
-            timeframe.set(timeframe_labels['1H'])
-        editing_mode=draft_mode()!=saved_mode
-        apply_button.configure(state='normal' if editing_mode and all(draft_mode()) else 'disabled')
-        mode_state.set('Выберите интервал' if editing_mode and not draft_mode()[1] else '')
+        nonlocal editing_mode,saved_mode,viewed_book,journal,mode_revision
+        draft=draft_mode()
+        if independent:
+            if draft is None:
+                return
+            notebook.select(journal_tab)
+            if draft!=saved_mode:
+                mode_revision+=1
+                saved_mode=draft
+                viewed_book=STRATEGY_CODES[draft]
+                show_news_tab(viewed_book)
+                order_box.configure(text='Поручение владельца • '+viewed_book)
+                mode_state.set('')
+                scope.set('Текущий счёт')
+                strategy_filter.set('Все стратегии')
+                journal={}
+                positions.delete(*positions.get_children())
+                render_study({})
+                move_page(0)
+                set_summary(tr('Загрузка демосчёта…')+' '+viewed_book)
+                refresh()
+            return
+        editing_mode=draft is not None and (draft!=saved_mode or draft=='V1' and not v1_active)
+        apply_button.configure(state='normal' if editing_mode else 'disabled')
+        mode_state.set('')
     def choose_mode():
         nonlocal saving_mode
-        requested_strategy,requested_tf=draft_mode()
-        if not requested_strategy or not requested_tf:
-            mode_state.set('Выберите интервал для стратегии')
+        requested_strategy=draft_mode()
+        if not requested_strategy:
             return
         saving_mode=True
         apply_button.configure(state='disabled')
         strategy_box.configure(state='disabled')
-        timeframe_box.configure(state='disabled')
         mode_state.set('Сохраняю…')
         def work():
             with app.store.connect() as db:
-                return set_trading_mode(db,requested_strategy,requested_tf)
+                return set_trading_mode(db,requested_strategy)
         def finish(value, text):
             nonlocal saving_mode,saved_mode,mode_revision,editing_mode
             saving_mode=False
@@ -476,19 +637,17 @@ def attach(app, parent):
             mode_revision+=1
             saved_mode=value
             if not alive():return
-            strategy.set(strategy_labels[saved_mode[0]])
-            timeframe.set(timeframe_labels.get(saved_mode[1],'1H + 4H'))
+            strategy.set(strategy_labels[saved_mode])
             strategy_box.configure(state='readonly')
-            timeframe_box.configure(state='readonly')
             mode_state.set(text)
             refresh()
-        if app.job(work,lambda value:finish(value,'Сохранено'),lambda _:finish(saved_mode,'Выбор не сохранился'),
+        if app.job(work,lambda value:finish(value,'Сохранено'),
+                   lambda _:finish(saved_mode,'Выбор не сохранился'),
                    lane='misc',key='paper_auto_trading_mode') is False:
             finish(saved_mode,'Выбор не сохранился')
     apply_button=ttk.Button(auto_controls,text='Применить',command=choose_mode,state='disabled')
     apply_button.pack(side='left',before=mode_label)
     strategy_box.bind('<<ComboboxSelected>>',edit_mode)
-    timeframe_box.bind('<<ComboboxSelected>>',edit_mode)
     ttk.Button(controls,text=tr('Обновить демосчёт'),command=refresh).pack(side='left',padx=4)
     def toggle():
         def work():

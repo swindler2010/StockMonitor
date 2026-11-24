@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import data_quality as quality
 from functools import lru_cache
+from gettex_sessions import bounds as gettex_bounds, years_covered
 
 # 1m is an auxiliary recovery input only; LABELS remains the eleven UI TF.
 MINUTES={'1m':1,'5m':5,'10m':10,'15m':15,'30m':30,'1H':60,'2H':120,'3H':180,'4H':240}
@@ -18,7 +19,7 @@ def schedule(meta,first,last):
     if not name or quality.TIMEZONES[name]!=meta.get('timezone'):raise ValueError('Не подтверждён календарь/timezone площадки')
     first=pd.Timestamp(first);last=pd.Timestamp(last)
     daily=meta.get('timeframe') in ('1D','1W','1M')
-    if name=='GETTEX' and not ((int(quality.GETTEX_DAILY_START[:4]) if daily else 2026)<=first.year<=last.year<=2026):raise ValueError('Календарь GETTEX для этого TF не подтверждён')
+    if name=='GETTEX' and not years_covered(first.year,last.year,daily):raise ValueError('Календарь GETTEX для этого TF не подтверждён')
     return quality.calendar(name,first.year-1,last.year+1,daily=daily and name=='GETTEX').schedule.loc[str(first.date()):str(last.date())]
 
 def endpoints(frame):
@@ -30,10 +31,12 @@ def endpoints(frame):
     idx=frame.index.tz_convert(zone).tz_localize(None) if frame.index.tz is not None else frame.index
     first=idx.min().normalize()-pd.Timedelta(days=7)
     last=idx.max().normalize()+pd.Timedelta(days=40 if tf=='1M' else 7)
-    if frame.attrs.get('venue')=='GETTEX' and (int(quality.GETTEX_DAILY_START[:4]) if tf in ('1D','1W','1M') else 2026)<=idx.min().year<=idx.max().year<=2026:
+    daily=tf in ('1D','1W','1M')
+    if frame.attrs.get('venue')=='GETTEX' and years_covered(idx.min().year,idx.max().year,daily):
         # Calendar lookup padding is not an actual out-of-year candle. Keep
         # all real bars subject to the verified-year guard in schedule().
-        first=max(first,pd.Timestamp(quality.GETTEX_DAILY_START if tf in ('1D','1W','1M') else '2026-01-01'));last=min(last,pd.Timestamp('2026-12-31'))
+        start,end=gettex_bounds(daily)
+        first=max(first,pd.Timestamp(start));last=min(last,pd.Timestamp(end))
     sched=schedule(frame.attrs,first,last)
     if tf=='1D':
         # One calendar lookup for the entire daily archive. Slicing the schedule
@@ -148,6 +151,38 @@ def accepted_display_slots(meta,missing,target,now):
     return pd.DatetimeIndex(found)
 
 
+def factual_closed_bounds(frame,base,target,now):
+    """Exact first bucket/last close for depth selection, without OHLCV work.
+
+    Only the bound factual GETTEX path retains incomplete historical buckets.
+    All other callers must use the full aggregator with its existing guards.
+    """
+    from gettex_first import bound
+    if not bound(frame) or base not in MINUTES or target not in MINUTES or frame.index.tz is not None:
+        raise ValueError('FACTUAL_INTRADAY_BOUNDS_UNAVAILABLE')
+    now=pd.Timestamp(now)
+    if MINUTES[base]>MINUTES[target]:return None
+    if base==target:
+        data=pd.DataFrame(frame,copy=False);data.attrs={**frame.attrs,'timeframe':base}
+        ends=endpoints(data);mask=ends<=now
+        return (frame.index[mask].min(),ends[mask].max()) if mask.any() else None
+    zone=frame.attrs['timezone'];step=pd.Timedelta(minutes=MINUTES[target]);first=None;last=None
+    for _,row in schedule(frame.attrs,frame.index.min(),frame.index.max()).iterrows():
+        segments=[(row.open,row.close)] if pd.isna(row.break_start) else [(row.open,row.break_start),(row.break_end,row.close)]
+        for opening,closing in segments:
+            cutoff=min(closing,now)
+            if cutoff<=opening:continue
+            a=opening.tz_convert(zone).tz_localize(None);b=closing.tz_convert(zone).tz_localize(None)
+            limit=b if cutoff==closing else a+((cutoff-opening)//step)*step
+            left=frame.index.searchsorted(a);right=frame.index.searchsorted(limit)
+            if left>=right:continue
+            start=a+((frame.index[left]-a)//step)*step
+            end=min(a+((frame.index[right-1]-a)//step+1)*step,b).tz_localize(zone).tz_convert('UTC')
+            if first is None:first=start
+            last=end
+    return (first,last) if first is not None else None
+
+
 def aggregate(frame,base,target,now=None):
     from gettex_first import bound
     nonblocking=bound(frame)
@@ -253,9 +288,10 @@ def daily_provenance(daily, out, target, now=None, base='1D'):
             now=now,check_stale=not bounded)
         first=out.index[0]-pd.Timedelta(days=6) if target=='1W' else out.index[0]
         last=out.index[-1] if target in ('1D','1W') else out.index[-1]+pd.offsets.MonthBegin(1)-pd.Timedelta(days=1)
-        if meta.get('venue')=='GETTEX' and base=='1D' and int(quality.GETTEX_DAILY_START[:4])<=daily.index.min().year<=daily.index.max().year<=2026:
+        if meta.get('venue')=='GETTEX' and base=='1D' and years_covered(daily.index.min().year,daily.index.max().year,True):
             # Calendar lookup padding is not an out-of-range observed candle.
-            first=max(first,pd.Timestamp(quality.GETTEX_DAILY_START));last=min(last,pd.Timestamp('2026-12-31'))
+            start,end=gettex_bounds(True)
+            first=max(first,pd.Timestamp(start));last=min(last,pd.Timestamp(end))
         sched=schedule(meta,first,last)
         complete=[];ends={};tv_used=[]
         for stamp in out.index:
@@ -306,4 +342,3 @@ def daily_provenance(daily, out, target, now=None, base='1D'):
                 out.attrs['daily_provenance']['leading_partial']=str(out.index[0])
     except (ValueError,KeyError,TypeError,IndexError) as error:
         out.attrs['data_quality']={'state':'INVALID','issues':['DAILY_PROVENANCE: '+str(error)]}
-

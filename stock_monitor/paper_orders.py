@@ -71,10 +71,10 @@ def check_binding(result, args):
 
 def validate(db, info, result, args, now):
     from paper_hourly import authority, validate_analysis, order_size, SIZING
-    from paper_account import EXECUTION_TF, POLICY, money
+    from paper_account import EXECUTION_TF, POLICY, money, result_portfolio
     from paper_protection import entry_plan
     check_binding(result, args)
-    cfg = authority(db, info['isin'], result.get('identity'), allow_paused=True)
+    cfg = authority(db,info['isin'],result.get('identity'),allow_paused=True,portfolio=result_portfolio(db,result))
     manual = validate_analysis(db, info, result, now, cfg)
     if result.get('quote_blocker'):
         raise ValueError(result['quote_blocker'])
@@ -119,6 +119,7 @@ def denial(error, result=None):
         'PAPER_ORDER_RISK_SIZE_LIMIT':'Количество превышает разрешённый размер по риску или доступным средствам.',
         'PAPER_AUTO_POSITION_LIMIT':'Позиция уже открыта; повторная покупка запрещена.',
         'PAPER_INSUFFICIENT_POSITION':'Для продажи недостаточно акций на демосчёте.',
+        'PAPER_PORTFOLIO_CHANGED':'Демосчёт сменился во время проверки.',
         'PAPER_INSUFFICIENT_CASH':'Недостаточно свободных средств с учётом комиссии.',
         'PAPER_SAVE_DRAFTS_REQUIRED':'Сначала сохраните изменения в программе.',
         'PAPER_BRIDGE_DISABLED':'Разрешение на команды через Bridge выключено.',
@@ -149,9 +150,17 @@ def submit(app, args, initiator, preview=False):
         info = copy.deepcopy(next(i for i in app.watchlist if i['isin'] == args['isin']))
         args.update(timeframe='1H', _initiator=initiator, _quote_tf=intent['quote_tf'])
         args.setdefault('_deadline', time.time()+110)
+        from paper_account import ACCOUNT,PORTFOLIOS,requested_view
+        portfolio = args.get('_paper_portfolio')
+        if portfolio is None:
+            portfolio=requested_view(app.store) if callable(getattr(app.store,'setting',None)) else ACCOUNT
+        if portfolio not in (*PORTFOLIOS, ACCOUNT):
+            raise ValueError('PAPER_PORTFOLIO_UNKNOWN')
         values = dict(watchlist=[info], drafts={}, feed_errors={}, symbol=info['name'],
             timeframe='1H', period='Max', ai_config=copy.deepcopy(app.ai_config), _paper_order=intent,
             instrument_revisions=app.store.read_cache.token_for(['instrument:'+info['isin']]))
+        if portfolio!=ACCOUNT:
+            args['_paper_portfolio']=values['_paper_portfolio']=portfolio
     except Exception as error:
         future.set_result(denial(error));return future
     app._paper_busy = True
@@ -174,7 +183,7 @@ def submit(app, args, initiator, preview=False):
                     # passes the same final guards as an order, without a journal row.
                     answer = execute(db, info, result, args)
                     db.rollback()
-                    return dict(status='PREVIEW', fill=answer['fill'], position=ledger(db)['positions'],
+                    return dict(status='PREVIEW', fill=answer['fill'], position=ledger(db,portfolio)['positions'],
                         detail='Оценка цены; при нажатии BUY/SELL данные проверяются заново.')
                 return execute(db, info, result, args)
         except Exception as error:

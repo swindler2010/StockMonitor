@@ -140,4 +140,3 @@ def evaluate(contexts, selected_tf, position=None, benchmark=None, required=None
         benchmark_context=benchmark,timestamp=selected.get('signal_at'),rules_version=VERSION,
         status='DATA BLOCKED' if blockers else 'READY',
         reason='; '.join(blockers or ([r['text'] for r in (bear if signal=='SELL' else bull)][:3]+entry_blockers[:2]+warnings[:1])) or 'Нет достаточных направленных подтверждений')
-

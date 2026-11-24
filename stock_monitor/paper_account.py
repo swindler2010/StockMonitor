@@ -1,7 +1,10 @@
 """EUR-only paper account. No broker transport; quotes come from guarded analytics."""
 import json, hashlib, math, sqlite3, time, re
+from contextlib import closing
 from decimal import Decimal, ROUND_HALF_UP
 from datetime import datetime, timezone
+
+from paper_entry_modes import V2_RESEARCH_BLOCKER, V2_TIMEFRAME
 
 ALLOWED={'DE0005140008','DE0007236101','DE0007164600','DE0008404005','US0378331005'}
 # Keep the original cohort only for already-authorized historical-risk policies
@@ -9,6 +12,14 @@ ALLOWED={'DE0005140008','DE0007236101','DE0007164600','DE0008404005','US03783310
 # it does not authorize a trade or accept any historical defect.
 UNIVERSE_VERSION='registered_eur_equities_v1'
 ACCOUNT='five-eur-10000-v1'
+PORTFOLIOS=('V1','V2','V3','V4','V5')
+PORTFOLIO_SETTING='paper_portfolios'
+PORTFOLIO_VERSION=1
+AUTO_PORTFOLIOS_SETTING='paper_auto_portfolios'
+AUTO_PORTFOLIOS_VERSION=2
+VIEW_PORTFOLIO_SETTING='paper_view_portfolio'
+READY_PORTFOLIOS=('V1','V4','V5')
+READINESS_BLOCKERS={'V2':V2_RESEARCH_BLOCKER,'V3':'V2_SEED_PROOF_MISSING'}
 EXECUTION_TF='15m'
 # Stored account contract; legacy rows retain the original description.
 POLICY={'currency':'EUR','starting_cash':'10000.00','commission':'1.00','spread_bps':'10','max_bar_age_seconds':900,'execution':'closed 5m/15m close +/- model half-spread; virtual only'}
@@ -41,12 +52,164 @@ def initialize(db):
     db.execute('INSERT OR IGNORE INTO paper_accounts VALUES (?,?)',(ACCOUNT,json.dumps(POLICY,sort_keys=True)))
     assert json.loads(db.execute('SELECT policy FROM paper_accounts WHERE id=?',(ACCOUNT,)).fetchone()[0])==POLICY,'PAPER_POLICY_MISMATCH'
 
-def ledger(db):
-    if not db.execute("SELECT 1 FROM sqlite_master WHERE name='paper_accounts'").fetchone():return {'status':'NOT_INITIALIZED','virtual':True}
+def initialize_portfolios(db):
+    """One transaction, no mutation of the old combined history or balances."""
+    initialize(db)
+    db.execute('CREATE TABLE IF NOT EXISTS paper_portfolio_fills '
+               '(id TEXT PRIMARY KEY, portfolio TEXT NOT NULL, digest TEXT NOT NULL, payload TEXT NOT NULL)')
+    db.execute('CREATE INDEX IF NOT EXISTS paper_fills_by_portfolio ON paper_portfolio_fills(portfolio)')
+    db.execute('CREATE TABLE IF NOT EXISTS paper_portfolio_archive '
+               '(id TEXT PRIMARY KEY, portfolio TEXT NOT NULL, digest TEXT NOT NULL, '
+               'payload TEXT NOT NULL, reset_epoch TEXT NOT NULL)')
+    db.execute('CREATE INDEX IF NOT EXISTS paper_archive_by_portfolio ON paper_portfolio_archive(portfolio)')
+    policy=json.dumps(POLICY,sort_keys=True)
+    db.executemany('INSERT OR IGNORE INTO paper_accounts VALUES (?,?)',
+                   [(name,policy) for name in PORTFOLIOS])
+    for name in PORTFOLIOS:
+        if db.execute('SELECT policy FROM paper_accounts WHERE id=?',(name,)).fetchone()[0]!=policy:
+            raise ValueError('PAPER_POLICY_MISMATCH')
+    db.execute('INSERT OR IGNORE INTO settings VALUES (?,?)',
+               (PORTFOLIO_SETTING,json.dumps(PORTFOLIO_VERSION)))
+
+
+def portfolios_enabled(db):
+    from paper_hourly import read
+    return read(db,PORTFOLIO_SETTING)==PORTFOLIO_VERSION
+
+
+def portfolio_for_mode(config, enabled):
+    if not enabled:
+        return ACCOUNT
+    from paper_entry_modes import STRATEGY_CODES
+    return STRATEGY_CODES[config.get('strategy_mode','V1')]
+
+
+def automatic_portfolios(policy):
+    if not isinstance(policy,dict) or policy.get('version')!=AUTO_PORTFOLIOS_VERSION:
+        return None
+    ready=policy.get('ready')
+    return tuple(book for book in PORTFOLIOS if book in ready) if isinstance(ready,list) else ()
+
+
+def independent_portfolios(db):
+    from paper_hourly import read
+    return automatic_portfolios(read(db,AUTO_PORTFOLIOS_SETTING))
+
+
+def portfolio_config(config,portfolio):
+    from paper_entry_modes import STRATEGY_CODES
+    from paper_v1_long_term import PROFILE_KEY,MODEL
+    modes={code:mode for mode,code in STRATEGY_CODES.items()}
+    if portfolio not in modes:
+        return config
+    result=dict(config,strategy_mode=modes[portfolio])
+    if portfolio=='V1':
+        result[PROFILE_KEY]=MODEL
+    return result
+
+
+def selected_portfolio(db):
+    from paper_hourly import CONFIG, read
+    split=portfolios_enabled(db)
+    viewed=read(db,VIEW_PORTFOLIO_SETTING) if split and independent_portfolios(db) is not None else None
+    if viewed in PORTFOLIOS:
+        return viewed
+    return portfolio_for_mode(read(db,CONFIG,{}),split)
+
+
+def requested_view(store):
+    if store.setting(PORTFOLIO_SETTING,None)!=PORTFOLIO_VERSION:
+        return ACCOUNT
+    view=store.setting(VIEW_PORTFOLIO_SETTING,None)
+    if view in PORTFOLIOS and automatic_portfolios(store.setting(AUTO_PORTFOLIOS_SETTING,None)) is not None:
+        return view
+    return portfolio_for_mode(store.setting('paper_auto_1h',{}),True)
+
+
+def entry_status_key(portfolio,isin):
+    return f'paper_auto_status:{portfolio}:{isin}'
+
+
+def initialize_independent_automation(db):
+    from paper_hourly import CONFIG, STATUS, read
+    if independent_portfolios(db) is not None:
+        return
+    cfg=read(db,CONFIG,{})
+    previous=portfolio_for_mode(cfg,True)
+    db.execute('INSERT OR IGNORE INTO settings VALUES (?,?)',(VIEW_PORTFOLIO_SETTING,json.dumps(previous)))
+    db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',(AUTO_PORTFOLIOS_SETTING,
+        json.dumps(dict(version=AUTO_PORTFOLIOS_VERSION,ready=list(READY_PORTFOLIOS)))))
+    for isin in cfg.get('identities',{}):
+        status=read(db,STATUS+isin)
+        if status and status.get('strategy_mode','V1')==cfg.get('strategy_mode','V1'):
+            db.execute('INSERT OR IGNORE INTO settings VALUES (?,?)',
+                       (entry_status_key(previous,isin),json.dumps(status)))
+
+
+def result_portfolio(db,result):
+    return result.get('paper_portfolio') or selected_portfolio(db)
+
+
+def portfolio_epoch_key(portfolio):
+    return 'paper_epoch' if portfolio==ACCOUNT else 'paper_epoch:'+portfolio
+
+
+def operation_rows(db,portfolio,*,archived=False,revision_only=False):
+    """All receipts in one portfolio, in original execution order."""
+    if portfolio==ACCOUNT:
+        table='paper_fill_archive' if archived else 'paper_fills'
+        if archived and not db.execute(
+                'SELECT 1 FROM sqlite_master WHERE type=? AND name=?',('table',table)).fetchone():
+            return []
+        where,args='',()
+    else:
+        table='paper_portfolio_archive' if archived else 'paper_portfolio_fills'
+        where,args=' WHERE portfolio=?',(portfolio,)
+    if revision_only:
+        columns='id,digest'
+    else:
+        columns='id,digest,payload,reset_epoch' if archived else 'id,digest,payload'
+    return db.execute(f'SELECT {columns} FROM {table}{where} ORDER BY rowid',args).fetchall()
+
+
+def saved_fill(db,request_id,*,include_archive=True):
+    """Request IDs are unique across ledgers, including the old journal."""
+    row=db.execute('SELECT digest,payload FROM paper_fills WHERE id=?',(request_id,)).fetchone()
+    if row is not None:
+        return ACCOUNT,*row,False
+    if portfolios_enabled(db):
+        row=db.execute('SELECT portfolio,digest,payload FROM paper_portfolio_fills WHERE id=?',(request_id,)).fetchone()
+        if row is not None:
+            return *row,False
+        if include_archive:
+            row=db.execute('SELECT portfolio,digest,payload FROM paper_portfolio_archive WHERE id=?',(request_id,)).fetchone()
+            if row is not None:
+                return *row,True
+    if include_archive and db.execute(
+            "SELECT 1 FROM sqlite_master WHERE name='paper_fill_archive'").fetchone():
+        row=db.execute('SELECT digest,payload FROM paper_fill_archive WHERE id=?',(request_id,)).fetchone()
+        if row is not None:
+            return ACCOUNT,*row,True
+    return None
+
+
+def maintained_positions(db):
+    if not portfolios_enabled(db):
+        return ledger(db).get('positions',[])
+    return [p for name in (*PORTFOLIOS,ACCOUNT) for p in ledger(db,name).get('positions',[])
+            if Decimal(p['quantity'])>0]
+
+
+def ledger(db,portfolio=None):
+    if not db.execute("SELECT 1 FROM sqlite_master WHERE name='paper_accounts'").fetchone():
+        return {'status':'NOT_INITIALIZED','virtual':True}
+    portfolio=portfolio or selected_portfolio(db)
+    if portfolio!=ACCOUNT and (portfolio not in PORTFOLIOS or not portfolios_enabled(db)):
+        raise ValueError('PAPER_PORTFOLIO_UNKNOWN')
     from paper_protection import management_key
     from paper_hourly import read
     cash=money(POLICY['starting_cash']);realized=money(0);fees=money(0);positions={};fills=[]
-    for (payload,) in db.execute('SELECT payload FROM paper_fills ORDER BY rowid'):
+    for _,_,payload in operation_rows(db,portfolio):
         e=json.loads(payload);qty=Decimal(e['quantity']);gross=Decimal(e['gross']);fee=Decimal(e['fee'])
         key=(e['isin'],json.dumps(e['identity'],sort_keys=True))
         p=positions.setdefault(key,{'isin':key[0],'identity':e['identity'],'quantity':Decimal(0),'cost':money(0)})
@@ -73,9 +236,11 @@ def ledger(db):
             management=read(db,management_key(p['auto_entry']['request_id']),{})
             if management:
                 p['active_stop']=management['stop']
+        if portfolio!=ACCOUNT or portfolios_enabled(db):
+            p['portfolio']=portfolio
         output.append({**p,'quantity':str(p['quantity']),'cost':str(money(p['cost'])),'unrealized':None if p['quantity'] else '0.00','mark_status':'REQUIRES_FRESH_READY_QUOTE' if p['quantity'] else 'FLAT'})
     flat=all(Decimal(p['quantity'])==0 for p in output)
-    return {'status':'ACTIVE','virtual':True,'account':ACCOUNT,'policy':POLICY,'allowed_isins':registered_isins(db),
+    return {'status':'ACTIVE','virtual':True,'account':portfolio,'policy':POLICY,'allowed_isins':registered_isins(db),
             'universe':{'version':UNIVERSE_VERSION,'automatic_new_instruments':True,'scope':'Registered stocks; verified EUR listing and all execution gates required'},
             'execution_timeframe':EXECUTION_TF,'cash':str(cash),'realized':str(money(realized)),'fees':str(fees),'unrealized':'0.00' if flat else None,'equity':str(cash) if flat else None,'positions':output,'fills':fills,'currency':'EUR','broker_orders':False}
 
@@ -138,6 +303,12 @@ def validate_execution_inputs(db,result,isin):
     if not token or 'instrument:'+isin not in token or not any(k.startswith('market:'+isin+':') for k in token):raise ValueError('PAPER_NO_INPUT_REVISIONS')
     if db.execute("SELECT 1 FROM settings WHERE key='paper_epoch'").fetchone() and 'setting:paper_epoch' not in token:
         raise ValueError('PAPER_ACCOUNT_RESET')
+    if portfolios_enabled(db):
+        scope='setting:'+portfolio_epoch_key(result_portfolio(db,result))
+        if scope not in token or 'setting:'+PORTFOLIO_SETTING not in token:
+            raise ValueError('PAPER_ACCOUNT_RESET')
+        if independent_portfolios(db) is not None and 'setting:'+AUTO_PORTFOLIOS_SETTING not in token:
+            raise ValueError('PAPER_STALE_INPUTS')
     for scope,rev in token.items():
         row=db.execute('SELECT revision FROM input_revisions WHERE scope=?',(scope,)).fetchone()
         if (row[0] if row else 0)!=rev:raise ValueError('PAPER_STALE_INPUTS')
@@ -155,20 +326,38 @@ def execute(db,info,result,args,now=None):
     q=Decimal(str(qty))
     if q.as_tuple().exponent < -6:raise ValueError('PAPER_QUANTITY_PRECISION')
     intent=result.get('discretionary')
+    selected=selected_portfolio(db)
+    portfolio=result_portfolio(db,result)
+    split=portfolios_enabled(db)
+    if split and not result.get('paper_portfolio'):
+        raise ValueError('PAPER_PORTFOLIO_REQUIRED')
+    if portfolio not in (*PORTFOLIOS,ACCOUNT) or not split and portfolio!=ACCOUNT:
+        raise ValueError('PAPER_PORTFOLIO_UNKNOWN')
+    if args.get('_paper_portfolio',portfolio)!=portfolio:
+        raise ValueError('PAPER_PORTFOLIO_CHANGED')
+    manage_only=result.get('paper_manage_only') is True
+    ready=independent_portfolios(db)
+    if manage_only and (intent or args['side']!='SELL'):
+        raise ValueError('PAPER_PORTFOLIO_CHANGED')
+    if not manage_only:
+        if ready is None and portfolio!=selected:
+            raise ValueError('PAPER_PORTFOLIO_CHANGED')
+        if ready is not None and portfolio not in PORTFOLIOS:
+            raise ValueError('PAPER_PORTFOLIO_CHANGED')
+        if ready is not None and 'hourly' in result and not intent and portfolio not in ready:
+            raise ValueError('PAPER_STRATEGY_NOT_READY')
     digest_fields={k:args.get(k) for k in ('request_id','isin','side','quantity','timeframe')}
+    if portfolio!=ACCOUNT:
+        digest_fields['paper_portfolio']=portfolio
     if intent:
         from paper_orders import check_binding
         check_binding(result,args)
         digest_fields['discretionary']=intent
     digest=hashlib.sha256(json.dumps(digest_fields,sort_keys=True).encode()).hexdigest()
-    prior=db.execute('SELECT digest,payload FROM paper_fills WHERE id=?',(args['request_id'],)).fetchone()
-    archived=False
-    if not prior and db.execute("SELECT 1 FROM sqlite_master WHERE name='paper_fill_archive'").fetchone():
-        prior=db.execute('SELECT digest,payload FROM paper_fill_archive WHERE id=?',(args['request_id'],)).fetchone()
-        archived=bool(prior)
+    prior=saved_fill(db,args['request_id'])
     if prior:
-        if prior[0]!=digest:raise ValueError('PAPER_REQUEST_REUSED')
-        return {'status':'COMPLETED','fill':json.loads(prior[1]),'idempotent':True,'archived':archived}
+        if prior[:2]!=(portfolio,digest):raise ValueError('PAPER_REQUEST_REUSED')
+        return {'status':'COMPLETED','fill':json.loads(prior[2]),'idempotent':True,'archived':prior[3]}
     token=validate_execution_inputs(db,result,info['isin'])
     persisted=registered_instrument(db,info['isin'])
     contract=result.get('execution_context') or {}
@@ -191,8 +380,19 @@ def execute(db,info,result,args,now=None):
     quote_result=result['execution_quote'] if hourly else result
     if result.get('identity',{}).get('source')=='gettex_chart' and 'setting:gettex_chart:'+info['isin']+':'+quote_result['timeframe'] not in token:
         raise ValueError('PAPER_NO_LISTING_REVISION')
-    listing=stored_identity(db,persisted,result.get('identity',{}),quote_result['timeframe'])
+    analysis_identity=result.get('identity',{})
+    origin=analysis_identity
+    if hourly and not intent:
+        from paper_v2_quotes import bound_identity
+        origin=bound_identity(db,persisted,result)
+    listing=stored_identity(db,persisted,origin,quote_result['timeframe'])
     identity,b=quote(persisted,quote_result,now,accepted_historical_risk=manual is not None,stored_listing=listing)
+    execution_identity=identity
+    if identity!=analysis_identity:
+        # Only the exact-row V2 adapter above may separate price provenance
+        # from the unchanged canonical position/analysis binding.
+        if identity!=origin or not hourly or intent:raise ValueError('PAPER_AUTO_QUOTE_IDENTITY_BLOCKED')
+        identity=analysis_identity
     if (not hourly and contract.get('status')!='READY' and manual is None) or contract.get('isin')!=info['isin']:
         raise ValueError('PAPER_WINDOW_BLOCKED')
     if manual is None and contract.get('trading_engine',{}).get('status')!='READY':raise ValueError('PAPER_ENGINE_DATA_BLOCKED')
@@ -206,7 +406,12 @@ def execute(db,info,result,args,now=None):
     from calculation_window import execution_eligibility
     smart=hourly_receipt if hourly else manual if manual is not None else execution_eligibility(db,persisted,result['timeframe'],identity,instant,args['side'])
     if not hourly and manual is None and contract.get('smart_eligibility')!=smart:raise ValueError('PAPER_SMART_CONTEXT_CHANGED')
-    state=ledger(db);fee=money(POLICY['commission']);half=Decimal(POLICY['spread_bps'])/Decimal(20000)
+    execution_policy=POLICY
+    if portfolio=='V2' and smart.get('execution_policy'):
+        from paper_v2_30m import COSTS
+        if smart['execution_policy']!=COSTS:raise ValueError('V2_EXECUTION_POLICY_CHANGED')
+        execution_policy={**POLICY,**COSTS}
+    state=ledger(db,portfolio);fee=money(execution_policy['commission']);half=Decimal(execution_policy['spread_bps'])/Decimal(20000)
     price=Decimal(str(b['close']))*(1+half if args['side']=='BUY' else 1-half);gross=money(price*q)
     if args['side']=='BUY' and gross+fee>Decimal(state['cash']):raise ValueError('PAPER_INSUFFICIENT_CASH')
     if args['side']=='SELL':
@@ -214,27 +419,67 @@ def execute(db,info,result,args,now=None):
         if held is None or Decimal(held['quantity'])<q:raise ValueError('PAPER_INSUFFICIENT_POSITION')
     if (time.time() if live_clock else now)>=args['_deadline']:raise ValueError('PAPER_EXPIRED')
     fill={'request_id':args['request_id'],'at':datetime.fromtimestamp(now,timezone.utc).isoformat(),'isin':info['isin'],'identity':identity,'timeframe':result['timeframe'],'side':args['side'],'quantity':str(q),'reference_price':str(b['close']),'bar_close_at':b['close_at'],'price':str(price),'gross':str(gross),'fee':str(fee),'spread_bps':POLICY['spread_bps'],'virtual':True,'input_revisions':token,'smart_eligibility':smart}
+    fill['spread_bps']=execution_policy['spread_bps']
+    if execution_identity!=identity:fill['execution_identity']=execution_identity
     if manual is not None:fill['manual_risk']=manual
     if hourly:fill['execution_quote_timeframe']=quote_result['timeframe']
     fill['initiator']=intent['initiator'] if intent else hourly_receipt.get('strategy_label','V1') if hourly else 'CHATGPT'
-    db.execute('INSERT INTO paper_fills VALUES (?,?,?)',(args['request_id'],digest,json.dumps(fill,sort_keys=True)))
-    return {'status':'COMPLETED','fill':fill,'account':ledger(db)}
+    if portfolio==ACCOUNT:
+        db.execute('INSERT INTO paper_fills VALUES (?,?,?)',(args['request_id'],digest,json.dumps(fill,sort_keys=True)))
+    else:
+        fill['paper_portfolio']=portfolio
+        db.execute('INSERT INTO paper_portfolio_fills VALUES (?,?,?,?)',
+                   (args['request_id'],portfolio,digest,json.dumps(fill,sort_keys=True)))
+    return {'status':'COMPLETED','fill':fill,'account':ledger(db,portfolio)}
 
-def status(path, *, include_journal=False):
+def status(path, *, include_journal=False,portfolio=None):
     from pathlib import Path
-    with sqlite3.connect(Path(path).resolve().as_uri()+'?mode=ro',uri=True,timeout=.2) as db:
+    with closing(sqlite3.connect(Path(path).resolve().as_uri()+'?mode=ro',uri=True,timeout=.2)) as db:
         db.execute('BEGIN')
-        state=mark_positions(db,ledger(db))
+        state=mark_positions(db,ledger(db,portfolio))
+        portfolio=state.get('account',ACCOUNT)
+        split=portfolios_enabled(db)
+        if split:
+            balances={}
+            for name in PORTFOLIOS:
+                book=state if name==portfolio else ledger(db,name)
+                balances[name]=dict(starting_cash=POLICY['starting_cash'],cash=book['cash'],
+                    realized=book['realized'],fees=book['fees'],
+                    open_positions=sum(Decimal(p['quantity'])>0 for p in book['positions']))
+            state['portfolios']=balances
+            legacy=ledger(db,ACCOUNT)
+            state['legacy_portfolio']=dict(cash=legacy['cash'],fills=len(legacy['fills']),
+                open_positions=sum(Decimal(p['quantity'])>0 for p in legacy['positions']))
         from paper_hourly import CONFIG,STATUS,read
         config=read(db,CONFIG,{})
-        state['automation']={**config,'instruments':{isin:read(db,STATUS+isin,{}) for isin in config.get('identities',{})}}
+        ready=independent_portfolios(db)
+        if ready is not None:
+            enabled=bool(config.get('enabled'))
+            running=ready if enabled else ()
+            for name,balance in state.get('portfolios',{}).items():
+                balance['automation']='ACTIVE' if name in running else 'PAUSED' if name in ready else 'NOT_READY'
+                if name not in ready and name in READINESS_BLOCKERS:
+                    balance['readiness_blocker']=READINESS_BLOCKERS[name]
+            state['automatic_portfolios']=list(running)
+            profile=portfolio_config(config,portfolio)
+            state['automation']={**profile,'enabled':portfolio in running,'global_enabled':enabled,
+                'independent':True,'instruments':{isin:read(db,entry_status_key(portfolio,isin),{})
+                    for isin in config.get('identities',{})}}
+        else:
+            state['automation']={**config,'instruments':{isin:read(db,STATUS+isin,{})
+                    for isin in config.get('identities',{})}}
+        if state['automation'].get('strategy_mode')=='V2':
+            state['automation']['instruments']={
+                isin:item for isin,item in state['automation']['instruments'].items()
+                if item.get('candidate_timeframes')==[V2_TIMEFRAME]
+                and set(item.get('timeframes',{}))<={V2_TIMEFRAME}}
         from paper_preparation import STATE
         state['automation']['preparation']=read(db,STATE,{})
-        state['archived_fills']=db.execute('SELECT COUNT(*) FROM paper_fill_archive').fetchone()[0] if db.execute("SELECT 1 FROM sqlite_master WHERE name='paper_fill_archive'").fetchone() else 0
+        state['archived_fills']=len(operation_rows(db,portfolio,archived=True))
         if include_journal:
             from paper_journal import read as journal
             from paper_v5_context_study import summary as context_study
-            state['journal']=journal(db,state.get('fills',[]))
+            state['journal']=journal(db,state.get('fills',[]),portfolio=portfolio,legacy=split)
             state['v5_context_study']=context_study(db)
         return state
 
@@ -291,4 +536,3 @@ def mark_positions(db,state,now=None):
     state['unrealized']=str(money(total)) if complete else None
     state['equity']=str(money(Decimal(state['cash'])+sum(Decimal(p.get('market_value','0')) for p in state['positions']))) if complete else None
     return state
-

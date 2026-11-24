@@ -75,11 +75,14 @@ def _digest(value):
     return hashlib.sha256(json.dumps(value,sort_keys=True,ensure_ascii=False,default=str,separators=(',',':')).encode()).hexdigest()
 
 
-def _setting_value(db, key, start=None):
+def _setting_value(db, key, start=None,projection=None):
     import json
     row=db.execute('SELECT value FROM settings WHERE key=?',(key,)).fetchone()
     if row is None:return None
     value=json.loads(row[0])
+    if key.startswith('interval_evidence:') and projection:
+        from closed_evidence import canonical
+        return canonical(value,projection)
     if isinstance(value,dict):
         if key.startswith('data_quality:'):
             value={k:v for k,v in value.items() if k not in DQ_PROGRESS_FIELDS}
@@ -180,17 +183,18 @@ def _closed_rows(db, spec):
     return [tuple(r) for r,keep in zip(rows,inside) if keep]
 
 
-def capture_closed_inputs(db, specs, token):
+def capture_closed_inputs(db, specs, token, *, memo=None):
     """Existing revisions are the fast path; exact used inputs are the proof.
 
-    Caller owns a consistent read snapshot. Later appends are outside each
-    range; corrections/deletions/insertions within it are never ignored.
+    Caller owns a consistent read snapshot and discards any memo with it.
+    Later appends are outside each range; changes within it are never ignored.
     """
     specs=[s for s in specs if s]
-    specs=list({_digest(s):s for s in [*specs,*(v for s in specs for v in s.get('recovered_inputs',[]))]}.values())
+    unique={_digest(s):s for s in [*specs,*(v for s in specs for v in s.get('recovered_inputs',[]))]}
+    specs=list(unique.values())
     wanted={s['isin'] for s in specs}
     quality_keys={f"{s['isin']}:{s['identity']['symbol']}:{s['base_tf']}" for s in specs}
-    tracked={};settings={};strict={};settings_start={}
+    tracked={};settings={};strict={};settings_start={};settings_projection={}
     from gettex_first import audit_only_scopes
     advisory=audit_only_scopes(specs)
     starts={f"{s['isin']}:{s['identity']['symbol']}:{s['base_tf']}":s.get('from') for s in specs}
@@ -204,17 +208,33 @@ def capture_closed_inputs(db, specs, token):
             if key.startswith(('history_identity:','interval_evidence:')) and key.split(':',1)[1] not in wanted:continue
             start=starts.get(key.split(':',1)[1]) if key.startswith('data_quality:') else None
             if start:settings_start[scope]=start
-            settings[scope]=_digest(_setting_value(db,key,start))
+            if key.startswith('interval_evidence:'):
+                from closed_evidence import projection
+                projected=projection(specs,key.split(':',1)[1])
+                if projected:settings_projection[scope]=projected
+            projection=settings_projection.get(scope)
+            cache=('setting',scope,revision,start,_digest(projection))
+            if memo is not None and cache in memo:
+                settings[scope]=memo[cache]
+            else:
+                settings[scope]=_digest(_setting_value(db,key,start,projection))
+                if memo is not None:memo[cache]=settings[scope]
         else:strict[scope]=revision
         tracked[scope]=revision
     series=[]
-    for spec in specs:
+    for key,spec in unique.items():
         scope='market:'+spec['isin']+':'+spec['base_tf']
         revision=(db.execute('SELECT revision FROM input_revisions WHERE scope=?',(scope,)).fetchone() or [0])[0]
         tracked[scope]=revision
-        rows=_closed_rows(db,spec)
-        series.append(dict(spec=spec,scope=scope,count=len(rows),digest=_digest(rows)))
-    return dict(version=1,revisions=tracked,strict=strict,settings=settings,settings_start=settings_start,series=series)
+        cache=('series',key,revision)
+        cached=memo.get(cache) if memo is not None else None
+        if cached is None:
+            rows=_closed_rows(db,spec)
+            cached=(len(rows),_digest(rows))
+            if memo is not None:memo[cache]=cached
+        count,digest=cached
+        series.append(dict(spec=spec,scope=scope,count=count,digest=digest))
+    return dict(version=1,revisions=tracked,strict=strict,settings=settings,settings_start=settings_start,settings_projection=settings_projection,series=series)
 
 
 def primary_closed_series(guard, isin, identity):
@@ -246,10 +266,11 @@ def validate_closed_inputs(db, guard, memo=None):
         settings_changed |= {k for k in guard['settings'] if k.startswith('setting:cp_manual_risk:')}
     for k in settings_changed:
         start=guard.get('settings_start',{}).get(k)
-        cache=('setting',k,current[k],start)
+        projection=guard.get('settings_projection',{}).get(k)
+        cache=('setting',k,current[k],start,_digest(projection))
         if k.startswith('setting:cp_manual_risk:'):
             cache += (tuple(sorted(current.items())),)
-        if cache not in memo:memo[cache]=_digest(_setting_value(db,k[len('setting:'):],start))
+        if cache not in memo:memo[cache]=_digest(_setting_value(db,k[len('setting:'):],start,projection))
         if memo[cache]!=guard['settings'][k]:raise InputRevisionChanged('Closed input changed: '+k)
     for item in guard['series']:
         if item['scope'] not in changed:continue
@@ -261,25 +282,39 @@ def validate_closed_inputs(db, guard, memo=None):
 
 @contextmanager
 def frozen_store(store):
-    """Short SQLite online backup, then compute without holding the live DB.
+    """One readonly WAL view, not a full database copy on every calculation.
 
-    The temporary read-only copy uses the SAME Store and ReadCache, not another
-    history or calculation pipeline. Only the owned temporary directory closes.
+    Legacy readers may begin their local read scopes repeatedly; those BEGINs
+    share this outer transaction. Neither reader nor cache can end its view.
+    The existing live closed-input validation still runs after this scope.
     """
-    import tempfile
-    from pathlib import Path
-    from contextlib import closing
-    with tempfile.TemporaryDirectory(prefix='sm-closed-input-') as folder:
-        path=Path(folder)/'snapshot.sqlite3'
-        with closing(sqlite3.connect(store.path.resolve().as_uri()+'?mode=ro',uri=True)) as source, closing(sqlite3.connect(path)) as dest:
-            source.backup(dest,pages=2048,sleep=.01)
-        captured=copy.copy(store);captured.path=path;captured.read_cache=ReadCache(path)
-        try:yield captured
-        finally:captured.read_cache.close()
+    class FrozenConnection(sqlite3.Connection):
+        def execute(self,sql,parameters=()):
+            if sql.strip().upper().rstrip(';')=='BEGIN' and self.in_transaction:
+                return super().execute('SELECT 1 WHERE 0')
+            return super().execute(sql,parameters)
+    db=sqlite3.connect(store.path.resolve().as_uri()+'?mode=ro',uri=True,check_same_thread=False,timeout=.2,factory=FrozenConnection)
+    db.execute('PRAGMA query_only=ON');db.execute('BEGIN')
+    db.execute('SELECT count(*) FROM input_revisions').fetchone() # pin WAL view now
+    def guard(action,a,b,*unused):
+        if action in (sqlite3.SQLITE_TRANSACTION,sqlite3.SQLITE_SAVEPOINT,sqlite3.SQLITE_ATTACH,sqlite3.SQLITE_DETACH):return sqlite3.SQLITE_DENY
+        if action==sqlite3.SQLITE_PRAGMA and a.lower()=='query_only' and b is not None and b.upper() not in ('ON','1'):return sqlite3.SQLITE_DENY
+        return sqlite3.SQLITE_OK
+    db.set_authorizer(guard)
+    captured=copy.copy(store);captured.read_cache=ReadCache(store.path,connection=db)
+    import pandas as pd
+    captured._lineage_read_view=(db,pd.Timestamp.now(tz='UTC'),{})
+    @contextmanager
+    def connect():yield db
+    captured.connect=connect
+    try:yield captured
+    finally:
+        db.set_authorizer(None)
+        captured.read_cache.close()
 
 class ReadCache:
-    def __init__(self,path,limit=64):
-        self.db=sqlite3.connect(path,check_same_thread=False,timeout=5)
+    def __init__(self,path,limit=64,connection=None):
+        self.db=connection if connection is not None else sqlite3.connect(path,check_same_thread=False,timeout=5)
         self.lock=threading.RLock();self.items=OrderedDict();self.limit=limit
         self.local=threading.local()
         self.analytics_items=OrderedDict();self.analytics_limit=128
@@ -386,4 +421,3 @@ class CachedStoreMixin:
         self.read_cache.depend('market:'+args[0]+':'+args[1])
         call=super().load_series
         return self.read_cache.get(('series',args,tuple(sorted(kwargs.items()))),lambda:call(*args,**kwargs),scoped=True,inputs=self.read_cache.token_for(['market:'+args[0]+':'+(args[1] if len(args)>1 else kwargs.get('base','15m'))]))
-

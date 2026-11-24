@@ -5,7 +5,7 @@ from math import ceil
 
 import pandas as pd
 
-from paper_v5 import HOLD_MINUTES, clean_quotes, levels, previous_daily_down_closes, _rows
+from paper_v5 import HOLD_MINUTES, clean_quotes, levels, previous_daily_down_closes, peer_rows
 from timeframes import MINUTES, schedule
 
 VERSION = 'v5_entries_selected_timeframe_v4_v1'
@@ -142,7 +142,7 @@ def decide(engine, timeframe):
                 **{key:bar[key] for key in ('breadth_available','breadth_positive','breadth_required','breadth_inputs')})
 
 
-def _series(store, db, info, identity, base, first, last):
+def _series(store, db, info, identity, base, first, last, peer_inputs=None):
     from eur_listings import stored_identity
     isin = info['isin']
     store.read_cache.depend('instrument:'+isin)
@@ -150,10 +150,11 @@ def _series(store, db, info, identity, base, first, last):
     store.read_cache.depend('setting:gettex_chart:'+isin+':'+base)
     if not stored_identity(db,info,identity,base):
         return None
-    return clean_quotes(_rows(db,isin,identity,first,last,base=base),identity['timezone'],available_bars=True)
+    return clean_quotes(peer_rows(db,isin,identity,first,last,peer_inputs,base=base),
+                        identity['timezone'],available_bars=True)
 
 
-def context(store, info, identity, signal, when, listings, timeframe):
+def context(store, info, identity, signal, when, listings, timeframe, *, post_earnings=True, peer_inputs=None):
     """Use exact native inputs and retain every source revision before execution."""
     from paper_account import registered_instrument
 
@@ -198,7 +199,7 @@ def context(store, info, identity, signal, when, listings, timeframe):
             return None
         bar.update(timeframe=timeframe,signal_at=signal,checked_at=when.isoformat(),
                    closed=bar['closed'].isoformat(),
-                   report_date=report_for(calendar,PUBLISHED_REPORTS.get(info['isin'],()),bar['session_day']))
+                   report_date=report_for(calendar,PUBLISHED_REPORTS.get(info['isin'],()),bar['session_day']) if post_earnings else None)
         if not is_daily:
             store.read_cache.depend('market:'+info['isin']+':1D')
             store.read_cache.depend('setting:gettex_chart:'+info['isin']+':1D')
@@ -215,7 +216,8 @@ def context(store, info, identity, signal, when, listings, timeframe):
                     continue
                 if is_daily:
                     date = bar['session_day']
-                    values = _series(store,db,peer,meta,base,date,date+' 23:59:59')
+                    values = _series(store,db,peer,meta,base,date,date+' 23:59:59',
+                        peer_inputs if isin!=info['isin'] else None)
                     if values is not None and len(values)==1:
                         peers.append((isin,bool(values.close.iloc[0]>values.open.iloc[0])))
                 else:
@@ -225,7 +227,8 @@ def context(store, info, identity, signal, when, listings, timeframe):
                     slots = pd.date_range(opening,opening+pd.Timedelta(hours=1),freq=quarter,inclusive='left').union(
                         pd.date_range(stamp,end,freq=quarter,inclusive='left'))
                     values = raw if isin==info['isin'] else _series(store,db,peer,meta,base,
-                        slots[0].tz_convert(zone).tz_localize(None),slots[-1].tz_convert(zone).tz_localize(None))
+                        slots[0].tz_convert(zone).tz_localize(None),slots[-1].tz_convert(zone).tz_localize(None),
+                        peer_inputs)
                     if values is not None:
                         selected = values.loc[values.index.isin(slots)]
                         if (not selected.empty and selected.index.min()<opening+pd.Timedelta(hours=1)

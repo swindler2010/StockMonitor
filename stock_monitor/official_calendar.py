@@ -1,4 +1,4 @@
-"""Date-only official schedules, presentation only; never a trading risk input."""
+"""Official schedules for presentation; never a trading risk input."""
 from datetime import date, datetime, timezone
 from html.parser import HTMLParser
 from zoneinfo import ZoneInfo
@@ -8,6 +8,14 @@ SETTING = 'ui_official_calendar'
 SOURCES = {
     'ECB': 'https://www.ecb.europa.eu/press/calendars/mgcgc/html/index.en.html',
     'FED': 'https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm',
+    'BLS': 'https://www.bls.gov/schedule/news_release/bls.ics',
+    'BEA': 'https://www.bea.gov/news/schedule/ics/online-calendar-subscription.ics',
+}
+SOURCE_PAGES = {**SOURCES,'BLS':'https://www.bls.gov/schedule/news_release/','BEA':'https://www.bea.gov/news/schedule'}
+ECONOMIC_RELEASES = {
+    'BLS': {'consumer price index':'US_CPI','producer price index':'US_PPI',
+            'employment situation':'US_JOBS','job openings and labor turnover':'US_JOLTS'},
+    'BEA': {'gross domestic product,':'US_GDP','gdp (':'US_GDP','personal income and outlays':'US_PCE'},
 }
 MONTHS = {v: n for n, v in enumerate(('January', 'February', 'March', 'April', 'May', 'June',
                                     'July', 'August', 'September', 'October', 'November', 'December'), 1)}
@@ -48,10 +56,51 @@ class Blocks(HTMLParser):
 def row(source, start, end, kind, original):
     if end < start or (end-start).days > 10: raise ValueError('CALENDAR_DATE_RANGE')
     return dict(source=source, date=start.isoformat(), end_date=end.isoformat(), kind=kind,
-                precision='DATE_RANGE' if end != start else 'DATE', original=original[:800], url=SOURCES[source])
+                precision='DATE_RANGE' if end != start else 'DATE', original=original[:800], url=SOURCE_PAGES[source])
+
+
+def parse_economic_calendar(source, data):
+    if len(data)>2_000_000:
+        raise ValueError('CALENDAR_TOO_LARGE')
+    content=data.decode('utf-8-sig').replace('\r\r\n','\n').replace('\r\n','\n')
+    content=re.sub(r'\n[ \t]', '', content)
+    if not content.startswith('BEGIN:VCALENDAR'):
+        raise ValueError('ECONOMIC_CALENDAR_FORMAT_CHANGED')
+    releases=ECONOMIC_RELEASES[source]
+    events=[]
+    eastern=ZoneInfo('America/New_York')
+    berlin=ZoneInfo('Europe/Berlin')
+    for block in re.findall(r'^BEGIN:VEVENT\s*\n(.*?)^END:VEVENT',content,re.M|re.S)[:2000]:
+        fields = {k:(name,value) for line in block.splitlines() if ':' in line
+                  for name, value in [line.split(':',1)] for k in [name.split(';')[0]]}
+        if fields.get('STATUS',('', ''))[1]=='CANCELLED':
+            continue
+        summary=fields.get('SUMMARY',('', ''))[1].replace(r'\,',',')
+        name=summary.casefold().removeprefix('the ')
+        kind=next((kind for label,kind in releases.items() if name.startswith(label)), None)
+        prop,value=fields.get('DTSTART',('', ''))
+        if not kind or not value:
+            continue
+        if re.fullmatch(r'\d{8}',value):
+            day=datetime.strptime(value,'%Y%m%d').date()
+            events.append(row(source,day,day,kind,summary))
+        elif re.fullmatch(r'\d{8}T\d{6}Z?',value):
+            timezone_id=prop.split('TZID=',1)[1].split(';')[0].strip('"') if 'TZID=' in prop else ''
+            if not value.endswith('Z') and timezone_id not in ('','America/New_York','US/Eastern'):
+                continue
+            instant=datetime.strptime(value.rstrip('Z'),'%Y%m%dT%H%M%S').replace(
+                tzinfo=timezone.utc if value.endswith('Z') else eastern)
+            day=instant.astimezone(berlin).date()
+            events.append(dict(row(source,day,day,kind,summary),precision='TIME',
+                               starts_at=instant.astimezone(timezone.utc).isoformat()))
+    if not events:
+        raise ValueError('ECONOMIC_CALENDAR_FORMAT_CHANGED_OR_EMPTY')
+    return sorted({(r['date'],r['kind']):r for r in events}.values(),key=lambda r:r['date'])[-500:]
 
 
 def parse(source, data, year_floor=None):
+    if source in ECONOMIC_RELEASES:
+        return parse_economic_calendar(source,data)
     year_floor = year_floor or datetime.now(ZoneInfo('Europe/Berlin')).year
     blocks = Blocks(data.decode('utf-8-sig')).blocks
     out = []
@@ -113,5 +162,5 @@ def upcoming(snapshot, today=None, limit=100):
                 if date.fromisoformat(item['end_date']) < today: continue
                 date.fromisoformat(item['date'])
             except (ValueError, TypeError, KeyError): continue
-            out.append({**item, 'source': source, 'url': SOURCES[source], 'stale': stale})
+            out.append({**item, 'source': source, 'url': SOURCE_PAGES[source], 'stale': stale})
     return sorted(out, key=lambda r: (r['date'], r['source']))[:limit]

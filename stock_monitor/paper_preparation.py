@@ -12,6 +12,7 @@ import time
 VERSION='sequential_ready_gettex_v1'
 STATE='paper_auto_preparation'
 RECEIPT='paper_auto_admission:'
+ATTEMPT='paper_auto_preparation_attempt:'
 
 
 def policy(db):
@@ -52,8 +53,8 @@ def candidate_authority(db,isin,identity=None):
     return cfg,exact
 
 
-def retry_inputs(db,isin,identity):
-    """Cheap wake-up token, not an analytical or execution proof."""
+def retry_scopes(isin,identity):
+    """Semantic market and quality revisions used to wake PAPER work."""
     from paper_hourly import CONFIG
     scopes=['instrument:'+isin,'setting:'+CONFIG,'setting:paper_epoch',
         'setting:cp_manual_risk:'+isin,'setting:interval_evidence:'+isin]
@@ -62,6 +63,11 @@ def retry_inputs(db,isin,identity):
             'setting:data_quality:'+isin+':'+str(identity.get('symbol',''))+':'+base])
     # Source receipts update even without new candles. Only semantic input
     # revisions (market/DQ/policy) wake the calculation, not HTTP timestamps.
+    return scopes
+
+
+def retry_inputs(db,isin,identity):
+    scopes=retry_scopes(isin,identity)
     rows=dict(db.execute('SELECT scope,revision FROM input_revisions WHERE scope IN ('+
         ','.join('?' for _ in scopes)+')',scopes))
     return {s:rows.get(s,0) for s in scopes}
@@ -69,39 +75,52 @@ def retry_inputs(db,isin,identity):
 
 def choose(db,now):
     """Persist one candidate and its retry time. Called off the UI thread."""
-    import pandas as pd
-    from candle_schedule import boundary
-    from paper_hourly import read,STATUS
-    from paper_account import registered_instrument
-    cfg,p=policy(db);old=read(db,STATE,{})
-    active=old.get('isin') if old.get('epoch')==cfg['epoch'] else None
-    if active and active not in cfg['identities']:
-        try:registered_instrument(db,active)
-        except ValueError:active=None
-    else:active=None
-    if old.get('epoch')==cfg['epoch'] and old.get('next_check',0)>now:
-        if not active or old.get('retry_inputs')==retry_inputs(db,active,old.get('identity',{})):return None
-    if active is None:
-        # Owner prerequisites are still checked by policy(). Another stock's
-        # quote age or CP assessment is not this candidate's input under #20.
-        # Keep one sequential candidate; execution guards remain per order.
-        candidates=[]
-        for isin,payload in db.execute('SELECT isin,payload FROM instruments ORDER BY isin'):
-            if isin in cfg['identities']:continue
-            try:info=registered_instrument(db,isin)
-            except ValueError:continue
-            candidates.append(info)
-        rank={isin:n for n,isin in enumerate(p.get('priority',[]))}
-        info=min(candidates,key=lambda i:(rank.get(i['isin'],len(rank)),i['isin']),default=None)
-        if info is None:return None
-    else:info=registered_instrument(db,active)
-    isin=info['isin'];saved=read(db,'gettex_chart:'+isin+':15m',{})
+    from paper_hourly import read
+    from paper_account import instrument_allowed
+    from eur_listings import stored_identity
+
+    cfg,p=policy(db)
+    old=read(db,STATE,{})
+    current_epoch=old.get('epoch')==cfg['epoch']
+    attempts={key[len(ATTEMPT):]:json.loads(value) for key,value in
+        db.execute("SELECT key,value FROM settings WHERE key LIKE ?",(ATTEMPT+'%',))}
+    priority={isin:index for index,isin in enumerate(p.get('priority',[]))}
+    candidates=[]
+    for isin,payload in db.execute('SELECT isin,payload FROM instruments ORDER BY isin'):
+        if isin in cfg['identities']:
+            continue
+        info=json.loads(payload)
+        if not instrument_allowed(info) or info['isin']!=isin:
+            continue
+        saved=read(db,'gettex_chart:'+isin+':15m',{})
+        identity=saved.get('identity',{})
+        previous=old if current_epoch and old.get('isin')==isin else attempts.get(isin,{})
+        if previous.get('epoch')!=cfg['epoch']:
+            previous={}
+        # A confirmed listing is the CP bootstrap handoff. An unverified
+        # listing stays in CP and does not consume the trading worker.
+        if not stored_identity(db,info,identity,'15m'):
+            continue
+        retry=retry_inputs(db,isin,identity)
+        if (previous.get('next_check',0)>now and previous.get('retry_inputs')==retry
+                and previous.get('identity')==identity):
+            continue
+        # Give every waiting security one pass before retrying the same one.
+        report=read(db,'cp_eligibility:'+isin,{})
+        hourly_ready=any(candidate.get('timeframe')=='1H' and candidate.get('analysis_ready')
+                         for candidate in report.get('candidates',()))
+        rank=(previous.get('at',0),not hourly_ready,priority.get(isin,len(priority)),isin)
+        candidates.append((rank,info,identity,retry,previous))
+    if not candidates:
+        return None
+    _,info,identity,retry,previous=min(candidates,key=lambda candidate:candidate[0])
+    isin=info['isin']
     item=dict(isin=isin,name=info.get('name',isin),epoch=cfg['epoch'],
-        identity=saved.get('identity',{}),state='PREPARING',execution_permission=False,
-        requested_at=old.get('requested_at',now) if active else now,
-        retry_inputs=retry_inputs(db,isin,saved.get('identity',{})),
-        at=now,next_check=now+300,reason='Проверка закрытых 1H/4H/1D; подключение отдельно от исполнения; сделок нет')
+        identity=identity,state='PREPARING',execution_permission=False,
+        requested_at=previous.get('requested_at',now),retry_inputs=retry,
+        at=now,next_check=now+300,reason='Проверка закрытых 1H/4H/1D и отдельного допуска')
     write(db,STATE,item)
+    write(db,ATTEMPT+isin,item)
     return info
 
 
@@ -199,6 +218,8 @@ def admit(db,info,result,now):
         q=result.get('execution_quote',{})
         if q.get('identity')!=identity or q.get('isin')!=info['isin']:
             raise ValueError('PAPER_AUTO_QUOTE_IDENTITY_BLOCKED')
+        if q.get('data_quality',{}).get('state')=='INVALID':
+            raise ValueError('PAPER_PREPARATION_QUOTE_INVALID')
         if 'setting:gettex_chart:'+info['isin']+':'+str(q.get('timeframe')) not in token:
             raise ValueError('PAPER_NO_LISTING_REVISION')
         quote(info,q,now,stored_listing=stored_identity(db,info,identity,q.get('timeframe')))
@@ -210,6 +231,7 @@ def admit(db,info,result,now):
     cfg=copy.deepcopy(cfg);cfg['identities'][info['isin']]=identity
     cfg.setdefault('names',{})[info['isin']]=info.get('name',info['isin'])
     write(db,CONFIG,cfg);write(db,RECEIPT+info['isin'],report);write(db,STATE,report)
+    db.execute('DELETE FROM settings WHERE key=?',(ATTEMPT+info['isin'],))
     return report
 
 
@@ -252,5 +274,5 @@ def turn(app):
                 execution_permission=False,reason=str(error),
                 message='Допуск пока закрыт; CandlePilot продолжает штатное восстановление данных')
             write(db,STATE,old)
+            write(db,ATTEMPT+info['isin'],old)
         return old
-

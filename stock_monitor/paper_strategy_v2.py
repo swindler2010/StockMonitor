@@ -49,13 +49,15 @@ def above(context,key,threshold):
     if hi<=threshold:return False
     raise ValueError('V2_SEED_THRESHOLD_UNSTABLE:'+key)
 
-def proposal(engine):
-    """Only validated closed 1H/4H/1D inputs; returns no trading permission."""
+def proposal(engine, *, inherit_core=True, timeframe="1H"):
+    """Only validated closed inputs; returns no trading permission."""
     if engine.get('status')!='READY':return dict(action='BLOCKED',reason='CORE_DATA_BLOCKED')
     if engine.get('demo_initialization') and not engine['demo_initialization'].get('consistent'):
         return dict(action='BLOCKED',reason='CORE_SEED_UNSTABLE')
     try:
-        contexts=engine['timeframe_context'];h,m,d=(contexts[t] for t in ('1H','4H','1D'))
+        from trading_engine import profile
+        others=[tf for tf in profile(timeframe) if tf!=timeframe]
+        contexts=engine['timeframe_context'];h,m,d=(contexts[t] for t in (timeframe,*others))
         f=h['facts'];price=float(f['price']);atr_hi=bounds(h,'atr')[1];support=float(f['support'])
         if not all(math.isfinite(v) and v>0 for v in (price,atr_hi,support)):raise ValueError('V2_RISK_INPUT_INVALID')
         # Existing accepted seed model bounds risk levels to one cent. Use the
@@ -69,23 +71,23 @@ def proposal(engine):
         quality='UNAVAILABLE' if not f.get('volume_reliable') else 'ABOVE_AVERAGE' if f['relative_volume']>=1 else 'BELOW_AVERAGE'
         answer=dict(action='WAIT',reason='NO_ENTRY',stop=stop,target=target,atr=atr_hi,volume_quality=quality,
                     risk_fraction=POLICY['standard_risk'],seed_model='Existing terminal bounds; uncertain new thresholds blocked')
-        if engine.get('signal')=='BUY':return dict(answer,action='BUY',mode='STANDARD',reason='V1_CONSERVATIVE_BUY')
-        if engine.get('signal')=='SELL':return dict(answer,action='SELL',reason='V1_CONFIRMED_REVERSAL')
+        if inherit_core and engine.get('signal')=='BUY':return dict(answer,action='BUY',mode='STANDARD',reason='V1_CONSERVATIVE_BUY')
+        if inherit_core and engine.get('signal')=='SELL':return dict(answer,action='SELL',reason='V1_CONFIRMED_REVERSAL')
         # Boolean structure/regime flags are invariant in the existing seed proof.
         reversal=bool(f.get('breakdown') or f.get('bearish_retest')) and not above(h,'histogram',0) and not above(h,'rsi',45)
-        if reversal:return dict(answer,action='SELL',reason='CLOSED_1H_STRUCTURE_REVERSAL')
+        if reversal:return dict(answer,action='SELL',reason='CLOSED_1H_STRUCTURE_REVERSAL' if inherit_core else 'V2_STRUCTURE_REVERSAL')
         reasons=[]
-        if not (f.get('breakout') or f.get('reclaim')):reasons.append('NO_CLOSED_STRUCTURE_TRIGGER')
+        if not (f.get('breakout') or f.get('reclaim') or (not inherit_core and f.get('retest'))):reasons.append('NO_CLOSED_STRUCTURE_TRIGGER')
         if not (above(h,'histogram',0) and above(h,'histogram_delta',0) and above(h,'rsi',50)):reasons.append('MOMENTUM_NOT_CONFIRMED')
         improving=above(m,'histogram_delta',0) and above(m,'ema10_slope_atr',0)
-        if not improving:reasons.append('4H_NOT_IMPROVING')
+        if not improving:reasons.append(others[0]+'_NOT_IMPROVING')
         daily_bear=(d['facts'].get('regime')=='BEARISH' and not above(d,'histogram',0)
                     and not above(d,'histogram_delta',0) and not above(d,'rsi',45))
-        if daily_bear:reasons.append('1D_STRONG_BEARISH_IMPULSE')
+        if daily_bear:reasons.append(others[1]+'_STRONG_BEARISH_IMPULSE')
         if f.get('extended'):reasons.append('EXTENDED_OVER_3_ATR')
         if target is None or (target-price)/(price-stop)<POLICY['minimum_rr']:reasons.append('STRUCTURAL_RR_BELOW_2')
-        return dict(answer,action='WAIT' if reasons else 'BUY',mode='EARLY',risk_fraction=POLICY['early_risk'],
-                    reason=';'.join(reasons) if reasons else 'EARLY_CLOSED_1H_CONFIRMED')
+        return dict(answer,action='WAIT' if reasons else 'BUY',mode='EARLY',risk_fraction=POLICY['early_risk'],entry_rr=POLICY['minimum_rr'],
+                    reason=';'.join(reasons) if reasons else ('EARLY_CLOSED_1H_CONFIRMED' if inherit_core else 'V2_BREAKOUT_CONFIRMED'))
     except (KeyError,TypeError,ValueError,ZeroDivisionError) as error:
         return dict(action='BLOCKED',reason=str(error))
 
@@ -107,14 +109,15 @@ def size(state,reference,decision,variant):
         distance=entry-stop*(1-half)
         risk=min(money(state['equity']*decision['risk_fraction']),money(state['equity']*POLICY['total_risk'])-open_risk(state))
         if decision.get('mode')=='EARLY':
-            target=decision.get('target')
-            if not target or (target*(1-half)-entry)/distance<2:raise ValueError('FILL_RR_BELOW_2_AFTER_SPREAD')
+            target=decision.get('target');rr=decision.get('entry_rr',2)
+            if not target or (target*(1-half)-entry)/distance<rr:
+                raise ValueError(f'FILL_RR_BELOW_{rr:g}_AFTER_SPREAD')
     qty=min(int((min(state['cash'],allocation)-fee)//entry),int((risk-2*fee)//distance)) if distance>0 else 0
     while qty>0 and (money(entry*qty)+fee>min(state['cash'],allocation) or distance*qty+2*fee>risk):qty-=1
     if qty<1:raise ValueError('RISK_OR_CASH_BELOW_ONE_SHARE')
     # Fees per share can reduce a seemingly adequate gross 2:1 ratio.
-    if variant=='V2' and decision.get('mode')=='EARLY' and ((decision['target']*(1-half)-entry)*qty-2*fee)/(distance*qty+2*fee)<2:
-        raise ValueError('FILL_RR_BELOW_2_AFTER_COSTS')
+    if variant=='V2' and decision.get('mode')=='EARLY' and ((decision['target']*(1-half)-entry)*qty-2*fee)/(distance*qty+2*fee)<decision.get('entry_rr',2):
+        raise ValueError(f"FILL_RR_BELOW_{decision.get('entry_rr',2):g}_AFTER_COSTS")
     return qty,entry,dict(risk_budget=risk,estimated_loss=distance*qty+2*fee,allocation=allocation)
 
 def mark(state,isin,reference,at):
@@ -133,7 +136,7 @@ def sell(state,isin,qty,reference,at,reason,events):
         state['gross_profit' if pnl>0 else 'gross_loss']+=abs(pnl)
         events.append(dict(kind='CLOSED_TRADE',isin=isin,at=at,net_pnl=pnl));del state['positions'][isin]
 
-def advance(state,variant,event,*,smart_exit=True):
+def advance(state,variant,event,*,smart_exit=True,exit_policy=None):
     """One validated observation shared by V1/V2. Mutates only shadow state.
 
     The signal is considered after executing this bar: entries/reversals cannot
@@ -158,7 +161,18 @@ def advance(state,variant,event,*,smart_exit=True):
         state['pending'].pop(isin,None);pending=None
         events.append(dict(kind='REJECT',isin=isin,at=at,reason='PRIOR_CLOSED_INPUTS_CHANGED'))
     fingerprint=event.get('decision_fingerprints',{}).get(variant,event['decision_fingerprint'])
-    if p and variant=='V2' and smart_exit:
+    if p and exit_policy:
+        if exit_policy['hard_stop'] and q['low']<=p['stop']:
+            sell(state,isin,p['qty'],min(q['open'],p['stop']),at,'STOP_OR_GAP_STOP',events);p=None
+        elif exit_policy.get('take_profit') and q['high']>=p['target']:
+            sell(state,isin,p['qty'],p['target'],at,'STRATEGY_TAKE_PROFIT',events);p=None
+        elif exit_policy.get('max_holding_minutes'):
+            from datetime import datetime
+            minutes=(datetime.fromisoformat(at)-datetime.fromisoformat(q['open_at'])).total_seconds()/60
+            p['held_minutes']+=minutes
+            if p['held_minutes']>=exit_policy['max_holding_minutes']:
+                sell(state,isin,p['qty'],q['close'],at,'STRATEGY_TIME_EXIT',events);p=None
+    elif p and variant=='V2' and smart_exit and exit_policy is None:
         if q['low']<=p['stop']:
             sell(state,isin,p['qty'],min(q['open'],p['stop']),at,'STOP_OR_GAP_STOP',events);p=None
         elif not p['partial'] and q['high']>=p['entry']+2*p['r']:
@@ -176,7 +190,9 @@ def advance(state,variant,event,*,smart_exit=True):
         if event['signal_at']!=pending['signal_at'] or fingerprint!=pending['fingerprint']:
             events.append(dict(kind='REJECT',at=at,isin=isin,reason='SIGNAL_OR_INPUTS_CHANGED'))
         elif pending['decision']['action']=='SELL':
-            if p:sell(state,isin,p['qty'],q['close'],at,'CLOSED_1H_REVERSAL',events);p=None
+            if p:
+                reason=pending['decision']['reason'] if exit_policy is not None or event.get('entry_modes') else 'CLOSED_1H_REVERSAL'
+                sell(state,isin,p['qty'],q['close'],at,reason,events);p=None
         elif not p and not events:
             decision=pending['decision']
             try:
@@ -185,9 +201,16 @@ def advance(state,variant,event,*,smart_exit=True):
                 if any(not 0<=(datetime.fromisoformat(event['available_at'])-datetime.fromisoformat(state['marks'][i]['at'])).total_seconds()<=900
                        for i in state['positions']):raise ValueError('PORTFOLIO_MARK_STALE')
                 qty,price,risk=size(state,q['close'],decision,variant)
-                fee=POLICY['fee'];cost=money(price*qty)+fee;state['cash']=money(state['cash']-cost);state['fees']+=fee
-                stop=decision['stop'];state['positions'][isin]=dict(qty=qty,entry=price,cost=cost,stop=stop,initial_stop=stop,
+                fee=POLICY['fee'];cost=money(price*qty)+fee
+                stop=decision['stop']
+                if variant=='V1' and exit_policy:
+                    stop=min(decision['support']*.995,q['close']-2*decision['atr'])
+                    if stop<=0:raise ValueError('STRATEGY_STOP_INVALID')
+                state['cash']=money(state['cash']-cost);state['fees']+=fee
+                state['positions'][isin]=dict(qty=qty,entry=price,cost=cost,stop=stop,initial_stop=stop,
                     r=price-stop,partial=False,realized=0.,entered_at=at,mode=decision.get('mode','STANDARD'))
+                if exit_policy:
+                    state['positions'][isin].update(target=decision.get('target'),held_minutes=0.)
                 state['last_entry_signal'][isin]=pending['signal_at']
                 events.append(dict(kind='FILL',side='BUY',isin=isin,at=at,quantity=qty,price=price,commission=fee,reason=decision['reason'],risk=risk))
             except ValueError as error:events.append(dict(kind='REJECT',isin=isin,at=at,reason=str(error)))
@@ -202,7 +225,9 @@ def advance(state,variant,event,*,smart_exit=True):
             state['pending'][isin]=dict(decision=copy.deepcopy(decision),signal_at=event['signal_at'],signal_close=event['signal_close'],
                 available_at=event['available_at'],fingerprint=fingerprint)
     p=state['positions'].get(isin)
-    if variant=='V2' and smart_exit and p and p['partial'] and decision.get('atr'):
+    if p and p['entered_at']!=at and decision.get('atr') and exit_policy and exit_policy.get('trailing_atr'):
+        p['stop']=max(p['stop'],q['close']-exit_policy['trailing_atr']*decision['atr'])
+    elif variant=='V2' and smart_exit and exit_policy is None and p and p['partial'] and decision.get('atr'):
         p['stop']=max(p['stop'],event['hourly_price']-2*decision['atr'])
     for e in events:
         e['observed_at']=event['available_at'];e['bar_close_at']=at
