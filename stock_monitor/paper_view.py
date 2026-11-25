@@ -242,7 +242,7 @@ def attach(app, parent):
     instrument_box.pack(side='left',padx=4)
     ttk.Label(row,text='Количество:').pack(side='left')
     quantity_box=ttk.Entry(row,textvariable=quantity,width=10);quantity_box.pack(side='left',padx=4)
-    message=tk.StringVar(value='WAIT V1 не запрещает ваше поручение. Качество, свежесть цены и риск обязательны.')
+    message=tk.StringVar(value='Выберите инструмент для демосчёта.')
     ttk.Label(order_box,textvariable=message,wraplength=1000,justify='left').pack(anchor='w',padx=4,pady=4)
     def changed(*_):message.set('Поручение изменено; проверьте цену выбранной акции заново.')
     selected.trace_add('write',changed);quantity.trace_add('write',changed)
@@ -295,6 +295,7 @@ def attach(app, parent):
     auto_controls=ttk.Frame(auto_box)
     auto_controls.pack(fill='x',padx=4,pady=3)
     strategy_labels={key:label for key,label,_ in MODES}
+    strategy_labels['V1']=translated_label('Архив V1','V1-Archiv','V1 archive')
     strategy=tk.StringVar()
     mode_state=tk.StringVar()
     selector_label=ttk.Label(auto_controls,text='Стратегия')
@@ -354,7 +355,7 @@ def attach(app, parent):
     journal_tab=ttk.Frame(notebook)
     notebook.add(journal_tab,text='Журнал V1–V5')
     news_tab=ttk.Frame(notebook)
-    notebook.add(news_tab,text=translated_label('Новости V1','V1-Nachrichten','V1 news'))
+    notebook.add(news_tab,text=translated_label('Архив новостей V1','V1-Nachrichtenarchiv','V1 news archive'))
     V1NewsPanel(app,notebook,news_tab)
     notebook.hide(news_tab)
 

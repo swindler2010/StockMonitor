@@ -59,7 +59,7 @@ class Dialog:
         nav=ttk.Frame(base,style=p+'.TFrame');nav.pack(fill='x',pady=(0,10))
         for label,command in [('График',self.select),('Акции',lambda:None),('Индикаторы',app.show_indicators),
                               ('CandlePilot',lambda:__import__('candlepilot_health').show(app)),('Новости',app.show_news),
-                              ('Портфель',app.show_portfolio),('Настройки',app.show_settings)]:
+                              ('Портфель',lambda:app.show_portfolio(parent=win)),('Настройки',app.show_settings)]:
             ttk.Button(nav,text=tr(label),image=photo(app.root,{'График':'chart','Акции':'template','Индикаторы':'indicators','CandlePilot':'globe','Новости':'news','Портфель':'template','Настройки':'gear'}[label],18),compound='left',command=command,style='DeskActive.TButton' if label=='Акции' else 'Watchlist.TButton').pack(side='left',padx=3)
         header=ttk.Frame(base,style=p+'.TFrame');header.pack(fill='x',pady=(0,12))
         ttk.Label(header,image=photo(app.root,'chart',40),style=p+'.TLabel').pack(side='left',padx=8)

@@ -18,7 +18,7 @@ PORTFOLIO_VERSION=1
 AUTO_PORTFOLIOS_SETTING='paper_auto_portfolios'
 AUTO_PORTFOLIOS_VERSION=2
 VIEW_PORTFOLIO_SETTING='paper_view_portfolio'
-READY_PORTFOLIOS=('V1','V4','V5')
+READY_PORTFOLIOS=('V4','V5')
 READINESS_BLOCKERS={'V2':V2_RESEARCH_BLOCKER,'V3':'V2_SEED_PROOF_MISSING'}
 EXECUTION_TF='15m'
 # Stored account contract; legacy rows retain the original description.
@@ -88,7 +88,7 @@ def automatic_portfolios(policy):
     if not isinstance(policy,dict) or policy.get('version')!=AUTO_PORTFOLIOS_VERSION:
         return None
     ready=policy.get('ready')
-    return tuple(book for book in PORTFOLIOS if book in ready) if isinstance(ready,list) else ()
+    return tuple(book for book in PORTFOLIOS if book != 'V1' and book in ready) if isinstance(ready,list) else ()
 
 
 def independent_portfolios(db):

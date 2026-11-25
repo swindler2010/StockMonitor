@@ -18,7 +18,7 @@ class IndependentTests(unittest.TestCase):
         self.f=self.scenario.f
         self.db=self.f.db
         paper.initialize_independent_automation(self.db)
-        self.assertEqual(paper.independent_portfolios(self.db),('V1','V4','V5'))
+        self.assertEqual(paper.independent_portfolios(self.db),('V4','V5'))
         # The fixture enables other books to exercise routing independently.
         policy=hourly.read(self.db,paper.AUTO_PORTFOLIOS_SETTING)
         policy['ready']=list(paper.PORTFOLIOS)
@@ -148,7 +148,7 @@ class IndependentTests(unittest.TestCase):
              patch.object(hourly.time,'time',return_value=f.now):
             for _ in range(5):
                 runtime.tick()
-            self.assertEqual(calls,[('V5',None),('V1',None),('V2',None),('V3',None),('V4',None)])
+            self.assertEqual(calls,[('V5',None),('V2',None),('V3',None),('V4',None),('V5',None)])
             self.make_order('PULLBACK')
             f.trade()
             self.db.commit()
