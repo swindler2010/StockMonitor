@@ -216,12 +216,13 @@ def v2_daily_summary(state):
         return ''
     labels = {'PASS': 'цель выполнена', 'NO_ROUND_TRIP': 'без закрытой сделки в этот день',
               'LOSS': 'убыток', 'FLAT': 'ноль', 'IN_PROGRESS': 'сессия продолжается'}
-    lines = ['','V2 · Последние сессии']
+    lines = ['',tr('V2 · Последние сессии')]
     for row in reversed(sessions):
-        line = (f"{row['day']} · {labels[row['status']]} · "
-                f"покупок {row['buys']}, продаж {row['sells']} · {row['net']} EUR")
+        line = tr('{day} · {status} · покупок {buys}, продаж {sells} · {net} EUR',
+                  day=row['day'],status=tr(labels[row['status']]),buys=row['buys'],
+                  sells=row['sells'],net=row['net'])
         if row['profit_lock'] and row['status'] == 'IN_PROGRESS':
-            line += ' · новые покупки остановлены'
+            line += tr(' · новые покупки остановлены')
         if not row['round_trips'] and row['reasons']:
             line += ' · ' + ', '.join(reason for reason, _ in row['reasons'])
         lines.append(line)
