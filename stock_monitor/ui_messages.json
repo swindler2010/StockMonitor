@@ -5633,5 +5633,37 @@
   "V2: одна позиция, до 10 акций, до 45% средств и 0,5% расчётного риска с издержками.": {
     "en": "V2: one position, up to 10 shares, 45% of funds and 0.5% estimated risk including costs.",
     "de": "V2: eine Position, bis zu 10 Aktien, 45% der Mittel und 0,5% geschätztes Risiko einschließlich Kosten."
+  },
+  "V2 · Последние сессии": {
+    "en": "V2 · Recent sessions",
+    "de": "V2 · Letzte Sitzungen"
+  },
+  "цель выполнена": {
+    "en": "goal achieved",
+    "de": "Tagesziel erreicht"
+  },
+  "без закрытой сделки в этот день": {
+    "en": "no completed trade that day",
+    "de": "kein abgeschlossener Handel an diesem Tag"
+  },
+  "убыток": {
+    "en": "loss",
+    "de": "Verlust"
+  },
+  "ноль": {
+    "en": "flat",
+    "de": "null"
+  },
+  "сессия продолжается": {
+    "en": "session in progress",
+    "de": "Sitzung läuft"
+  },
+  "{day} · {status} · покупок {buys}, продаж {sells} · {net} EUR": {
+    "en": "{day} · {status} · buys {buys}, sells {sells} · {net} EUR",
+    "de": "{day} · {status} · Käufe {buys}, Verkäufe {sells} · {net} EUR"
+  },
+  " · новые покупки остановлены": {
+    "en": " · new buys paused",
+    "de": " · neue Käufe pausiert"
   }
 }
