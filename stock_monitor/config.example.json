@@ -1,0 +1,12 @@
+{
+  "base_currency": "EUR",
+  "timeframes": ["5m", "10m", "15m", "30m", "1H", "2H", "3H", "4H", "1D", "1W", "1M"],
+  "ema_fast": 10,
+  "ema_slow": 30,
+  "require_stop": true,
+  "live_trading": false,
+  "watchlist": [
+    {"symbol": "APC", "name": "Apple", "venue": "GETTEX", "currency": "EUR", "check_add": true, "isin": "US0378331005", "history_symbol": "APC.F", "profile_symbol": "AAPL"},
+    {"symbol": "NVD", "name": "NVIDIA", "venue": "GETTEX", "currency": "EUR", "check_add": true, "isin": "US67066G1040", "history_symbol": "NVD.F", "profile_symbol": "NVDA"}
+  ]
+}

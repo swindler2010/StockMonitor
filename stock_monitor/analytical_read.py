@@ -1,0 +1,184 @@
+"""Bounded read projection using the existing chart/indicator calculation path."""
+import copy,json,hashlib
+import pandas as pd
+from snapshot_worker import inputs,SnapshotContext,Value
+from desktop014 import DEFAULT_IND
+from analytics import indicators,bar_ends
+
+def read_time():return pd.Timestamp.now(tz='UTC')
+
+def calculate_consistent(store,values,calculator=None):
+    """One WAL read view, then final live input validation; no database copy."""
+    from contextlib import contextmanager
+    from performance_cache import ReadCache
+    # Only the owned serial readonly child can retain its bounded cache across
+    # WAL views. Main-thread/shared Store callers keep an isolated connection.
+    reuse=bool(getattr(store,'_serial_readonly',False) and not store.read_cache.db.in_transaction)
+    captured=copy.copy(store);captured.read_cache=store.read_cache if reuse else ReadCache(store.path)
+    @contextmanager
+    def connect():yield captured.read_cache.db
+    captured.connect=connect
+    try:
+        db=captured.read_cache.db;db.execute('PRAGMA query_only=ON');db.execute('BEGIN')
+        # Only this immutable WAL view may reuse an expensive lineage check.
+        # Never carried to the writer or the next analytical request.
+        captured._lineage_read_view=(db,read_time(),{})
+        with captured.read_cache.track_inputs() as token:
+            expected=values.get('instrument_revisions',{})
+            captured.read_cache.assert_current(expected);captured.read_cache._record(expected)
+            result=(calculator or calculate)(captured,values)
+        token=dict(token)
+    finally:
+        if reuse:captured.read_cache.db.rollback()
+        else:captured.read_cache.close()
+    from gettex_first import engine_available,calculation_allowed
+    engine=result.get('trading_engine') or (result.get('analysis_context') or {}).get('trading_engine',{})
+    analysis=result.get('analysis')
+    factual=engine_available(engine,list(engine.get('timeframe_context',{})))
+    if analysis and len(analysis)==2:factual=factual or calculation_allowed(analysis[1])
+    if factual:
+        # DQ is observed at calculation time, not an input permission. Actual
+        # candles, listing receipts, settings and policies stay revision-bound.
+        token={k:v for k,v in token.items() if not k.startswith('setting:data_quality:')}
+    store.read_cache.assert_current(token)
+    result['_input_revisions']=token
+    return result
+
+def capture(app,args):
+    values=inputs(app)
+    info=next((i for i in values['watchlist'] if i['isin']==args['isin']),None)
+    if info is None:raise ValueError('UNKNOWN_INSTRUMENT')
+    values.update(watchlist=[info],symbol=info['name'],timeframe=args['timeframe'],period='Max',feed_errors={},request=copy.deepcopy(args))
+    values['drafts']={k:v for k,v in values['drafts'].items() if k==info['isin']}
+    values['instrument_revisions']={k:v for k,v in values['instrument_revisions'].items() if k=='instrument:'+info['isin']}
+    return values
+
+def calculate(store,values):
+    # A reset invalidates prepared paper requests, not candle history.
+    store.read_cache.depend('setting:paper_epoch')
+    if values.get('_paper_portfolio'):
+        from paper_account import AUTO_PORTFOLIOS_SETTING,PORTFOLIO_SETTING,portfolio_epoch_key
+        store.read_cache.depend('setting:'+PORTFOLIO_SETTING)
+        store.read_cache.depend('setting:'+AUTO_PORTFOLIOS_SETTING)
+        store.read_cache.depend('setting:'+portfolio_epoch_key(values['_paper_portfolio']))
+        store.read_cache.depend('setting:paper_auto_1h')
+    if values['request'].get('view')=='stored_archive':
+        from mcp_projection import archive
+        args=values['request']
+        store.read_cache.depend('market:'+args['isin']+':'+args['timeframe'])
+        store.read_cache.depend('instrument:'+args['isin'])
+        return archive(store.path,args)
+    context=SnapshotContext();context.store=store
+    for key,value in values.items():setattr(context,key,Value(value) if key in ('symbol','timeframe','period') else value)
+    args=values['request'];info=context.instrument_cfg();state=context.user_state(info)
+    if args.get('source')=='onvista':
+        if args['timeframe'] not in ('1D','1W','1M'):
+            raise ValueError('ONVISTA_DAILY_ONLY')
+        if not all(args.get(k) for k in ('symbol','venue','currency')):
+            raise ValueError('EXACT_STORED_IDENTITY_REQUIRED')
+        context.readonly_source=dict(isin=info['isin'],identity={**{k:args[k] for k in ('source','symbol','venue','currency')},'timezone':'Europe/Berlin'})
+        context.analysis_at=read_time()
+    frame=context.frame_for(info,args['timeframe'])
+    from partial_chart import select_display
+    if args.get('source')!='onvista':
+        frame=select_display({**info,'history_venue_lock':state.get('history_venue_lock')},args['timeframe'],frame,store)
+    settings={**DEFAULT_IND,**store.setting('global_indicators',{})}
+    identity={k:frame.attrs.get(k) for k in ('source','symbol','venue','currency','timezone')}
+    for key in ('source','symbol','venue','currency'):
+        if key in args and args[key]!=identity[key]:raise ValueError('IDENTITY_MISMATCH')
+    now=read_time()
+    context.analysis_at=now
+    execution_context=None
+    analysis_context=None
+    from gettex_first import bound
+    from paper_account import EXECUTION_TF, instrument_allowed
+    if instrument_allowed(info) and args['timeframe']==EXECUTION_TF:
+        from calculation_window import build
+        execution_context=build(context,info,args['timeframe'],state,now)
+    if bound(frame):
+        engine=context.trading_analysis(info,analysis_only=True)
+        analysis_context={'analysis_ready':engine.get('status')=='READY','execution_permission':False,
+            'calculated_at':now.isoformat(),'identity':identity,'trading_engine':engine,
+            'basis':'GETTEX-first actual saved bars; CandlePilot warnings are audit-only'}
+    elif args.get('source')=='onvista':
+        engine=context.trading_analysis(info,analysis_only=True)
+        analysis_context={'analysis_ready':engine.get('status')=='READY','execution_permission':False,
+            'calculated_at':now.isoformat(),'identity':identity,'trading_engine':engine,
+            'basis':'Exact imported Onvista daily listing; standard DQ, complete closed inputs and CORE gates'}
+    elif instrument_allowed(info):
+        from cp_controls import demo_initialization_policy,initialization_policy_for
+        key='cp_manual_risk:'+info['isin'];store.read_cache.depend('setting:'+key)
+        policy=initialization_policy_for(store,info)
+        if demo_initialization_policy(policy,info['isin']) and args['timeframe'] in policy.get('analysis_timeframes',[]):
+            context.analysis_at=now
+            engine=context.trading_analysis(info,analysis_only=True)
+            analysis_context={'analysis_ready':engine.get('status')=='READY',
+                'execution_permission':False,'calculated_at':now.isoformat(),
+                'identity':engine.get('analysis_identity'),'trading_engine':engine,
+                'basis':'Separate owner-approved demo analysis; page OHLCV/indicators keep their own stated source'}
+    token=store.read_cache.dependencies()
+    # Bind actual closed-bar flags instead of an arbitrary wall-clock minute.
+    # The existing engine still assesses DQ/admission on every read; this is
+    # only the OHLCV/indicator-page identity, never a trade-readiness lease.
+    ends=bar_ends(frame) if not frame.empty else pd.DatetimeIndex([],tz='UTC')
+    from gettex_first import bound
+    closed=(ends<=now) & (frame['bar_complete'].fillna(False).astype(bool).to_numpy() if 'bar_complete' in frame and not bound(frame) else True)
+    temporal=hashlib.sha256(closed.tobytes()).hexdigest()
+    query={k:v for k,v in args.items() if k not in ('offset','limit','expected_revision','_deadline')}
+    revision=hashlib.sha256(json.dumps([token,query,state,settings,temporal],sort_keys=True,default=str).encode()).hexdigest()
+    offset=args.get('offset',0);limit=args.get('limit',200)
+    if not 1<=limit<=500 or offset<0:raise ValueError('INVALID_PAGE')
+    if args.get('expected_revision') and args['expected_revision']!=revision:raise ValueError('STALE_PAGE')
+    if offset and args.get('expected_revision')!=revision:raise ValueError('STALE_PAGE')
+    ends=bar_ends(frame) if not frame.empty else pd.DatetimeIndex([],tz='UTC')
+    from partial_chart import bind
+    display_only=bool(frame.attrs.get('partial_chart'))
+    enriched=bind({},frame)['analysis'][0] if display_only else indicators(frame) if not frame.empty else frame
+    chart_series={};chart_profile={'status':'NOT_REQUESTED'}
+    if args.get('include_chart_series') and not frame.empty and not display_only:
+        from mcp_chart_export import export
+        chart_series,chart_profile=export(frame,settings,args['timeframe'])
+    openings=pd.DatetimeIndex(enriched.index)
+    if openings.tz is None:openings=openings.tz_localize(identity['timezone'] or 'Europe/Berlin',ambiguous='NaT',nonexistent='NaT')
+    openings=openings.tz_convert('UTC')
+    mask=~openings.isna()
+    for key in ('from','to'):
+        if args.get(key):
+            boundary=pd.Timestamp(args[key])
+            if boundary.tzinfo is None:raise ValueError('RANGE_REQUIRES_TIMEZONE')
+            boundary=boundary.tz_convert('UTC')
+            mask=mask & (openings>=boundary if key=='from' else openings<=boundary)
+    closed=(ends<=now) & (enriched['bar_complete'].fillna(False).astype(bool).to_numpy() if 'bar_complete' in enriched and not bound(enriched) else True)
+    if args.get('closed_only'):mask=mask & closed
+    matches=[n for n,keep in enumerate(mask) if keep]
+    matched_total=len(matches);rows=[]
+    for n in matches[offset:offset+limit]:
+        opening=openings[n];row=enriched.iloc[n]
+        record={k:float(row[k]) if pd.notna(row[k]) else None for k in ('open','high','low','close','volume','ema10','ema30','rsi','atr','macd','macd_signal','volume_mean20') if k in row}
+        record.update(open_at=opening.isoformat(),close_at=ends[n].isoformat(),closed=bool(closed[n]))
+        if args.get('include_chart_series'):record['chart_values']={key:values[n] for key,values in chart_series.items()}
+        record['missing_values']=[k for k,v in record.items() if v is None]
+        rows.append(record)
+    page=rows
+    from candle_timing import annotate_page
+    measured=annotate_page(store,info['isin'],args['timeframe'],identity,page,now.isoformat())
+    from market import clean
+    return {'status':'AVAILABLE' if not frame.empty else 'NO_DATA','isin':info['isin'],'timeframe':args['timeframe'],
+        'identity':identity,'data_quality':frame.attrs.get('data_quality',{}),'provenance':clean(copy.deepcopy(frame.attrs)),'history':{k:frame.attrs.get(k) for k in ('completion_status','limitation','history_depth')},
+        'stored_frame_count':len(frame),'first':str(frame.index[0]) if len(frame) else None,'last':str(frame.index[-1]) if len(frame) else None,
+        'as_of':now.isoformat(),'revision':revision,'offset':offset,'total_count':matched_total,'next_offset':offset+len(page) if offset+len(page)<matched_total else None,
+        'revision_scope':'Inputs/settings/query/closed-bar flags; diagnostics and admission reassessed per request, never pinned for trading',
+        'bars':page,'execution_context':execution_context,'analysis_context':analysis_context,
+        'page_diagnostics':{'unaddressable_timestamps':int(openings.isna().sum()),'closed_only':bool(args.get('closed_only')),
+            'empty_selection_reason':None if matched_total else 'NO_MATCHING_ADDRESSABLE_CLOSED_BARS' if args.get('closed_only') else 'NO_MATCHING_ADDRESSABLE_BARS'},
+        'timestamps':{'calculated_at':now.isoformat(),'application_received_at':None,'mcp_published_at':None,
+                      'provider_latency':'UNCONFIRMED','note':'Bar close_at is not receipt or publication time'},
+        'chart_indicators':settings,'chart_volume_profile':chart_profile,'drawings':copy.deepcopy(state.get('drawings',[])),'levels':copy.deepcopy(state.get('levels',{})),
+        'indicator_basis':{'series':'existing analytics.indicators; fixed CORE parameters, includes forming bars for inspection, not a confirmed signal',
+            'display_only':display_only,'display_only_reason':'Partial diagnostic chart; indicators not computed across excluded intervals' if display_only else None,
+            'parameters':{'EMA':[10,30],'RSI':14,'ATR':14,'MACD':[12,26,9],'average_volume':20},
+            'chart_configurable_series':'EXPORTED_ENABLED_SETTINGS_USING_EXISTING_DESKTOP_METHOD' if args.get('include_chart_series') else 'NOT_REQUESTED; set include_chart_series=true',
+            'missing_reason':'NaN means insufficient warmup or unavailable input; use data_quality for trustworthiness'},
+        'delivery_latency':{'status':'PARTIAL_MEASURED' if measured else 'UNCONFIRMED','storage_observed_bars':measured,
+            'provider_latency':'UNCONFIRMED','reason':'Storage observations are available only for tracked new/changed base bars; HTTP receipt and provider publication remain unknown'},
+        'execution':'read only; no download, source switch or trade'}

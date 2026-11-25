@@ -1,0 +1,8 @@
+pandas==3.0.1
+numpy==2.3.5
+matplotlib==3.11.2
+requests==2.34.2
+tzdata==2026.4
+plyer==2.1.0
+yfinance==1.7.0
+exchange-calendars==4.13.2
