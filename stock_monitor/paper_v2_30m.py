@@ -182,8 +182,9 @@ def candidates(tapes,g,when,model):
                 offers.append(dict(isin=code,score=score,setup=entry,exit_rule=exit_rule,
                     atr=atr,anchor=anchor,stop=stop,target=target,quote=float(q),
                     quote_end=when.isoformat(),signal_closed=signal.isoformat(),
-                    personal_days=seen,model=MODEL,artifact_sha256=model['artifact_sha256']))
-    return sorted(offers,key=lambda o:(-o['score'],o['isin'],o['setup']+'/any/'+o['exit_rule'])),waits
+                    personal_days=seen,model=MODEL,artifact_sha256=model['artifact_sha256'],
+                    estimated_risk=(q*1.001-stop*.999)*qty+4.))
+    return sorted(offers,key=lambda o:(-o['score'],o['estimated_risk'],o['isin'],o['setup']+'/any/'+o['exit_rule'])),waits
 
 
 def context(store,info,identity,now,execution_quote):
@@ -285,6 +286,75 @@ def screen(store,info,identity,now):
             signal='WAIT',timestamp=packet.get('signal_closed'),reason=packet['reason'],v2_30m=packet)),**quote)
 
 
+def session_fills(fills):
+    """Group fills by Berlin session using the ledger's proportional cost basis."""
+    from collections import defaultdict
+    from datetime import datetime
+    from decimal import Decimal
+    from zoneinfo import ZoneInfo
+
+    zone = ZoneInfo('Europe/Berlin')
+    positions = {}
+    totals = defaultdict(lambda: dict(buys=0, sells=0, round_trips=0, net=Decimal(0)))
+    for fill in fills:
+        day = datetime.fromisoformat(fill['at']).astimezone(zone).date().isoformat()
+        row = totals[day]
+        key = fill['isin'], canonical(fill['identity'])
+        quantity, gross, fee = (Decimal(fill[k]) for k in ('quantity', 'gross', 'fee'))
+        open_qty, cost, opened = positions.get(key, (Decimal(0), Decimal(0), None))
+        if fill['side'] == 'BUY':
+            row['buys'] += 1
+            opened = day if not open_qty else opened if opened == day else None
+            positions[key] = open_qty + quantity, cost + gross + fee, opened
+        else:
+            row['sells'] += 1
+            matched_cost = cost * quantity / open_qty
+            row['net'] += gross - fee - matched_cost
+            remaining = open_qty - quantity
+            positions[key] = remaining, cost - matched_cost, opened
+            if not remaining and opened == day:
+                row['round_trips'] += 1
+    return totals
+
+
+def daily_report(fills, automation, now):
+    """Grade recent exchange sessions, keeping live sessions provisional."""
+    from collections import Counter
+    from paper_account import money
+    from timeframes import schedule
+
+    stamp = pd.Timestamp(now, unit='s', tz='UTC')
+    today = stamp.tz_convert('Europe/Berlin').date().isoformat()
+    try:
+        calendar = schedule({'venue': 'GETTEX', 'timezone': 'Europe/Berlin'},
+                            (pd.Timestamp(today) - pd.Timedelta(days=10)).date(), today)
+    except ValueError:
+        return []
+    totals = session_fills(fills)
+    reports = []
+    for session in list(calendar.itertuples())[-5:]:
+        day = session.Index.date().isoformat()
+        if day in environment().HALT_DAYS or stamp < session.open:
+            continue
+        row = totals.get(day, dict(buys=0, sells=0, round_trips=0, net=0))
+        net = money(row['net'])
+        counts = Counter()
+        for item in automation.get('instruments', {}).values():
+            checked = item.get('at')
+            if not checked or pd.Timestamp(checked, unit='s', tz='UTC').tz_convert('Europe/Berlin').date().isoformat() != day:
+                continue
+            reason = item.get('execution_blocker') or item.get('quote_blocker') or item.get('reason')
+            if reason:
+                counts[reason] += 1
+        complete = stamp >= session.close
+        passed = row['round_trips'] > 0 and net > 0
+        status = ('PASS' if passed else 'NO_ROUND_TRIP' if not row['round_trips']
+                  else 'LOSS' if net < 0 else 'FLAT') if complete else 'IN_PROGRESS'
+        reports.append(dict(day=day, status=status, **{k: row[k] for k in ('buys','sells','round_trips')},
+                            net=str(net), profit_lock=net > 0, reasons=counts.most_common(3)))
+    return reports
+
+
 def size(db,info,result,signal,now):
     from paper_account import ledger
     state=ledger(db,'V2')
@@ -292,15 +362,10 @@ def size(db,info,result,signal,now):
     if signal.get('model')!=MODEL:raise ValueError('V2_30M_MODEL_MISSING')
     model=authority(db,pd.Timestamp(now,unit='s',tz='UTC'))
     if signal.get('artifact_sha256')!=model['artifact_sha256']:raise ValueError('V2_30M_MODEL_CHANGED')
-    # Only realized exits count towards the frozen daily profit lock.
-    costs={};net=0.;today=pd.Timestamp(now,unit='s',tz='UTC').tz_convert('Europe/Berlin').date()
-    for fill in state['fills']:
-        code=fill['isin'];gross,fee=float(fill['gross']),float(fill['fee'])
-        if fill['side']=='BUY':costs[code]=gross+fee
-        elif code in costs:
-            if pd.Timestamp(fill['at']).tz_convert('Europe/Berlin').date()==today:net+=gross-fee-costs[code]
-            costs.pop(code,None)
-    if net>0:raise ValueError('V2_DAILY_NET_PROFIT_LOCK')
+    from paper_account import money
+    today = pd.Timestamp(now, unit='s', tz='UTC').tz_convert('Europe/Berlin').date().isoformat()
+    if money(session_fills(state['fills']).get(today, {}).get('net', 0)) > 0:
+        raise ValueError('V2_DAILY_NET_PROFIT_LOCK')
     bar=result['execution_quote']['bars'][-1]
     quote=float(bar['close']);atr=signal['atr'];anchor=signal['anchor']
     if pd.Timestamp(bar['close_at'])!=pd.Timestamp(signal['quote_end']) or not anchor+.05*atr<=quote<=anchor+.65*atr:
