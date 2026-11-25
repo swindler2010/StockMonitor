@@ -481,6 +481,9 @@ def status(path, *, include_journal=False,portfolio=None):
             from paper_v5_context_study import summary as context_study
             state['journal']=journal(db,state.get('fills',[]),portfolio=portfolio,legacy=split)
             state['v5_context_study']=context_study(db)
+            if portfolio == 'V2':
+                from paper_v2_30m import daily_report
+                state['v2_daily_sessions'] = daily_report(state['fills'], state['automation'], time.time())
         return state
 
 def mark_positions(db,state,now=None):
