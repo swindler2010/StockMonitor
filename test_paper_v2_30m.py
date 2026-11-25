@@ -473,4 +473,34 @@ class Lock75Extension(unittest.TestCase):
         self.assertEqual(self.check('103')[0], 'V2_TIME_EXIT')
 
 
+class DailySession(unittest.TestCase):
+    @staticmethod
+    def fill(at, side, gross, qty=1):
+        return dict(at=at, side=side, gross=str(gross), fee='2', quantity=str(qty),
+                    isin='TEST', identity={'source':'gettex'})
+
+    def test_proportional_basis_today_and_round_trip(self):
+        fills = [self.fill('2026-11-24T14:00:00Z','BUY',200,2),
+                 self.fill('2026-11-24T15:00:00Z','SELL',109),
+                 self.fill('2026-11-24T16:00:00Z','SELL',96)]
+        row = v2.session_fills(fills)['2026-11-24']
+        self.assertEqual((row['buys'],row['sells'],row['round_trips'],row['net']),
+                         (1,2,1,Decimal('-1')))
+
+    def test_berlin_session_and_closed_day_grades(self):
+        fills = [self.fill('2026-11-23T22:45:00Z','BUY',100),
+                 self.fill('2026-11-24T14:00:00Z','SELL',110)]
+        after = pd.Timestamp('2026-11-24T22:30:00Z').timestamp()
+        row = v2.daily_report(fills,{},after)[-1]
+        self.assertEqual((row['status'],row['round_trips'],row['net']),('NO_ROUND_TRIP',0,'6.00'))
+        fills = [self.fill('2026-11-24T13:00:00Z','BUY',100),
+                 self.fill('2026-11-24T14:00:00Z','SELL',104)]
+        self.assertEqual(v2.daily_report(fills,{},after)[-1]['status'],'FLAT')
+        fills[-1]['gross'] = '105'
+        self.assertEqual(v2.daily_report(fills,{},after)[-1]['status'],'PASS')
+        before = pd.Timestamp('2026-11-24T15:00:00Z').timestamp()
+        row = v2.daily_report(fills,{},before)[-1]
+        self.assertEqual((row['status'],row['profit_lock']),('IN_PROGRESS',True))
+
+
 if __name__=='__main__':unittest.main()
