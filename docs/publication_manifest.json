@@ -7,6 +7,8 @@
     "2d6946e84b369a10cda436519186563bcbc2caa9"
   ],
   "branch": "work1/sync-current-016",
+  "pull_request": "https://github.com/swindler2010/StockMonitor/pull/29",
+  "previous_publication": "6a4b27a88ab7acaa89ce8414536e77ad2526998f",
   "hash_semantics": "SHA256 of exact LF-normalized Git blob bytes; manifest excludes itself.",
   "files": [
     {
@@ -41,8 +43,8 @@
     },
     {
       "path": "docs/CHANGELOG_2026-10-23_to_current.md",
-      "sha256": "9904301bcc7f86f58b6847cb69e4b45a05dd0b3323b178dce51f15f07ba6ef3a",
-      "bytes": 38118
+      "sha256": "a6f6fc198c70dffa4f031ee2337c3595a5adacfb43d4f527f3881859b4b1b3cb",
+      "bytes": 40457
     },
     {
       "path": "docs/CP_ALL_STOCK_RECOVERY_RU.md",
@@ -136,8 +138,8 @@
     },
     {
       "path": "docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md",
-      "sha256": "0d2abda27e72425a146eb904be5cfe42f648df49c7a498017d1511c1d631579a",
-      "bytes": 3832493
+      "sha256": "0c43e8f0e9a05d3db11a07d142383a32ee6edcfdf7b5b48d786d20c4b5caf836",
+      "bytes": 3836506
     },
     {
       "path": "docs/NEWS_DRAWING_DESIGN_RU.md",
@@ -176,13 +178,13 @@
     },
     {
       "path": "docs/V1_READABLE_PATCH_RU.md",
-      "sha256": "504f1c14edb18282b4fa6b969b169e7e87cc28cbebec478792e2921023ed55aa",
-      "bytes": 4557
+      "sha256": "8461b61e5bed946a5f77f379c2767e029b9b436410d4868e03a8e0f166325522",
+      "bytes": 9788
     },
     {
       "path": "docs/VALIDATION_AND_ROLLBACK_RU.md",
-      "sha256": "6613ca4ad12c63096f45812b24ee65d5c393920c7651307ea622eeb923f5c98c",
-      "bytes": 16595
+      "sha256": "2cd036bdbe2b17cc911ab5e74c53b9df0fb253e3e1a30255f5f4d9041e625e24",
+      "bytes": 19336
     },
     {
       "path": "docs/WATCHLIST_DIALOG_DESIGN_RU.md",
@@ -191,8 +193,8 @@
     },
     {
       "path": "docs/regression_results.json",
-      "sha256": "128a9c622091f9305529be6833a8fa6566aaa68ba25dcf36e3d05686fe05d5a6",
-      "bytes": 23897
+      "sha256": "81ef6d624184f7fe6333636d52c03577d3b700089b1f5fc10ed6c7ee2c7646c9",
+      "bytes": 26411
     },
     {
       "path": "requirements.txt",
@@ -381,8 +383,8 @@
     },
     {
       "path": "stock_monitor/cp_controls.py",
-      "sha256": "13367f5d25eea07e1064e9d4eccf0ea5a369c6514a93d6684140c05a64713a73",
-      "bytes": 100441
+      "sha256": "448a6b2f1f945634b68b6e9eba1aa1998369f2d92104b2c04aa861cb3d5dbdc4",
+      "bytes": 101589
     },
     {
       "path": "stock_monitor/cp_diagnostic_baseline.py",
@@ -981,13 +983,13 @@
     },
     {
       "path": "stock_monitor/real_portfolio.py",
-      "sha256": "3be808842ebf930e22477a82037c3a08f9aca140d4caead9836a0bbb2f78f09d",
-      "bytes": 16042
+      "sha256": "63a6b6819192048ea67d9e4f54e7a0dee13d8820088a93c342b1e641a49e8f89",
+      "bytes": 17336
     },
     {
       "path": "stock_monitor/real_portfolio_view.py",
-      "sha256": "b0a89e021682694622e0258031c7dd9be57bf6c5c815790e5eed8f6e0a207e6f",
-      "bytes": 26024
+      "sha256": "7689414c7d5b5db719f79f242632cd3abf317175359d404d2e242862f61b27dd",
+      "bytes": 35894
     },
     {
       "path": "stock_monitor/recovery_bundle.py",
@@ -1221,8 +1223,8 @@
     },
     {
       "path": "stock_monitor/ui_messages.json",
-      "sha256": "52a1a27aa68879d0ca419d57d43706ff2006d1ec4868a680d0f4138e13af5904",
-      "bytes": 260701
+      "sha256": "4054976d728cf88e79e26c00ab3849da4d9691b4ff41f91e1ba63c739247924f",
+      "bytes": 272299
     },
     {
       "path": "stock_monitor/ui_performance.py",
@@ -1446,8 +1448,8 @@
     },
     {
       "path": "test_cp_bridge_diagnostics.py",
-      "sha256": "b32d428523cc880654e3678295abcbb8cd252b2865af3cbec36381db3a34edba",
-      "bytes": 33681
+      "sha256": "4a86885bc6b4aadb83fae57adcda01d0b96aa6ded3272f601de30834c47fb516",
+      "bytes": 35046
     },
     {
       "path": "test_cp_calculation_reuse.py",
@@ -1981,8 +1983,8 @@
     },
     {
       "path": "test_input_revisions.py",
-      "sha256": "215c6438a17476dabf1b1ce56c58e01751abcfed226f177b742c1cb4a795d37b",
-      "bytes": 5849
+      "sha256": "9811efa97cb6d968a16f167d7ac5490a275ddc2b608732a73b7fda9f34ad5272",
+      "bytes": 6383
     },
     {
       "path": "test_instrument_dialog.py",
@@ -2386,8 +2388,8 @@
     },
     {
       "path": "test_real_portfolio.py",
-      "sha256": "93a58abae6faf9b746b578ff1fa7dae489e8988f53e0b21befc006e0fd6e5ecd",
-      "bytes": 15836
+      "sha256": "839116176dabbc28092df0efddbee42a6230866d0b5cd4d590e8de1671995c0e",
+      "bytes": 16801
     },
     {
       "path": "test_reconciliation_interval_scope.py",
@@ -2496,8 +2498,8 @@
     },
     {
       "path": "test_snapshot_publication_isolation.py",
-      "sha256": "cb5555069af1f740b38a7fa06daa1b5e00ec8fa29eef92548e99c657e7cbaad5",
-      "bytes": 8113
+      "sha256": "1ad737f3211a7006fa5a2c837a473b6ccb9f56d494017eb1fdaa42f387248e34",
+      "bytes": 8340
     },
     {
       "path": "test_source_gap.py",
@@ -2606,8 +2608,8 @@
     },
     {
       "path": "test_v1_readable.py",
-      "sha256": "8613422de4a6f9a7940f7b6584b5e3504b2cde2d3e295c3f20f4f6b0dff42f8c",
-      "bytes": 7431
+      "sha256": "d31b976ef28108947c361e1863e739acfdfd91709792cda5b0a6e0504d36174f",
+      "bytes": 7737
     },
     {
       "path": "test_v2_pr25_apply.py",

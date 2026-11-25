@@ -460,43 +460,60 @@ def effective_accepted(db,isin,grant,*,_read_memo=None):
         # Retain IDs only. A caller normalizing its own decoded receipt cannot
         # mutate a shared cached grant. New contents/view require full checks.
         return {pid:grant['accepted'][pid] for pid in pool[cache_key]}
+    entry_key=('entries',*cache_key) if cache_key is not None else None
+    remembered=pool.get(entry_key,{}) if entry_key is not None else {}
+    def remember_entry(pid,entry,valid):
+        # Some legacy predicates conservatively return False on a source-read
+        # refusal. At an expired diagnostic budget that is unknown evidence,
+        # never a rejection to retain in a later continuation.
+        deadlines=getattr(db,'deadlines',())
+        if scope and deadlines:
+            import time as clock_time,sqlite3 as sqlite_errors
+            if clock_time.monotonic()>=min(deadlines):raise sqlite_errors.OperationalError('interrupted')
+        if entry_key is not None:
+            remembered[pid]=bool(valid);pool[entry_key]=remembered
+        if valid:result[pid]=entry
     policy=read(db,AUTO_POLICY,{})
     enabled=(policy.get('enabled') is True and policy.get('version')==AUTO_VERSION and
              isin not in policy.get('excluded_isins',[]))
     result={};validated={}
     for pid,entry in grant.get('accepted',{}).items():
+        if entry_key is not None and pid in remembered:
+            if remembered[pid]:result[pid]=entry
+            continue
         if entry.get('actor')==REVIEWED_ACTOR:
             policy=read(db,REVIEWED_PREFIX+isin,{})
             token=entry.get('input_revisions',{})
             current=_revisions(db,token)
-            if (policy.get('version')==REVIEWED_VERSION and policy.get('approved') is True
+            accepted=(policy.get('version')==REVIEWED_VERSION and policy.get('approved') is True
                     and pid in policy.get('entries',{}) and token
                     and (current==token or _reviewed_market_tail_current(db,isin,entry,token,current,_read_memo=_read_memo))
                     and all(entry.get('problem',{}).get(k)==policy['entries'][pid]['problem'].get(k)
                             for k in ('id','isin','kind','identity','tf','range','report_key','state'))
-                    and entry.get('evidence',{}).get('policy_digest')==digest(policy)):
-                result[pid]=entry
+                    and entry.get('evidence',{}).get('policy_digest')==digest(policy))
+            remember_entry(pid,entry,accepted)
             continue
         if entry.get('actor')==TV_ACTOR:
             token=entry.get('input_revisions',{})
-            if not _tv_enabled(db,isin) or not token:continue
+            if not _tv_enabled(db,isin) or not token:remember_entry(pid,entry,False);continue
             current=_revisions(db,token)
-            if current!=token and not _reviewed_market_tail_current(db,isin,entry,token,current,_read_memo=_read_memo):continue
-            result[pid]=entry
+            if current!=token and not _reviewed_market_tail_current(db,isin,entry,token,current,_read_memo=_read_memo):remember_entry(pid,entry,False);continue
+            remember_entry(pid,entry,True)
             continue # New explicit policy; never revive old historical grants.
         review=grant.get('historical_review',{})
         if review.get('version')==1 and review.get('state')=='COMPLETE':
             checked=review.get('results',{}).get(pid,{})
             token=checked.get('input_revisions',{})
-            if checked.get('state')!='SOURCE_LIMITED' or not token or _revisions(db,token)!=token:continue
+            if checked.get('state')!='SOURCE_LIMITED' or not token or _revisions(db,token)!=token:remember_entry(pid,entry,False);continue
         if entry.get('actor')==AUTO_ACTOR:
             token=entry.get('input_revisions',{})
-            if not enabled or not token:continue
+            if not enabled or not token:remember_entry(pid,entry,False);continue
             binding=tuple(sorted(token.items()))
             if binding not in validated:validated[binding]=_revisions(db,token)==token
-            if not validated[binding]:continue
-        result[pid]=entry
-    if cache_key is not None:pool[cache_key]=tuple(result)
+            if not validated[binding]:remember_entry(pid,entry,False);continue
+        remember_entry(pid,entry,True)
+    if cache_key is not None:
+        pool[cache_key]=tuple(result);pool.pop(entry_key,None)
     return result
 
 

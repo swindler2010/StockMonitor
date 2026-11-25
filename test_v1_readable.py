@@ -20,7 +20,7 @@ class ReadableTests(unittest.TestCase):
         before = copy.deepcopy(result)
         with patch.object(i18n, '_language', 'ru'):
             heading, summary, reasons, warnings, levels = view.recommendation(result)
-        self.assertEqual(heading, 'Ждать')
+        self.assertEqual(heading, i18n.tr(view.DECISIONS['WAIT'][0]))
         self.assertIn('Недельный тренд', reasons[0])
         self.assertEqual(len(reasons), 1)
         self.assertEqual(len(warnings), 1)
@@ -51,6 +51,7 @@ class ReadableTests(unittest.TestCase):
         keys = set(view.DECISIONS[k][0] for k in view.DECISIONS)
         keys.update(v for pair in view.DECISIONS.values() for v in pair)
         keys.update(view.REASONS.values())
+        keys.update(['Когда покупать или докупать','Сколько покупать','Как долго держать','Прибыль на акцию','Свободный денежный поток'])
         keys.update(view.OPERATION_NAMES.values())
         keys.update(view.OPERATION_STATUSES.values())
         for node in ast.walk(tree):
@@ -116,8 +117,8 @@ class ReadableViewTests(unittest.TestCase):
             identity={'currency':'EUR'},long_term={'support':'10','signal_day':'2026-11-24'},
             generated_at=now.isoformat(),valid_until=(now+timedelta(minutes=5)).isoformat(),_input_revisions={})
         f.jobs[1][1](result);f.root.update()
-        text=next(w.get('1.0','end') for w in f.widgets() if isinstance(w,tk.Text) and 'Почему V1' in w.get('1.0','end'))
-        self.assertTrue(text.startswith('Ждать'))
+        text=next(w.get('1.0','end') for w in f.widgets() if isinstance(w,tk.Text) and i18n.tr('Что показывает график') in w.get('1.0','end'))
+        self.assertTrue(text.startswith(i18n.tr(view.DECISIONS['WAIT'][0])))
         self.assertIn('На дневном графике пока нет сигнала',text)
         self.assertNotIn('V1_DAILY_SETUP_WAIT',text)
         self.assertIn('Уровни на графике',text)

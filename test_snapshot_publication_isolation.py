@@ -102,8 +102,12 @@ class RealProofIsolation(unittest.TestCase):
   other=capture_closed_inputs(self.db,[spec],{'instrument:OTHER':1,'market:OTHER:15m':1});self.db.commit()
   @contextmanager
   def connect():
-   try:yield self.db
-   finally:self.db.rollback()
+   # Production validation owns a separate query-only connection. Keep the
+   # fixture writer writable so this scenario can apply the later correction.
+   import sqlite3
+   reader=sqlite3.connect(':memory:');self.db.backup(reader)
+   try:yield reader
+   finally:reader.close()
   stocks=[dict(isin=isin,name=isin,timeframe='1H',count=1,candles=[{'close':10}],_closed_inputs=g,
                trading_engine=dict(status='READY',signal='BUY')) for isin,g in [('TEST',self.guard),('OTHER',other)]]
   state=dict(stocks=stocks,selected={'isin':'TEST'},analysis_snapshot={},_calculation_timing={})

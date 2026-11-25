@@ -262,8 +262,11 @@ def calculate(store, values):
     from paper_v1_long_term import PROFILE_KEY, MODEL
     from gettex_chart import state_key, confirmed_state
     from calculation_window import context_deadline
+    from fundamentals_view import cache_matches, freshness
     store.read_cache.depend('setting:'+KEY)
     info = values['watchlist'][0]
+    fundamentals_key = 'fundamentals:'+info['isin']
+    store.read_cache.depend('setting:'+fundamentals_key)
     with store.connect() as db:
         account = read(db)
         if account is None: raise ValueError('REAL_ACCOUNT_NOT_INITIALIZED')
@@ -271,12 +274,29 @@ def calculate(store, values):
         listing_key = state_key(info['isin'], '1D')
         row = db.execute('SELECT value FROM settings WHERE key=?', (listing_key,)).fetchone()
         listing = json.loads(row[0]) if row else {}
+        row = db.execute('SELECT value FROM settings WHERE key=?', (fundamentals_key,)).fetchone()
+        try:
+            fundamentals = json.loads(row[0]) if row else {}
+        except (ValueError, TypeError):
+            fundamentals = {}
     store.read_cache.depend('setting:'+listing_key)
     if not confirmed_state(info, listing): raise ValueError('REAL_LISTING_UNCONFIRMED')
     identity = listing['identity']
     held = next((p for p in account['positions'] if p['isin']==info['isin'] and number(p['quantity'])>0), {})
     position = {'quantity':held['quantity']} if held else {}
     now = read_time()
+    company = {}
+    if cache_matches(fundamentals, info) and fundamentals.get('symbol'):
+        metrics = fundamentals.get('metrics') or []
+        company = dict(updated_at=fundamentals.get('updated_at'), freshness=freshness(fundamentals, now), metrics=[])
+        for metric in ('TotalRevenue', 'DilutedEPS', 'FreeCashFlow'):
+            candidates = [r for r in metrics if isinstance(r, dict) and r.get('metric')==metric
+                          and r.get('frequency')=='quarterly' and isinstance(r.get('period_end'),str)
+                          and r['period_end'] <= now.date().isoformat()]
+            if candidates:
+                latest = max(candidates, key=lambda r:r['period_end'])
+                company['metrics'].append({key:latest.get(key) for key in
+                    ('metric','value','currency','period_end','cache_status','updated_at')})
     calculated = context(store, dict(values, _paper_v1_long_term=True), identity, plan('1D'), position, now)
     engine = calculated['engine']
     result = dict(isin=info['isin'], timeframe='1D', execution_context={'trading_engine':engine})
@@ -285,6 +305,6 @@ def calculate(store, values):
         identity=identity, generated_at=now.isoformat(), core=engine.get('status'),
         valid_until=context_deadline(identity,'1D',now).isoformat(),
         signal=decision['action'], reason=decision.get('reason'), signal_at=engine.get('timestamp'),
-        model=MODEL, real_quantity=held.get('quantity','0'),
+        model=MODEL, real_quantity=held.get('quantity','0'), company=company,
         long_term=engine.get('v1_long_term',{}), execution_permission=False,
         quote_is_broker_execution_price=False, proof=calculated['proof'])

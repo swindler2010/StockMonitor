@@ -257,6 +257,23 @@ class RealViewTests(unittest.TestCase):
         self.jobs[1][1]({'signal':'UNEXPECTED_ADVICE'})
         self.assertFalse(any('UNEXPECTED_ADVICE' in w.get('1.0','end') for w in self.widgets() if isinstance(w,tk.Text)))
 
+    def test_repeated_advice_click_does_not_discard_first_result(self):
+        import tkinter as tk
+        from tkinter import ttk
+        from i18n import tr
+        button=next(w for w in self.widgets() if isinstance(w,ttk.Button) and w.cget('text')==tr('Проверить рекомендацию'))
+        button.invoke()
+        button.invoke()
+        self.assertEqual(len(self.jobs),2)
+        now=datetime.now(timezone.utc)
+        result=dict(signal='WAIT',core='READY',reason='V1_DAILY_SETUP_WAIT',real_quantity='2',
+                    identity={'currency':'EUR'},long_term={},generated_at=now.isoformat(),
+                    valid_until=(now+timedelta(minutes=5)).isoformat(),_input_revisions={})
+        self.jobs[1][1](result)
+        self.assertFalse(button.instate(['disabled']))
+        self.assertTrue(any(tr('Пока подождать') in w.get('1.0','end')
+                            for w in self.widgets() if isinstance(w,tk.Text)))
+
     def test_journal_paging_keeps_all_rows_and_never_submits_a_trade(self):
         from tkinter import ttk
         tree=next(w for w in self.widgets() if isinstance(w,ttk.Treeview) and 'status' in w['columns'])

@@ -59,7 +59,14 @@ class InputRevisionTests(unittest.TestCase):
             self.store.event('unrelated',{})
             self.assertTrue(Features.accept_background_snapshot(self.ui,result,values))
             self.store.set_setting('history_identity:'+self.info['isin'],{'symbol':'APC.F','venue':'FRA','currency':'EUR'})
-            self.assertFalse(Features.accept_background_snapshot(self.ui,result,values))
+            # There is no saved price series in this fixture. The coherent
+            # publisher may retain its blocked report after an unused identity
+            # changes, but that must never create prices or trade permission.
+            self.assertTrue(Features.accept_background_snapshot(self.ui,result,values))
+            self.assertEqual(result['stocks'][0]['trading_engine']['status'],'DATA BLOCKED')
+            self.assertEqual(result['stocks'][0]['trading_engine']['signal'],'WAIT')
+            self.assertEqual(result['stocks'][0]['count'],0)
+            self.assertEqual(result['stocks'][0]['candles'],[])
         finally:
             client.close()
             if client.process:client.process.wait(timeout=10);client.process.stdin.close();client.process.stdout.close()

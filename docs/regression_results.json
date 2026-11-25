@@ -1,14 +1,14 @@
 {
   "schema": 2,
-  "generated_at": "2026-11-25T13:13:11.936905+00:00",
+  "generated_at": "2026-11-25T14:05:42.372513+00:00",
   "scope": "Current V1 patch and publication portability; synthetic data, no production account writes or market-source calls",
   "totals": {
-    "PASS": 91,
+    "PASS": 92,
     "FAIL": 0,
     "ERROR": 4,
     "SKIP": 0
   },
-  "unique_tests": 95,
+  "unique_tests": 96,
   "cases": [
     {
       "test": "test_indicator_controls.IndicatorControlsTests.test_aba_revision_rejected_and_unknown_rows_preserved",
@@ -190,7 +190,8 @@
       "issues": [
         "no such table: input_revisions"
       ],
-      "verification_context": "Guarded publication regression"
+      "verification_context": "Guarded publication regression",
+      "last_rechecked_at": "2026-11-25T13:48:33.255766+00:00"
     },
     {
       "test": "test_issue19_scoped_receipts.EvidenceReadTransport.test_existing_snapshot_alias_pins_instrument_and_page_without_writes",
@@ -198,7 +199,8 @@
       "issues": [
         "Remote end closed connection without response"
       ],
-      "verification_context": "Guarded publication regression"
+      "verification_context": "Guarded publication regression",
+      "last_rechecked_at": "2026-11-25T13:48:33.255766+00:00"
     },
     {
       "test": "test_issue19_scoped_receipts.EvidenceRequest.test_existing_queue_async_idempotent_and_final_deadline_guard",
@@ -287,7 +289,8 @@
       "issues": [
         "'last'"
       ],
-      "verification_context": "Guarded publication regression"
+      "verification_context": "Guarded publication regression",
+      "last_rechecked_at": "2026-11-25T13:48:33.255766+00:00"
     },
     {
       "test": "test_issue22_mcp.Tests.test_expired_lease_never_silently_switches_revision",
@@ -439,7 +442,8 @@
       "issues": [
         "'last'"
       ],
-      "verification_context": "Guarded publication regression"
+      "verification_context": "Guarded publication regression",
+      "last_rechecked_at": "2026-11-25T13:48:33.255766+00:00"
     },
     {
       "test": "test_issue22_mcp.Tests.test_ten_selected_recalculations_keep_current_publication",
@@ -460,156 +464,180 @@
       "test": "test_real_portfolio.RealAccountTests.test_account_operations_and_levels_survive_reopen_with_revision_guards",
       "status": "PASS",
       "issues": [],
-      "verification_context": "V1 application isolated unit/Tk run, 20+5 unique PASS"
+      "verification_context": "Repeated after parallel V1 investment-plan change: same25 unique PASS,4.161s; live UI separately PASS"
     },
     {
       "test": "test_real_portfolio.RealAccountTests.test_actual_buy_sell_cash_basis_and_fees",
       "status": "PASS",
       "issues": [],
-      "verification_context": "V1 application isolated unit/Tk run, 20+5 unique PASS"
+      "verification_context": "Repeated after parallel V1 investment-plan change: same25 unique PASS,4.161s; live UI separately PASS"
     },
     {
       "test": "test_real_portfolio.RealAccountTests.test_compact_mcp_never_inlines_the_broker_journal",
       "status": "PASS",
       "issues": [],
-      "verification_context": "V1 application isolated unit/Tk run, 20+5 unique PASS"
+      "verification_context": "Repeated after parallel V1 investment-plan change: same25 unique PASS,4.161s; live UI separately PASS"
     },
     {
       "test": "test_real_portfolio.RealAccountTests.test_concurrent_change_and_broker_reimport_do_not_erase_local_records",
       "status": "PASS",
       "issues": [],
-      "verification_context": "V1 application isolated unit/Tk run, 20+5 unique PASS"
+      "verification_context": "Repeated after parallel V1 investment-plan change: same25 unique PASS,4.161s; live UI separately PASS"
     },
     {
       "test": "test_real_portfolio.RealAccountTests.test_deposit_and_fee_are_exact_cash_flows",
       "status": "PASS",
       "issues": [],
-      "verification_context": "V1 application isolated unit/Tk run, 20+5 unique PASS"
+      "verification_context": "Repeated after parallel V1 investment-plan change: same25 unique PASS,4.161s; live UI separately PASS"
     },
     {
       "test": "test_real_portfolio.RealAccountTests.test_duplicate_record_and_conflicting_id",
       "status": "PASS",
       "issues": [],
-      "verification_context": "V1 application isolated unit/Tk run, 20+5 unique PASS"
+      "verification_context": "Repeated after parallel V1 investment-plan change: same25 unique PASS,4.161s; live UI separately PASS"
     },
     {
       "test": "test_real_portfolio.RealAccountTests.test_identity_currency_future_and_duplicate_fail_closed",
       "status": "PASS",
       "issues": [],
-      "verification_context": "V1 application isolated unit/Tk run, 20+5 unique PASS"
+      "verification_context": "Repeated after parallel V1 investment-plan change: same25 unique PASS,4.161s; live UI separately PASS"
     },
     {
       "test": "test_real_portfolio.RealAccountTests.test_import_repeated_exactly_does_not_reset_or_duplicate",
       "status": "PASS",
       "issues": [],
-      "verification_context": "V1 application isolated unit/Tk run, 20+5 unique PASS"
+      "verification_context": "Repeated after parallel V1 investment-plan change: same25 unique PASS,4.161s; live UI separately PASS"
     },
     {
       "test": "test_real_portfolio.RealAccountTests.test_lightweight_health_does_not_read_or_serialize_real_account",
       "status": "PASS",
       "issues": [],
-      "verification_context": "V1 application isolated unit/Tk run, 20+5 unique PASS"
+      "verification_context": "Repeated after parallel V1 investment-plan change: same25 unique PASS,4.161s; live UI separately PASS"
     },
     {
       "test": "test_real_portfolio.RealAccountTests.test_main_footer_uses_v1_and_never_labels_lifetime_return_as_daily",
       "status": "PASS",
       "issues": [],
-      "verification_context": "V1 application isolated unit/Tk run, 20+5 unique PASS"
+      "verification_context": "Repeated after parallel V1 investment-plan change: same25 unique PASS,4.161s; live UI separately PASS"
     },
     {
       "test": "test_real_portfolio.RealAccountTests.test_no_missing_or_nonfinite_cash_is_assumed_zero",
       "status": "PASS",
       "issues": [],
-      "verification_context": "V1 application isolated unit/Tk run, 20+5 unique PASS"
+      "verification_context": "Repeated after parallel V1 investment-plan change: same25 unique PASS,4.161s; live UI separately PASS"
     },
     {
       "test": "test_real_portfolio.RealAccountTests.test_not_an_order_and_no_sale_beyond_held_quantity",
       "status": "PASS",
       "issues": [],
-      "verification_context": "V1 application isolated unit/Tk run, 20+5 unique PASS"
+      "verification_context": "Repeated after parallel V1 investment-plan change: same25 unique PASS,4.161s; live UI separately PASS"
     },
     {
       "test": "test_real_portfolio.RealAccountTests.test_real_negative_cash_and_cancelled_history_are_not_paper_fills",
       "status": "PASS",
       "issues": [],
-      "verification_context": "V1 application isolated unit/Tk run, 20+5 unique PASS"
+      "verification_context": "Repeated after parallel V1 investment-plan change: same25 unique PASS,4.161s; live UI separately PASS"
     },
     {
       "test": "test_real_portfolio.RealAccountTests.test_recommendation_uses_actual_held_quantity_and_no_execution_permission",
       "status": "PASS",
       "issues": [],
-      "verification_context": "V1 application isolated unit/Tk run, 20+5 unique PASS"
+      "verification_context": "Repeated after parallel V1 investment-plan change: same25 unique PASS,4.161s; live UI separately PASS"
     },
     {
       "test": "test_real_portfolio.RealAccountTests.test_reconciliation_difference_is_not_hidden",
       "status": "PASS",
       "issues": [],
-      "verification_context": "V1 application isolated unit/Tk run, 20+5 unique PASS"
+      "verification_context": "Repeated after parallel V1 investment-plan change: same25 unique PASS,4.161s; live UI separately PASS"
     },
     {
       "test": "test_real_portfolio.RealAccountTests.test_unknown_cost_is_unknown_not_zero",
       "status": "PASS",
       "issues": [],
-      "verification_context": "V1 application isolated unit/Tk run, 20+5 unique PASS"
+      "verification_context": "Repeated after parallel V1 investment-plan change: same25 unique PASS,4.161s; live UI separately PASS"
     },
     {
       "test": "test_real_portfolio.RealAccountTests.test_wrong_real_revision_never_reaches_core_calculation",
       "status": "PASS",
       "issues": [],
-      "verification_context": "V1 application isolated unit/Tk run, 20+5 unique PASS"
+      "verification_context": "Repeated after parallel V1 investment-plan change: same25 unique PASS,4.161s; live UI separately PASS"
     },
     {
       "test": "test_real_portfolio.RealViewTests.test_journal_paging_keeps_all_rows_and_never_submits_a_trade",
       "status": "PASS",
       "issues": [],
-      "verification_context": "V1 application isolated unit/Tk run, 20+5 unique PASS"
+      "verification_context": "Repeated after parallel V1 investment-plan change: same25 unique PASS,4.161s; live UI separately PASS"
     },
     {
       "test": "test_real_portfolio.RealViewTests.test_late_advice_is_discarded_after_instrument_switch",
       "status": "PASS",
       "issues": [],
-      "verification_context": "V1 application isolated unit/Tk run, 20+5 unique PASS"
+      "verification_context": "Repeated after parallel V1 investment-plan change: same25 unique PASS,4.161s; live UI separately PASS"
     },
     {
       "test": "test_real_portfolio.RealViewTests.test_real_cash_and_journal_are_shown_without_replaying_or_writing",
       "status": "PASS",
       "issues": [],
-      "verification_context": "V1 application isolated unit/Tk run, 20+5 unique PASS"
+      "verification_context": "Repeated after parallel V1 investment-plan change: same25 unique PASS,4.161s; live UI separately PASS"
     },
     {
       "test": "test_v1_readable.ReadableTests.test_all_new_presentation_messages_have_both_translations",
       "status": "PASS",
       "issues": [],
-      "verification_context": "V1 application isolated unit/Tk run, 20+5 unique PASS"
+      "verification_context": "Repeated after parallel V1 investment-plan change: same25 unique PASS,4.161s; live UI separately PASS"
     },
     {
       "test": "test_v1_readable.ReadableTests.test_nested_and_manual_execution_fields_keep_actual_values_and_currency",
       "status": "PASS",
       "issues": [],
-      "verification_context": "V1 application isolated unit/Tk run, 20+5 unique PASS"
+      "verification_context": "Repeated after parallel V1 investment-plan change: same25 unique PASS,4.161s; live UI separately PASS"
     },
     {
       "test": "test_v1_readable.ReadableTests.test_recommendation_separates_decision_levels_and_quality_without_mutation",
       "status": "PASS",
       "issues": [],
-      "verification_context": "V1 application isolated unit/Tk run, 20+5 unique PASS"
+      "verification_context": "Repeated after parallel V1 investment-plan change: same25 unique PASS,4.161s; live UI separately PASS"
     },
     {
       "test": "test_v1_readable.ReadableViewTests.test_advice_renders_sections_and_human_decision_without_writes",
       "status": "PASS",
       "issues": [],
-      "verification_context": "V1 application isolated unit/Tk run, 20+5 unique PASS"
+      "verification_context": "Repeated after parallel V1 investment-plan change: same25 unique PASS,4.161s; live UI separately PASS"
     },
     {
       "test": "test_v1_readable.ReadableViewTests.test_buy_sell_filters_reset_paging_and_show_exact_selected_event",
       "status": "PASS",
       "issues": [],
-      "verification_context": "V1 application isolated unit/Tk run, 20+5 unique PASS"
+      "verification_context": "Repeated after parallel V1 investment-plan change: same25 unique PASS,4.161s; live UI separately PASS"
+    },
+    {
+      "test": "test_real_portfolio.RealViewTests.test_repeated_advice_click_does_not_discard_first_result",
+      "status": "PASS",
+      "issues": [],
+      "verification_context": "Parallel V1 repeat-click regression, isolated Tk; source-only fix not loaded in current TEST"
     }
   ],
   "limitations": [
     "This is not a full discover/CI pass. Previously accepted unchanged queue/DQ tests were not rerun.",
     "Four historical fixtures do not implement current contracts; failures retained. No unrelated production fix was made.",
-    "Live TEST acceptance is recorded separately, not inferred from isolated Tk tests."
-  ]
+    "Live TEST acceptance is recorded separately, not inferred from isolated Tk tests.",
+    "Parallel V1 repeat-click fix was written after the shared restart and is not runtime-accepted by this task. Requested readable patch and filters are live-accepted."
+  ],
+  "live_v1": {
+    "restart_at": "2026-11-25T14:42:33+01:00",
+    "recommendation": {
+      "isin": "US67066G1040",
+      "signal": "WAIT",
+      "calculated_at": "2026-11-25T14:54:40+01:00",
+      "closed_day": "2026-11-24",
+      "readable_decision": true,
+      "reasons_levels_quality_time_seen": true
+    },
+    "buy_filter": true,
+    "sell_filter": true,
+    "selected_operation_details": true,
+    "all_filter_restored": true,
+    "trades_created": 0
+  },
+  "latest_v1_scope": "26 distinct tests final PASS: localization case repaired after 4 missing entries; repeat runs not double counted"
 }

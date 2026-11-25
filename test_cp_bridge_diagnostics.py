@@ -223,6 +223,34 @@ class Tests(unittest.TestCase):
    with self.assertRaises(sqlite3.DatabaseError):s.db.execute(sql)
   self.assertTrue(s.db.in_transaction);self.assertEqual(s.db.execute('PRAGMA query_only').fetchone()[0],1)
   self.assertTrue(ctl.effective_accepted(s.db,'A',grant,_read_memo={}))
+ def test_53_and_200_approvals_resume_only_completed_entry_checks(self):
+  for count in (53,200):
+   ctl,s,template=self.approval_fixture()
+   grant=dict(accepted={str(i):json.loads(json.dumps(template['accepted']['receipt'])) for i in range(count)})
+   original=ctl._revisions;completed=0;attempts=0
+   while True:
+    calls=[0]
+    def bounded(db,token):
+     calls[0]+=1
+     if calls[0]>25:raise sqlite3.OperationalError('interrupted')
+     return original(db,token)
+    attempts+=1
+    try:
+     with patch.object(ctl,'_revisions',side_effect=bounded):result=ctl.effective_accepted(s.db,'A',grant,_read_memo={})
+     completed+=calls[0];break
+    except sqlite3.OperationalError:completed+=calls[0]-1
+    self.assertLess(attempts,MAX_READ_ATTEMPTS)
+   self.assertEqual(set(result),set(grant['accepted']))
+   self.assertEqual(completed,count);self.assertGreater(attempts,1)
+ def test_expired_budget_cannot_cache_a_swallowed_negative_check(self):
+  ctl,s,grant=self.approval_fixture()
+  grant['accepted']['receipt']['input_revisions']['instrument:A']=999
+  s.db.deadlines=[time.monotonic()-1]
+  try:
+   with patch.object(ctl,'_reviewed_market_tail_current',return_value=False):
+    with self.assertRaises(sqlite3.OperationalError):ctl.effective_accepted(s.db,'A',grant,_read_memo={})
+   self.assertEqual(s.db._cp_approval_results,{})
+  finally:s.db.deadlines=[]
  def test_retry_reuses_base_only_in_original_view_and_keeps_raw_dq(self):
   r=self.root();s=self.m.sessions[r['revision']];queries=[];s.db.set_trace_callback(queries.append)
   with patch.object(s,'_physical',side_effect=sqlite3.OperationalError('interrupted')):self.page(r['revision'])

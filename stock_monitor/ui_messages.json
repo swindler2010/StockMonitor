@@ -6313,5 +6313,177 @@
   "Чистая стоимость счёта": {
     "en": "Net account value",
     "de": "Nettokontowert"
+  },
+  "0 шт. По сохранённым данным SC свободных средств без кредита нет.": {
+    "en": "0 shares. The saved SC snapshot shows no funds available without credit.",
+    "de": "0 Aktien. Laut gespeichertem SC-Snapshot ist kein Guthaben ohne Kredit verfügbar."
+  },
+  "0 шт. на текущем сигнале. Объём можно оценить после появления сигнала на покупку.": {
+    "en": "0 shares at the current signal. Size can be estimated when a buy signal appears.",
+    "de": "0 Aktien beim aktuellen Signal. Die Stückzahl kann bei einem Kaufsignal geschätzt werden."
+  },
+  "Введи положительный лимит покупок в евро или оставь поле пустым.": {
+    "en": "Enter a positive purchase limit in euros or leave the field empty.",
+    "de": "Gib ein positives Kauflimit in Euro ein oder lasse das Feld leer."
+  },
+  "Введи свой лимит на эту покупку в евро и обнови расчёт.": {
+    "en": "Enter your limit for this purchase in euros and update the calculation.",
+    "de": "Gib dein Limit für diesen Kauf in Euro ein und aktualisiere die Berechnung."
+  },
+  "Вернись к покупке, когда недельный тренд поддержит рост, а закрытая дневная свеча подтвердит вход V1.": {
+    "en": "Reconsider buying when the weekly trend supports an advance and a closed daily candle confirms a V1 entry.",
+    "de": "Prüfe einen Kauf erneut, wenn der Wochentrend den Anstieg unterstützt und eine geschlossene Tageskerze den V1-Einstieg bestätigt."
+  },
+  "График пока не даёт основания для новой сделки.": {
+    "en": "The chart does not yet support a new trade.",
+    "de": "Der Chart liefert derzeit keine Grundlage für einen neuen Trade."
+  },
+  "Держать позицию": {
+    "en": "Hold position",
+    "de": "Position halten"
+  },
+  "Для оценки количества нужны цена закрытия и уровень входа в евро.": {
+    "en": "Estimating quantity requires a closing price and entry level in euros.",
+    "de": "Für die Stückzahlschätzung werden Schlusskurs und Einstiegsniveau in Euro benötigt."
+  },
+  "До {shares} целых акций при ориентире {price} и лимите {cap}. Это оценка по снимку без учёта комиссии. Перед заявкой сверь цену и остаток в SC.": {
+    "en": "Up to {shares} whole shares at an indicative price of {price} and a limit of {cap}. This snapshot estimate excludes fees. Check price and available funds in SC before placing an order.",
+    "de": "Bis zu {shares} ganze Aktien bei einem Richtpreis von {price} und einem Limit von {cap}. Diese Snapshot-Schätzung enthält keine Gebühren. Prüfe Kurs und Guthaben in SC vor einer Order."
+  },
+  "Доля в стоимости бумаг по снимку SC: {weight}": {
+    "en": "Share of securities value in the SC snapshot: {weight}",
+    "de": "Anteil am Wertpapierwert laut SC-Snapshot: {weight}"
+  },
+  "Закрытие ниже поддержки {price} — повод проверить позицию.": {
+    "en": "A close below support at {price} is a reason to review the position.",
+    "de": "Ein Schlusskurs unter der Unterstützung bei {price} ist Anlass, die Position zu prüfen."
+  },
+  "Из-за сигнала выхода позицию стоит пересмотреть сейчас.": {
+    "en": "The exit signal warrants reviewing the position now.",
+    "de": "Wegen des Ausstiegssignals sollte die Position jetzt überprüft werden."
+  },
+  "Как долго держать": {
+    "en": "How long to hold",
+    "de": "Wie lange halten"
+  },
+  "Когда покупать или докупать": {
+    "en": "When to buy or add",
+    "de": "Wann kaufen oder aufstocken"
+  },
+  "Лимит изменён. Нажми «Проверить рекомендацию», чтобы пересчитать количество.": {
+    "en": "Limit changed. Click “Check recommendation” to recalculate quantity.",
+    "de": "Limit geändert. Klicke auf „Empfehlung prüfen“, um die Stückzahl neu zu berechnen."
+  },
+  "Лимит на одну покупку, € (необязательно)": {
+    "en": "Limit per purchase, € (optional)",
+    "de": "Limit je Kauf, € (optional)"
+  },
+  "На более длинных графиках пока нет согласованного роста.": {
+    "en": "The longer timeframes do not yet show aligned upward trends.",
+    "de": "Die längeren Zeitrahmen zeigen noch keinen übereinstimmenden Aufwärtstrend."
+  },
+  "На графике появился сигнал для входа.": {
+    "en": "An entry signal appeared on the chart.",
+    "de": "Im Chart ist ein Einstiegssignal aufgetreten."
+  },
+  "На графике появился сигнал для выхода.": {
+    "en": "An exit signal appeared on the chart.",
+    "de": "Im Chart ist ein Ausstiegssignal aufgetreten."
+  },
+  "На графике, по которому V1 ищет точку покупки, сохраняется снижение.": {
+    "en": "The chart V1 uses to find an entry still shows a decline.",
+    "de": "Der Chart, in dem V1 einen Einstieg sucht, zeigt weiterhin einen Rückgang."
+  },
+  "От последнего закрытия до него {gap}.": {
+    "en": "It is {gap} above the last close.",
+    "de": "Es liegt {gap} über dem letzten Schlusskurs."
+  },
+  "Отчётность из сохранённых данных СМ. Проверь, не вышел ли новый отчёт.": {
+    "en": "Financial statements come from saved SM data. Check whether a new report has been released.",
+    "de": "Die Finanzdaten stammen aus gespeicherten SM-Daten. Prüfe, ob ein neuer Bericht erschienen ist."
+  },
+  "Перед покупкой сравни выручку, денежный поток и прогноз компании с прошлым годом и проверь оценку акции.": {
+    "en": "Before buying, compare revenue, cash flow and company guidance with last year and review the stock valuation.",
+    "de": "Vergleiche vor einem Kauf Umsatz, Cashflow und Unternehmensprognose mit dem Vorjahr und prüfe die Aktienbewertung."
+  },
+  "Пересмотреть позицию": {
+    "en": "Review position",
+    "de": "Position überprüfen"
+  },
+  "Плановый горизонт V1 — 3–5 лет. Пересматривай позицию после квартальных отчётов и при ухудшении перспектив бизнеса.": {
+    "en": "The planned V1 horizon is 3–5 years. Review the position after quarterly reports and if business prospects deteriorate.",
+    "de": "Der geplante V1-Horizont beträgt 3–5 Jahre. Überprüfe die Position nach Quartalsberichten und bei schlechteren Geschäftsaussichten."
+  },
+  "По текущему сигналу V1 можно сохранить позицию.": {
+    "en": "The current V1 signal supports keeping the position.",
+    "de": "Beim aktuellen V1-Signal kann die Position gehalten werden."
+  },
+  "По этой акции нет сопоставленной отчётности в СМ. Сейчас долгосрочный вывод ограничен данными графика.": {
+    "en": "SM has no matched financial statements for this stock. The current long-term assessment is limited to chart data.",
+    "de": "Für diese Aktie sind in SM keine zugeordneten Finanzberichte vorhanden. Die langfristige Einschätzung ist derzeit auf Chartdaten begrenzt."
+  },
+  "Позиции пока нет. Для долгосрочного входа оцени бизнес на горизонте 3–5 лет, затем пересматривай вывод после отчётов.": {
+    "en": "There is no position yet. For a long-term entry, assess the business over 3–5 years and review the conclusion after reports.",
+    "de": "Es besteht noch keine Position. Beurteile das Geschäft für einen langfristigen Einstieg über 3–5 Jahre und überprüfe die Einschätzung nach Berichten."
+  },
+  "Пока подождать": {
+    "en": "Wait for now",
+    "de": "Vorerst abwarten"
+  },
+  "Покупку пока отложить. Для имеющейся позиции проверь причину сигнала и последний отчёт компании.": {
+    "en": "Postpone buying for now. For an existing position, review the signal reason and latest company report.",
+    "de": "Verschiebe den Kauf vorerst. Prüfe bei einer bestehenden Position den Signalgrund und den neuesten Unternehmensbericht."
+  },
+  "Прибыль на акцию": {
+    "en": "Earnings per share",
+    "de": "Gewinn je Aktie"
+  },
+  "Проверить возможность покупки": {
+    "en": "Consider buying",
+    "de": "Kaufmöglichkeit prüfen"
+  },
+  "Проверка бизнеса": {
+    "en": "Business review",
+    "de": "Geschäft prüfen"
+  },
+  "Размер покупки пока неизвестен. Нужны актуальные свободные средства SC.": {
+    "en": "Purchase size is not yet known. Current available SC funds are required.",
+    "de": "Die Kaufgröße ist noch unbekannt. Aktuelles verfügbares SC-Guthaben wird benötigt."
+  },
+  "Сколько покупать": {
+    "en": "How much to buy",
+    "de": "Wie viel kaufen"
+  },
+  "Сначала обнови данные и запроси новый расчёт. Сейчас условия входа проверить нельзя.": {
+    "en": "Update the data and request a new calculation first. Entry conditions cannot currently be checked.",
+    "de": "Aktualisiere zuerst die Daten und fordere eine neue Berechnung an. Die Einstiegsbedingungen können derzeit nicht geprüft werden."
+  },
+  "Снижение теряет силу или движение вверх усиливается.": {
+    "en": "The decline is losing momentum or the upward move is strengthening.",
+    "de": "Der Rückgang verliert an Kraft oder die Aufwärtsbewegung verstärkt sich."
+  },
+  "Твой уровень пересмотра позиции — {price}.": {
+    "en": "Your position review level is {price}.",
+    "de": "Dein Überprüfungsniveau für die Position liegt bei {price}."
+  },
+  "Уровень {price} на графике — повод перепроверить сигнал.": {
+    "en": "The chart level at {price} is a reason to recheck the signal.",
+    "de": "Das Chartniveau bei {price} ist Anlass, das Signal erneut zu prüfen."
+  },
+  "Что показывает график": {
+    "en": "What the chart shows",
+    "de": "Was der Chart zeigt"
+  },
+  "🟢 — акция есть в портфеле": {
+    "en": "🟢 — stock is held in the portfolio",
+    "de": "🟢 — Aktie ist im Portfolio enthalten"
+  },
+  "Не удалось запустить расчёт V1. Попробуй ещё раз.": {
+    "en": "Could not start the V1 calculation. Try again.",
+    "de": "Die V1-Berechnung konnte nicht gestartet werden. Versuche es erneut."
+  },
+  "Данные реального счёта V1 ещё не загружены.": {
+    "en": "The real V1 account data has not loaded yet.",
+    "de": "Die Daten des realen V1-Kontos sind noch nicht geladen."
   }
 }
