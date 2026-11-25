@@ -210,6 +210,24 @@ def automation_summary(state):
     return '\n'.join(lines)
 
 
+def v2_daily_summary(state):
+    sessions = state.get('v2_daily_sessions', [])
+    if not sessions:
+        return ''
+    labels = {'PASS': 'цель выполнена', 'NO_ROUND_TRIP': 'без закрытой сделки в этот день',
+              'LOSS': 'убыток', 'FLAT': 'ноль', 'IN_PROGRESS': 'сессия продолжается'}
+    lines = ['','V2 · Последние сессии']
+    for row in reversed(sessions):
+        line = (f"{row['day']} · {labels[row['status']]} · "
+                f"покупок {row['buys']}, продаж {row['sells']} · {row['net']} EUR")
+        if row['profit_lock'] and row['status'] == 'IN_PROGRESS':
+            line += ' · новые покупки остановлены'
+        if not row['round_trips'] and row['reasons']:
+            line += ' · ' + ', '.join(reason for reason, _ in row['reasons'])
+        lines.append(line)
+    return '\n'.join(lines)
+
+
 def summary(state):
     if state.get('status') != 'ACTIVE': return tr('Демосчёт: ') + str(state.get('status',tr('недоступен')))
     start=state['policy']['starting_cash'];equity=state.get('equity')
@@ -222,7 +240,7 @@ def summary(state):
     balances=("\n"+tr('Свободные средства по счетам')+"  "+
               "  |  ".join(f"{name} {book['cash']} EUR" for name,book in portfolios.items())
               if portfolios else "")
-    return (f"{state['account']}{tr(' • только виртуальные операции\nНачальный капитал: ')}{start}{tr(' EUR • Доходность: ')}{change}\nCash: {value('cash')} • Equity: {value('equity')}{tr('\nРеализованный P&L: ')}{value('realized')}{tr(' • Нереализованный: ')}{value('unrealized')}{tr(' • Комиссии: ')}{value('fees')}"+balances+universe+automation_summary(state))
+    return (f"{state['account']}{tr(' • только виртуальные операции\nНачальный капитал: ')}{start}{tr(' EUR • Доходность: ')}{change}\nCash: {value('cash')} • Equity: {value('equity')}{tr('\nРеализованный P&L: ')}{value('realized')}{tr(' • Нереализованный: ')}{value('unrealized')}{tr(' • Комиссии: ')}{value('fees')}"+balances+universe+automation_summary(state)+v2_daily_summary(state))
 
 def attach(app, parent):
     from calendar_panel import label as translated_label
