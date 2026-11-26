@@ -35,7 +35,7 @@ class SourceTests(unittest.TestCase):
         self.assertIsNone(value['decisions'][0]['target_currency']);json.dumps(value,allow_nan=False)
     def test_other_symbol_rejected_before_other_calls(self):
         t=ticker();t.get_info.return_value['symbol']='OTHER';value=f.fetch(INFO,Path('.'),ticker=t,now=NOW)
-        self.assertEqual(value['errors'],{'profile':'ValueError'});t.get_recommendations.assert_not_called();self.assertNotIn('targets',value)
+        self.assertEqual(value['errors'],{'profile':'IDENTITY_MISMATCH'});t.get_recommendations.assert_not_called();self.assertNotIn('targets',value)
     def test_no_currency_cannot_borrow_reporting_or_selected_stock_currency(self):
         t=ticker();del t.get_info.return_value['currency'];value=f.fetch(INFO,Path('.'),ticker=t,now=NOW)
         self.assertIsNone(value['targets']['currency']);self.assertEqual(value['targets']['status'],'CURRENCY_UNKNOWN');self.assertNotIn('history',value)
@@ -59,7 +59,7 @@ class SourceTests(unittest.TestCase):
         old=f.fetch(INFO,Path('.'),ticker=ticker(),now=NOW);t=ticker();t.get_recommendations.side_effect=RuntimeError('network')
         current=f.fetch(INFO,Path('.'),old,ticker=t,now=NOW+timedelta(days=2))
         self.assertEqual(current['ratings'],old['ratings']);self.assertEqual(current['ratings_at'],old['ratings_at'])
-        self.assertNotEqual(current['targets_at'],old['targets_at']);self.assertEqual(f.state(current,NOW+timedelta(days=2)),'STALE')
+        self.assertNotEqual(current['targets_at'],old['targets_at']);self.assertEqual(f.state(current,NOW+timedelta(days=2)),'PARTIAL')
     def test_previous_profile_never_survives_changed_identity(self):
         old=f.fetch(INFO,Path('.'),ticker=ticker(),now=NOW);other={**INFO,'profile_symbol':'NEW'}
         result=f.fetch(other,Path('.'),old,ticker=ticker(),now=NOW)
@@ -86,7 +86,7 @@ class SourceTests(unittest.TestCase):
         info={**INFO,'profile_symbol':None,'history_symbol':None};candidate=dict(symbol='WRONG',quoteType='EQUITY')
         with patch('market.search',return_value=[candidate]*5),patch('market.resolve_symbol',return_value=dict(status='CONFIRMED',symbol='WRONG',isin='WRONG')) as resolver:
             result=f.fetch(info,Path('.'),ticker=ticker(),now=NOW)
-        self.assertEqual(resolver.call_count,2);self.assertEqual(result['errors']['identity'],'PROFILE_IDENTITY_UNCONFIRMED');self.assertNotIn('targets',result)
+        self.assertEqual(resolver.call_count,2);self.assertTrue(result['errors']['identity'].startswith('PROFILE_ISIN_MISMATCH:'));self.assertNotIn('targets',result)
     def test_resolved_profile_expires_without_renewing_saved_proof(self):
         binding=dict(status='CONFIRMED',isin=INFO['isin'],symbol='ORCL',resolved_at=NOW.isoformat())
         with patch('market.search',side_effect=RuntimeError('no provider')) as search:
@@ -179,7 +179,7 @@ class ForecastNavigationTests(unittest.TestCase):
         pages=self.screen.pages
         with patch('analyst_forecast.load',return_value={}):
             pages.select('forecast');work,done,kwargs=pending.pop(0)
-            self.assertEqual(kwargs['lane'],'misc');packet=work();done(packet)
+            self.assertEqual(kwargs['lane'],'chart');packet=work();done(packet)
             self.assertIsNotNone(pages.forecast_panel);self.assertEqual(len(pending),1)
             work,done,kwargs=pending.pop(0);self.assertEqual(kwargs['key'],('analyst-forecast','A'))
             packet=work();pages.render=Mock();self.app.symbol.set('NVIDIA');done(packet);pages.render.assert_not_called()

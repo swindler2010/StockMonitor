@@ -39,7 +39,8 @@ def state(packet,now=None):
     stamp=moment(packet.get('updated_at'))
     if stamp is None:return 'UNAVAILABLE'
     if stamp>now:return 'FUTURE_TIMESTAMP'
-    return 'STALE' if packet.get('errors') or (now-stamp).total_seconds()>=TTL else 'AVAILABLE'
+    if (now-stamp).total_seconds()>=TTL:return 'STALE'
+    return 'PARTIAL' if packet.get('errors') else 'AVAILABLE'
 
 def targets(info):
     fields={'low':'targetLowPrice','mean':'targetMeanPrice','high':'targetHighPrice'}
@@ -98,30 +99,96 @@ def history(frame,metadata,symbol,currency):
         if value is not None:rows[at.date().isoformat()]=value
     return sorted(rows.items())
 
-def resolve_profile(info,cache_dir,previous=None,now=None):
+def _isin_symbols(isin):
+    """Actual auxiliary symbols from the existing independent exact-ISIN source."""
+    import requests
+    import json
+    response=requests.get('https://markets.businessinsider.com/ajax/SearchController_Suggest',
+        params={'max_results':25,'query':isin},headers={'User-Agent':'Mozilla/5.0 StockMonitor/0.16'},timeout=8)
+    response.raise_for_status()
+    token=r'"(?:\\.|[^"\\])*"';symbols=[]
+    for match in re.finditer(r'new Array\(\s*('+token+r'(?:\s*,\s*'+token+r'){5})\s*\)',response.text):
+        row=json.loads('['+match.group(1)+']');parts=row[2].split('|')
+        if row[1]=='Stocks' and len(parts)>=2 and parts[1]==isin and re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9.^=-]{0,24}',parts[0]):
+            if parts[0] not in symbols:symbols.append(parts[0])
+    return symbols[:2]
+
+def _class_profile(info,item):
+    """One US share-class separator only; independently prove listing and exact ISIN."""
+    symbol=item.get('symbol','');match=re.fullmatch(r'([A-Z0-9]{1,6})-([A-Z])',symbol)
+    if not match or not str(info.get('isin','')).startswith('US'):return None
+    import requests
+    from urllib.parse import quote
+    from market import _exact_isins
+    reference=match[1]+'.'+match[2];headers={'User-Agent':'Mozilla/5.0 StockMonitor/0.16'}
+    try:
+        response=requests.get('https://query1.finance.yahoo.com/v8/finance/chart/'+quote(symbol,safe=''),
+            params={'range':'1d','interval':'1d'},headers=headers,timeout=8);response.raise_for_status()
+        payload=response.json().get('chart',{})
+        if payload.get('error') or len(payload.get('result') or [])!=1:return None
+        meta=payload['result'][0].get('meta',{})
+        if meta.get('symbol')!=symbol or meta.get('instrumentType')!='EQUITY' or meta.get('exchangeName')!=item.get('exchange'):return None
+        currency=meta.get('currency')
+        if not isinstance(currency,str) or not re.fullmatch('[A-Za-z]{3}',currency) or item.get('currency') not in (None,currency):return None
+        response=requests.get('https://markets.businessinsider.com/ajax/SearchController_Suggest',
+            params={'max_results':25,'query':reference},headers=headers,timeout=8);response.raise_for_status()
+        if _exact_isins(response.text,reference,'EQUITY')!=info['isin']:return None
+    except Exception:return None
+    return dict(status='CONFIRMED',isin=info['isin'],symbol=symbol,venue=meta['exchangeName'],currency=currency,
+        source='proxy',timezone=meta.get('exchangeTimezoneName'),
+        evidence={'listing':'Yahoo exact symbol/type/venue/currency','isin':'Business Insider exact reference symbol',
+                  'class_separator':{'provider':symbol,'reference':reference,'rule':'same US share class; dot/dash separator only'},'checksum':True})
+
+def _error(error):
+    text=str(error)
+    return text if isinstance(error,ValueError) and text in ('SOURCE_EMPTY','IDENTITY_MISMATCH') else type(error).__name__
+
+def resolve_profile(info,cache_dir,previous=None,now=None,exclude_symbols=()):
     """Auxiliary binding only; never alter the user's listing/source settings."""
     now=now or datetime.now(timezone.utc);previous=previous or {}
     old=previous.get('resolved_profile') or {};at=moment(old.get('resolved_at'))
-    if (old.get('status')=='CONFIRMED' and old.get('isin')==info.get('isin') and old.get('symbol')
+    if (old.get('status')=='CONFIRMED' and old.get('symbol') not in exclude_symbols and old.get('isin')==info.get('isin') and old.get('symbol')
             and at is not None and 0<=(now-at).total_seconds()<7*TTL):return dict(old)
     from market import search,resolve_symbol,valid_isin
     isin=info.get('isin')
     if not valid_isin(isin):raise ValueError('PROFILE_ISIN_INVALID')
     candidates=search(isin)
-    candidates=[q for q in candidates if q.get('quoteType')=='EQUITY' and q.get('symbol')]
+    candidates=[q for q in candidates if q.get('quoteType')=='EQUITY' and q.get('symbol') and q['symbol'] not in exclude_symbols]
     candidates.sort(key=lambda q:q.get('currency')!=info.get('currency'))
-    # Exact symbol/listing/ISIN proof, bounded to two candidate checks per turn.
-    for item in candidates[:2]:
+    attempted=set();different=[];checks=0
+    def check(item):
+        nonlocal checks
+        checks+=1
+        attempted.add(item['symbol'])
         result=resolve_symbol(item['symbol'],cache_dir,search_result=item)
-        if result.get('status')=='CONFIRMED' and result.get('isin')==isin and result.get('symbol')==item['symbol']:
-            return dict(result,resolved_at=now.isoformat())
+        if result.get('status')=='CONFIRMED' and result.get('symbol')==item['symbol']:
+            if result.get('isin')==isin:return dict(result,resolved_at=now.isoformat())
+            different.append(result.get('isin'))
+        if result.get('status')!='CONFIRMED':
+            alias=_class_profile(info,item)
+            if alias:return dict(alias,resolved_at=now.isoformat())
+    for item in candidates[:2]:
+        result=check(item)
+        if result:return result
+    # Some listings have no literal Yahoo ticker in BI's symbol search.
+    # Reuse actual symbols from BI's exact-ISIN records; never invent an alias.
+    if checks<2:
+        for symbol in _isin_symbols(isin):
+            if symbol in attempted or symbol in exclude_symbols:continue
+            matches=[q for q in search(symbol) if q.get('symbol')==symbol and q.get('quoteType')=='EQUITY']
+            if len(matches)!=1:continue
+            result=check(matches[0])
+            if result:return result
+            if checks>=2:break
+    if different:raise ValueError('PROFILE_ISIN_MISMATCH:'+isin+':'+','.join(sorted(set(different))))
     raise ValueError('PROFILE_IDENTITY_UNCONFIRMED')
 
-def fetch(info,cache_dir,previous=None,ticker=None,now=None):
+def _fetch_bound(info,cache_dir,previous=None,ticker=None,now=None,symbol=None,binding=None):
     """Run only in the existing Dispatcher; four bounded auxiliary provider reads."""
     now=now or datetime.now(timezone.utc);stamp=now.isoformat()
-    symbol=info.get('profile_symbol') or info.get('history_symbol')
+    symbol=symbol or info.get('profile_symbol') or info.get('history_symbol')
     old=previous if matches(previous,info) else {}
+    if old.get('symbol') not in (None,symbol):old={}
     packet=dict(old,identity=identity(info),symbol=symbol,source=SOURCE,attempted_at=stamp,errors={})
     if info.get('kind')=='benchmark':
         packet.update(errors={'identity':'NO_COMPANY_PROFILE'});return packet
@@ -132,6 +199,7 @@ def fetch(info,cache_dir,previous=None,ticker=None,now=None):
             packet['errors']['identity']=str(error) if isinstance(error,ValueError) else type(error).__name__
             return packet
         packet['resolved_profile']=binding;symbol=binding['symbol'];packet['symbol']=symbol
+    if binding:packet['resolved_profile']=dict(binding)
     session=None
     if ticker is None:
         import yfinance as yf
@@ -145,9 +213,11 @@ def fetch(info,cache_dir,previous=None,ticker=None,now=None):
     try:
         try:
             raw=ticker.get_info() or {}
+            if not raw:raise ValueError('SOURCE_EMPTY')
             if raw.get('symbol')!=symbol:raise ValueError('IDENTITY_MISMATCH')
         except Exception as error:
-            packet['errors']['profile']=type(error).__name__
+            packet['errors']['profile']=_error(error)
+            if type(error).__name__=='YFRateLimitError':packet['rate_limited']=True
             # No other new section can be bound to an unconfirmed company response.
             return packet
         packet['company']=str(raw.get('longName') or raw.get('shortName') or symbol)[:200]
@@ -161,7 +231,7 @@ def fetch(info,cache_dir,previous=None,ticker=None,now=None):
                 value=loader()
                 if value is None or value==[]:raise ValueError('SOURCE_EMPTY')
             except Exception as error:
-                packet['errors'][key]=type(error).__name__
+                packet['errors'][key]=_error(error)
                 if type(error).__name__=='YFRateLimitError':
                     packet['rate_limited']=True;break
             else:
@@ -170,6 +240,42 @@ def fetch(info,cache_dir,previous=None,ticker=None,now=None):
         return packet
     finally:
         if session is not None:session.close()
+
+def fetch(info,cache_dir,previous=None,ticker=None,now=None):
+    """Coherent provider snapshot; an alternative must independently prove the same ISIN."""
+    now=now or datetime.now(timezone.utc);configured=info.get('profile_symbol') or info.get('history_symbol')
+    old=previous if matches(previous,info) else {};binding=None
+    if old.get('use_resolved_profile') and configured:
+        try:binding=resolve_profile(info,cache_dir,old,now,exclude_symbols=(configured,))
+        except Exception:binding=None
+    packet=_fetch_bound(info,cache_dir,old,ticker,now,symbol=binding.get('symbol') if binding else None,binding=binding)
+    if binding:packet.update(configured_symbol=configured,use_resolved_profile=True,switch_reason='ANALYST_COVERAGE_MISSING')
+    missing=((packet.get('targets') or {}).get('mean') is None and not (packet.get('ratings') or {}).get('total'))
+    if not configured or not missing or info.get('kind')=='benchmark' or packet.get('rate_limited') or packet.get('errors',{}).get('profile')=='IDENTITY_MISMATCH':return packet
+    try:
+        alternate=resolve_profile(info,cache_dir,old,now,exclude_symbols=(packet.get('symbol'),configured))
+        alternative=_fetch_bound(info,cache_dir,None,None,now,symbol=alternate['symbol'],binding=alternate)
+    except Exception as error:
+        packet['coverage_note']=str(error) if isinstance(error,ValueError) else type(error).__name__
+        return packet
+    if ((alternative.get('targets') or {}).get('mean') is not None or (alternative.get('ratings') or {}).get('total')):
+        alternative.update(configured_symbol=configured,use_resolved_profile=True,switch_reason='ANALYST_COVERAGE_MISSING',
+            source_attempts=[dict(symbol=packet.get('symbol'),at=packet.get('attempted_at'),errors=packet.get('errors'))])
+        return alternative
+    packet['coverage_note']='NO_ANALYST_COVERAGE_FOR_CONFIRMED_ALTERNATIVE:'+alternate['symbol']
+    return packet
+
+def presentation_key(packet,now=None):
+    """Run off Tk: skip unchanged paints while still observing each real deadline."""
+    import json,hashlib
+    now=now or datetime.now(timezone.utc);sections=[]
+    for key in ('targets','ratings','decisions','history'):
+        stamp=moment(packet.get(key+'_at'))
+        status=('UNAVAILABLE' if stamp is None else 'FUTURE_TIMESTAMP' if stamp>now else
+                'STALE' if key in packet.get('errors',{}) or (now-stamp).total_seconds()>=TTL else 'AVAILABLE')
+        sections.append(status)
+    digest=hashlib.sha256(json.dumps(packet,ensure_ascii=True,sort_keys=True,allow_nan=False).encode()).hexdigest()
+    return digest,state(packet,now),tuple(sections)
 
 def saved(store,info):
     value=store.setting(PREFIX+info.get('isin',''),{})

@@ -49,6 +49,19 @@ WORDS={
  'identitymissing':('Не подтверждён тикер для прогноза: источник не установил точное соответствие ISIN.', 'Ticker für Prognose nicht bestätigt: keine eindeutige ISIN-Zuordnung.', 'Forecast ticker unconfirmed: provider could not verify the exact ISIN.'),
  'resolved':('Тикер прогноза найден по ISIN · торговый источник не изменён', 'Prognoseticker über ISIN ermittelt · Handelsquelle unverändert', 'Forecast ticker resolved by ISIN · trading source unchanged'),
  'cooldown':('Обновление не чаще одного раза в 15 минут','Aktualisierung frühestens nach 15 Minuten','Refresh at most once per 15 minutes'),
+ 'partial_state':('Частично доступно','Teilweise verfügbar','Partly available'),
+ 'targets':('Цели цены','Kursziele','Price targets'),'ratings':('Рекомендации','Empfehlungen','Recommendations'),
+ 'history_section':('История цены','Kursverlauf','Price history'),'decisions':('Решения аналитиков','Analystenentscheidungen','Analyst decisions'),
+ 'profile':('Профиль эмитента','Unternehmensprofil','Company profile'),'identity':('Привязка акции','Wertpapierzuordnung','Stock identity'),
+ 'source_empty':('источник не предоставил сведения','keine Angaben vom Anbieter','provider supplied no data'),
+ 'source_failed':('не удалось получить или проверить данные','Daten konnten nicht geladen oder geprüft werden','data could not be obtained or verified'),
+ 'source_other':('источник ответил по другой акции','Anbieter lieferte ein anderes Wertpapier','provider returned a different stock'),
+ 'source_busy':('поставщик ограничил частоту запросов','Anbieter begrenzt die Anfragerate','provider rate limit'),
+ 'isin_mismatch':('ISIN источника не совпадает','ISIN des Anbieters stimmt nicht überein','provider ISIN does not match'),
+ 'alternative_empty':('На подтверждённом альтернативном листинге прогноз не предоставлен','Keine Prognose für die bestätigte alternative Notierung','No forecast supplied for the confirmed alternative listing'),
+ 'binding_checked':('Оценки аналитиков — отдельно от торгового сигнала СМ. Привязка прогноза сверена по ISIN; торговый источник не изменён.',
+                    'Analystenschätzungen sind vom SM-Handelssignal getrennt. Zuordnung über ISIN geprüft; Handelsquelle unverändert.',
+                    'Analyst estimates are separate from the SM trading signal. Forecast identity checked by ISIN; trading source unchanged.'),
  'raw':('Оригинал рейтингов: ','Bewertungen im Original: ','Original ratings: ')
 }
 
@@ -59,8 +72,23 @@ def price(value,currency=None):return format_value(value,language(),kind='price'
 def stamp(packet,key=None):
     at=packet.get(key+'_at') if key else packet.get('updated_at')
     dt=moment(at);now=datetime.now(timezone.utc)
-    status=word('unknown') if dt is None else word('future') if dt>now else word('stale') if (now-dt).total_seconds()>=TTL or (key in packet.get('errors',{}) if key else packet.get('errors')) else word('available')
+    if key is None:
+        status=word({'AVAILABLE':'available','PARTIAL':'partial_state','STALE':'stale','FUTURE_TIMESTAMP':'future','UNAVAILABLE':'unknown'}[state(packet)])
+    else:status=word('unknown') if dt is None else word('future') if dt>now else word('stale') if (now-dt).total_seconds()>=TTL or key in packet.get('errors',{}) else word('available')
     return status+' · '+format_date(at,language(),clock=True)
+
+def display_notes(packet):
+    def reason(code):
+        code=str(code)
+        if code.startswith('PROFILE_ISIN_MISMATCH:'):return word('isin_mismatch')+' · '+' → '.join(code.split(':')[1:])
+        if code.startswith('NO_ANALYST_COVERAGE_FOR_CONFIRMED_ALTERNATIVE:'):return word('alternative_empty')+' · '+code.split(':')[-1]
+        return word({'SOURCE_EMPTY':'source_empty','IDENTITY_MISMATCH':'source_other','YFRateLimitError':'source_busy'}.get(code,'source_failed'))
+    rows=[]
+    for key,code in (packet.get('errors') or {}).items():
+        label=word('history_section' if key=='history' else key)
+        rows.append(label+' — '+reason(code))
+    if packet.get('coverage_note'):rows.append(reason(packet['coverage_note']))
+    return rows
 
 def rating_word(score):
     if score is None:return word('unknown')
@@ -83,7 +111,7 @@ def grade(raw):
 class Plot(tk.Canvas):
     def __init__(self,parent,packet,**kwargs):
         self.packet=packet;self.pending=None
-        super().__init__(parent,highlightthickness=0,height=270,**kwargs)
+        super().__init__(parent,highlightthickness=0,height=kwargs.pop('height',270),**kwargs)
         self.bind('<Configure>',self.schedule);self.bind('<Destroy>',self.cancel,add='+')
     def schedule(self,_=None):
         if self.pending is None:self.pending=self.after_idle(self.paint)
@@ -126,8 +154,8 @@ class Plot(tk.Canvas):
         else:self.create_text(left,top+15,text=word('historymissing'),anchor='w',fill='#92a7bb',font=('Segoe UI',9))
         xx=x(end);xf=x(future)
         self.create_line(xx,top,xx,bottom,fill='#607789',dash=(2,4))
-        self.create_text(xx,bottom+20,text=end.strftime('%d.%m.%y'),fill='#92a7bb',font=('Segoe UI',8))
-        self.create_text(xf,bottom+20,text=future.strftime('%d.%m.%y'),fill='#92a7bb',font=('Segoe UI',8))
+        self.create_text(xx,bottom+20,text=format_date(end.isoformat(),language()),fill='#92a7bb',font=('Segoe UI',8))
+        self.create_text(xf,bottom+20,text=format_date(future.isoformat(),language()),fill='#92a7bb',font=('Segoe UI',8))
         anchor=current if current is not None else series[-1][1] if series else None
         if anchor is not None:
             if low is not None and high is not None:
@@ -139,8 +167,8 @@ class Plot(tk.Canvas):
             self.create_oval(xx-3,y(anchor)-3,xx+3,y(anchor)+3,fill='#22a8ff',outline='')
 
 class Panel:
-    def __init__(self,parent,app,info,packet):
-        self.parent=parent;self.app=app;self.info=info;self.packet=packet or {};self.widgets=[]
+    def __init__(self,parent,app,info,packet,compact=False):
+        self.parent=parent;self.app=app;self.info=info;self.packet=packet or {};self.widgets=[];self.compact=compact
         style=ttk.Style(parent);self.bg=style.lookup('DeskCard.TFrame','background') or '#0d1927'
         outer=ttk.Frame(parent,style='Desk.TFrame');outer.pack(fill='both',expand=True)
         self.canvas=tk.Canvas(outer,background=self.bg,highlightthickness=0)
@@ -153,20 +181,20 @@ class Panel:
         self.build()
     def wheel(self,e):self.canvas.yview_scroll(-int(e.delta/120),'units')
     def label(self,parent,text,large=False,muted=False):
-        label=ttk.Label(parent,text=text,style='DeskMuted.TLabel' if muted else 'Desk.TLabel',font=('Segoe UI',18 if large else 10,'bold' if large else 'normal'),wraplength=650,justify='left')
+        label=ttk.Label(parent,text=text,style='DeskMuted.TLabel' if muted else 'Desk.TLabel',font=('Segoe UI',(14 if self.compact else 18) if large else (9 if self.compact else 10),'bold' if large else 'normal'),wraplength=650,justify='left')
         label.pack(anchor='w',pady=3);label.bind('<MouseWheel>',self.wheel);return label
     def resize(self,e):
         self.canvas.itemconfigure(self.window,width=e.width)
         for label in self.widgets:label.configure(wraplength=max(200,e.width-32))
         if not hasattr(self,'rating'):return
-        row=0 if e.width>=850 else 1;column=1 if row==0 else 0
+        row=0 if e.width>=(700 if self.compact else 850) else 1;column=1 if row==0 else 0
         if self.rating.grid_info().get('row')!=row or self.rating.grid_info().get('column')!=column:
             self.rating.grid(row=row,column=column,sticky='nsew',padx=(12 if column else 0,0),pady=(10 if row else 0,0))
     def build(self):
         p=self.packet
         if self.info.get('kind')=='benchmark':self.label(self.content,word('benchmark'));return
         self.widgets.append(self.label(self.content,SOURCE_LINE(p,self.info),muted=True))
-        self.widgets.append(self.label(self.content,word('auxiliary'),muted=True))
+        self.widgets.append(self.label(self.content,word('binding_checked') if p.get('resolved_profile') else word('auxiliary'),muted=True))
         if p.get('resolved_profile'):self.widgets.append(self.label(self.content,word('resolved'),muted=True))
         if p.get('errors',{}).get('identity'):self.widgets.append(self.label(self.content,word('identitymissing'),muted=True))
         self.top=ttk.Frame(self.content,style='Desk.TFrame');self.top.pack(fill='x',pady=(14,8))
@@ -182,7 +210,7 @@ class Panel:
             if t.get('quote_at'):self.label(left,word('current')+' · '+format_date(datetime.fromtimestamp(t['quote_at'],timezone.utc).isoformat(),language(),clock=True),muted=True)
         except (TypeError,ValueError,OverflowError,OSError):pass
         if currency:self.label(left,currency+' · '+word('units'),muted=True)
-        plot=Plot(left,p,background=self.bg);plot.pack(fill='x',expand=True);plot.bind('<MouseWheel>',self.wheel)
+        plot=Plot(left,p,background=self.bg,height=200 if self.compact else 270);plot.pack(fill='x',expand=True);plot.bind('<MouseWheel>',self.wheel)
         cards=ttk.Frame(left,style='Desk.TFrame');cards.pack(fill='x')
         for key in ('low','mean','high'):
             box=ttk.Frame(cards,style='Desk.TFrame');box.pack(side='left',expand=True,fill='x',padx=4)
@@ -227,7 +255,7 @@ class Panel:
             if selected:
                 row=p['decisions'][int(selected[0])];detail.configure(text=word('raw')+(row.get('from_grade') or '—')+' → '+(row.get('to_grade') or '—')+' · '+word('uncurrency'))
         tree.bind('<<TreeviewSelect>>',inspect)
-        if p.get('errors'):self.widgets.append(self.label(self.content,word('partial')+' · '+', '.join(p['errors']),muted=True))
+        for message in display_notes(p):self.widgets.append(self.label(self.content,message,muted=True))
         self.label(self.content,word('cooldown'),muted=True)
     def gauge(self,parent,score):
         gauge=tk.Canvas(parent,width=240,height=115,background=self.bg,highlightthickness=0);gauge.pack(anchor='center')
@@ -244,7 +272,7 @@ def SOURCE_LINE(packet,info):
 
 def show(app,info):
     """Larger read-only view of this same stock; no changes to the chart selection."""
-    from analyst_forecast import load,identity
+    from analyst_forecast import load,identity,due
     windows=getattr(app,'_forecast_windows',{});app._forecast_windows=windows
     key=info['isin'];old=windows.get(key)
     if old is not None and old.winfo_exists():old.deiconify();old.lift();return old
@@ -256,7 +284,7 @@ def show(app,info):
         if not win.winfo_exists():return
         for child in host.winfo_children():child.destroy()
         Panel(host,app,info,packet);note.set(SOURCE_LINE(packet,info))
-    def refresh(force=False):
+    def refresh(force=False,network=False):
         counter[0]+=1;serial=counter[0];button.configure(state='disabled');note.set(word('loading'))
         def done(packet):
             if app.closing or not win.winfo_exists() or counter[0]!=serial:return
@@ -264,7 +292,10 @@ def show(app,info):
             current=next((i for i in app.watchlist if i.get('isin')==key),{})
             if identity(current)!=identity(info):note.set(word('unknown'));return
             render(packet)
+            if not network and due(packet,info):refresh(network=True)
         def failed(_):
             if win.winfo_exists() and counter[0]==serial:button.configure(state='normal');note.set(word('partial'))
-        if app.job(lambda:load(app,info,True,force=force),done,failed,key=('analyst-forecast',key),lane='misc',isin=key) is False:failed(None)
-    button=ttk.Button(top,text=word('refresh'),command=lambda:refresh(True));button.pack(side='right');refresh();return win
+        if app.job(lambda:load(app,info,network,force=force),done,failed,
+                   key=('analyst-forecast',key) if network else ('forecast-window-read',id(win),serial),
+                   lane='misc' if network else 'chart',isin=key) is False:failed(None)
+    button=ttk.Button(top,text=word('refresh'),command=lambda:refresh(True,True));button.pack(side='right');refresh();return win

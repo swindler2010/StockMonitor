@@ -200,7 +200,11 @@ class Pages:
                            and cache is not None and cache.current(technical['token']) and current(technical['files']))
                 except Exception:valid=False
                 if not valid:packet['technical']=None
-            self.model=packet;self.render(packet)
+            prior=getattr(self,'model',None)
+            unchanged=(section=='forecast' and packet.get('_forecast_key') is not None and
+                       prior is not None and prior.get('_forecast_key')==packet['_forecast_key'])
+            self.model=packet
+            if not unchanged:self.render(packet)
             if section=='forecast' and not refresh and info.get('kind')!='benchmark':
                 from analyst_forecast import due
                 if due(packet.get('forecast',{}),info):self.request(refresh=True)
@@ -209,13 +213,15 @@ class Pages:
                 for child in self.body.winfo_children():child.destroy()
                 ttk.Label(self.body,text=tr('Данные временно недоступны. Повторите обновление.'),style='DeskMuted.TLabel',wraplength=600).pack(anchor='w')
         if section=='forecast':
-            from analyst_forecast import load as forecast_load
-            work=lambda:dict(info=info,forecast=forecast_load(self.app,info,refresh=refresh,force=force),technical=None)
+            from analyst_forecast import load as forecast_load,presentation_key
+            def work():
+                value=forecast_load(self.app,info,refresh=refresh,force=force)
+                return dict(info=info,forecast=value,technical=None,_forecast_key=presentation_key(value))
             key=('analyst-forecast',info['isin']) if refresh else ('workspace-section',id(self),serial)
         else:
             work=(lambda:technical(self.app,info,tf,period,cached)) if section=='analysis' else (lambda:load(self.app,info))
             key=('workspace-section',id(self),serial)
-        if self.app.job(work,done,failed,lane='misc' if section=='forecast' else 'chart',key=key) is False:
+        if self.app.job(work,done,failed,lane='misc' if section=='forecast' and refresh else 'chart',key=key) is False:
             if section=='forecast' and self.model:
                 from analyst_forecast_view import word
                 ttk.Label(self.body,text=word('partial'),style='DeskMuted.TLabel').pack(anchor='w')
@@ -235,7 +241,7 @@ class Pages:
         if kind=='analysis':self.analysis(packet);return
         if kind=='forecast':
             from analyst_forecast_view import Panel
-            self.forecast_panel=Panel(self.body,self.app,packet['info'],packet.get('forecast',{}));return
+            self.forecast_panel=Panel(self.body,self.app,packet['info'],packet.get('forecast',{}),compact=True);return
         if packet.get('info',{}).get('kind')=='benchmark':
             from benchmark_display import information_text
             self.text(information_text(packet['info'],packet['benchmark'],kind));return
