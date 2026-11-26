@@ -1,0 +1,116 @@
+{
+  "generated_at": "2026-11-26T23:33:00.099322+00:00",
+  "status": "INSTALLED_AND_VERIFIED_IN_TEST",
+  "stocks": 106,
+  "cache_readback_equal": 106,
+  "targets_and_ratings_available": 86,
+  "history_available": 103,
+  "source_limitations": {
+    "confirmed_profile_no_target": 17,
+    "identity_unconfirmed": 3
+  },
+  "initial_forecasts_available": 74,
+  "additional_forecasts_available": 12,
+  "postboot_software_defects": {
+    "initial": 4,
+    "corrected_by_work": 4,
+    "known_unresolved": 0
+  },
+  "candle_writes_by_work": 0,
+  "candle_repairs_by_cp_in_scope": 0,
+  "created_trades": 0,
+  "tests": {
+    "unique": 46,
+    "failed": 0,
+    "errors": 0,
+    "source_changes": 0,
+    "scopes": [
+      "installed files",
+      "exact publication source"
+    ]
+  },
+  "component_rendering": {
+    "passed": 636,
+    "expected": 636,
+    "callback_errors": 0,
+    "languages": [
+      "ru",
+      "de",
+      "en"
+    ],
+    "sizes": [
+      [
+        1280,
+        850
+      ],
+      [
+        840,
+        660
+      ]
+    ],
+    "mean_ms": 112,
+    "p95_ms": 156,
+    "max_ms": 203,
+    "scope": "Actual component in an isolated Tk window, actual saved source cards; not a live application latency guarantee"
+  },
+  "live_windows": [
+    {
+      "case": "Apple main forecast",
+      "observed_at": "2026-11-27T00:21:46+01:00",
+      "result": "Saved values visible at first screenshot after click; compact chart and gauge side by side; Apple/30m/week preserved",
+      "first_observation_ms": 3209,
+      "measurement_scope": "click plus Windows screenshot transport, not a pure UI callback latency"
+    },
+    {
+      "case": "Berkshire class and separate window",
+      "observed_at": "2026-11-27T00:22:19+01:00",
+      "result": "BRK-B forecast, same-class exact-ISIN proof, BRK.B trading symbol unchanged; history, target band, gauge and actual decisions visible in separate read-only popup; popup closed normally"
+    },
+    {
+      "case": "ASML fresh partial",
+      "observed_at": "2026-11-27T00:25:12+01:00",
+      "result": "PARTIAL translated; available history shown, unavailable target/rating displayed as missing, counts not fabricated; exact source section/alternative explanation visible below"
+    },
+    {
+      "case": "Exxon identity mismatch",
+      "observed_at": "2026-11-27T00:26:55+01:00",
+      "result": "No unconfirmed forecast; exact US30231G1022 to US30233Q1085 mismatch displayed; catalogue not changed"
+    },
+    {
+      "case": "Unchanged periodic paint",
+      "initial_scroll_at": "2026-11-26T23:28:03.782Z",
+      "result": "Same scrolled position after periodic refresh; real CORE sidebar updated independently; original forecast receipt date unchanged",
+      "observed_at": "2026-11-26T23:29:25Z",
+      "elapsed_seconds": 81.462
+    },
+    {
+      "case": "Restore chart and selection",
+      "observed_at": "2026-11-27T00:29:55+01:00",
+      "result": "Apple 30m/week restored, same original graph range and indicators; forecast reopened with saved values; own popup closed; sidebar search blank"
+    }
+  ],
+  "preservation": true,
+  "files": {
+    "stock_monitor/analyst_forecast.py": "d78141f857a54920485cf0bfdc842bf73e0896efa4694ee1c7f3ed7c8d374aa7",
+    "stock_monitor/analyst_forecast_view.py": "e434af4657990c30707b7205d8cca49ff244b69c7000c1e8db7ce8c9c219c865",
+    "stock_monitor/workspace_pages.py": "b9aff12c1ad41ac69f80f0cf750088dd349e3c4919c10a5591e8ee948460ffe4",
+    "test_analyst_forecast.py": "3a3427717d2a61c7a24a60f648386993dd4513d6b83048929455f2fdf6a6b2e8",
+    "test_analyst_forecast_completion.py": "4f496301aca6ca3c2ebe56bce2dc8ae354b83d812510578509e4ca2504a5e4a4"
+  },
+  "publication": {
+    "pr": "https://github.com/swindler2010/StockMonitor/pull/30",
+    "branch": "work1/analyst-forecast",
+    "issue": "https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-7204333044"
+  },
+  "files_scope": "Local TEST module SHA256; public shared-file changes contain only forecast hooks and were independently tested",
+  "final_compact_component": {
+    "passed": 636,
+    "expected": 636,
+    "callback_errors": 0,
+    "mean_ms": 201.3,
+    "p95_ms": 250.0,
+    "max_ms": 296.0,
+    "scope": "Final installed compact Panel, 106 actual saved cards, two sizes, ru/de/en; isolated Tk component while live TEST continues",
+    "over_250ms": 28
+  }
+}

@@ -12,6 +12,8 @@ class WorkspaceNavigationTests(unittest.TestCase):
     setUp=layout_fixture.MainScreenTests.setUp
 
     def immediate(self):
+        # Auxiliary forecasts have their own source tests; navigation stays offline.
+        provider=patch('analyst_forecast.load',return_value={});provider.start();self.addCleanup(provider.stop)
         self.app.job.side_effect=lambda work,done,*args,**kwargs:done(work()) or True
 
     def test_all_seven_primary_tabs_have_distinct_in_window_pages_and_keep_plot_view(self):
