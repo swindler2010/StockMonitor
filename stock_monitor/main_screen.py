@@ -324,7 +324,7 @@ class Screen:
         benchmark=bool(selected and selected.get('kind')=='benchmark')
         for tf, button in self.tf_buttons.items():
             button.configure(style='DeskActive.TButton' if tf == app.timeframe.get() else 'TButton',
-                             state='disabled' if benchmark and tf not in ('1D','1W','1M') else 'normal')
+                             state='normal')
         for key, button in getattr(self, 'group_buttons', {}).items():
             button.configure(style='DeskActive.TButton' if key == self.group.get() else 'DeskGroup.TButton')
         self.schedule_deltas()
@@ -528,7 +528,6 @@ class Screen:
 
     def choose_tf(self, tf):
         info=next((x for x in self.app.watchlist if x['name']==self.app.symbol.get()),{})
-        if info.get('kind')=='benchmark' and tf not in ('1D','1W','1M'):return
         if tf != self.app.timeframe.get():
             self.app.timeframe.set(tf)
             self.app.refresh_chart()

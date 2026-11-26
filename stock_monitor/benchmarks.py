@@ -27,6 +27,111 @@ def identity(info):
     return dict(source=info['history_source'],symbol=info['history_symbol'],
                 venue=info['history_venue'],currency=info['currency'],timezone=info['timezone'])
 
+INTRADAY_BASE='5m'
+
+def base_for(tf):
+    from timeframes import MINUTES
+    return INTRADAY_BASE if tf in MINUTES else '1D'
+
+
+def data_identity(info,base='1D'):
+    if base=='1D':return identity(info)
+    registered=CATALOG.get(info.get('isin'))
+    if registered is None or identity(info)!=identity(registered):raise ValueError('INDEX_CATALOGUE_IDENTITY_MISMATCH')
+    # Same direct VIX index, separate Yahoo series. Never relabel these rows
+    # as the official Cboe daily CSV or append one provider to the other.
+    if info['isin']=='INDEX:VIX':
+        return dict(source='proxy',symbol='^VIX',venue='CXI',currency='USD',timezone='America/Chicago')
+    return identity(info)
+
+
+def proxy_identity(symbol):
+    matches=[data_identity(i,INTRADAY_BASE) for i in CATALOG.values()
+             if data_identity(i,INTRADAY_BASE)['symbol']==symbol]
+    return matches[0] if len(matches)==1 else None
+
+
+def history_key(info,base='1D'):
+    return 'benchmark_history:'+info['isin']+(':'+base if base!='1D' else '')
+
+
+def feed_plan(store,info,now=None):
+    """Existing writer lane: one due real source per turn, no extra threads."""
+    from candle_schedule import decision
+    now=pd.Timestamp(now or pd.Timestamp.now(tz='UTC'))
+    meta=data_identity(info,INTRADAY_BASE);intraday=decision(store,info['isin'],meta,INTRADAY_BASE,now)
+    saved=store.setting(history_key(info,INTRADAY_BASE),{})
+    if (not intraday['due'] and intraday.get('reason')=='UNCHANGED' and not saved.get('count')
+            and saved.get('attempted_at') and now>=pd.Timestamp(saved['attempted_at'])+pd.Timedelta(days=1)):
+        intraday={**intraday,'due':True,'reason':'INDEX_EMPTY_DAILY_RECHECK'}
+    daily=store.setting(history_key(info),{});seconds=86400 if info['history_source']=='cboe' else 3600
+    daily_due=not daily.get('attempted_at') or now>=pd.Timestamp(daily['attempted_at'])+pd.Timedelta(seconds=seconds)
+    cooldown=store.setting('cp_source_retry:'+identity(info)['source'],None)
+    if cooldown and now<pd.Timestamp(cooldown):daily_due=False
+    if intraday['due'] and not saved.get('count'):
+        return dict(due=True,base=INTRADAY_BASE,plan=intraday,attempted_at=saved.get('attempted_at',''))
+    if daily_due:return dict(due=True,base='1D',attempted_at=daily.get('attempted_at',''))
+    if intraday['due']:return dict(due=True,base=INTRADAY_BASE,plan=intraday,attempted_at=saved.get('attempted_at',''))
+    return dict(due=False,base=INTRADAY_BASE,reason=intraday.get('reason'),attempted_at=saved.get('attempted_at',''))
+
+
+def sync_intraday(store,info,now=None,downloader=None,plan=None):
+    from candle_schedule import decision,finish
+    now=pd.Timestamp(now or pd.Timestamp.now(tz='UTC'));base=INTRADAY_BASE;meta=data_identity(info,base)
+    key=history_key(info,base);state=store.setting(key,{})
+    plan=decision(store,info['isin'],meta,base,now) if plan is None else plan
+    if not plan.get('due'):return state
+    cached=load(store,info,base);start=None
+    if len(cached):
+        start=pd.Timestamp(cached.index[-1]).tz_localize(meta['timezone'])
+        if start>=now:raise ValueError('Future index intraday watermark')
+    error=None
+    try:
+        incoming=(history_service.download(meta['symbol'],'5m',start=start,store=store)
+                  if downloader is None else downloader(info,start))
+        incoming.attrs.update(unit=info['unit'],return_basis=info['return_basis'],volume_policy=info['volume_policy'])
+        report=quality.audit(incoming,base,meta,now=now,check_stale=False)
+        # GAP contains real rows and explicit missing slots. Retain them for a
+        # segmented chart; no filling, waiver or analytical READY promotion.
+        if len(incoming) and report['state'] not in ('READY','GAP','STALE'):
+            raise quality.QualityError(report)
+        if len(incoming):store.save_series(info,incoming,base)
+        cached=load(store,info,base);checked=quality.audit(cached,base,meta,now=now)
+        state.update(identity=meta,quality=checked['state'],issues=checked['issues'],ranges=checked['ranges'],
+            status='SAVED' if len(incoming) else 'UNCHANGED' if len(cached) else 'SOURCE_UNAVAILABLE',
+            first=str(cached.index.min()) if len(cached) else None,last=str(cached.index.max()) if len(cached) else None,
+            count=len(cached),normalization=incoming.attrs.get('intraday_normalization',{}),
+            source_constraint='Native Yahoo index 5m; initial provider window <=60 days; saved rows accumulate; regular-session projection only')
+        # Provider-delay proof comes from actual saved closed bars, not HTTP
+        # success. Reuse the scheduler's durable 15-minute retry up to four
+        # attempts per closed boundary, then retain the explicit block.
+        pending=not len(cached) or (not plan.get('session_open',False) and checked.get('stale_count',0)>0)
+        if pending:
+            count=state.get('publication_checks',0) if state.get('publication_close_at')==plan.get('close_at') else 0
+            if plan.get('reason')=='INDEX_EMPTY_DAILY_RECHECK':count=0
+            state.update(publication_close_at=plan.get('close_at'),publication_checks=count+1,
+                         publication_wait='EMPTY_SOURCE' if not len(cached) else 'LATE_CLOSED_TAIL')
+            if count+1<4:error=ValueError('INDEX_INTRADAY_'+state['publication_wait'])
+            else:state['publication_wait']='UNCONFIRMED_AFTER_BOUNDED_RECHECKS'
+        else:
+            for field in ('publication_close_at','publication_checks','publication_wait'):state.pop(field,None)
+    except Exception as caught:
+        error=caught
+        state.update(quality='SOURCE_UNAVAILABLE' if isinstance(caught,requests.RequestException) else 'INVALID',
+                     issues=[str(caught)],status='ERROR')
+    state.update(attempted_at=now.isoformat(),identity=meta,base=base,
+                 source_url='https://query1.finance.yahoo.com/v8/finance/chart/'+meta['symbol'])
+    store.set_setting(key,state);finish(store,info['isin'],meta,base,plan,error,now)
+    return state
+
+
+def sync_history(store,info,now=None):
+    plan=feed_plan(store,info,now)
+    if not plan['due']:return {**store.setting(history_key(info,plan['base']),{}),'feed_due':False}
+    state=sync_intraday(store,info,now,plan=plan['plan']) if plan['base']==INTRADAY_BASE else sync(store,info,now)
+    return {**state,'base':plan['base']}
+
+
 def ensure_catalog(store):
     present={x['isin'] for x in store.instruments()}
     for code,info in CATALOG.items():
@@ -50,9 +155,9 @@ def download(info,start=None,store=None):
     frame.attrs.update(unit=info['unit'],return_basis=info['return_basis'],volume_policy=info['volume_policy'])
     return frame
 
-def load(store,info):
-    meta=identity(info)
-    frame=store.load_series(info['isin'],'1D',meta['source'],meta['symbol'],meta['venue'],meta['currency'])
+def load(store,info,base='1D'):
+    meta=data_identity(info,base)
+    frame=store.load_series(info['isin'],base,meta['source'],meta['symbol'],meta['venue'],meta['currency'])
     frame.attrs.update(meta,unit=info['unit'],return_basis=info['return_basis'],volume_policy=info['volume_policy'])
     return frame
 

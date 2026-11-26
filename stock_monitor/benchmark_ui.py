@@ -19,7 +19,7 @@ def position_focus(app):
 
 class BenchmarkMixin:
     def apply_benchmark_labels(self,info,archive):
-        meta=bm.identity(info)
+        meta=bm.data_identity(info,bm.base_for(self.timeframe.get()))
         source='Cboe' if meta['source']=='cboe' else 'Yahoo'
         unit=tr(info['unit'])
         self.ax_price.set_title('',loc='center');self.ax_price.set_title('',loc='right')
@@ -57,7 +57,7 @@ class BenchmarkMixin:
     def _run_feed(self,info):
         if info.get('kind')!='benchmark':return super()._run_feed(info)
         with self.feed_slots:
-            state=bm.sync(self.store,info)
+            state=bm.sync_history(self.store,info)
             error='; '.join(state.get('issues',[])) if state.get('quality')!='READY' else ''
             self.store.event('benchmark_feed_result',{'isin':info['isin'],'ok':not error,'errors':[error] if error else [],'state':state})
         if not self.closing:self.events.put((self.feed_done,(info,[error] if error else [])))
@@ -71,17 +71,19 @@ class BenchmarkMixin:
 
     def _frame_uncached(self,info,tf):
         if info.get('kind')!='benchmark':return super()._frame_uncached(info,tf)
-        raw=bm.load(self.store,info)
+        from timeframes import LABELS
+        base=bm.base_for(tf);meta=bm.data_identity(info,base)
+        raw=bm.load(self.store,info,base)
         clock=getattr(self,'analysis_at',None)
         if getattr(self,'five_year_scope',False):
             from calculation_window import scope_raw
-            raw=scope_raw(raw,'1D',clock)
-        if tf not in ('1D','1W','1M'):
-            raw=pd.DataFrame();raw.attrs.update(bm.identity(info),data_quality={'state':'SOURCE_UNAVAILABLE','issues':[tr('Этот прямой источник подключён только для 1D / 1W / 1M; intraday не подменяется')]})
+            raw=scope_raw(raw,base,clock)
+        if tf not in LABELS:
+            raw=pd.DataFrame();raw.attrs.update(meta,data_quality={'state':'SOURCE_UNAVAILABLE','issues':['Unsupported index timeframe']})
             return raw
-        report=quality.audit(raw,'1D',bm.identity(info),now=clock);raw.attrs['data_quality']=report
+        report=quality.audit(raw,base,meta,now=clock);raw.attrs['data_quality']=report
         if report['state']!='READY':return raw.iloc[:0].copy()
-        return resample(raw,'1D',tf,now=clock)
+        return resample(raw,base,tf,now=clock)
 
     def market_context(self):
         info=self.instrument_cfg();state=self.user_state(info)
@@ -96,9 +98,10 @@ class BenchmarkMixin:
     def refresh_chart(self):
         info=self.instrument_cfg()
         if getattr(self,'_benchmark_opened_isin',None)!=info['isin']:
-            # Select a real interval this listing actually supplies when first
-            # opened. Later manual requests for unsupported intraday stay unavailable.
-            if info.get('kind')=='benchmark' and self.timeframe.get() not in ('1D','1W','1M'):
+            # Keep a supported selection; every intraday TF uses real native 5m.
+            # Unknown intervals remain unavailable instead of substituting rows.
+            from timeframes import LABELS
+            if info.get('kind')=='benchmark' and self.timeframe.get() not in LABELS:
                 self.timeframe.set('1D')
             self._benchmark_opened_isin=info['isin']
         self.dispatcher.focus(info['isin'],position_focus(self))
@@ -295,11 +298,11 @@ class BenchmarkMixin:
         info=self.instrument_cfg();benchmark_id=context.get('benchmark_id')
         self.benchmark_choice.set(bm.CATALOG[benchmark_id]['name'] if benchmark_id else '—')
         if info.get('kind')=='benchmark':
-            meta=bm.identity(info);archive=self.store.setting('benchmark_history:'+info['isin'],{})
+            base=bm.base_for(self.timeframe.get());meta=bm.data_identity(info,base);archive=self.store.setting(bm.history_key(info,base),{})
             self.source_choice.set(tr('Cboe — официальный VIX') if meta['source']=='cboe' else tr('Yahoo — прямой индекс'))
-            intraday_note=tr(' · intraday SOURCE_UNAVAILABLE; direct daily only') if self.timeframe.get() not in ('1D','1W','1M') else ''
+            intraday_note=tr(' · Источник внутридневной истории: Yahoo Finance, база 5m') if base=='5m' else ''
             self.source_status.set(tr('{p0} · {p1} · {p2} · {p3} · {p4} · DQ {p5} · archive {p6} · {p7} → {p8} · {p9}{p10}',p0=meta['symbol'],p1=meta['venue'],p2=meta['currency'],p3=meta['timezone'],p4=tr(info['unit']),p5=archive.get('quality', 'SOURCE_UNAVAILABLE'),p6=archive.get('status', 'INCOMPLETE'),p7=archive.get('first', '—'),p8=archive.get('last', '—'),p9=tr(info['return_basis']),p10=intraday_note))
-            self.relative_status.configure(text=tr('Индекс: объём не является торговым объёмом. ')+(tr('VIX — контекст волатильности.') if info['return_basis']=='volatility' else tr('История 1D / 1W / 1M.')))
+            self.relative_status.configure(text=tr('Индекс: объём не является торговым объёмом. ')+(tr('VIX — контекст волатильности.') if info['return_basis']=='volatility' else tr('История: все таймфреймы; внутридневные из настоящих 5m.')))
             self.apply_benchmark_labels(info,archive)
         else:
             from benchmark_display import relative_text

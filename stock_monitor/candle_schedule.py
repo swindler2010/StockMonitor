@@ -202,9 +202,9 @@ def planned_feeds(store,infos,now=None,focus=None):
  now=clock(now);due=[];prevented=0
  for info in infos:
   if info.get('kind')=='benchmark':
-   state=store.setting('benchmark_history:'+info['isin'],{})
-   seconds=86400 if info.get('history_source')=='cboe' else 3600
-   if not state.get('attempted_at') or now>=pd.Timestamp(state['attempted_at'])+pd.Timedelta(seconds=seconds):due.append((state.get('attempted_at',''),info,'EXISTING_BENCHMARK_POLICY'))
+   from benchmarks import feed_plan
+   plan=feed_plan(store,info,now)
+   if plan['due']:due.append((plan['attempted_at'],info,'EXISTING_BENCHMARK_POLICY'))
    else:prevented+=1
    continue
   isin=info['isin'];maintenance=store.setting('cp_maintenance:'+isin,{})

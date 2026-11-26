@@ -2865,6 +2865,34 @@
       "tests": [
         "test_cp_direct_empty.DirectEmpty"
       ]
+    },
+    {
+      "id": "direct_index_intraday_source_and_tf_routing_20261126",
+      "title": "Прямым индексам нужны настоящие 5m-данные и собственная identity по TF",
+      "sources": [
+        "proxy",
+        "cboe"
+      ],
+      "states": [
+        "SOURCE_UNAVAILABLE",
+        "STALE",
+        "GAP",
+        "UNCONFIRMED"
+      ],
+      "status": "IMPLEMENTED IN TEST; 35 targeted tests PASS; ordinary CP loaded all 6 native series; 48/48 live chart-worker views PASS; original DQ/source limitations retained; no trade grant",
+      "steps": [
+        "Для INDEX:SP500/NDX/SOX/DAX/STOXX600/VIX использовать подтверждённый индексный каталог, а не EUR-listing-фильтр акции.",
+        "Штатный benchmark feed обслуживает одну due-базу за ход: отдельный 5m Yahoo или прежний дневной источник. Повторные открытия графика сеть не запускают.",
+        "5m/10m/15m/30m/1H/2H/3H/4H строятся из настоящих сохранённых 5m. DQ, интервалы с пропусками, identity и входные ревизии сохраняются.",
+        "Yahoo ^VIX внутридневной ряд отделён от официального Cboe CSV VIX 1D. ETF/фьючерс/иная валюта или неподтверждённый тип INDEX не подставляются.",
+        "Пропуски STOXX после загрузки классифицируются как UNCONFIRMED, не NO_TRADES. Реальные участки доступны display_only, исходное качество не повышается.",
+        "Календарный планировщик и Retry-After общие с источником proxy; ночью одинаковые закрытые интервалы не загружаются повторно.",
+        "Пустой ответ/запаздывание последней закрытой 5m получает четыре ограниченных повторения на прежнем календарном ходе; затем сохраняется UNCONFIRMED_AFTER_BOUNDED_RECHECKS. Для пустого ряда возможна новая ограниченная попытка через сутки без обхода Retry-After."
+      ],
+      "evidence": [
+        "СМ-Архив/Index intraday source probe.json — фактические ответы query1.finance.yahoo.com от 26.11.2026; время проверки источника не продлевается автоматически.",
+        "test_benchmark_intraday.py — отдельная identity, источники VIX, сохранность дневных данных, 429 и все 48 внутридневных сочетаний."
+      ]
     }
   ],
   "sources": [

@@ -206,11 +206,11 @@ def download(symbol, interval='1d', start=None, end=None, store=None,expected=No
     # Stock OHLCV needs confirmed EUR identity before HTTP. Direct indices
     # remain separate native-unit diagnostics, never substitute stock prices.
     fields=('source','symbol','currency','venue','timezone')
-    if expected is None:
-        from benchmarks import CATALOG,identity as index_identity
-        direct=[index_identity(i) for i in CATALOG.values() if i['history_source']=='proxy' and i['history_symbol']==symbol]
-        if len(direct)!=1:raise ValueError('EUR_HISTORY_IDENTITY_REQUIRED: no confirmed stock listing before request')
-        expected=direct[0]
+    direct_index=expected is None
+    if direct_index:
+        from benchmarks import proxy_identity
+        expected=proxy_identity(symbol)
+        if expected is None:raise ValueError('EUR_HISTORY_IDENTITY_REQUIRED: no confirmed stock listing before request')
     elif expected.get('currency')!='EUR':
         raise ValueError('EUR_HISTORY_ONLY: non-EUR stock history request rejected')
     if (expected.get('source')!='proxy' or expected.get('symbol')!=symbol or
@@ -251,6 +251,7 @@ def download(symbol, interval='1d', start=None, end=None, store=None,expected=No
     chart=r.json()['chart']
     if chart.get('error') or not chart.get('result'):raise ValueError('Источник не вернул историю '+symbol)
     data=chart['result'][0];meta=data['meta'];currency=meta.get('currency');venue=meta.get('exchangeName')
+    if direct_index and meta.get('instrumentType')!='INDEX':raise ValueError('DIRECT_INDEX_TYPE_MISMATCH')
     if meta.get('symbol','').upper()!=symbol.upper():
         from data_quality import QualityError
         raise QualityError({'state':'INVALID','issues':['Источник вернул другой инструмент'],'ranges':[]})
@@ -268,6 +269,7 @@ def download(symbol, interval='1d', start=None, end=None, store=None,expected=No
     f=pd.DataFrame({k:q.get(k,[]) for k in ('open','high','low','close','volume')},index=index)
     # Keep malformed rows, duplicates and order for the quality gate to diagnose.
     f=f.apply(pd.to_numeric,errors='coerce')
+    if direct_index:f['volume']=f['volume'].fillna(0.0)  # Explicitly N/A only for a verified direct INDEX.
     f['source']='proxy';f['venue']=venue;f['currency']=currency;f['symbol']=symbol
     f.attrs={'source':'proxy','venue':venue,'currency':currency,'symbol':symbol,'timezone':meta.get('exchangeTimezoneName'),'fetched_at':datetime.now(timezone.utc).isoformat(),'first_trade_date':meta.get('firstTradeDate')}
     f.attrs['application_received_at']=response_received_at

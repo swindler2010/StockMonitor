@@ -6529,5 +6529,21 @@
   "Тип индекса": {
     "en": "Index type",
     "de": "Indextyp"
+  },
+  " · Источник внутридневной истории: Yahoo Finance, база 5m": {
+    "en": " · Intraday source: Yahoo Finance, 5m base",
+    "de": " · Intraday-Quelle: Yahoo Finance, 5m-Basis"
+  },
+  "История: все таймфреймы; внутридневные из настоящих 5m.": {
+    "en": "History: all timeframes; intraday aggregated from real 5m candles.",
+    "de": "Historie: alle Zeitrahmen; Intraday aus echten 5m-Kerzen aggregiert."
+  },
+  "Дневная история (1D)": {
+    "en": "Daily history (1D)",
+    "de": "Tageshistorie (1D)"
+  },
+  "Внутридневная история (база 5m)": {
+    "en": "Intraday history (5m base)",
+    "de": "Intraday-Historie (5m-Basis)"
   }
 }

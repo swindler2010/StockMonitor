@@ -142,11 +142,14 @@ class Schedule(unittest.TestCase):
   self.assertEqual(len(calls),3)
   self.assertEqual([args[0][0] for args in sleep.call_args_list],[.5,1.])
  def test_benchmark_existing_cadence_preserved(self):
-  i={'isin':'IDX','kind':'benchmark','history_source':'cboe'};now=pd.Timestamp('2026-10-24T10:00Z')
-  self.assertEqual(len(cs.planned_feeds(self.s,[i],now)['feeds']),1)
-  self.s.set_setting('benchmark_history:IDX',{'attempted_at':now.isoformat()})
-  self.assertFalse(cs.planned_feeds(self.s,[i],now+pd.Timedelta(hours=23))['feeds'])
-  self.assertEqual(len(cs.planned_feeds(self.s,[i],now+pd.Timedelta(days=1))['feeds']),1)
+  import benchmarks as bm
+  i=bm.CATALOG['INDEX:VIX'];now=pd.Timestamp('2026-10-24T10:00Z')
+  # No new intraday close: the pre-existing official Cboe daily cadence stays.
+  with patch.object(cs,'decision',return_value={'due':False,'reason':'UNCHANGED'}):
+   self.assertEqual(len(cs.planned_feeds(self.s,[i],now)['feeds']),1)
+   self.s.set_setting(bm.history_key(i),{'attempted_at':now.isoformat()})
+   self.assertFalse(cs.planned_feeds(self.s,[i],now+pd.Timedelta(hours=23))['feeds'])
+   self.assertEqual(len(cs.planned_feeds(self.s,[i],now+pd.Timedelta(days=1))['feeds']),1)
  def test_failed_closed_day_check_resumes(self):
   now=pd.Timestamp('2026-10-24T10:00Z');p=cs.decision(self.s,self.isin,self.x,'5m',now)
   cs.finish(self.s,self.isin,self.x,'5m',p,RuntimeError('network'),now)

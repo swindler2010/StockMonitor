@@ -43,10 +43,11 @@ class IndexDisplayTests(unittest.TestCase):
         self.assertEqual(select_display(unknown,'1D',normal,SimpleNamespace()).attrs['data_quality']['state'],'INVALID')
         invalid=normal.copy();invalid.attrs['data_quality']={'state':'INVALID'}
         self.assertTrue(select_display(info,'1D',invalid,SimpleNamespace()).empty)
-        self.assertTrue(select_display(info,'4H',normal,SimpleNamespace()).empty)
+        self.assertTrue(select_display(info,'1m',normal,SimpleNamespace()).empty)
         from benchmark_ui import BenchmarkMixin
         for tf in ('5m','15m','1H','4H'):
-            with patch.object(bm,'load',return_value=normal):
+            empty=normal.iloc[:0].copy()
+            with patch.object(bm,'load',return_value=empty):
                 raw=BenchmarkMixin._frame_uncached(SimpleNamespace(store=None),info,tf)
             self.assertTrue(select_display(info,tf,raw,SimpleNamespace()).empty)
             self.assertEqual(raw.attrs['data_quality']['state'],'SOURCE_UNAVAILABLE')
@@ -113,10 +114,11 @@ class IndexWorkspaceTests(unittest.TestCase):
         for variable in screen.condition_vars.values():variable.set('old stock fact')
         app.decision.set('WAIT');screen.bind_engine(None)
         self.assertTrue(all(v.get()=='—' for v in screen.condition_vars.values()))
-        self.assertEqual(str(screen.tf_buttons['5m'].cget('state')),'disabled')
+        self.assertEqual(str(screen.tf_buttons['5m'].cget('state')),'normal')
         self.assertEqual(str(screen.tf_buttons['1D'].cget('state')),'normal')
         screen.choose_tf('1H')
-        self.assertEqual(app.timeframe.get(),'1D')
+        self.assertEqual(app.timeframe.get(),'1H')
+        app.timeframe.set('1D')
         self.assertEqual(app.decision.get(),'ИНДЕКС')
         self.assertIn('Рыночный контекст',screen.quality_panel.analysis.get())
         numeric=raw.copy();numeric['ema10']=102;numeric['rsi']=50

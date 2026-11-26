@@ -1,5 +1,6 @@
 """Presentation only: preserve benchmark inputs, state codes and provenance."""
 from i18n import tr
+import pandas as pd
 
 def reason_text(reason):
     # Translate only known complete messages; arbitrary provider errors stay intact.
@@ -38,14 +39,16 @@ def select_frame(info,tf,normal,store,now=None):
     from analytics import resample
     expected=bm.CATALOG.get(info.get('isin'))
     valid=expected is not None and bm.identity(info)==bm.identity(expected)
-    meta=bm.identity(expected) if expected else {}
+    base=bm.base_for(tf)
+    meta=bm.data_identity(expected,base) if expected else {}
     if not valid or any(normal.attrs.get(k)!=v for k,v in meta.items()):
         out=normal.iloc[:0].copy()
         out.attrs['data_quality']={'state':'INVALID','issues':['Index catalogue identity mismatch']}
         return out
-    if tf not in ('1D','1W','1M'):
+    from timeframes import LABELS
+    if tf not in LABELS:
         out=normal.iloc[:0].copy()
-        out.attrs['data_quality']={'state':'SOURCE_UNAVAILABLE','issues':['Direct index source supplies daily history only']}
+        out.attrs['data_quality']={'state':'SOURCE_UNAVAILABLE','issues':['Unsupported index timeframe']}
         return out
     state=normal.attrs.get('data_quality',{}).get('state')
     if not normal.empty:
@@ -60,17 +63,21 @@ def select_frame(info,tf,normal,store,now=None):
             out.attrs['partial_chart']={'display_only':True,'raw_count':len(out),'excluded_rows':0,
                 'reason':'Verified index daily inputs; incomplete aggregate coverage remains blocked'}
         return out
-    if state!='STALE':return normal.iloc[:0].copy()
+    if state not in ('STALE','GAP','UNCONFIRMED'):return normal.iloc[:0].copy()
     # The analytical loader deliberately retains its freshness block. Display
     # may show its real historical rows only after an independent structural DQ.
-    raw=bm.load(store,info)
-    report=quality.audit(raw,'1D',meta,now=now)
-    structural=quality.audit(raw,'1D',meta,now=now,check_stale=False)
-    if report['state']!='STALE' or structural['state']!='READY':return normal.copy()
+    raw=bm.load(store,info,base)
+    report=quality.audit(raw,base,meta,now=now)
+    structural=quality.audit(raw,base,meta,now=now,check_stale=False)
+    if report['state'] not in ('STALE','GAP','UNCONFIRMED') or structural['state'] not in ('READY','GAP','UNCONFIRMED'):return normal.copy()
     raw.attrs['data_quality']=report
-    out=resample(raw,'1D',tf,now=now)
+    out=resample(raw,base,tf,now=now)
     out.attrs['partial_chart']={'display_only':True,'raw_count':len(out),'excluded_rows':0,
-        'reason':'Saved index history; latest publication is stale; analytical freshness remains blocked'}
+        'reason':'Real index history; source gaps/freshness remain blocked'}
+    if len(out) and report['state'] in ('GAP','UNCONFIRMED'):
+        grid=quality.expected_index(out.attrs,tf,out.index.min(),out.index.max(),pd.Timestamp(now or pd.Timestamp.now(tz='UTC'))+pd.Timedelta(days=3))
+        positions=grid.get_indexer(out.index)
+        out.attrs['partial_chart']['break_before']=[str(out.index[i]) for i in range(1,len(out)) if positions[i]<0 or positions[i]!=positions[i-1]+1]
     return out
 
 
@@ -81,6 +88,7 @@ def information(store,info):
     frame=bm.load(store,info)
     report=quality.audit(frame,'1D',bm.identity(info))
     return dict(archive=store.setting('benchmark_history:'+info['isin'],{}),quality=report['state'],
+        intraday=store.setting(bm.history_key(info,'5m'),{}),
         count=len(frame),first=str(frame.index[0]) if len(frame) else None,
         last=str(frame.index[-1]) if len(frame) else None,
         close=float(frame.close.iloc[-1]) if len(frame) and report['state'] in ('READY','STALE') else None)
@@ -93,7 +101,7 @@ def information_text(info,facts,section='overview'):
     meta=bm.identity(info);archive=facts['archive']
     provider='Cboe' if meta['source']=='cboe' else 'Yahoo Finance'
     unit=tr(info['unit'])
-    rows=[info['name'],tr('Прямой индекс · рыночный контекст'),
+    rows=[info['name'],tr('Прямой индекс · рыночный контекст'),tr('Дневная история (1D)'),
         tr('Источник')+': '+provider+' / '+meta['symbol']+' / '+meta['venue'],
         tr('Часовой пояс')+': '+meta['timezone'],tr('Валюта источника')+': '+meta['currency'],
         tr('Единица')+': '+unit,tr('Тип индекса')+': '+tr(info['return_basis']),
@@ -103,8 +111,14 @@ def information_text(info,facts,section='overview'):
         tr('История')+': '+format_date(facts.get('first'),language())+' → '+format_date(facts.get('last'),language()),
         tr('Качество данных')+': '+facts['quality'],
         tr('Архив')+': '+str(archive.get('status','INCOMPLETE'))+' / '+str(archive.get('archive_quality') or archive.get('quality','UNKNOWN')),
-        '',tr('Доступные интервалы: 1D / 1W / 1M. Внутридневная история этим источником не предоставляется.'),
+        '',tr('История: все таймфреймы; внутридневные из настоящих 5m.'),
         tr('Индекс используется как рыночный контекст. Торговый объём не применим.')]
+    intraday=facts.get('intraday',{});intraday_meta=bm.data_identity(info,'5m')
+    rows.extend(['',tr('Внутридневная история (база 5m)'),
+        'Yahoo Finance / '+intraday_meta['symbol']+' / '+intraday_meta['venue']+' / '+intraday_meta['timezone'],
+        tr('Свечей в архиве')+': '+str(intraday.get('count',0)),
+        tr('Последняя свеча')+': '+format_date(intraday.get('last'),language(),clock=True,assume_zone=intraday_meta['timezone']),
+        tr('Качество данных')+': '+str(intraday.get('quality','SOURCE_UNAVAILABLE'))])
     if section in ('finances','reports','events'):
         rows.insert(2,tr('Это индекс, а не компания: корпоративная отчётность, прибыль и дивиденды эмитента не применяются.'))
     return '\n'.join(rows)
