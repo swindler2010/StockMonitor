@@ -1,34 +1,65 @@
 {
-  "generated_at": "2026-11-26T21:59:42.751831+00:00",
-  "status": "READY_FOR_SHARED_RELOAD",
-  "tests": 29,
+  "generated_at": "2026-11-26T23:17:51.676167+00:00",
+  "status": "INSTALLED_FINAL_WINDOWS_CHECK_PENDING",
   "stocks": 106,
-  "configured_profiles": 75,
-  "missing_profiles": 31,
-  "oracle": {
-    "history": 501,
-    "decisions": 100,
-    "recommendations": 42,
-    "currency": "USD"
+  "cache_readback_equal": 106,
+  "mean_target_and_ratings": 86,
+  "history": 103,
+  "source_limitations": {
+    "confirmed_profile_without_target": 17,
+    "identity_unconfirmed": 3
   },
-  "moderna": {
-    "identity": "US60770K1079",
-    "symbol": "MRNA",
-    "history": 501
+  "initial_forecasts_available": 74,
+  "additional_forecasts_available": 12,
+  "postboot_software_defects": {
+    "identified": 4,
+    "code_fixes_by_work": 4,
+    "final_live_acceptance": "PENDING"
   },
+  "tests": {
+    "unique": 46,
+    "fail": 0,
+    "error": 0,
+    "source_changes": 0,
+    "scopes": [
+      "installed files",
+      "exact public source"
+    ]
+  },
+  "component_rendering": {
+    "passed": 636,
+    "expected": 636,
+    "callback_errors": 0,
+    "languages": [
+      "ru",
+      "de",
+      "en"
+    ],
+    "mean_ms": 112,
+    "p95_ms": 156,
+    "max_ms": 203,
+    "scope": "Isolated actual Panel and actual saved provider cards; not full live Windows latency guarantee"
+  },
+  "live_before_final_reload": [
+    "Main Apple forecast visible",
+    "Separate Apple forecast visible",
+    "Original Apple 30m/week selection unchanged"
+  ],
+  "final_live_blocker": "COMPUTER_USE_HELPER_ACTIVE_REQUEST",
   "direct_candle_writes": 0,
+  "candle_repairs_by_cp_in_scope": 0,
+  "created_trades": 0,
+  "preservation_in_three_source_loads": true,
   "files": {
-    "stock_monitor/analyst_forecast.py": "f85c09d0b61d74c1fa33d77c67b0362a27446716ff1aa2f2018cf22918f7e85d",
-    "stock_monitor/analyst_forecast_view.py": "ea4e3c1d7c96543eb2a46d7da6883c0f1b10fdb309209133dfa1098b2cb29619",
-    "stock_monitor/workspace_pages.py": "a9aab0791cde6112dbaf865f69467b84b5dc7329ba697d99a0a853a7025d2b0d",
-    "stock_monitor/ui_messages.json": "f78190f8feed9155f653cf597dd369458712baea9712f83dfb48f9200c69eaf9",
-    "test_analyst_forecast.py": "846821550c2ee01b41e974f3b42022688ef299ade4a7db11f2508c700ab13dad"
+    "stock_monitor/analyst_forecast.py": "d78141f857a54920485cf0bfdc842bf73e0896efa4694ee1c7f3ed7c8d374aa7",
+    "stock_monitor/workspace_pages.py": "b9aff12c1ad41ac69f80f0cf750088dd349e3c4919c10a5591e8ee948460ffe4",
+    "test_analyst_forecast.py": "3a3427717d2a61c7a24a60f648386993dd4513d6b83048929455f2fdf6a6b2e8",
+    "test_analyst_forecast_completion.py": "4f496301aca6ca3c2ebe56bce2dc8ae354b83d812510578509e4ca2504a5e4a4",
+    "stock_monitor/analyst_forecast_view.py": "e434af4657990c30707b7205d8cca49ff244b69c7000c1e8db7ce8c9c219c865"
   },
   "publication": {
-    "commit": "21b04d94f02f05b791b071ee9ac94a37ec481f00",
+    "commit": "ea2a68a16d3a12536f039e89699f66cde0f520a6",
     "pr": "https://github.com/swindler2010/StockMonitor/pull/30",
-    "issue": "https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-7204333044",
-    "issue_readback": true,
-    "source_ref": "work1/analyst-forecast"
+    "issue": "https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-7204333044"
   }
 }
