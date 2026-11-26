@@ -16,9 +16,12 @@ def install_input_revisions(db):
     db.execute('CREATE TABLE IF NOT EXISTS input_revisions(scope TEXT PRIMARY KEY, revision INTEGER NOT NULL)')
     specs={'candles':"'market:'||{r}.isin||':'||{r}.base_tf",
            'series':"'market:'||{r}.isin||':'||{r}.base_tf",
-           'settings':"'setting:'||{r}.key",'instruments':"'instrument:'||{r}.isin"}
+           'settings':"'setting:'||{r}.key",'instruments':"'instrument:'||{r}.isin",
+           'trades':"'trades:'||{r}.isin"}
     for table,scope in specs.items():
         columns=[row[1] for row in db.execute('PRAGMA table_info('+table+')')]
+        if table == 'trades' and not columns:
+            continue
         same=' AND '.join('NEW.'+c+' IS '+c for c in columns)
         equal=' AND '.join('NEW.'+c+' IS OLD.'+c for c in columns)
         if table=='settings':
@@ -417,9 +420,12 @@ class CachedStoreMixin:
         return super().setting(key,default)
 
     def load_official(self,*args,**kwargs):
-        self.read_cache.depend('market:'+args[0]+':'+(args[1] if len(args)>1 else kwargs.get('base','15m')))
+        base=args[1] if len(args)>1 else kwargs.get('base','15m')
+        scopes=['market:'+args[0]+':'+base]
+        if base=='1m':scopes.append('trades:'+args[0])
+        for scope in scopes:self.read_cache.depend(scope)
         call=super().load_official
-        return self.read_cache.get(('official',args,tuple(sorted(kwargs.items()))),lambda:call(*args,**kwargs),scoped=True,inputs=self.read_cache.token_for(['market:'+args[0]+':'+(args[1] if len(args)>1 else kwargs.get('base','15m'))]))
+        return self.read_cache.get(('official',args,tuple(sorted(kwargs.items()))),lambda:call(*args,**kwargs),scoped=True,inputs=self.read_cache.token_for(scopes))
 
     def load_series(self,*args,**kwargs):
         self.read_cache.depend('market:'+args[0]+':'+args[1])

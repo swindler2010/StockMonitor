@@ -19,7 +19,7 @@ from timeframes import endpoints, aggregate
 
 SOURCE = 'gettex_chart'
 BASES = ('15m', '5m', '1D', '1m')
-# 1m is an internal live/recovery input, never a twelfth UI/strategy TF.
+# Native 1m also supplies the public 1m/3m chart; execution remains separate.
 INTRADAY_MINUTES = {'1m': 1, '5m': 5, '15m': 15}
 FIELDS = ('open', 'high', 'low', 'close', 'volume')
 HOST = 'https://lseg-widgets.financial.com'
@@ -61,18 +61,34 @@ class Client:
         self.session.headers['jwt'] = auth['token']
         found = self.request('GET', HOST + '/rest/api/find/securities', params={
             'fids': 'x.RIC', 'search': isin, 'searchFor': 'ISIN', 'exchanges': 'GTX', 'isNF': 'false'}).json()
-        if found.get('status') != 'OK' or len(found.get('data', [])) != 1:
-            raise ValueError('Ambiguous GETTEX listing')
-        ric = found['data'][0]['x.RIC']
-        meta = identity(isin, ric)
-        answer = self.request('GET', HOST + '/rest/api/quote/info', params={
-            'rics': ric, 'fids': 'x._ISIN,x._CURRENCY,q._CURRENCY', 'feeliable': 'false'}).json()
-        rows = answer.get('data', [])
-        if answer.get('status') != 'OK' or len(rows) != 1 or rows[0].get('x._ISIN') != isin:
+        candidates=found.get('data',[])
+        rics=sorted({row.get('x.RIC') for row in candidates if isinstance(row,dict)
+                     and isinstance(row.get('x.RIC'),str) and re.fullmatch(r'[A-Za-z0-9_.-]+\.GTX',row['x.RIC'])})
+        if found.get('status')!='OK' or not 1<=len(rics)<=8:
+            raise ValueError('Ambiguous GETTEX listing: bounded exact RIC set unavailable')
+        # One bounded quote request validates every candidate. No name/order guess.
+        answer=self.request('GET',HOST+'/rest/api/quote/info',params={
+            'rics':','.join(rics),'fids':'x.RIC,x._ISIN,x._CURRENCY,q._CURRENCY','feeliable':'false'}).json()
+        rows=answer.get('data',[])
+        if answer.get('status')!='OK' or not isinstance(rows,list) or not rows or len(rows)>16:
             raise ValueError('Provider ISIN not confirmed')
-        currencies = [rows[0][k] for k in ('x._CURRENCY', 'q._CURRENCY') if rows[0].get(k)]
-        if not currencies or any(c != 'EUR' for c in currencies):
-            raise ValueError('Provider currency not confirmed EUR')
+        grouped={ric:[] for ric in rics}
+        for row in rows:
+            if not isinstance(row,dict):raise ValueError('Provider listing metadata invalid')
+            ric=row.get('x.RIC') or (rics[0] if len(rics)==1 else None)
+            if ric not in grouped:raise ValueError('Provider RIC mapping unconfirmed')
+            grouped[ric].append(row)
+        verified=[]
+        for ric,records in grouped.items():
+            if not records:continue
+            exact=True
+            for row in records:
+                currencies=[row[k] for k in ('x._CURRENCY','q._CURRENCY') if row.get(k)]
+                exact=exact and row.get('x._ISIN')==isin and bool(currencies) and all(c=='EUR' for c in currencies)
+            if exact:verified.append(ric)
+        if len(verified)!=1:
+            raise ValueError('Ambiguous GETTEX listing: exact ISIN/EUR matches='+str(len(verified))+'; candidates='+','.join(rics))
+        ric=verified[0];meta=identity(isin,ric)
         params = dict(ric=ric, fromDate=start.strftime('%Y-%m-%dT%H:%M:%S'), toDate=end.strftime('%Y-%m-%dT%H:%M:%S'))
         if base in ('1D','1M'):
             # Daily endpoint consumes listing-local date labels, not UTC instants.
@@ -654,7 +670,7 @@ def retain_deeper(info, tf, previous, previous_base, proposed, proposed_base, no
 def candidate(store, info, tf, current, current_base, now=None,analysis_at=None):
     """Select a WHOLE deeper/fresher confirmed series, never splice providers."""
     now = scheduler.clock(now)
-    base = '5m' if tf in ('5m', '10m') else '15m'
+    base = '1m' if tf in ('1m','3m') else '5m' if tf in ('5m', '10m') else '15m'
     frame = load(store, info, base)
     if frame.empty and base=='15m':
         base='5m';frame=load(store,info,base)
@@ -999,7 +1015,7 @@ def _fetch_turn(info, store, now=None, client=None, preferred_tf=None):
         chosen=next((x for x in choices if x[-1].get('archive_prefix')),chosen)
     focus_key='gettex_chart_focus:'+isin
     focus=store.setting(focus_key,{}) if preferred_tf else {}
-    preferred='1m' if preferred_tf=='1m' else '5m' if preferred_tf in ('5m','10m') else '1D' if preferred_tf in ('1D','1W','1M') else '15m'
+    preferred='1m' if preferred_tf in ('1m','3m') else '5m' if preferred_tf in ('5m','10m') else '1D' if preferred_tf in ('1D','1W','1M') else '15m'
     # The fresh scheduler already reserved a specific due base and bounded
     # foreground/background fairness. Do not silently spend that reservation
     # on another TF. Recheck due/cooldown above; a stale reservation is a no-op.
@@ -1038,7 +1054,7 @@ def _fetch_turn(info, store, now=None, client=None, preferred_tf=None):
         # At most one five-request public chart job/minute across CP workers.
         if preferred_tf:
             db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',(focus_key,json.dumps({'streak':focus.get('streak',0)+1 if base==preferred and focus.get('streak',0)<2 else 0,'base':base})))
-    start = now.normalize() - pd.Timedelta(days=1 if base=='1m' else 28 if base=='5m' else 90)
+    start = now.normalize() - pd.Timedelta(days=7 if base=='1m' and not saved.get('last') else 1 if base=='1m' else 28 if base=='5m' else 90)
     if base in ('1D','1M'):
         # Extend only to independently verified daily calendar dates. Native
         # intraday before 2026 remains blocked (phased trading-hour extension).

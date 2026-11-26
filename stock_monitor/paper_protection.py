@@ -19,7 +19,7 @@ def entry_plan(cfg,result,size,now):
     if not enabled(cfg):return None
     from paper_hourly import SIZING
     from paper_account import POLICY as execution
-    from timeframes import LABELS
+    from timeframes import ANALYSIS_LABELS as LABELS
     tf=result['timeframe'];q=result['execution_quote']
     if tf not in LABELS or size.get('mode')!=SIZING:
         raise ValueError('PAPER_PROTECTION_CONTEXT_UNCONFIRMED')

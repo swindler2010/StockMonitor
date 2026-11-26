@@ -123,7 +123,7 @@ def _prepare(store,values):
             enriched.attrs=frame.attrs.copy();analysis=(enriched,analysis[1])
         if analysis[1].get('ohlcv_valid',False):zones=Extras016.level_zones(context,info,confirmed)
     engine=None if phase=='display' else context.trading_analysis(info,analysis_only=True)
-    pending=phase=='display' and info.get('kind')!='benchmark'
+    pending=phase=='display' and info.get('kind')!='benchmark' and context.timeframe.get() not in ('1m','3m')
     market=({'state':'UNAVAILABLE','benchmark_id':None,'reason':'CORE рассчитывается в фоне'} if pending else
             engine['benchmark_context'] if engine is not None else context.market_context())
     prepared={'frame':frame,'analysis':analysis,'zones':zones,'context':market,'trading_engine':engine}

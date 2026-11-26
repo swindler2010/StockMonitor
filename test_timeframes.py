@@ -140,7 +140,8 @@ class Tests(unittest.TestCase):
         for day in ('2026-10-03','2026-12-25'):
             self.assertEqual(len(q.expected_index(meta,'5m',day,day+' 23:00',now)),0)
     def test_all_periods_preserved(self):
-        self.assertEqual(set(tf.LABELS),{'5m','10m','15m','30m','1H','2H','3H','4H','1D','1W','1M'})
+        self.assertEqual(set(tf.LABELS),{'1m','3m','5m','10m','15m','30m','1H','2H','3H','4H','1D','1W','1M'})
+        self.assertEqual(set(tf.ANALYSIS_LABELS),set(tf.LABELS)-{'1m','3m'})
         self.assertEqual(tf.base_for('10m'),'5m');self.assertEqual(tf.base_for('3H'),'1H')
         from mcp_server import TOOLS
         tool=next(t for t in TOOLS if t['name']=='stock_monitor_select')

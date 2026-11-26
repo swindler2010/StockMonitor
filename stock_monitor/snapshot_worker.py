@@ -95,7 +95,7 @@ class SnapshotContext:
         Reads only existing series. Never starts a feed or touches Tk. The
         engine payload is separate from legacy UI presentation for stage 2B.
         """
-        if info.get('kind')=='benchmark':return None
+        if info.get('kind')=='benchmark' or self.timeframe.get() in ('1m','3m'):return None
         now=getattr(self,'analysis_at',pd.Timestamp.now(tz='UTC'));tf=self.timeframe.get()
         required=getattr(self,'trading_required_tf',None)
         if required is not None:

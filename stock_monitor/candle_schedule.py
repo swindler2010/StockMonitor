@@ -497,6 +497,14 @@ def fresh_candidate(store,infos,now,focus=None):
    saved=store.setting('gettex_chart:'+isin+':'+base,{})
    if not confirmed_state(info,saved):
     if saved.get('retry_after') and now<pd.Timestamp(saved['retry_after']):continue
+    if base=='15m' and chart_allowed and not saved:
+     # Let a registered stock enter the normal listing resolver. The
+     # downloader still validates its ISIN and listing before saving data.
+     meta={**gettex_meta(isin),'source':'gettex_chart','symbol':isin}
+     if decision(store,isin,meta,base,now)['due']:
+      choices.append(('','gettex_chart',base))
+      stats['due']+=1
+     continue
     if base!='1m' or preferred!='1m':continue
     # Bootstrap the visible stock's minute lane using an existing listing
     # proof; fetch validates the actual response again before any write.
@@ -551,7 +559,7 @@ def fresh_candidate(store,infos,now,focus=None):
    # inputs. Interleaved position jobs reset foreground_streak, so always
    # choosing 1m here could leave the displayed 15m archive at yesterday.
    tf=(focus or {}).get('timeframe')
-   display_base='1D' if tf in ('1D','1W','1M') else '5m' if tf in ('5m','10m') else '15m' if tf in ('15m','30m','1H','2H','3H','4H') else preferred
+   display_base='1m' if tf in ('1m','3m') else '1D' if tf in ('1D','1W','1M') else '5m' if tf in ('5m','10m') else '15m' if tf in ('15m','30m','1H','2H','3H','4H') else preferred
    displayed=next((x for x in choices if x[1]=='gettex_chart' and x[2]==display_base),None)
    if displayed is None:displayed=next((x for x in choices if x[1]=='gettex_chart' and x[2]==preferred),None)
    if displayed:last,source,base=displayed

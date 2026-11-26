@@ -884,7 +884,7 @@ def initialization_policy_for(store,info,identity=None):
     The global setting is a revision dependency even when approval is absent.
     """
     from paper_account import ACCOUNT,instrument_allowed
-    from timeframes import LABELS
+    from timeframes import ANALYSIS_LABELS as LABELS
     key='cp_manual_risk:'+info['isin']
     store.read_cache.depend('setting:'+key)
     store.read_cache.depend('setting:'+DEMO_ALL_POLICY)
@@ -913,7 +913,7 @@ def demo_initialization_policy(policy,isin,identity=None):
     """Explicit owner's separate demo policy; never inferred from gap grants."""
     from paper_account import ACCOUNT
     expected=dict(source='gettex_chart',symbol='AAPL.GTX',venue='GETTEX',currency='EUR',timezone='Europe/Berlin')
-    from timeframes import LABELS
+    from timeframes import ANALYSIS_LABELS as LABELS
     if isinstance(policy,dict) and policy.get('version')==DEMO_ALL_INITIALIZATION:
         meta=policy.get('identity',{})
         return bool(isin and policy.get('isin')==isin and policy.get('account')==ACCOUNT

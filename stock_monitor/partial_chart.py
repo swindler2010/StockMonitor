@@ -197,7 +197,7 @@ def cached_periods(normal,tf,now=None):
     """
     if (tf not in ('1D','1W','1M') or normal.empty or
         not normal.attrs.get('aggregation_base') or 'bar_complete' not in normal):return None
-    from analytics import bar_ends,TIMEFRAMES
+    from analytics import bar_ends,CHART_TIMEFRAMES as TIMEFRAMES
     now=pd.Timestamp(now or pd.Timestamp.now(tz='UTC'))
     proof=normal.attrs.get('daily_provenance',{})
     allowed=('READY','STALE','GAP','SOURCE_GAP','UNCONFIRMED')
@@ -230,7 +230,7 @@ def load(info,tf,normal,store,registry=REGISTRY):
     # A healthy normal source still wins; never substitute a pinned calculation.
     if normal.empty or normal.attrs.get('data_quality',{}).get('state')=='INVALID':
         import gettex_chart
-        for base in (('5m',) if tf in ('5m','10m') else ('1D','15m') if tf in ('1D','1W','1M') else ('15m',)):
+        for base in (('1m',) if tf in ('1m','3m') else ('5m',) if tf in ('5m','10m') else ('1D','15m') if tf in ('1D','1W','1M') else ('15m',)):
             raw=gettex_chart._load_native(store,info,base)
             if not raw.attrs.get('partial_chart'):continue
             if not normal.empty and any(normal.attrs.get(k)!=raw.attrs.get(k) for k in quality.IDENTITY):continue
@@ -519,7 +519,7 @@ def select_display(info,tf,normal,store,now=None):
                 add(project(raw,base))
             except (ValueError,KeyError,TypeError) as error:
                 excluded.append({'source':label,'base':base,'reason':str(error)})
-        bases=('5m',) if tf in ('5m','10m') else ('1D','15m','5m') if tf in ('1D','1W','1M') else ('15m','5m')
+        bases=('1m',) if tf in ('1m','3m') else ('5m',) if tf in ('5m','10m') else ('1D','15m','5m') if tf in ('1D','1W','1M') else ('15m','5m')
         for base in bases:
             consider(lambda:gettex_chart._load_native(store,info,base),base,'gettex_chart')
             consider(lambda:store.load_official(info['isin'],base),base,'gettex')

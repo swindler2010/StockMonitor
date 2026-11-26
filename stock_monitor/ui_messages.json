@@ -6545,5 +6545,13 @@
   "Внутридневная история (база 5m)": {
     "en": "Intraday history (5m base)",
     "de": "Intraday-Historie (5m-Basis)"
+  },
+  "История: 1m/3m из настоящих 1m; остальные внутридневные из 5m.": {
+    "en": "History: 1m/3m from real 1m data; other intraday intervals from 5m.",
+    "de": "Historie: 1m/3m aus echten 1m-Daten; andere Intraday-Intervalle aus 5m."
+  },
+  "Минутная история (база 1m)": {
+    "en": "Minute history (1m base)",
+    "de": "Minutenhistorie (1m-Basis)"
   }
 }

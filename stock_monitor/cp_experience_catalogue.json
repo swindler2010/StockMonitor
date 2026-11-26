@@ -2893,6 +2893,33 @@
         "СМ-Архив/Index intraday source probe.json — фактические ответы query1.finance.yahoo.com от 26.11.2026; время проверки источника не продлевается автоматически.",
         "test_benchmark_intraday.py — отдельная identity, источники VIX, сохранность дневных данных, 429 и все 48 внутридневных сочетаний."
       ]
+    },
+    {
+      "id": "native_minutes_and_official_trade_aggregation_20261126",
+      "title": "Настоящие 1m/3m без деления старших свечей и расширения торговых допусков",
+      "sources": [
+        "gettex",
+        "gettex_chart",
+        "proxy"
+      ],
+      "states": [
+        "SOURCE_UNAVAILABLE",
+        "UNCONFIRMED",
+        "GAP"
+      ],
+      "status": "IMPLEMENTED_IN_TEST;15new+96affected tests PASS;16 real chart views and4 native UI views; Exxon source-unavailable retained",
+      "steps": [
+        "Построить 1m OHLCV только по сохранённым сделкам официального GETTEX; агрегировать 3m из настоящего 1m. Сохранять пропуски и исходный DQ.",
+        "Нативные минутные индексы загружать обычным serial feed: отдельная база 1m, ограниченный первоначальный range7d, затем штатный watermark/cooldown. Не смешивать источники и не создавать минуты из 5m.",
+        "При нескольких результатах поиска GETTEX проверить одним ограниченным запросом точные RIC/ISIN/EUR; принять только единственное полное совпадение. Реальную неоднозначность сохранить.",
+        "Связать минутный cache с trades:ISIN, сохранить окончательную проверку ревизий. Графики13TF; формальные аналитические/торговые горизонты11TF сохранены."
+      ],
+      "evidence": [
+        "test_minute_timeframes.py",
+        "test_minute_source_identity.py",
+        "docs/MINUTE_CHARTS_RU.md"
+      ],
+      "limits": "Exxon exactGETTEX ISIN/GTX search returned statusOK/data[]/totalCount0 at2026-11-26T17:47:39Z. No NO_TRADES inference. Full provider archive/freshness and slow cold stock display remain explicit; no new strategy/execution grant."
     }
   ],
   "sources": [
@@ -3363,5 +3390,5 @@
       "sha256_at_import": "1cdb3ec4c375da282bcdcc62de0eeba30ea30f1c7d1bd76bcd03f37d62c8da57"
     }
   ],
-  "updated_at": "2026-11-26T10:56:38.116Z"
+  "updated_at": "2026-11-26T17:56:37.053364+00:00"
 }

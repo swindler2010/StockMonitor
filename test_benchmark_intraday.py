@@ -81,10 +81,11 @@ class IntradayIndexTests(unittest.TestCase):
         self.assertEqual(self.store.setting('cp_source_retry:proxy'),(self.now+pd.Timedelta(hours=2)).isoformat())
         self.assertFalse(bm.feed_plan(self.store,self.info,self.now+pd.Timedelta(minutes=30))['due'])
     def test_closed_market_does_not_repeat_identical_interval_after_restart(self):
-        clock=pd.Timestamp('2026-11-29T12:00Z');self.store.save_series(self.info,self.bars(),'5m')
-        self.store.set_setting(bm.history_key(self.info),{'attempted_at':clock.isoformat()})
-        bm.sync_intraday(self.store,self.info,clock,downloader=lambda *_:self.bars())
-        self.assertFalse(bm.feed_plan(self.store,self.info,clock+pd.Timedelta(minutes=5))['due'])
+        with patch.object(bm,'INTRADAY_BASES',('5m',)):
+            clock=pd.Timestamp('2026-11-29T12:00Z');self.store.save_series(self.info,self.bars(),'5m')
+            self.store.set_setting(bm.history_key(self.info),{'attempted_at':clock.isoformat()})
+            bm.sync_intraday(self.store,self.info,clock,downloader=lambda *_:self.bars())
+            self.assertFalse(bm.feed_plan(self.store,self.info,clock+pd.Timedelta(minutes=5))['due'])
     def test_empty_weekend_source_retries_are_bounded_and_resume_daily_without_no_trades(self):
         clock=pd.Timestamp('2026-11-29T12:00Z')
         self.store.set_setting(bm.history_key(self.info),{'attempted_at':clock.isoformat()})
@@ -101,12 +102,13 @@ class IntradayIndexTests(unittest.TestCase):
         self.assertNotIn('NO_TRADES',json.dumps(result))
 
     def test_late_last_closed_bar_is_queued_again_instead_of_frozen_overnight(self):
-        clock=pd.Timestamp('2026-11-29T12:00Z')
-        self.store.set_setting(bm.history_key(self.info),{'attempted_at':clock.isoformat()})
-        result=bm.sync_intraday(self.store,self.info,clock,downloader=lambda *_:self.bars())
-        self.assertEqual(result['publication_wait'],'LATE_CLOSED_TAIL')
-        retry=bm.feed_plan(self.store,self.info,clock+pd.Timedelta(minutes=16))
-        self.assertTrue(retry['due']);self.assertEqual(retry['base'],'5m')
+        with patch.object(bm,'INTRADAY_BASES',('5m',)):
+            clock=pd.Timestamp('2026-11-29T12:00Z')
+            self.store.set_setting(bm.history_key(self.info),{'attempted_at':clock.isoformat()})
+            result=bm.sync_intraday(self.store,self.info,clock,downloader=lambda *_:self.bars())
+            self.assertEqual(result['publication_wait'],'LATE_CLOSED_TAIL')
+            retry=bm.feed_plan(self.store,self.info,clock+pd.Timedelta(minutes=16))
+            self.assertTrue(retry['due']);self.assertEqual(retry['base'],'5m')
 
     def test_candlepilot_turn_invokes_only_one_existing_base_loader(self):
         with patch.object(bm,'sync_intraday',return_value={'quality':'READY'}) as intra,patch.object(bm,'sync') as daily:

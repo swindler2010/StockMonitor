@@ -1,0 +1,489 @@
+{
+  "checked_at": "2026-11-26T17:56:37.053364+00:00",
+  "runtime_instance": "7d035abd5e220d0c859d84cdde461e23",
+  "initial_scope": {
+    "stocks": 106,
+    "indices": 6,
+    "missing_public_minute_views": 224
+  },
+  "stock_official_trade_inputs": {
+    "structurally_valid": 105,
+    "missing": [
+      {
+        "name": "Exxon Mobil",
+        "isin": "US30231G1022",
+        "reason": "official GETTEX exact ISIN/GTX search returned status OK, data=[], totalCount=0",
+        "checked_at": "2026-11-26T17:47:39.976025+00:00"
+      }
+    ]
+  },
+  "new_tests": 15,
+  "affected_tests": 96,
+  "chart_worker_acceptance": [
+    {
+      "isin": "US88160R1014",
+      "name": "Tesla",
+      "timeframe": "1m",
+      "state": "DRAWABLE",
+      "rows": 11337,
+      "first": "2026-09-28 07:30:00",
+      "last": "2026-11-26 15:43:00",
+      "quality": "UNCONFIRMED",
+      "display_only": false,
+      "seconds": 26.969,
+      "identity": {
+        "source": "gettex",
+        "symbol": "US88160R1014",
+        "venue": "GETTEX",
+        "currency": "EUR",
+        "timezone": "Europe/Berlin"
+      },
+      "checked_at": "2026-11-26T17:35:56.309263+00:00"
+    },
+    {
+      "isin": "US88160R1014",
+      "name": "Tesla",
+      "timeframe": "3m",
+      "state": "DRAWABLE",
+      "rows": 7135,
+      "first": "2026-09-28 07:30:00",
+      "last": "2026-11-26 15:42:00",
+      "quality": "INVALID",
+      "display_only": false,
+      "seconds": 41.625,
+      "identity": {
+        "source": "gettex",
+        "symbol": "US88160R1014",
+        "venue": "GETTEX",
+        "currency": "EUR",
+        "timezone": "Europe/Berlin"
+      },
+      "checked_at": "2026-11-26T17:36:23.306204+00:00"
+    },
+    {
+      "isin": "US0378331005",
+      "name": "Apple",
+      "timeframe": "1m",
+      "state": "DRAWABLE",
+      "rows": 10253,
+      "first": "2026-09-28 07:30:00",
+      "last": "2026-11-26 15:46:00",
+      "quality": "UNCONFIRMED",
+      "display_only": false,
+      "seconds": 45.078,
+      "identity": {
+        "source": "gettex",
+        "symbol": "US0378331005",
+        "venue": "GETTEX",
+        "currency": "EUR",
+        "timezone": "Europe/Berlin"
+      },
+      "checked_at": "2026-11-26T17:37:48.387312+00:00"
+    },
+    {
+      "isin": "US0378331005",
+      "name": "Apple",
+      "timeframe": "3m",
+      "state": "DRAWABLE",
+      "rows": 7129,
+      "first": "2026-09-28 07:30:00",
+      "last": "2026-11-26 15:45:00",
+      "quality": "INVALID",
+      "display_only": false,
+      "seconds": 74.468,
+      "identity": {
+        "source": "gettex",
+        "symbol": "US0378331005",
+        "venue": "GETTEX",
+        "currency": "EUR",
+        "timezone": "Europe/Berlin"
+      },
+      "checked_at": "2026-11-26T17:38:33.502316+00:00"
+    },
+    {
+      "isin": "INDEX:SP500",
+      "name": "S&P 500",
+      "timeframe": "1m",
+      "state": "DRAWABLE",
+      "rows": 2730,
+      "first": "2026-11-17 09:30:00",
+      "last": "2026-11-25 15:59:00",
+      "quality": "READY",
+      "display_only": false,
+      "seconds": 1.641,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^GSPC",
+        "venue": "SNP",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T17:52:19.446964+00:00"
+    },
+    {
+      "isin": "INDEX:SP500",
+      "name": "S&P 500",
+      "timeframe": "3m",
+      "state": "DRAWABLE",
+      "rows": 910,
+      "first": "2026-11-17 09:30:00",
+      "last": "2026-11-25 15:57:00",
+      "quality": "READY",
+      "display_only": false,
+      "seconds": 1.375,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^GSPC",
+        "venue": "SNP",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T17:52:21.095211+00:00"
+    },
+    {
+      "isin": "INDEX:NDX",
+      "name": "Nasdaq-100",
+      "timeframe": "1m",
+      "state": "DRAWABLE",
+      "rows": 2730,
+      "first": "2026-11-17 09:30:00",
+      "last": "2026-11-25 15:59:00",
+      "quality": "READY",
+      "display_only": false,
+      "seconds": 1.36,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^NDX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T17:42:28.513056+00:00"
+    },
+    {
+      "isin": "INDEX:NDX",
+      "name": "Nasdaq-100",
+      "timeframe": "3m",
+      "state": "DRAWABLE",
+      "rows": 910,
+      "first": "2026-11-17 09:30:00",
+      "last": "2026-11-25 15:57:00",
+      "quality": "READY",
+      "display_only": false,
+      "seconds": 1.156,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^NDX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T17:42:29.876396+00:00"
+    },
+    {
+      "isin": "INDEX:SOX",
+      "name": "SOX / Semiconductor Index",
+      "timeframe": "1m",
+      "state": "DRAWABLE",
+      "rows": 2730,
+      "first": "2026-11-17 09:30:00",
+      "last": "2026-11-25 15:59:00",
+      "quality": "READY",
+      "display_only": false,
+      "seconds": 0.641,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^SOX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T17:52:22.473994+00:00"
+    },
+    {
+      "isin": "INDEX:SOX",
+      "name": "SOX / Semiconductor Index",
+      "timeframe": "3m",
+      "state": "DRAWABLE",
+      "rows": 910,
+      "first": "2026-11-17 09:30:00",
+      "last": "2026-11-25 15:57:00",
+      "quality": "READY",
+      "display_only": false,
+      "seconds": 1.328,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^SOX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T17:52:23.117028+00:00"
+    },
+    {
+      "isin": "INDEX:DAX",
+      "name": "DAX",
+      "timeframe": "1m",
+      "state": "DRAWABLE",
+      "rows": 3554,
+      "first": "2026-11-18 09:02:00",
+      "last": "2026-11-26 17:29:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 1.156,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^GDAXI",
+        "venue": "GER",
+        "currency": "EUR",
+        "timezone": "Europe/Berlin"
+      },
+      "checked_at": "2026-11-26T17:52:59.080296+00:00"
+    },
+    {
+      "isin": "INDEX:DAX",
+      "name": "DAX",
+      "timeframe": "3m",
+      "state": "DRAWABLE",
+      "rows": 1183,
+      "first": "2026-11-18 09:03:00",
+      "last": "2026-11-26 17:27:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 1.469,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^GDAXI",
+        "venue": "GER",
+        "currency": "EUR",
+        "timezone": "Europe/Berlin"
+      },
+      "checked_at": "2026-11-26T17:53:00.238853+00:00"
+    },
+    {
+      "isin": "INDEX:STOXX600",
+      "name": "STOXX Europe 600",
+      "timeframe": "1m",
+      "state": "DRAWABLE",
+      "rows": 3571,
+      "first": "2026-11-18 09:00:00",
+      "last": "2026-11-26 17:30:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.5,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^STOXX",
+        "venue": "ZRH",
+        "currency": "EUR",
+        "timezone": "Europe/Zurich"
+      },
+      "checked_at": "2026-11-26T17:53:01.717481+00:00"
+    },
+    {
+      "isin": "INDEX:STOXX600",
+      "name": "STOXX Europe 600",
+      "timeframe": "3m",
+      "state": "DRAWABLE",
+      "rows": 1190,
+      "first": "2026-11-18 09:00:00",
+      "last": "2026-11-26 17:27:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 1.407,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^STOXX",
+        "venue": "ZRH",
+        "currency": "EUR",
+        "timezone": "Europe/Zurich"
+      },
+      "checked_at": "2026-11-26T17:53:02.217205+00:00"
+    },
+    {
+      "isin": "INDEX:VIX",
+      "name": "VIX",
+      "timeframe": "1m",
+      "state": "DRAWABLE",
+      "rows": 2544,
+      "first": "2026-11-18 08:31:00",
+      "last": "2026-11-26 10:30:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.453,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^VIX",
+        "venue": "CXI",
+        "currency": "USD",
+        "timezone": "America/Chicago"
+      },
+      "checked_at": "2026-11-26T17:53:03.640091+00:00"
+    },
+    {
+      "isin": "INDEX:VIX",
+      "name": "VIX",
+      "timeframe": "3m",
+      "state": "DRAWABLE",
+      "rows": 844,
+      "first": "2026-11-18 08:33:00",
+      "last": "2026-11-26 10:27:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 1.063,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^VIX",
+        "venue": "CXI",
+        "currency": "USD",
+        "timezone": "America/Chicago"
+      },
+      "checked_at": "2026-11-26T17:53:04.103195+00:00"
+    }
+  ],
+  "native_ui": [
+    {
+      "instrument": "INDEX:NDX",
+      "timeframe": "1m",
+      "rows": 2730,
+      "status": "visible with indicators",
+      "checked_at": "2026-11-26T17:42:55Z"
+    },
+    {
+      "instrument": "INDEX:NDX",
+      "timeframe": "3m",
+      "rows": 910,
+      "status": "visible with indicators",
+      "checked_at": "2026-11-26T17:43:09Z"
+    },
+    {
+      "instrument": "US0378331005",
+      "timeframe": "3m",
+      "rows": 7130,
+      "status": "visible with indicators and real CP quality warnings",
+      "checked_at": "2026-11-26T17:53:48Z"
+    },
+    {
+      "instrument": "US0378331005",
+      "timeframe": "1m",
+      "status": "visible OHLCV, EMA, RSI, MACD, ATR and unchanged UNCONFIRMED warning",
+      "checked_at": "2026-11-26T17:55:21Z"
+    }
+  ],
+  "index_sources": [
+    {
+      "isin": "INDEX:NDX",
+      "identity": {
+        "source": "proxy",
+        "symbol": "^NDX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "count": 2730,
+      "first": "2026-11-17 09:30:00",
+      "last": "2026-11-25 15:59:00",
+      "quality": "READY",
+      "status": "SAVED",
+      "attempted_at": "2026-11-26T17:36:48.651360+00:00",
+      "source_constraint": "Native Yahoo index 1m; initial named range 7d; saved rows accumulate; regular-session projection only"
+    },
+    {
+      "isin": "INDEX:SP500",
+      "identity": {
+        "source": "proxy",
+        "symbol": "^GSPC",
+        "venue": "SNP",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "count": 2730,
+      "first": "2026-11-17 09:30:00",
+      "last": "2026-11-25 15:59:00",
+      "quality": "READY",
+      "status": "SAVED",
+      "attempted_at": "2026-11-26T17:47:44.653101+00:00",
+      "source_constraint": "Native Yahoo index 1m; initial named range 7d; saved rows accumulate; regular-session projection only"
+    },
+    {
+      "isin": "INDEX:SOX",
+      "identity": {
+        "source": "proxy",
+        "symbol": "^SOX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "count": 2730,
+      "first": "2026-11-17 09:30:00",
+      "last": "2026-11-25 15:59:00",
+      "quality": "READY",
+      "status": "SAVED",
+      "attempted_at": "2026-11-26T17:48:44.543888+00:00",
+      "source_constraint": "Native Yahoo index 1m; initial named range 7d; saved rows accumulate; regular-session projection only"
+    },
+    {
+      "isin": "INDEX:DAX",
+      "identity": {
+        "source": "proxy",
+        "symbol": "^GDAXI",
+        "venue": "GER",
+        "currency": "EUR",
+        "timezone": "Europe/Berlin"
+      },
+      "count": 3554,
+      "first": "2026-11-18 09:02:00",
+      "last": "2026-11-26 17:29:00",
+      "quality": "UNCONFIRMED",
+      "status": "SAVED",
+      "attempted_at": "2026-11-26T17:51:06.313229+00:00",
+      "source_constraint": "Native Yahoo index 1m; initial named range 7d; saved rows accumulate; regular-session projection only"
+    },
+    {
+      "isin": "INDEX:STOXX600",
+      "identity": {
+        "source": "proxy",
+        "symbol": "^STOXX",
+        "venue": "ZRH",
+        "currency": "EUR",
+        "timezone": "Europe/Zurich"
+      },
+      "count": 3571,
+      "first": "2026-11-18 09:00:00",
+      "last": "2026-11-26 17:30:00",
+      "quality": "UNCONFIRMED",
+      "status": "SAVED",
+      "attempted_at": "2026-11-26T17:51:54.285985+00:00",
+      "source_constraint": "Native Yahoo index 1m; initial named range 7d; saved rows accumulate; regular-session projection only"
+    },
+    {
+      "isin": "INDEX:VIX",
+      "identity": {
+        "source": "proxy",
+        "symbol": "^VIX",
+        "venue": "CXI",
+        "currency": "USD",
+        "timezone": "America/Chicago"
+      },
+      "count": 2544,
+      "first": "2026-11-18 08:31:00",
+      "last": "2026-11-26 10:30:00",
+      "quality": "UNCONFIRMED",
+      "status": "SAVED",
+      "attempted_at": "2026-11-26T17:52:24.355501+00:00",
+      "source_constraint": "Native Yahoo index 1m; initial named range 7d; saved rows accumulate; regular-session projection only"
+    }
+  ],
+  "direct_candle_repairs_by_work": 0,
+  "autonomous_candle_repairs_counted": 0,
+  "cp_primary_minute_index_loads": 6,
+  "cp_primary_minute_rows": 17859,
+  "trade_timeframes_unchanged": 11,
+  "limitations": [
+    "True provider history only; no subdivision of 5m/15m, no padding of gaps.",
+    "All105 stock trade inputs checked structurally; full chart_worker acceptance covers Apple/Tesla and6 indices, not222 UI windows.",
+    "First cold stock display remains slow: Tesla26.969/41.625s; profiled Apple45.078/74.468s with profiler overhead. Heavy work is outside Tk; no250ms claim.",
+    "CP warnings about gaps/partial parents remain; minute chart access is not a new CORE/execution grant.",
+    "Exxon2 views remain source-unavailable."
+  ]
+}

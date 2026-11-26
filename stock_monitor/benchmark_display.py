@@ -52,6 +52,9 @@ def select_frame(info,tf,normal,store,now=None):
         return out
     state=normal.attrs.get('data_quality',{}).get('state')
     if not normal.empty:
+        if normal.attrs.get('timeframe')!=tf:
+            out=normal.iloc[:0].copy();out.attrs['data_quality']={'state':'INVALID','issues':['Index timeframe mismatch']}
+            return out
         # A real partial boundary week/month remains drawable with its original
         # aggregate DQ. Daily inputs already passed BenchmarkMixin's strict
         # audit; this display receipt never makes that period analytical input.
@@ -88,7 +91,7 @@ def information(store,info):
     frame=bm.load(store,info)
     report=quality.audit(frame,'1D',bm.identity(info))
     return dict(archive=store.setting('benchmark_history:'+info['isin'],{}),quality=report['state'],
-        intraday=store.setting(bm.history_key(info,'5m'),{}),
+        intraday=store.setting(bm.history_key(info,'5m'),{}),minute=store.setting(bm.history_key(info,'1m'),{}),
         count=len(frame),first=str(frame.index[0]) if len(frame) else None,
         last=str(frame.index[-1]) if len(frame) else None,
         close=float(frame.close.iloc[-1]) if len(frame) and report['state'] in ('READY','STALE') else None)
@@ -111,7 +114,7 @@ def information_text(info,facts,section='overview'):
         tr('История')+': '+format_date(facts.get('first'),language())+' → '+format_date(facts.get('last'),language()),
         tr('Качество данных')+': '+facts['quality'],
         tr('Архив')+': '+str(archive.get('status','INCOMPLETE'))+' / '+str(archive.get('archive_quality') or archive.get('quality','UNKNOWN')),
-        '',tr('История: все таймфреймы; внутридневные из настоящих 5m.'),
+        '',tr('История: 1m/3m из настоящих 1m; остальные внутридневные из 5m.'),
         tr('Индекс используется как рыночный контекст. Торговый объём не применим.')]
     intraday=facts.get('intraday',{});intraday_meta=bm.data_identity(info,'5m')
     rows.extend(['',tr('Внутридневная история (база 5m)'),
@@ -119,6 +122,12 @@ def information_text(info,facts,section='overview'):
         tr('Свечей в архиве')+': '+str(intraday.get('count',0)),
         tr('Последняя свеча')+': '+format_date(intraday.get('last'),language(),clock=True,assume_zone=intraday_meta['timezone']),
         tr('Качество данных')+': '+str(intraday.get('quality','SOURCE_UNAVAILABLE'))])
+    minute=facts.get('minute',{})
+    rows.extend(['',tr('Минутная история (база 1m)'),
+        'Yahoo Finance / '+intraday_meta['symbol']+' / '+intraday_meta['venue'],
+        tr('Свечей в архиве')+': '+str(minute.get('count',0)),
+        tr('Последняя свеча')+': '+format_date(minute.get('last'),language(),clock=True,assume_zone=intraday_meta['timezone']),
+        tr('Качество данных')+': '+str(minute.get('quality','SOURCE_UNAVAILABLE'))])
     if section in ('finances','reports','events'):
         rows.insert(2,tr('Это индекс, а не компания: корпоративная отчётность, прибыль и дивиденды эмитента не применяются.'))
     return '\n'.join(rows)

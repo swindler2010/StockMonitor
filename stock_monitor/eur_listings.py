@@ -182,7 +182,8 @@ def depth(frame,tf):
     if not frame.empty:
         closed=frame.loc[bar_ends(frame)<=pd.Timestamp.now(tz='UTC')]
         if 'bar_complete' in closed:closed=closed.loc[closed.bar_complete.fillna(False)]
-    count=len(closed);enough=count>=TARGETS[tf]
+    target=100 if tf in ('1m','3m') else TARGETS[tf]
+    count=len(closed);enough=count>=target
     if tf=='1M' and count:
         enough=enough and closed.index[0]<=closed.index[-1]-pd.DateOffset(years=20)+pd.DateOffset(months=1)
     # Reaching a count target is not evidence of a complete usable archive.
@@ -192,7 +193,7 @@ def depth(frame,tf):
     if quality=='READY':status=depth_status
     elif quality in ('STALE','GAP','SOURCE_GAP','INVALID','RECOVERING','SOURCE_UNAVAILABLE'):status=quality
     else:status='INCOMPLETE' if enough else 'SOURCE_LIMITED'
-    return dict(count=count,target=TARGETS[tf],status=status,depth_status=depth_status,target_met=bool(enough),
+    return dict(count=count,target=target,status=status,depth_status=depth_status,target_met=bool(enough),
                 first=str(closed.index[0]) if count else None,last=str(closed.index[-1]) if count else None)
 _lock=threading.Lock()
 _calls=deque()

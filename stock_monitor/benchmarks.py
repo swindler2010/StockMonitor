@@ -28,10 +28,11 @@ def identity(info):
                 venue=info['history_venue'],currency=info['currency'],timezone=info['timezone'])
 
 INTRADAY_BASE='5m'
+INTRADAY_BASES=('5m','1m')
 
 def base_for(tf):
     from timeframes import MINUTES
-    return INTRADAY_BASE if tf in MINUTES else '1D'
+    return '1m' if tf in ('1m','3m') else INTRADAY_BASE if tf in MINUTES else '1D'
 
 
 def data_identity(info,base='1D'):
@@ -56,28 +57,31 @@ def history_key(info,base='1D'):
 
 
 def feed_plan(store,info,now=None):
-    """Existing writer lane: one due real source per turn, no extra threads."""
+    """One native base per existing serial turn; no new loader or thread."""
     from candle_schedule import decision
-    now=pd.Timestamp(now or pd.Timestamp.now(tz='UTC'))
-    meta=data_identity(info,INTRADAY_BASE);intraday=decision(store,info['isin'],meta,INTRADAY_BASE,now)
-    saved=store.setting(history_key(info,INTRADAY_BASE),{})
-    if (not intraday['due'] and intraday.get('reason')=='UNCHANGED' and not saved.get('count')
-            and saved.get('attempted_at') and now>=pd.Timestamp(saved['attempted_at'])+pd.Timedelta(days=1)):
-        intraday={**intraday,'due':True,'reason':'INDEX_EMPTY_DAILY_RECHECK'}
+    now=pd.Timestamp(now or pd.Timestamp.now(tz='UTC'));due=[]
+    for base in INTRADAY_BASES:
+        meta=data_identity(info,base);plan=decision(store,info['isin'],meta,base,now)
+        saved=store.setting(history_key(info,base),{})
+        if (not plan['due'] and plan.get('reason')=='UNCHANGED' and not saved.get('count')
+                and saved.get('attempted_at') and now>=pd.Timestamp(saved['attempted_at'])+pd.Timedelta(days=1)):
+            plan={**plan,'due':True,'reason':'INDEX_EMPTY_DAILY_RECHECK'}
+        if plan['due']:due.append(dict(due=True,base=base,plan=plan,attempted_at=saved.get('attempted_at',''),missing=not saved.get('count')))
+    missing=next((p for p in due if p['missing']),None)
+    if missing:return missing
     daily=store.setting(history_key(info),{});seconds=86400 if info['history_source']=='cboe' else 3600
     daily_due=not daily.get('attempted_at') or now>=pd.Timestamp(daily['attempted_at'])+pd.Timedelta(seconds=seconds)
     cooldown=store.setting('cp_source_retry:'+identity(info)['source'],None)
     if cooldown and now<pd.Timestamp(cooldown):daily_due=False
-    if intraday['due'] and not saved.get('count'):
-        return dict(due=True,base=INTRADAY_BASE,plan=intraday,attempted_at=saved.get('attempted_at',''))
     if daily_due:return dict(due=True,base='1D',attempted_at=daily.get('attempted_at',''))
-    if intraday['due']:return dict(due=True,base=INTRADAY_BASE,plan=intraday,attempted_at=saved.get('attempted_at',''))
-    return dict(due=False,base=INTRADAY_BASE,reason=intraday.get('reason'),attempted_at=saved.get('attempted_at',''))
+    if due:return min(due,key=lambda p:p['attempted_at'])
+    return dict(due=False,base=INTRADAY_BASE,reason=plan.get('reason'),attempted_at=saved.get('attempted_at',''))
 
 
-def sync_intraday(store,info,now=None,downloader=None,plan=None):
+def sync_intraday(store,info,now=None,downloader=None,plan=None,*,base=INTRADAY_BASE):
     from candle_schedule import decision,finish
-    now=pd.Timestamp(now or pd.Timestamp.now(tz='UTC'));base=INTRADAY_BASE;meta=data_identity(info,base)
+    now=pd.Timestamp(now or pd.Timestamp.now(tz='UTC'));meta=data_identity(info,base)
+    if base not in INTRADAY_BASES:raise ValueError('UNSUPPORTED_INDEX_BASE')
     key=history_key(info,base);state=store.setting(key,{})
     plan=decision(store,info['isin'],meta,base,now) if plan is None else plan
     if not plan.get('due'):return state
@@ -87,7 +91,7 @@ def sync_intraday(store,info,now=None,downloader=None,plan=None):
         if start>=now:raise ValueError('Future index intraday watermark')
     error=None
     try:
-        incoming=(history_service.download(meta['symbol'],'5m',start=start,store=store)
+        incoming=(history_service.download(meta['symbol'],base,start=(max(start,now-pd.Timedelta(days=7)+pd.Timedelta(minutes=1)) if base=='1m' and start is not None else start),store=store,**({'minute_chart':True} if base=='1m' else {}))
                   if downloader is None else downloader(info,start))
         incoming.attrs.update(unit=info['unit'],return_basis=info['return_basis'],volume_policy=info['volume_policy'])
         report=quality.audit(incoming,base,meta,now=now,check_stale=False)
@@ -101,7 +105,7 @@ def sync_intraday(store,info,now=None,downloader=None,plan=None):
             status='SAVED' if len(incoming) else 'UNCHANGED' if len(cached) else 'SOURCE_UNAVAILABLE',
             first=str(cached.index.min()) if len(cached) else None,last=str(cached.index.max()) if len(cached) else None,
             count=len(cached),normalization=incoming.attrs.get('intraday_normalization',{}),
-            source_constraint='Native Yahoo index 5m; initial provider window <=60 days; saved rows accumulate; regular-session projection only')
+            source_constraint=('Native Yahoo index 1m; initial named range 7d; saved rows accumulate; regular-session projection only' if base=='1m' else 'Native Yahoo index 5m; initial provider window <=60 days; saved rows accumulate; regular-session projection only'))
         # Provider-delay proof comes from actual saved closed bars, not HTTP
         # success. Reuse the scheduler's durable 15-minute retry up to four
         # attempts per closed boundary, then retain the explicit block.
@@ -128,7 +132,7 @@ def sync_intraday(store,info,now=None,downloader=None,plan=None):
 def sync_history(store,info,now=None):
     plan=feed_plan(store,info,now)
     if not plan['due']:return {**store.setting(history_key(info,plan['base']),{}),'feed_due':False}
-    state=sync_intraday(store,info,now,plan=plan['plan']) if plan['base']==INTRADAY_BASE else sync(store,info,now)
+    state=sync_intraday(store,info,now,plan=plan['plan'],base=plan['base']) if plan['base'] in INTRADAY_BASES else sync(store,info,now)
     return {**state,'base':plan['base']}
 
 

@@ -5,7 +5,8 @@ import pandas as pd
 import numpy as np
 
 TIMEFRAMES={'5m':'5min','10m':'10min','15m':'15min','30m':'30min','1H':'1h','2H':'2h','3H':'3h','4H':'4h','1D':'1D','1W':'W-FRI','1M':'MS'}
-RANK={'1m':1,'5m':5,'10m':10,'15m':15,'30m':30,'1H':60,'2H':120,'3H':180,'4H':240,'1D':1440,'1W':10080,'1M':43200}
+CHART_TIMEFRAMES={'1m':'1min','3m':'3min',**TIMEFRAMES}
+RANK={'1m':1,'3m':3,'5m':5,'10m':10,'15m':15,'30m':30,'1H':60,'2H':120,'3H':180,'4H':240,'1D':1440,'1W':10080,'1M':43200}
 
 def bar_ends(frame):
     """Conservative normal-session endpoints; no invented holiday candles."""
@@ -17,7 +18,7 @@ def bar_ends(frame):
     if index.tz is None:index=index.tz_localize(frame.attrs.get('timezone') or 'Europe/Berlin',ambiguous='NaT',nonexistent='NaT')
     ends=index+pd.offsets.MonthBegin(1) if tf=='1M' else index+pd.Timedelta(days=1) if tf=='1W' else index+pd.Timedelta(minutes=RANK[tf])
     close=frame.attrs.get('session_close')
-    if tf in ('5m','10m','15m','30m','1H','2H','3H','4H') and close:
+    if tf in ('1m','3m','5m','10m','15m','30m','1H','2H','3H','4H') and close:
         import re
         if not re.fullmatch(r'(?:[01]\d|2[0-3]):[0-5]\d',close):raise ValueError('Invalid session closing time')
         hour,minute=map(int,close.split(':'))

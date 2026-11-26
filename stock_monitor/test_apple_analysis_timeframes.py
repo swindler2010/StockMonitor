@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest.mock import patch
 import pandas as pd
 import analytics as a,cp_controls as cp
-from timeframes import LABELS
+from timeframes import ANALYSIS_LABELS as LABELS
 
 E=Path(__file__).resolve().parents[1]/'history64-evidence/apple-analysis11-30'
 class AppleAnalysisTimeframes(unittest.TestCase):

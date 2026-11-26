@@ -114,3 +114,16 @@ def normalize(frame,base,now=None,start=None,end=None,*,cached_quotes_only=False
     out.attrs={**meta,'intraday_normalization':diagnostics,'intraday_span':span,
                'intraday_blockers':blockers}
     return out
+
+
+def trade_minutes(trades):
+    """Actual official executions/observations, never subdivision of larger bars."""
+    if trades.empty:return pd.DataFrame(columns=list(quality.FIELDS),index=pd.DatetimeIndex([]))
+    if (not isinstance(trades.index,pd.DatetimeIndex) or trades.index.hasnans
+            or not trades.index.is_monotonic_increasing):
+        raise ValueError('MINUTE_TRADE_TIMESTAMP_INVALID')
+    values=trades[['price','volume']].to_numpy(dtype=float)
+    if not np.isfinite(values).all() or (values[:,0]<=0).any() or (values[:,1]<0).any():
+        raise ValueError('MINUTE_TRADE_VALUES_INVALID')
+    return trades.price.resample('1min').ohlc().join(
+        trades.volume.resample('1min').sum().rename('volume')).dropna()

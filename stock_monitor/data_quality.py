@@ -327,7 +327,7 @@ CALENDARS={'NMS':'XNAS','NGM':'XNAS','NCM':'XNAS','NYQ':'XNYS','PCX':'XNYS',
 TIMEZONES={'XNAS':'America/New_York','XNYS':'America/New_York',
            'XETR':'Europe/Berlin','XFRA':'Europe/Berlin','XPAR':'Europe/Paris','XLON':'Europe/London','GETTEX':'Europe/Berlin',
            'STOXX_EUROPE':'Europe/Zurich','CBOE_VIX':'America/Chicago'}
-STEPS={'1D':pd.Timedelta(days=1),**{tf:pd.Timedelta(minutes=m) for tf,m in {'1m':1,'5m':5,'10m':10,'15m':15,'30m':30,'1H':60,'2H':120,'3H':180,'4H':240}.items()}}
+STEPS={'1D':pd.Timedelta(days=1),**{tf:pd.Timedelta(minutes=m) for tf,m in {'1m':1,'3m':3,'5m':5,'10m':10,'15m':15,'30m':30,'1H':60,'2H':120,'3H':180,'4H':240}.items()}}
 XFRA_SESSION_REVISION='equities-2021-11-29-v1'
 from gettex_sessions import DAILY_START as GETTEX_DAILY_START
 

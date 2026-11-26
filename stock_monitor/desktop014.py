@@ -229,7 +229,7 @@ class Desktop014:
                 pinned_archive=True;imported_daily=matches[0]
         if required_identity is not None and required_identity.get('source')=='gettex_chart':
             import gettex_chart
-            chart_base='1D' if base_for(tf)=='1D' else '5m' if tf in ('5m','10m') else '15m'
+            chart_base=base_for(tf,'gettex_chart')
             chart_daily=gettex_chart.load(self.store,info,chart_base,clock)
             if chart_daily.empty and chart_base=='15m':
                 chart_base='5m';chart_daily=gettex_chart.load(self.store,info,chart_base,clock)
@@ -582,7 +582,8 @@ class Desktop014:
                 try:_,extra=history_service.recover(info,self.store);errors+=extra
                 except Exception as e:errors.append('История proxy: '+str(e))
             try:
-                trades=self._download_gettex_trades(info['isin'])
+                trades=(self._download_gettex_trades(info['isin'],True) if info.get('_gettex_poll_only')
+                        else self._download_gettex_trades(info['isin']))
                 if not trades.empty:
                     self.store.save_trades(info['isin'],trades);all_trades=self.store.load_trades(info['isin'])
                     official=all_trades.price.resample('15min').ohlc().join(all_trades.volume.resample('15min').sum().rename('volume')).dropna()
@@ -648,13 +649,13 @@ class Desktop014:
                 self.store.event('feed_result',{'isin':info['isin'],'ok':not errors,'errors':errors,'last_success':self.store.setting('gettex_last_success:'+info['isin'])})
                 self.events.put((self.feed_done,(info,errors)))
 
-    def _download_gettex_trades(self,isin):
+    def _download_gettex_trades(self,isin,recent_only=False):
         import gettex_history
         import candle_schedule as scheduler
         meta=scheduler.gettex_meta(isin);plan=scheduler.decision(self.store,isin,meta,'5m')
         if not plan['due']:return pd.DataFrame()
         plan['started_at']=pd.Timestamp.now(tz='UTC').isoformat()
-        try:result=gettex_history.download(isin,self._http_bytes,self._parse_gettex_csv,self.store)
+        try:result=gettex_history.download(isin,self._http_bytes,self._parse_gettex_csv,self.store,recent_only=recent_only)
         except Exception as error:
             scheduler.finish(self.store,isin,meta,'5m',plan,error);raise
         self._cp_gettex_pending=(isin,plan)

@@ -6,7 +6,7 @@ import pandas as pd
 import analytics, cp_controls as cp
 from desktop014 import Desktop014
 from snapshot_worker import SnapshotContext, Value
-from timeframes import LABELS
+from timeframes import ANALYSIS_LABELS as LABELS
 from trading_engine import profile
 from paper_account import ACCOUNT
 

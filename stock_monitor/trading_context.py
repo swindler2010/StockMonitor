@@ -67,7 +67,7 @@ def closed_parent_input(frame, base, target, now):
 
 
 def plan(signal_tf, trend_tf=None, execution_tf=(EXECUTION_TF,)):
-    from timeframes import LABELS
+    from timeframes import ANALYSIS_LABELS as LABELS
     from trading_engine import profile
     required=tuple(profile(signal_tf) if trend_tf is None else trend_tf)
     if (signal_tf not in LABELS or len(required)!=3 or len(set(required))!=3

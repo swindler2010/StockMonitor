@@ -97,10 +97,20 @@ class Store:
 
     def load_official(self, isin, base='15m'):
         import pandas as pd
-        with self.connect() as db:rows=db.execute("SELECT ts,open,high,low,close,volume FROM candles WHERE isin=? AND source='gettex' AND base_tf=? ORDER BY ts",(isin,base)).fetchall()
-        if not rows:return pd.DataFrame()
-        frame=pd.DataFrame(rows,columns=['ts','open','high','low','close','volume']).set_index('ts');frame.index=pd.to_datetime(frame.index)
-        frame['source']='gettex';frame.attrs={'source':'gettex','venue':'GETTEX','currency':'EUR','symbol':isin,'timezone':'Europe/Berlin','session_open':'07:30','session_close':'23:00','session_policy':'current published GETTEX stock hours; historical exceptions not verified'}
+        if base=='1m':
+            # These rows already came through the ordinary official GETTEX
+            # writer. Reuse their full saved depth; never split a 5m candle.
+            from intraday import trade_minutes
+            trades=self.load_trades(isin)
+            frame=trade_minutes(trades)
+            if frame.empty:return frame
+            frame.attrs['minute_origin']='existing official GETTEX trade ledger'
+            frame.attrs['minute_trade_count']=len(trades)
+        else:
+            with self.connect() as db:rows=db.execute("SELECT ts,open,high,low,close,volume FROM candles WHERE isin=? AND source='gettex' AND base_tf=? ORDER BY ts",(isin,base)).fetchall()
+            if not rows:return pd.DataFrame()
+            frame=pd.DataFrame(rows,columns=['ts','open','high','low','close','volume']).set_index('ts');frame.index=pd.to_datetime(frame.index)
+        frame['source']='gettex';frame.attrs={**frame.attrs,'source':'gettex','venue':'GETTEX','currency':'EUR','symbol':isin,'timezone':'Europe/Berlin','session_open':'07:30','session_close':'23:00','session_policy':'current published GETTEX stock hours; historical exceptions not verified'}
         from data_quality import attach_interval_evidence
         from history_service import attach_parent_provenance
         return attach_parent_provenance(self,attach_interval_evidence(self,frame,isin),isin,base)

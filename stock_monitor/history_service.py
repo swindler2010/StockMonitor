@@ -202,7 +202,7 @@ KNOWN={
  'US11135F1012':('1YD.DE','AVGO'), 'DE0006231004':('IFX.DE','IFX.DE'),
  'US68389X1054':('ORC.DE','ORCL')}
 
-def download(symbol, interval='1d', start=None, end=None, store=None,expected=None):
+def download(symbol, interval='1d', start=None, end=None, store=None,expected=None,*,minute_chart=False):
     # Stock OHLCV needs confirmed EUR identity before HTTP. Direct indices
     # remain separate native-unit diagnostics, never substitute stock prices.
     fields=('source','symbol','currency','venue','timezone')
@@ -220,16 +220,26 @@ def download(symbol, interval='1d', start=None, end=None, store=None,expected=No
     intraday_base={'1m':'1m','5m':'5m','15m':'15m','60m':'1H','1h':'1H'}.get(interval)
     clock=pd.Timestamp.now(tz='UTC')
     if start is None and interval=='1d':start=pd.Timestamp('1900-01-01',tz='UTC')
+    named_minute_range=False
+    if minute_chart and (not direct_index or interval!='1m'):
+        raise ValueError('MINUTE_CHART_REQUIRES_DIRECT_INDEX')
     if interval=='1m':
-        # Conservative request budget, not a claim about the provider's full
-        # retention: only a named recent range, at most one session per attempt.
-        if start is None or end is None or pd.Timestamp(start).tzinfo is None or pd.Timestamp(end).tzinfo is None:
-            raise ValueError('AUX_1M_EXPLICIT_RANGE_REQUIRED')
-        if pd.Timestamp(start)<clock-pd.Timedelta(days=1) or pd.Timestamp(end)-pd.Timestamp(start)>pd.Timedelta(days=1):
-            raise ValueError('AUX_1M_OUTSIDE_BOUNDED_RECENT_WINDOW')
-    if start is None and intraday_base:
+        if minute_chart:
+            named_minute_range=start is None and end is None
+            if not named_minute_range and (start is None or pd.Timestamp(start).tzinfo is None
+                    or pd.Timestamp(start)<clock-pd.Timedelta(days=7)
+                    or (end is not None and (pd.Timestamp(end).tzinfo is None or pd.Timestamp(end)-pd.Timestamp(start)>pd.Timedelta(days=7)))):
+                raise ValueError('INDEX_1M_OUTSIDE_BOUNDED_WINDOW')
+        else:
+            # Existing auxiliary recovery remains an explicit one-day request.
+            if start is None or end is None or pd.Timestamp(start).tzinfo is None or pd.Timestamp(end).tzinfo is None:
+                raise ValueError('AUX_1M_EXPLICIT_RANGE_REQUIRED')
+            if pd.Timestamp(start)<clock-pd.Timedelta(days=1) or pd.Timestamp(end)-pd.Timestamp(start)>pd.Timedelta(days=1):
+                raise ValueError('AUX_1M_OUTSIDE_BOUNDED_RECENT_WINDOW')
+    if start is None and intraday_base and not named_minute_range:
         start=clock-pd.Timedelta(days=730 if intraday_base=='1H' else 60)+pd.Timedelta(minutes=1)
-    if start is None:raise ValueError('Unsupported history interval without explicit start')
+    if named_minute_range:params['range']='7d'
+    elif start is None:raise ValueError('Unsupported history interval without explicit start')
     else:
         ts=pd.Timestamp(start)
         if ts.tzinfo is None:

@@ -5,11 +5,14 @@ import data_quality as quality
 from functools import lru_cache
 from gettex_sessions import bounds as gettex_bounds, years_covered
 
-# 1m is an auxiliary recovery input only; LABELS remains the eleven UI TF.
-MINUTES={'1m':1,'5m':5,'10m':10,'15m':15,'30m':30,'1H':60,'2H':120,'3H':180,'4H':240}
-LABELS={'5m':'5м','10m':'10м','15m':'15м','30m':'30м','1H':'1ч','2H':'2ч','3H':'3ч','4H':'4ч','1D':'1д','1W':'1н','1M':'1мес'}
+# Minute charts are separate from the existing eleven analytical/trading horizons.
+MINUTES={'1m':1,'3m':3,'5m':5,'10m':10,'15m':15,'30m':30,'1H':60,'2H':120,'3H':180,'4H':240}
+LABELS={'1m':'1м','3m':'3м','5m':'5м','10m':'10м','15m':'15м','30m':'30м','1H':'1ч','2H':'2ч','3H':'3ч','4H':'4ч','1D':'1д','1W':'1н','1M':'1мес'}
+
+ANALYSIS_LABELS={k:v for k,v in LABELS.items() if k not in ('1m','3m')}
 
 def base_for(tf,source='proxy'):
+    if tf in ('1m','3m'):return '1m'
     if source=='gettex':return '5m' if tf in ('5m','10m') else '15m'
     if source=='gettex_chart':return '1D' if tf in ('1D','1W','1M') else '5m' if tf in ('5m','10m') else '15m'
     return '1D' if tf in ('1D','1W','1M') else '5m' if tf in ('5m','10m') else '1H' if tf in ('1H','2H','3H','4H') else '15m'
