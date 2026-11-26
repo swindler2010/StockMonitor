@@ -292,6 +292,49 @@ class V2Transactions(unittest.TestCase):
         v2._CACHE.clear()
 
 
+    def test_cached_ranked_basket_advances_after_persisted_leader_rejection(self):
+        from contextlib import contextmanager
+        from types import SimpleNamespace
+        from paper_account import entry_status_key
+
+        f = self.f
+        other = 'XX0000000001'
+        for number in range(13):
+            code = f.isin if not number else 'XX'+str(number).zfill(10)
+            instrument = dict(isin=code, kind='stock', name=code)
+            f.db.execute('INSERT OR REPLACE INTO instruments VALUES (?,?)',
+                         (code,json.dumps(instrument)))
+            f.write('gettex_chart:'+code+':15m',dict(identity=f.identity))
+            f.db.execute('INSERT INTO series VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+                         (code,'gettex_chart','GETTEX','EUR','AAPL.GTX','15m',
+                          '2026-11-04 10:45:00',100,102,99,101,20))
+        cfg = hourly.read(f.db,hourly.CONFIG,{})
+        cfg['identities'][other] = f.identity
+        f.write(hourly.CONFIG,cfg)
+
+        @contextmanager
+        def connect():
+            yield f.db
+
+        store = SimpleNamespace(connect=connect,read_cache=SimpleNamespace(depend=lambda _ : None))
+        now = pd.Timestamp(f.now,unit='s',tz='UTC')
+        quote = dict(bars=[dict(close_at='2026-11-04T10:00:00Z')])
+        offers = [dict(isin=f.isin,exit_rule='lock75',score=9),
+                  dict(isin=other,exit_rule='lock75',score=8)]
+        v2._CACHE.clear()
+        self.addCleanup(v2._CACHE.clear)
+        with patch.object(v2,'authority',return_value=self.model), \
+                patch('eur_listings.stored_identity',return_value=True), \
+                patch.object(v2,'candidates',return_value=(offers,{})) as build:
+            leader = v2.context(store,f.info,f.identity,now,quote)
+            backup = dict(f.info,isin=other)
+            self.assertEqual(v2.context(store,backup,f.identity,now,quote)['ranked_isin'],f.isin)
+            f.write(entry_status_key('V2',f.isin), dict(v2_queue_key=leader['v2_queue']['key'],
+                      v2_attempted_isin=f.isin,v2_candidate_rejected=True))
+            self.assertEqual(v2.context(store,backup,f.identity,now,quote)['action'],'BUY')
+            self.assertEqual(build.call_count,1)
+
+
 class FrozenRules(unittest.TestCase):
     def test_v2_presentation_reports_half_percent_risk_in_selected_language(self):
         import i18n
@@ -501,6 +544,31 @@ class DailySession(unittest.TestCase):
         before = pd.Timestamp('2026-11-24T15:00:00Z').timestamp()
         row = v2.daily_report(fills,{},before)[-1]
         self.assertEqual((row['status'],row['profit_lock']),('IN_PROGRESS',True))
+
+
+class RankedFallback(unittest.TestCase):
+    def test_scopes_rejections_to_candidate_and_exact_window(self):
+        from paper_v2_quotes import ranked_candidate
+        queue = {'key':'model/slot/source','candidates':['AAA','BBB','CCC']}
+        rejection = dict(v2_queue_key=queue['key'], v2_attempted_isin='AAA',
+                         v2_candidate_rejected=True)
+        self.assertEqual(ranked_candidate(queue, {'AAA': rejection}), 'BBB')
+        self.assertEqual(ranked_candidate(queue, {'AAA': {**rejection, 'v2_queue_key':'old'}}), 'AAA')
+        self.assertEqual(ranked_candidate(queue, {'AAA': {**rejection, 'v2_attempted_isin':'BBB'}}), 'AAA')
+
+    def test_only_local_failure_releases_next_candidate(self):
+        from paper_v2_quotes import candidate_rejected, ranked_slots
+        quote = '2026-11-24T14:00:00+00:00'
+        queue = dict(key='sample', candidates=['AAA','BBB'], quote_at=quote)
+        leader = dict(state='BLOCKED', core='READY', v2_attempted_isin='AAA',
+                      v2_queue_key='sample', v2_queue=queue)
+        self.assertFalse(candidate_rejected({**leader, 'execution_blocker':'InputRevisionChanged: changed'}))
+        self.assertFalse(candidate_rejected({**leader, 'execution_blocker':'ValueError: V2_DAILY_NET_PROFIT_LOCK'}))
+        self.assertTrue(candidate_rejected({**leader, 'execution_blocker':'ValueError: V2_CASH_OR_RISK'}))
+        now = pd.Timestamp(quote).timestamp()+60
+        previous = {'AAA': {**leader, 'v2_candidate_rejected': True}}
+        self.assertEqual(ranked_slots(('AAA','BBB'), previous, now), {'BBB'})
+        self.assertEqual(ranked_slots(('AAA','BBB'), previous, now+901), set())
 
 
 if __name__=='__main__':unittest.main()
