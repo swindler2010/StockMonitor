@@ -183,9 +183,11 @@ def saved(store,info):
                 targets=targets(raw),targets_at=stamp.isoformat(),updated_at=stamp.isoformat(),
                 errors={},legacy_card=True)
 
-def load(app,info,refresh=False):
+def load(app,info,refresh=False,force=False):
     packet=saved(app.store,info)
-    if refresh and due(packet,info):
+    attempted=moment(packet.get('attempted_at'))
+    may_force=attempted is None or (datetime.now(timezone.utc)-attempted).total_seconds()>=RETRY
+    if refresh and (due(packet,info) or force and may_force):
         packet=fetch(info,app.store.directory/'provider_cache',packet)
         current=next((dict(r) for r in app.watchlist if r.get('isin')==info.get('isin')),None)
         if current is not None and identity(current)==identity(info):

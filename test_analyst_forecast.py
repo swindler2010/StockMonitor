@@ -94,6 +94,16 @@ class SourceTests(unittest.TestCase):
             self.assertEqual(same,binding);search.assert_not_called()
             with self.assertRaises(RuntimeError):f.resolve_profile(INFO,Path('.'),dict(resolved_profile=binding),NOW+timedelta(days=8))
 
+    def test_manual_refresh_can_update_fresh_daily_cache_after_minimum_retry(self):
+        current=datetime.now(timezone.utc);packet=f.fetch(INFO,Path('.'),ticker=ticker(),now=current)
+        store=SimpleNamespace(directory=Path('.'),setting=lambda key,default=None:packet,set_setting=Mock())
+        app=SimpleNamespace(store=store,watchlist=[INFO])
+        with patch.object(f,'fetch',return_value=packet) as fetch:
+            f.load(app,INFO,True,force=True);fetch.assert_not_called()
+            packet['attempted_at']=(current-timedelta(minutes=16)).isoformat()
+            f.load(app,INFO,True);fetch.assert_not_called()
+            f.load(app,INFO,True,force=True);fetch.assert_called_once()
+
     def test_rate_limit_does_not_continue_auxiliary_calls(self):
         class YFRateLimitError(Exception):pass
         t=ticker();t.get_recommendations.side_effect=YFRateLimitError();v=f.fetch(INFO,Path('.'),ticker=t,now=NOW)

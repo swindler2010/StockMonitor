@@ -169,14 +169,14 @@ class Pages:
             self.news=Dialog(self.app,parent=self.host);return
         self.heading=ttk.Frame(self.host,padding=(15,10),style='DeskCard.TFrame');self.heading.pack(fill='x',pady=(3,8))
         self.title=ttk.Label(self.heading,text=tr(SECTIONS[section])+' • '+str(self.context[0].get('name') or ''),style='DeskTitle.TLabel');self.title.pack(side='left')
-        ttk.Button(self.heading,text=tr('Обновить'),command=lambda:self.request(refresh=True)).pack(side='right')
+        ttk.Button(self.heading,text=tr('Обновить'),command=lambda:self.request(refresh=True,force=True)).pack(side='right')
         if section=='forecast' and self.context[0].get('kind')!='benchmark':
             from analyst_forecast_view import show,word
             ttk.Button(self.heading,text=word('expand'),command=lambda:show(self.app,dict(self.context[0]))).pack(side='right',padx=5)
         self.body=ttk.Frame(self.host,padding=12,style='DeskCard.TFrame');self.body.pack(fill='both',expand=True)
         self.note=ttk.Label(self.body,text=tr('Чтение сохранённых данных…'),style='DeskMuted.TLabel');self.note.pack(anchor='w',pady=8)
         self.request()
-    def request(self,refresh=False):
+    def request(self,refresh=False,force=False):
         if self.closed or self.active in ('chart','news'):return
         captured=self.capture();self.context=captured;self.sequence+=1;serial=self.sequence;section=self.active
         info,tf,period,lang=captured
@@ -210,7 +210,7 @@ class Pages:
                 ttk.Label(self.body,text=tr('Данные временно недоступны. Повторите обновление.'),style='DeskMuted.TLabel',wraplength=600).pack(anchor='w')
         if section=='forecast':
             from analyst_forecast import load as forecast_load
-            work=lambda:dict(info=info,forecast=forecast_load(self.app,info,refresh=refresh),technical=None)
+            work=lambda:dict(info=info,forecast=forecast_load(self.app,info,refresh=refresh,force=force),technical=None)
             key=('analyst-forecast',info['isin']) if refresh else ('workspace-section',id(self),serial)
         else:
             work=(lambda:technical(self.app,info,tf,period,cached)) if section=='analysis' else (lambda:load(self.app,info))

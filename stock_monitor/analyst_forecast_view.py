@@ -256,7 +256,7 @@ def show(app,info):
         if not win.winfo_exists():return
         for child in host.winfo_children():child.destroy()
         Panel(host,app,info,packet);note.set(SOURCE_LINE(packet,info))
-    def refresh():
+    def refresh(force=False):
         counter[0]+=1;serial=counter[0];button.configure(state='disabled');note.set(word('loading'))
         def done(packet):
             if app.closing or not win.winfo_exists() or counter[0]!=serial:return
@@ -266,5 +266,5 @@ def show(app,info):
             render(packet)
         def failed(_):
             if win.winfo_exists() and counter[0]==serial:button.configure(state='normal');note.set(word('partial'))
-        if app.job(lambda:load(app,info,True),done,failed,key=('analyst-forecast',key),lane='misc',isin=key) is False:failed(None)
-    button=ttk.Button(top,text=word('refresh'),command=refresh);button.pack(side='right');refresh();return win
+        if app.job(lambda:load(app,info,True,force=force),done,failed,key=('analyst-forecast',key),lane='misc',isin=key) is False:failed(None)
+    button=ttk.Button(top,text=word('refresh'),command=lambda:refresh(True));button.pack(side='right');refresh();return win
