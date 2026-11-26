@@ -1126,6 +1126,11 @@ def compact(result):
         quote_blocker=result.get('quote_blocker'),
         quote_at=(result.get('execution_quote', {}).get('bars') or [{}])[-1].get('close_at'))
     entry=engine.get('v2_30m') or {}
+    if entry.get('v2_queue'):
+        report['v2_queue'] = entry['v2_queue']
+        report['v2_queue_key'] = entry['v2_queue']['key']
+        if entry.get('action') == 'BUY':
+            report['v2_attempted_isin'] = result['isin']
     if entry.get('ranked_isin'):
         report.update(v2_ranked_isin=entry['ranked_isin'],v2_market_source=entry.get('market_source'))
     return report
@@ -1297,6 +1302,11 @@ def run_turn(app, info, values, cfg, *, v5_queue=None, manage_portfolio=None, en
                     reports[other_tf]=dict(compact(other),timeframe=other_tf,strategy=STRATEGY_CODES[other_mode],
                         signal=other_signal['action'],reason=other_signal['reason'],state='NOT_SELECTED')
             break
+    if portfolio == 'V2':
+        from paper_v2_quotes import candidate_rejected
+        for row in reports.values():
+            if candidate_rejected(row):
+                row['v2_candidate_rejected'] = True
     retry=any(row.get('execution_blocker','').startswith(('InputRevisionChanged:','ValueError: PAPER_STALE_INPUTS'))
         for row in reports.values())
     primary=primary_report(reports)
@@ -1476,7 +1486,7 @@ def due_stock(db,cfg,ids,now,portfolio=None):
                or status.get('candidate_timeframes')!=list(configured_timeframes(cfg)))
         if v5:
             dirty=dirty or status.get('v5_rule_version')!=v5_rule_version(cfg)
-        if dirty or now>=status.get('next_check',0) or isin in v2_ranked:
+        if dirty or now>=status.get('next_check',0) or isin in v2_ranked or isin in v2_slots:
             due.append((isin not in v2_ranked,isin not in v2_slots,not dirty,status.get('at',0),rank if portfolio=='V1' else isin,isin))
     return min(due)[-1] if due else None
 
