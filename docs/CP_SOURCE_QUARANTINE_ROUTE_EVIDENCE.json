@@ -79,5 +79,96 @@
     "stock_monitor/cp_controls.py": "0339244ba75af8c4b19284dd48ca62190cee51b3c24efc589230632d2d2c9d80",
     "stock_monitor/revision_watcher.py": "08b0b10e837eb897ad8f263a63c2253e7c96822db27370c1f781bd02f017a6f1"
   },
-  "privacy": "No databases, credentials, balances, positions or fills included."
+  "privacy": "No databases, credentials, balances, positions or fills included.",
+  "ui_acceptance": {
+    "selected_stock": "MICHELIN (CGDE)",
+    "isin": "FR001400AJ45",
+    "same_source_quarantines_visible": true,
+    "actual_auto_repair_button_clicked": true,
+    "queue_written_at": "2026-11-26T19:16:34.814549+00:00",
+    "request_id": "ed69dae7cb39dc73ef8cd9fce82de371e5c723785d52cf94f19c8c4be1b53842",
+    "button_state_observed": "In queue / owner priority",
+    "chart_selection_restored": "Apple 1m week",
+    "repair_completed": false
+  },
+  "latest_runtime_check": {
+    "captured_at": "2026-11-26T19:21:08.299856+00:00",
+    "remaining_quarantines": 125,
+    "remaining_rejected": 3912,
+    "work_direct_candle_writes": 0
+  },
+  "latest_requests": {
+    "8932c2404639c68c9fd549993efece7419c9dad44cbe8df57b2776a2745f12ce": {
+      "problem": {
+        "isin": "FR001400AJ45",
+        "kind": "archive",
+        "identity": {
+          "source": "gettex_chart",
+          "symbol": "MCHAG.GTX",
+          "venue": "GETTEX",
+          "currency": "EUR",
+          "timezone": "Europe/Berlin"
+        },
+        "tf": "1D",
+        "state": "INVALID",
+        "reasons": [
+          "Невозможные OHLC/цены/объёмы"
+        ],
+        "range": [
+          "2026-11-12 00:00:00",
+          "2026-11-12 00:00:00"
+        ],
+        "report_key": "gettex_chart:FR001400AJ45:1D",
+        "id": "8cddbb17ea164f22cc8266eb3237968185f021396af15826601eba5a25bcadd2"
+      },
+      "state": "WAITING",
+      "requested_at": "2026-11-26T18:46:44.611336+00:00",
+      "attempts": 0,
+      "owner_priority_at": "2026-11-26T18:46:44.611336+00:00",
+      "started_at": "2026-11-26T18:48:21.640863+00:00",
+      "next_retry": "2026-11-26T18:49:12.463774+00:00",
+      "reason": "SOURCE_QUARANTINE_UNCONFIRMED: исходное отклонение не снято проверенным восстановлением; WAITING_PROVIDER: проверка источника не ранее 2026-11-26T18:49:12.463774+00:00; DQ GAP",
+      "source_quarantine_remaining": [
+        "2026-11-12 00:00:00"
+      ],
+      "quality": "GAP",
+      "finished_at": "2026-11-26T18:50:04.310906+00:00"
+    },
+    "ed69dae7cb39dc73ef8cd9fce82de371e5c723785d52cf94f19c8c4be1b53842": {
+      "problem": {
+        "isin": "FR001400AJ45",
+        "kind": "archive",
+        "identity": {
+          "source": "gettex_chart",
+          "symbol": "MCHAG.GTX",
+          "venue": "GETTEX",
+          "currency": "EUR",
+          "timezone": "Europe/Berlin"
+        },
+        "tf": "15m",
+        "state": "INVALID",
+        "reasons": [
+          "Свечи вне сессии/неправильное выравнивание",
+          "Неподтверждённые пустые интервалы: 2030"
+        ],
+        "range": [
+          "2026-10-20 23:00:00",
+          "2026-10-20 23:00:00"
+        ],
+        "report_key": "gettex_chart:FR001400AJ45:15m",
+        "id": "fea33c8f20d1bceaa770da6aef001caf01d6072b8dd15fcaf8c7dc764ceb6cec"
+      },
+      "state": "QUEUED",
+      "requested_at": "2026-11-26T19:16:34.814549+00:00",
+      "attempts": 0,
+      "owner_priority_at": "2026-11-26T19:16:34.814549+00:00"
+    }
+  },
+  "publication": {
+    "code_commit": "fbeb36de870704f2d68a106cb2fec84089e1198d",
+    "reports": {
+      "5": "https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-7201227509",
+      "29": "https://github.com/swindler2010/StockMonitor/pull/29#issuecomment-7201227837"
+    }
+  }
 }
