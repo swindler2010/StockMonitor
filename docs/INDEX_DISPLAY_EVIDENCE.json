@@ -1,0 +1,1290 @@
+{
+  "scope": "six direct indices / eight intraday timeframes",
+  "checked_at": "2026-11-26T16:53:47.864901+00:00",
+  "initial_missing_timeframe_views": 48,
+  "restored_timeframe_views": 48,
+  "remaining_unavailable_timeframe_views": 0,
+  "targeted_unique_tests": 35,
+  "live_chart_worker_views": [
+    {
+      "isin": "INDEX:SP500",
+      "timeframe": "5m",
+      "rows": 3335,
+      "first": "2026-09-28 09:30:00",
+      "last": "2026-11-25 15:55:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.406,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^GSPC",
+        "venue": "SNP",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T16:44:39.723183+00:00",
+      "market_revision": 3335
+    },
+    {
+      "isin": "INDEX:SP500",
+      "timeframe": "10m",
+      "rows": 1667,
+      "first": "2026-09-28 09:30:00",
+      "last": "2026-11-25 15:50:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 2.063,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^GSPC",
+        "venue": "SNP",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T16:44:39.723183+00:00",
+      "market_revision": 3335
+    },
+    {
+      "isin": "INDEX:SP500",
+      "timeframe": "15m",
+      "rows": 1111,
+      "first": "2026-09-28 09:30:00",
+      "last": "2026-11-25 15:45:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 1.562,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^GSPC",
+        "venue": "SNP",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T16:44:39.723183+00:00",
+      "market_revision": 3335
+    },
+    {
+      "isin": "INDEX:SP500",
+      "timeframe": "30m",
+      "rows": 555,
+      "first": "2026-09-28 09:30:00",
+      "last": "2026-11-25 15:30:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 1.094,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^GSPC",
+        "venue": "SNP",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T16:44:39.723183+00:00",
+      "market_revision": 3335
+    },
+    {
+      "isin": "INDEX:SP500",
+      "timeframe": "1H",
+      "rows": 298,
+      "first": "2026-09-28 09:30:00",
+      "last": "2026-11-25 15:30:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.985,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^GSPC",
+        "venue": "SNP",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T16:44:39.723183+00:00",
+      "market_revision": 3335
+    },
+    {
+      "isin": "INDEX:SP500",
+      "timeframe": "2H",
+      "rows": 170,
+      "first": "2026-09-28 09:30:00",
+      "last": "2026-11-25 15:30:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.843,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^GSPC",
+        "venue": "SNP",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T16:44:39.723183+00:00",
+      "market_revision": 3335
+    },
+    {
+      "isin": "INDEX:SP500",
+      "timeframe": "3H",
+      "rows": 127,
+      "first": "2026-09-28 09:30:00",
+      "last": "2026-11-25 15:30:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.75,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^GSPC",
+        "venue": "SNP",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T16:44:39.723183+00:00",
+      "market_revision": 3335
+    },
+    {
+      "isin": "INDEX:SP500",
+      "timeframe": "4H",
+      "rows": 84,
+      "first": "2026-09-28 09:30:00",
+      "last": "2026-11-25 13:30:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.672,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^GSPC",
+        "venue": "SNP",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T16:44:39.723183+00:00",
+      "market_revision": 3335
+    },
+    {
+      "isin": "INDEX:DAX",
+      "timeframe": "5m",
+      "rows": 4486,
+      "first": "2026-09-28 09:00:00",
+      "last": "2026-11-26 17:20:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.422,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^GDAXI",
+        "venue": "GER",
+        "currency": "EUR",
+        "timezone": "Europe/Berlin"
+      },
+      "checked_at": "2026-11-26T16:44:39.723183+00:00",
+      "market_revision": 4486
+    },
+    {
+      "isin": "INDEX:DAX",
+      "timeframe": "10m",
+      "rows": 2242,
+      "first": "2026-09-28 09:00:00",
+      "last": "2026-11-26 17:10:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 2.469,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^GDAXI",
+        "venue": "GER",
+        "currency": "EUR",
+        "timezone": "Europe/Berlin"
+      },
+      "checked_at": "2026-11-26T16:44:39.723183+00:00",
+      "market_revision": 4486
+    },
+    {
+      "isin": "INDEX:DAX",
+      "timeframe": "15m",
+      "rows": 1494,
+      "first": "2026-09-28 09:00:00",
+      "last": "2026-11-26 17:00:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 1.906,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^GDAXI",
+        "venue": "GER",
+        "currency": "EUR",
+        "timezone": "Europe/Berlin"
+      },
+      "checked_at": "2026-11-26T16:44:39.723183+00:00",
+      "market_revision": 4486
+    },
+    {
+      "isin": "INDEX:DAX",
+      "timeframe": "30m",
+      "rows": 746,
+      "first": "2026-09-28 09:00:00",
+      "last": "2026-11-26 16:30:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 1.281,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^GDAXI",
+        "venue": "GER",
+        "currency": "EUR",
+        "timezone": "Europe/Berlin"
+      },
+      "checked_at": "2026-11-26T16:44:39.723183+00:00",
+      "market_revision": 4486
+    },
+    {
+      "isin": "INDEX:DAX",
+      "timeframe": "1H",
+      "rows": 394,
+      "first": "2026-09-28 09:00:00",
+      "last": "2026-11-26 16:00:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 1.094,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^GDAXI",
+        "venue": "GER",
+        "currency": "EUR",
+        "timezone": "Europe/Berlin"
+      },
+      "checked_at": "2026-11-26T16:44:39.723183+00:00",
+      "market_revision": 4486
+    },
+    {
+      "isin": "INDEX:DAX",
+      "timeframe": "2H",
+      "rows": 218,
+      "first": "2026-09-28 09:00:00",
+      "last": "2026-11-26 15:00:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.891,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^GDAXI",
+        "venue": "GER",
+        "currency": "EUR",
+        "timezone": "Europe/Berlin"
+      },
+      "checked_at": "2026-11-26T16:44:39.723183+00:00",
+      "market_revision": 4486
+    },
+    {
+      "isin": "INDEX:DAX",
+      "timeframe": "3H",
+      "rows": 130,
+      "first": "2026-09-28 09:00:00",
+      "last": "2026-11-26 12:00:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.75,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^GDAXI",
+        "venue": "GER",
+        "currency": "EUR",
+        "timezone": "Europe/Berlin"
+      },
+      "checked_at": "2026-11-26T16:44:39.723183+00:00",
+      "market_revision": 4486
+    },
+    {
+      "isin": "INDEX:DAX",
+      "timeframe": "4H",
+      "rows": 130,
+      "first": "2026-09-28 09:00:00",
+      "last": "2026-11-26 13:00:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.828,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^GDAXI",
+        "venue": "GER",
+        "currency": "EUR",
+        "timezone": "Europe/Berlin"
+      },
+      "checked_at": "2026-11-26T16:44:39.723183+00:00",
+      "market_revision": 4486
+    },
+    {
+      "isin": "INDEX:NDX",
+      "timeframe": "5m",
+      "rows": 3335,
+      "first": "2026-09-28 09:30:00",
+      "last": "2026-11-25 15:55:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.328,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^NDX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T16:47:16.951696+00:00",
+      "market_revision": 3335
+    },
+    {
+      "isin": "INDEX:NDX",
+      "timeframe": "10m",
+      "rows": 1667,
+      "first": "2026-09-28 09:30:00",
+      "last": "2026-11-25 15:50:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 1.438,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^NDX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T16:47:16.951696+00:00",
+      "market_revision": 3335
+    },
+    {
+      "isin": "INDEX:NDX",
+      "timeframe": "15m",
+      "rows": 1111,
+      "first": "2026-09-28 09:30:00",
+      "last": "2026-11-25 15:45:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 1.187,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^NDX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T16:47:16.951696+00:00",
+      "market_revision": 3335
+    },
+    {
+      "isin": "INDEX:NDX",
+      "timeframe": "30m",
+      "rows": 555,
+      "first": "2026-09-28 09:30:00",
+      "last": "2026-11-25 15:30:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.828,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^NDX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T16:47:16.951696+00:00",
+      "market_revision": 3335
+    },
+    {
+      "isin": "INDEX:NDX",
+      "timeframe": "1H",
+      "rows": 298,
+      "first": "2026-09-28 09:30:00",
+      "last": "2026-11-25 15:30:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.735,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^NDX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T16:47:16.951696+00:00",
+      "market_revision": 3335
+    },
+    {
+      "isin": "INDEX:NDX",
+      "timeframe": "2H",
+      "rows": 170,
+      "first": "2026-09-28 09:30:00",
+      "last": "2026-11-25 15:30:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.562,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^NDX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T16:47:16.951696+00:00",
+      "market_revision": 3335
+    },
+    {
+      "isin": "INDEX:NDX",
+      "timeframe": "3H",
+      "rows": 127,
+      "first": "2026-09-28 09:30:00",
+      "last": "2026-11-25 15:30:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.625,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^NDX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T16:47:16.951696+00:00",
+      "market_revision": 3335
+    },
+    {
+      "isin": "INDEX:NDX",
+      "timeframe": "4H",
+      "rows": 84,
+      "first": "2026-09-28 09:30:00",
+      "last": "2026-11-25 13:30:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.531,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^NDX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T16:47:16.951696+00:00",
+      "market_revision": 3335
+    },
+    {
+      "isin": "INDEX:SOX",
+      "timeframe": "5m",
+      "rows": 3335,
+      "first": "2026-09-28 09:30:00",
+      "last": "2026-11-25 15:55:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.297,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^SOX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T16:47:16.951696+00:00",
+      "market_revision": 3335
+    },
+    {
+      "isin": "INDEX:SOX",
+      "timeframe": "10m",
+      "rows": 1667,
+      "first": "2026-09-28 09:30:00",
+      "last": "2026-11-25 15:50:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 1.328,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^SOX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T16:47:16.951696+00:00",
+      "market_revision": 3335
+    },
+    {
+      "isin": "INDEX:SOX",
+      "timeframe": "15m",
+      "rows": 1111,
+      "first": "2026-09-28 09:30:00",
+      "last": "2026-11-25 15:45:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 1.11,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^SOX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T16:47:16.951696+00:00",
+      "market_revision": 3335
+    },
+    {
+      "isin": "INDEX:SOX",
+      "timeframe": "30m",
+      "rows": 555,
+      "first": "2026-09-28 09:30:00",
+      "last": "2026-11-25 15:30:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.75,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^SOX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T16:47:16.951696+00:00",
+      "market_revision": 3335
+    },
+    {
+      "isin": "INDEX:SOX",
+      "timeframe": "1H",
+      "rows": 298,
+      "first": "2026-09-28 09:30:00",
+      "last": "2026-11-25 15:30:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.609,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^SOX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T16:47:16.951696+00:00",
+      "market_revision": 3335
+    },
+    {
+      "isin": "INDEX:SOX",
+      "timeframe": "2H",
+      "rows": 170,
+      "first": "2026-09-28 09:30:00",
+      "last": "2026-11-25 15:30:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.609,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^SOX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T16:47:16.951696+00:00",
+      "market_revision": 3335
+    },
+    {
+      "isin": "INDEX:SOX",
+      "timeframe": "3H",
+      "rows": 127,
+      "first": "2026-09-28 09:30:00",
+      "last": "2026-11-25 15:30:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.532,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^SOX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T16:47:16.951696+00:00",
+      "market_revision": 3335
+    },
+    {
+      "isin": "INDEX:SOX",
+      "timeframe": "4H",
+      "rows": 84,
+      "first": "2026-09-28 09:30:00",
+      "last": "2026-11-25 13:30:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.562,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^SOX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "checked_at": "2026-11-26T16:47:16.951696+00:00",
+      "market_revision": 3335
+    },
+    {
+      "isin": "INDEX:STOXX600",
+      "timeframe": "5m",
+      "rows": 4487,
+      "first": "2026-09-28 09:00:00",
+      "last": "2026-11-26 17:25:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.375,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^STOXX",
+        "venue": "ZRH",
+        "currency": "EUR",
+        "timezone": "Europe/Zurich"
+      },
+      "checked_at": "2026-11-26T16:47:16.951696+00:00",
+      "market_revision": 4487
+    },
+    {
+      "isin": "INDEX:STOXX600",
+      "timeframe": "10m",
+      "rows": 2243,
+      "first": "2026-09-28 09:00:00",
+      "last": "2026-11-26 17:20:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 1.625,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^STOXX",
+        "venue": "ZRH",
+        "currency": "EUR",
+        "timezone": "Europe/Zurich"
+      },
+      "checked_at": "2026-11-26T16:47:16.951696+00:00",
+      "market_revision": 4487
+    },
+    {
+      "isin": "INDEX:STOXX600",
+      "timeframe": "15m",
+      "rows": 1495,
+      "first": "2026-09-28 09:00:00",
+      "last": "2026-11-26 17:15:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 1.281,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^STOXX",
+        "venue": "ZRH",
+        "currency": "EUR",
+        "timezone": "Europe/Zurich"
+      },
+      "checked_at": "2026-11-26T16:47:16.951696+00:00",
+      "market_revision": 4487
+    },
+    {
+      "isin": "INDEX:STOXX600",
+      "timeframe": "30m",
+      "rows": 747,
+      "first": "2026-09-28 09:00:00",
+      "last": "2026-11-26 17:00:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 1.016,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^STOXX",
+        "venue": "ZRH",
+        "currency": "EUR",
+        "timezone": "Europe/Zurich"
+      },
+      "checked_at": "2026-11-26T16:47:16.951696+00:00",
+      "market_revision": 4487
+    },
+    {
+      "isin": "INDEX:STOXX600",
+      "timeframe": "1H",
+      "rows": 351,
+      "first": "2026-09-28 09:00:00",
+      "last": "2026-11-26 16:00:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.89,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^STOXX",
+        "venue": "ZRH",
+        "currency": "EUR",
+        "timezone": "Europe/Zurich"
+      },
+      "checked_at": "2026-11-26T16:47:16.951696+00:00",
+      "market_revision": 4487
+    },
+    {
+      "isin": "INDEX:STOXX600",
+      "timeframe": "2H",
+      "rows": 175,
+      "first": "2026-09-28 09:00:00",
+      "last": "2026-11-26 15:00:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.875,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^STOXX",
+        "venue": "ZRH",
+        "currency": "EUR",
+        "timezone": "Europe/Zurich"
+      },
+      "checked_at": "2026-11-26T16:47:16.951696+00:00",
+      "market_revision": 4487
+    },
+    {
+      "isin": "INDEX:STOXX600",
+      "timeframe": "3H",
+      "rows": 87,
+      "first": "2026-09-28 09:00:00",
+      "last": "2026-11-26 12:00:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.828,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^STOXX",
+        "venue": "ZRH",
+        "currency": "EUR",
+        "timezone": "Europe/Zurich"
+      },
+      "checked_at": "2026-11-26T16:47:16.951696+00:00",
+      "market_revision": 4487
+    },
+    {
+      "isin": "INDEX:STOXX600",
+      "timeframe": "4H",
+      "rows": 87,
+      "first": "2026-09-28 09:00:00",
+      "last": "2026-11-26 13:00:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.688,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^STOXX",
+        "venue": "ZRH",
+        "currency": "EUR",
+        "timezone": "Europe/Zurich"
+      },
+      "checked_at": "2026-11-26T16:47:16.951696+00:00",
+      "market_revision": 4487
+    },
+    {
+      "isin": "INDEX:VIX",
+      "timeframe": "5m",
+      "rows": 3488,
+      "first": "2026-09-28 08:30:00",
+      "last": "2026-11-26 10:25:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.312,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^VIX",
+        "venue": "CXI",
+        "currency": "USD",
+        "timezone": "America/Chicago"
+      },
+      "checked_at": "2026-11-26T16:49:06.158426+00:00",
+      "market_revision": 3488
+    },
+    {
+      "isin": "INDEX:VIX",
+      "timeframe": "10m",
+      "rows": 1765,
+      "first": "2026-09-28 08:30:00",
+      "last": "2026-11-26 10:20:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 1.391,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^VIX",
+        "venue": "CXI",
+        "currency": "USD",
+        "timezone": "America/Chicago"
+      },
+      "checked_at": "2026-11-26T16:49:06.158426+00:00",
+      "market_revision": 3488
+    },
+    {
+      "isin": "INDEX:VIX",
+      "timeframe": "15m",
+      "rows": 1162,
+      "first": "2026-09-28 08:30:00",
+      "last": "2026-11-26 10:15:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 1.172,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^VIX",
+        "venue": "CXI",
+        "currency": "USD",
+        "timezone": "America/Chicago"
+      },
+      "checked_at": "2026-11-26T16:49:06.158426+00:00",
+      "market_revision": 3488
+    },
+    {
+      "isin": "INDEX:VIX",
+      "timeframe": "30m",
+      "rows": 602,
+      "first": "2026-09-28 08:30:00",
+      "last": "2026-11-26 10:00:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.906,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^VIX",
+        "venue": "CXI",
+        "currency": "USD",
+        "timezone": "America/Chicago"
+      },
+      "checked_at": "2026-11-26T16:49:06.158426+00:00",
+      "market_revision": 3488
+    },
+    {
+      "isin": "INDEX:VIX",
+      "timeframe": "1H",
+      "rows": 300,
+      "first": "2026-09-28 08:30:00",
+      "last": "2026-11-26 09:30:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.641,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^VIX",
+        "venue": "CXI",
+        "currency": "USD",
+        "timezone": "America/Chicago"
+      },
+      "checked_at": "2026-11-26T16:49:06.158426+00:00",
+      "market_revision": 3488
+    },
+    {
+      "isin": "INDEX:VIX",
+      "timeframe": "2H",
+      "rows": 171,
+      "first": "2026-09-28 08:30:00",
+      "last": "2026-11-26 08:30:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.594,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^VIX",
+        "venue": "CXI",
+        "currency": "USD",
+        "timezone": "America/Chicago"
+      },
+      "checked_at": "2026-11-26T16:49:06.158426+00:00",
+      "market_revision": 3488
+    },
+    {
+      "isin": "INDEX:VIX",
+      "timeframe": "3H",
+      "rows": 127,
+      "first": "2026-09-28 08:30:00",
+      "last": "2026-11-25 14:30:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.609,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^VIX",
+        "venue": "CXI",
+        "currency": "USD",
+        "timezone": "America/Chicago"
+      },
+      "checked_at": "2026-11-26T16:49:06.158426+00:00",
+      "market_revision": 3488
+    },
+    {
+      "isin": "INDEX:VIX",
+      "timeframe": "4H",
+      "rows": 84,
+      "first": "2026-09-28 08:30:00",
+      "last": "2026-11-25 12:30:00",
+      "quality": "UNCONFIRMED",
+      "display_only": true,
+      "seconds": 0.594,
+      "identity": {
+        "source": "proxy",
+        "symbol": "^VIX",
+        "venue": "CXI",
+        "currency": "USD",
+        "timezone": "America/Chicago"
+      },
+      "checked_at": "2026-11-26T16:49:06.158426+00:00",
+      "market_revision": 3488
+    }
+  ],
+  "ordinary_CP_native_source_acquisitions": [
+    {
+      "isin": "INDEX:DAX",
+      "base_tf": "5m",
+      "rows": 4486,
+      "first": "2026-09-28 09:00:00",
+      "last": "2026-11-26 17:20:00"
+    },
+    {
+      "isin": "INDEX:NDX",
+      "base_tf": "5m",
+      "rows": 3335,
+      "first": "2026-09-28 09:30:00",
+      "last": "2026-11-25 15:55:00"
+    },
+    {
+      "isin": "INDEX:SOX",
+      "base_tf": "5m",
+      "rows": 3335,
+      "first": "2026-09-28 09:30:00",
+      "last": "2026-11-25 15:55:00"
+    },
+    {
+      "isin": "INDEX:SP500",
+      "base_tf": "5m",
+      "rows": 3335,
+      "first": "2026-09-28 09:30:00",
+      "last": "2026-11-25 15:55:00"
+    },
+    {
+      "isin": "INDEX:STOXX600",
+      "base_tf": "5m",
+      "rows": 4487,
+      "first": "2026-09-28 09:00:00",
+      "last": "2026-11-26 17:25:00"
+    },
+    {
+      "isin": "INDEX:VIX",
+      "base_tf": "5m",
+      "rows": 3488,
+      "first": "2026-09-28 08:30:00",
+      "last": "2026-11-26 10:25:00"
+    }
+  ],
+  "source_quality": [
+    {
+      "isin": "INDEX:DAX",
+      "identity": {
+        "source": "proxy",
+        "symbol": "^GDAXI",
+        "venue": "GER",
+        "currency": "EUR",
+        "timezone": "Europe/Berlin"
+      },
+      "attempted_at": "2026-11-26T16:40:52.110073+00:00",
+      "quality": "UNCONFIRMED",
+      "ranges": [
+        [
+          "2026-10-16 12:25:00",
+          "2026-10-16 12:25:00"
+        ]
+      ],
+      "count": 4486,
+      "normalization": {
+        "invalid_ohlcv": 2
+      }
+    },
+    {
+      "isin": "INDEX:SP500",
+      "identity": {
+        "source": "proxy",
+        "symbol": "^GSPC",
+        "venue": "SNP",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "attempted_at": "2026-11-26T16:44:27.585335+00:00",
+      "quality": "UNCONFIRMED",
+      "ranges": [
+        [
+          "2026-11-05 12:15:00",
+          "2026-11-05 13:45:00"
+        ]
+      ],
+      "count": 3335,
+      "normalization": {
+        "outside_regular_session": 1,
+        "invalid_ohlcv": 19
+      }
+    },
+    {
+      "isin": "INDEX:NDX",
+      "identity": {
+        "source": "proxy",
+        "symbol": "^NDX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "attempted_at": "2026-11-26T16:44:56.346751+00:00",
+      "quality": "UNCONFIRMED",
+      "ranges": [
+        [
+          "2026-11-05 12:15:00",
+          "2026-11-05 13:45:00"
+        ]
+      ],
+      "count": 3335,
+      "normalization": {
+        "outside_regular_session": 1,
+        "invalid_ohlcv": 19
+      }
+    },
+    {
+      "isin": "INDEX:SOX",
+      "identity": {
+        "source": "proxy",
+        "symbol": "^SOX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "attempted_at": "2026-11-26T16:46:03.137161+00:00",
+      "quality": "UNCONFIRMED",
+      "ranges": [
+        [
+          "2026-11-05 12:15:00",
+          "2026-11-05 13:45:00"
+        ]
+      ],
+      "count": 3335,
+      "normalization": {
+        "outside_regular_session": 1,
+        "invalid_ohlcv": 19
+      }
+    },
+    {
+      "isin": "INDEX:STOXX600",
+      "identity": {
+        "source": "proxy",
+        "symbol": "^STOXX",
+        "venue": "ZRH",
+        "currency": "EUR",
+        "timezone": "Europe/Zurich"
+      },
+      "attempted_at": "2026-11-26T16:46:30.862800+00:00",
+      "quality": "UNCONFIRMED",
+      "ranges": [
+        [
+          "2026-09-28 17:30:00",
+          "2026-09-28 17:55:00"
+        ],
+        [
+          "2026-09-29 17:30:00",
+          "2026-09-29 17:55:00"
+        ],
+        [
+          "2026-09-30 17:30:00",
+          "2026-09-30 17:55:00"
+        ],
+        [
+          "2026-10-01 17:30:00",
+          "2026-10-01 17:55:00"
+        ],
+        [
+          "2026-10-02 17:30:00",
+          "2026-10-02 17:55:00"
+        ],
+        [
+          "2026-10-05 17:30:00",
+          "2026-10-05 17:55:00"
+        ],
+        [
+          "2026-10-06 17:30:00",
+          "2026-10-06 17:55:00"
+        ],
+        [
+          "2026-10-07 17:30:00",
+          "2026-10-07 17:55:00"
+        ],
+        [
+          "2026-10-08 17:30:00",
+          "2026-10-08 17:55:00"
+        ],
+        [
+          "2026-10-09 17:30:00",
+          "2026-10-09 17:55:00"
+        ],
+        [
+          "2026-10-12 17:30:00",
+          "2026-10-12 17:55:00"
+        ],
+        [
+          "2026-10-13 17:30:00",
+          "2026-10-13 17:55:00"
+        ],
+        [
+          "2026-10-14 17:30:00",
+          "2026-10-14 17:55:00"
+        ],
+        [
+          "2026-10-15 17:30:00",
+          "2026-10-15 17:55:00"
+        ],
+        [
+          "2026-10-16 12:25:00",
+          "2026-10-16 12:25:00"
+        ],
+        [
+          "2026-10-16 17:30:00",
+          "2026-10-16 17:55:00"
+        ],
+        [
+          "2026-10-19 17:30:00",
+          "2026-10-19 17:55:00"
+        ],
+        [
+          "2026-10-20 17:30:00",
+          "2026-10-20 17:55:00"
+        ],
+        [
+          "2026-10-21 17:30:00",
+          "2026-10-21 17:55:00"
+        ],
+        [
+          "2026-10-22 17:30:00",
+          "2026-10-22 17:55:00"
+        ],
+        [
+          "2026-10-23 17:30:00",
+          "2026-10-23 17:55:00"
+        ],
+        [
+          "2026-10-26 17:30:00",
+          "2026-10-26 17:55:00"
+        ],
+        [
+          "2026-10-27 17:30:00",
+          "2026-10-27 17:55:00"
+        ],
+        [
+          "2026-10-28 17:30:00",
+          "2026-10-28 17:55:00"
+        ],
+        [
+          "2026-10-29 17:30:00",
+          "2026-10-29 17:55:00"
+        ],
+        [
+          "2026-10-30 17:30:00",
+          "2026-10-30 17:55:00"
+        ],
+        [
+          "2026-11-02 17:30:00",
+          "2026-11-02 17:55:00"
+        ],
+        [
+          "2026-11-03 17:30:00",
+          "2026-11-03 17:55:00"
+        ],
+        [
+          "2026-11-04 17:30:00",
+          "2026-11-04 17:55:00"
+        ],
+        [
+          "2026-11-05 17:30:00",
+          "2026-11-05 17:55:00"
+        ],
+        [
+          "2026-11-06 17:30:00",
+          "2026-11-06 17:55:00"
+        ],
+        [
+          "2026-11-09 17:30:00",
+          "2026-11-09 17:55:00"
+        ],
+        [
+          "2026-11-10 17:30:00",
+          "2026-11-10 17:55:00"
+        ],
+        [
+          "2026-11-11 17:30:00",
+          "2026-11-11 17:55:00"
+        ],
+        [
+          "2026-11-12 17:30:00",
+          "2026-11-12 17:55:00"
+        ],
+        [
+          "2026-11-13 17:30:00",
+          "2026-11-13 17:55:00"
+        ],
+        [
+          "2026-11-16 17:30:00",
+          "2026-11-16 17:55:00"
+        ],
+        [
+          "2026-11-17 17:30:00",
+          "2026-11-17 17:55:00"
+        ],
+        [
+          "2026-11-18 17:30:00",
+          "2026-11-18 17:55:00"
+        ],
+        [
+          "2026-11-19 17:30:00",
+          "2026-11-19 17:55:00"
+        ],
+        [
+          "2026-11-20 17:30:00",
+          "2026-11-20 17:55:00"
+        ],
+        [
+          "2026-11-23 17:30:00",
+          "2026-11-23 17:55:00"
+        ],
+        [
+          "2026-11-24 17:30:00",
+          "2026-11-24 17:55:00"
+        ],
+        [
+          "2026-11-25 17:30:00",
+          "2026-11-25 17:55:00"
+        ]
+      ],
+      "count": 4487,
+      "normalization": {
+        "invalid_ohlcv": 1,
+        "not_closed": 1
+      }
+    },
+    {
+      "isin": "INDEX:VIX",
+      "identity": {
+        "source": "proxy",
+        "symbol": "^VIX",
+        "venue": "CXI",
+        "currency": "USD",
+        "timezone": "America/Chicago"
+      },
+      "attempted_at": "2026-11-26T16:47:45.468032+00:00",
+      "quality": "UNCONFIRMED",
+      "ranges": [
+        [
+          "2026-11-05 11:00:00",
+          "2026-11-05 12:30:00"
+        ]
+      ],
+      "count": 3488,
+      "normalization": {
+        "outside_regular_session": 3429,
+        "invalid_ohlcv": 19,
+        "not_closed": 1
+      }
+    }
+  ],
+  "windows_intraday_observation": {
+    "isin": "INDEX:DAX",
+    "timeframe": "1H",
+    "time_local": "2026-11-26T17:42:06",
+    "timezone": "Europe/Berlin",
+    "result": "Nonempty native-source chart, units/source label and original UNCONFIRMED/PARTIAL displayed; indicators do not claim unavailable warmup"
+  },
+  "windows_other_intraday_screens": "No additional UI switching during parallel Portfolio/Bridge acceptance; all 48 prepared frames checked read-only against working database",
+  "direct_Work_candle_repairs": 0,
+  "CP_candle_repairs_proven": 0,
+  "first_source_acquisition_not_repair": true,
+  "trading_settings_changed_by_Work": false
+}

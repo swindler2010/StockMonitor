@@ -1,0 +1,427 @@
+"""Bounded read cache; SQLite commit generation invalidates internal/external writes."""
+import copy,sqlite3,threading
+from collections import OrderedDict
+from contextlib import contextmanager
+
+# Repair scheduling/progress is persisted for CP, but is not candle quality.
+# Keep state, identity, ranges, stale facts, provider quality/errors and every
+# unknown field strict. The writer/reader must use the same small allowlist.
+DQ_PROGRESS_FIELDS = ('checked_at', 'raw_retry_after', 'parent_child_revisions',
+    'next_retry', 'recovery_cursor', 'recovery_ranges', 'recovery_completed_ranges',
+    'recovery_failed_ranges', 'local_recovery_reused', 'recovery_provider_attempted',
+    'recovery_wait')
+
+def install_input_revisions(db):
+    """Transactional dependency revisions; no journal or global setting clock."""
+    db.execute('CREATE TABLE IF NOT EXISTS input_revisions(scope TEXT PRIMARY KEY, revision INTEGER NOT NULL)')
+    specs={'candles':"'market:'||{r}.isin||':'||{r}.base_tf",
+           'series':"'market:'||{r}.isin||':'||{r}.base_tf",
+           'settings':"'setting:'||{r}.key",'instruments':"'instrument:'||{r}.isin"}
+    for table,scope in specs.items():
+        columns=[row[1] for row in db.execute('PRAGMA table_info('+table+')')]
+        same=' AND '.join('NEW.'+c+' IS '+c for c in columns)
+        equal=' AND '.join('NEW.'+c+' IS OLD.'+c for c in columns)
+        if table=='settings':
+            # Transport/check timestamps do not change identity, candles or DQ.
+            # Keep every other field, including state, ranges, session and source.
+            def meaningful(prefix):
+                key=prefix+'key';value=prefix+'value'
+                dq_paths=','.join("'$."+field+"'" for field in DQ_PROGRESS_FIELDS)
+                return (f"CASE WHEN json_valid({value}) THEN CASE "
+                    f"WHEN {key} LIKE 'data_quality:%' THEN json_remove({value},{dq_paths}) "
+                    f"WHEN {key} LIKE 'history_identity:%' OR {key} LIKE 'history_coverage:%' THEN json_remove({value},'$.fetched_at') "
+                    f"ELSE {value} END ELSE {value} END")
+            same='NEW.key IS key AND '+meaningful('NEW.')+' IS '+meaningful('')
+            equal='NEW.key IS OLD.key AND '+meaningful('NEW.')+' IS '+meaningful('OLD.')
+            # Upgrade existing dev databases transactionally; no data rewriting.
+            for action in ('insert','update'):
+                db.execute('DROP TRIGGER IF EXISTS input_settings_'+action)
+        def bump(row):
+            return 'INSERT INTO input_revisions VALUES('+scope.format(r=row)+',1) ON CONFLICT(scope) DO UPDATE SET revision=revision+1;'
+        db.execute(f'CREATE TRIGGER IF NOT EXISTS input_{table}_insert BEFORE INSERT ON {table} WHEN NOT EXISTS(SELECT 1 FROM {table} WHERE {same}) BEGIN {bump("NEW")} END')
+        db.execute(f'CREATE TRIGGER IF NOT EXISTS input_{table}_delete AFTER DELETE ON {table} BEGIN {bump("OLD")} END')
+        db.execute(f'CREATE TRIGGER IF NOT EXISTS input_{table}_update AFTER UPDATE ON {table} WHEN NOT ({equal}) BEGIN {bump("OLD")} {bump("NEW")} END')
+
+class InputRevisionChanged(RuntimeError):
+    """A captured dependency changed; only this error permits bounded retry."""
+
+
+def frame_dependency(isin, frame, tf, now):
+    """Describe the actual closed raw range used by an existing calculation."""
+    import pandas as pd
+    from analytics import bar_ends
+    from timeframes import base_for
+    if frame.empty:return None
+    meta=frame.attrs
+    if not all(meta.get(k) for k in ('source','symbol','venue','currency','timezone')):return None
+    view=frame.copy(deep=False);view.attrs={**meta,'timeframe':tf}
+    ends=bar_ends(view);closed=ends[ends<=now]
+    if not len(closed):return None
+    spec=dict(isin=isin,identity={k:meta[k] for k in ('source','symbol','venue','currency','timezone')},
+                base_tf=meta.get('aggregation_base') or base_for(tf,meta['source']),
+                through=pd.Timestamp(closed.max()).isoformat(),timeframe=tf)
+    if meta.get('analysis_scope'):spec['from']=meta['analysis_scope']['start']
+    from gettex_first import bound,VERSION as GETTEX_FIRST
+    if bound(frame):spec['calculation_policy']=GETTEX_FIRST
+    spec['recovered_inputs']=[s for item in meta.get('parent_recovery_inputs',[]) if
+        (not spec.get('from') or pd.Timestamp(item['parent_at'])>=pd.Timestamp(spec['from']))
+        and pd.Timestamp(item['parent_at']).tz_localize(meta['timezone'])<closed.max()
+        for s in item['inputs']]
+    return spec
+
+
+def _digest(value):
+    import hashlib,json
+    return hashlib.sha256(json.dumps(value,sort_keys=True,ensure_ascii=False,default=str,separators=(',',':')).encode()).hexdigest()
+
+
+def _setting_value(db, key, start=None,projection=None,*,read_memo=None):
+    import json
+    row=db.execute('SELECT value FROM settings WHERE key=?',(key,)).fetchone()
+    if row is None:return None
+    value=json.loads(row[0])
+    if key.startswith('interval_evidence:') and projection:
+        from closed_evidence import canonical
+        return canonical(value,projection)
+    if isinstance(value,dict):
+        if key.startswith('data_quality:'):
+            value={k:v for k,v in value.items() if k not in DQ_PROGRESS_FIELDS}
+            if start:
+                from calculation_window import scope_report
+                value=scope_report(value,start)
+            classification=value.get('interval_classification')
+            # These two totals cover the entire growing archive, not the
+            # frozen range. Exact used OHLCV are independently hashed below.
+            # Normalize only a consistent census; all gap/absence/delay facts,
+            # evidence, unknown fields and malformed counters remain strict.
+            # Do not change stored DQ or its raw revision/execution binding.
+            counts=('with_candles','NO_TRADES','UNCONFIRMED','GAP','market_closed_intervals')
+            if (isinstance(classification,dict)
+                and all(type(classification.get(k)) is int and classification[k]>=0
+                        for k in ('expected_open_intervals',*counts))
+                and classification['expected_open_intervals']==sum(classification[k] for k in counts)):
+                value={**value,'interval_classification':{k:v for k,v in classification.items()
+                    if k not in ('expected_open_intervals','with_candles')}}
+        elif key.startswith(('history_identity:','history_coverage:')):
+            value={k:v for k,v in value.items() if k!='fetched_at'}
+        elif key.startswith('gettex_chart:'):
+            # A verified provider tail is acquisition progress, not part of
+            # an earlier closed range. SAVED/UNCHANGED differ only by this
+            # receipt's added/changed count. Preserve PARTIAL, faults, quality,
+            # identity and every unknown field; execution keeps raw revisions.
+            from gettex_chart import confirmed_state
+            bound=(isinstance(value.get('identity'),dict) and isinstance(value.get('listing_proof'),dict)
+                   and confirmed_state({'isin':key.split(':')[1]},value))
+            if bound:
+                value={k:v for k,v in value.items() if k!='last'}
+                if value.get('state') in ('SAVED','UNCHANGED'):value['state']='SAVED_OR_UNCHANGED'
+            # A later HTTP receipt can contain exactly the same candles.
+            # Closed OHLCV have their own digest; retain identity, listing
+            # status/evidence, quality, archive faults and native-month proof.
+            # Incremental fetch counts/ranges and receipt paths describe the
+            # HTTP attempt, not the retained series. Unresolved rejected rows
+            # remain in archive_invalid; exact used OHLCV have their own digest.
+            # In particular invalid_receipts grows on every PARTIAL refresh,
+            # even when the original rejected observations have not changed.
+            value={k:v for k,v in value.items() if k not in (
+                'received_at','planned_at','requested_from','requested_to','receipt','sha256',
+                'live_receipt','provisional_only','invalid_receipts','count','added','changed',
+                'input_revisions_before','input_revisions_after')}
+            if isinstance(value.get('listing_proof'),dict):
+                value['listing_proof']={k:v for k,v in value['listing_proof'].items() if k!='verified_at'}
+        elif key.startswith('benchmark_history:'):
+            value={k:v for k,v in value.items() if k!='attempted_at'}
+        elif key.startswith('cp_reconciliation_job:'):
+            observation=value.get('observation') or {};finding=value.get('finding') or {}
+            fingerprint=value.get('input_fingerprint','')
+            # v4 already binds exact rows/neighbours, verified listing and
+            # scoped authoritative proof, excluding only its check timestamp.
+            # Retain every decision, evidence, identity and unknown field. A
+            # legacy/unbound/failed review stays byte-sensitive as before.
+            if (isinstance(observation,dict) and isinstance(finding,dict)
+                and value.get('fingerprint_version')==4 and isinstance(fingerprint,str)
+                and len(fingerprint)==64 and all(c in '0123456789abcdef' for c in fingerprint)
+                and observation.get('fingerprint_version')==4 and observation.get('identity_confirmed') is True
+                and observation.get('input_fingerprint')==fingerprint and finding.get('observation_current') is True
+                and value.get('review_required') is False and value.get('status') in ('AWAITING_SOURCE','RESOLVED_NATIVE','REVIEW_WEEKLY')):
+                value={k:v for k,v in value.items() if k not in ('checked_at','next_check','checks','native_retry','history')}
+                value['finding']={k:v for k,v in finding.items() if k!='evidence_checked_at'}
+                if 'evidence_digest' in finding:value['finding']['evidence_digest']='v4-scoped:'+fingerprint
+                if isinstance(value.get('source_comparison'),dict):
+                    value['source_comparison']={k:v for k,v in value['source_comparison'].items() if k!='native_checked_at'}
+        elif key.startswith('cp_manual_risk:'):
+            # The CP writer may reconfirm the SAME decision after a later bar
+            # or transport receipt. Compare its contents and bound scope set,
+            # not the numeric counters of an independently validated renewal.
+            # Invalid receipts keep their exact counters; unknown actors and
+            # every other grant/evidence field remain strict. Used OHLCV,
+            # policies and execution tokens retain their separate guards.
+            from cp_controls import effective_accepted,TV_ACTOR,REVIEWED_ACTOR,AUTO_ACTOR
+            memo_args={}
+            if read_memo is not None and db.in_transaction and db.execute('PRAGMA query_only').fetchone()[0]:
+                view=(db,db.execute('PRAGMA data_version').fetchone()[0],db.total_changes)
+                memo_args['_read_memo']=read_memo.setdefault(('approval_proofs',view),{})
+            for pid,entry in effective_accepted(db,key.split(':',1)[1],value,**memo_args).items():
+                token=entry.get('input_revisions')
+                if entry.get('actor') in (TV_ACTOR,REVIEWED_ACTOR,AUTO_ACTOR) and token:
+                    value['accepted'][pid]={**entry,'input_revisions':{scope:'CURRENT' for scope in token}}
+    return value
+
+
+def _closed_rows(db, spec):
+    import pandas as pd
+    ident=spec['identity'];args=[spec['isin'],ident['source'],spec['base_tf']]
+    if ident['source']=='gettex':
+        sql='SELECT ts,open,high,low,close,volume FROM candles WHERE isin=? AND source=? AND base_tf=?'
+    else:
+        sql='SELECT ts,open,high,low,close,volume FROM series WHERE isin=? AND source=? AND base_tf=? AND symbol=? AND venue=? AND currency=?'
+        args += [ident['symbol'],ident['venue'],ident['currency']]
+    rows=db.execute(sql+' ORDER BY ts',args).fetchall()
+    if not rows:return []
+    # Compare instants, not lexicographic mixed-offset date strings. A late
+    # insertion anywhere inside the used range is a material revision too.
+    stamps=pd.DatetimeIndex(pd.to_datetime([r[0] for r in rows]))
+    if stamps.tz is None:stamps=stamps.tz_localize(ident['timezone'],ambiguous='raise',nonexistent='raise')
+    inside=stamps.tz_convert('UTC')<pd.Timestamp(spec['through'])
+    if spec.get('from'):inside &= stamps.tz_convert(ident['timezone'])>=pd.Timestamp(spec['from']).tz_localize(ident['timezone'])
+    return [tuple(r) for r,keep in zip(rows,inside) if keep]
+
+
+def capture_closed_inputs(db, specs, token, *, memo=None):
+    """Existing revisions are the fast path; exact used inputs are the proof.
+
+    Caller owns a consistent read snapshot and discards any memo with it.
+    Later appends are outside each range; changes within it are never ignored.
+    """
+    specs=[s for s in specs if s]
+    unique={_digest(s):s for s in [*specs,*(v for s in specs for v in s.get('recovered_inputs',[]))]}
+    specs=list(unique.values())
+    wanted={s['isin'] for s in specs}
+    quality_keys={f"{s['isin']}:{s['identity']['symbol']}:{s['base_tf']}" for s in specs}
+    tracked={};settings={};strict={};settings_start={};settings_projection={}
+    from gettex_first import audit_only_scopes
+    advisory=audit_only_scopes(specs)
+    starts={f"{s['isin']}:{s['identity']['symbol']}:{s['base_tf']}":s.get('from') for s in specs}
+    for scope,revision in token.items():
+        if scope in advisory:continue
+        if scope.startswith('market:'):continue
+        if scope.startswith('instrument:') and scope[len('instrument:'):] not in wanted:continue
+        if scope.startswith('setting:'):
+            key=scope[len('setting:'):]
+            if key.startswith(('data_quality:','history_coverage:')) and key.split(':',1)[1] not in quality_keys:continue
+            if key.startswith(('history_identity:','interval_evidence:')) and key.split(':',1)[1] not in wanted:continue
+            start=starts.get(key.split(':',1)[1]) if key.startswith('data_quality:') else None
+            if start:settings_start[scope]=start
+            if key.startswith('interval_evidence:'):
+                from closed_evidence import projection
+                projected=projection(specs,key.split(':',1)[1])
+                if projected:settings_projection[scope]=projected
+            projection=settings_projection.get(scope)
+            cache=('setting',scope,revision,start,_digest(projection))
+            if memo is not None and cache in memo:
+                settings[scope]=memo[cache]
+            else:
+                settings[scope]=_digest(_setting_value(db,key,start,projection,read_memo=memo))
+                if memo is not None:memo[cache]=settings[scope]
+        else:strict[scope]=revision
+        tracked[scope]=revision
+    series=[]
+    for key,spec in unique.items():
+        scope='market:'+spec['isin']+':'+spec['base_tf']
+        revision=(db.execute('SELECT revision FROM input_revisions WHERE scope=?',(scope,)).fetchone() or [0])[0]
+        tracked[scope]=revision
+        cache=('series',key,revision)
+        cached=memo.get(cache) if memo is not None else None
+        if cached is None:
+            rows=_closed_rows(db,spec)
+            cached=(len(rows),_digest(rows))
+            if memo is not None:memo[cache]=cached
+        count,digest=cached
+        series.append(dict(spec=spec,scope=scope,count=count,digest=digest))
+    return dict(version=1,revisions=tracked,strict=strict,settings=settings,settings_start=settings_start,settings_projection=settings_projection,series=series)
+
+
+def primary_closed_series(guard, isin, identity):
+    """Separate named recovery evidence from the selected analytical series.
+
+    Recovery inputs stay in the full proof and are validated unchanged. Only
+    exact same-listing references of the selected series are auxiliary; an
+    unreferenced provider/venue cannot masquerade as a required timeframe.
+    """
+    own=[s for s in guard.get('series',[]) if s['spec'].get('isin')==isin]
+    refs={_digest(r) for s in own if s['spec'].get('identity')==identity
+          for r in s['spec'].get('recovered_inputs',[])
+          if r.get('isin')==isin and all(r.get('identity',{}).get(k)==identity.get(k)
+                                      for k in ('venue','currency','timezone'))}
+    return [s for s in own if _digest(s['spec']) not in refs]
+
+
+def validate_closed_inputs(db, guard, memo=None):
+    """Return a current revision token only if the frozen inputs still match."""
+    if not guard or guard.get('version')!=1:raise InputRevisionChanged('Closed input proof missing')
+    memo={} if memo is None else memo
+    token=guard['revisions'];current={k:(db.execute('SELECT revision FROM input_revisions WHERE scope=?',(k,)).fetchone() or [0])[0] for k in token}
+    changed={k for k,v in token.items() if current[k]!=v}
+    for k in changed & guard['strict'].keys():raise InputRevisionChanged('Closed input changed: '+k)
+    settings_changed=changed & guard['settings'].keys()
+    if changed:
+        # A receipt can lose effective acceptance when its referenced data
+        # changes, even BEFORE the CP writer renews the receipt itself.
+        settings_changed |= {k for k in guard['settings'] if k.startswith('setting:cp_manual_risk:')}
+    for k in settings_changed:
+        start=guard.get('settings_start',{}).get(k)
+        projection=guard.get('settings_projection',{}).get(k)
+        cache=('setting',k,current[k],start,_digest(projection))
+        if k.startswith('setting:cp_manual_risk:'):
+            cache += (tuple(sorted(current.items())),)
+        if cache not in memo:memo[cache]=_digest(_setting_value(db,k[len('setting:'):],start,projection,read_memo=memo))
+        if memo[cache]!=guard['settings'][k]:raise InputRevisionChanged('Closed input changed: '+k)
+    for item in guard['series']:
+        if item['scope'] not in changed:continue
+        cache=('series',_digest(item['spec']),current[item['scope']])
+        if cache not in memo:memo[cache]=_digest(_closed_rows(db,item['spec']))
+        if memo[cache]!=item['digest']:raise InputRevisionChanged('Closed candle changed: '+str(item['spec']))
+    return current
+
+
+@contextmanager
+def frozen_store(store):
+    """One readonly WAL view, not a full database copy on every calculation.
+
+    Legacy readers may begin their local read scopes repeatedly; those BEGINs
+    share this outer transaction. Neither reader nor cache can end its view.
+    The existing live closed-input validation still runs after this scope.
+    """
+    class FrozenConnection(sqlite3.Connection):
+        def execute(self,sql,parameters=()):
+            if sql.strip().upper().rstrip(';')=='BEGIN' and self.in_transaction:
+                return super().execute('SELECT 1 WHERE 0')
+            return super().execute(sql,parameters)
+    db=sqlite3.connect(store.path.resolve().as_uri()+'?mode=ro',uri=True,check_same_thread=False,timeout=.2,factory=FrozenConnection)
+    db.execute('PRAGMA query_only=ON');db.execute('BEGIN')
+    db.execute('SELECT count(*) FROM input_revisions').fetchone() # pin WAL view now
+    def guard(action,a,b,*unused):
+        if action in (sqlite3.SQLITE_TRANSACTION,sqlite3.SQLITE_SAVEPOINT,sqlite3.SQLITE_ATTACH,sqlite3.SQLITE_DETACH):return sqlite3.SQLITE_DENY
+        if action==sqlite3.SQLITE_PRAGMA and a.lower()=='query_only' and b is not None and b.upper() not in ('ON','1'):return sqlite3.SQLITE_DENY
+        return sqlite3.SQLITE_OK
+    db.set_authorizer(guard)
+    captured=copy.copy(store);captured.read_cache=ReadCache(store.path,connection=db)
+    import pandas as pd
+    captured._lineage_read_view=(db,pd.Timestamp.now(tz='UTC'),{})
+    @contextmanager
+    def connect():yield db
+    captured.connect=connect
+    try:yield captured
+    finally:
+        db.set_authorizer(None)
+        captured.read_cache.close()
+
+class ReadCache:
+    def __init__(self,path,limit=64,connection=None):
+        self.db=connection if connection is not None else sqlite3.connect(path,check_same_thread=False,timeout=5)
+        self.lock=threading.RLock();self.items=OrderedDict();self.limit=limit
+        self.local=threading.local()
+        self.analytics_items=OrderedDict();self.analytics_limit=128
+
+    @contextmanager
+    def track_inputs(self,isolated=False):
+        previous=getattr(self.local,'stack',[])
+        if isolated:self.local.stack=[]
+        if not hasattr(self.local,'stack'):self.local.stack=[]
+        token={};self.local.stack.append(token)
+        try:yield token
+        finally:
+            self.local.stack.pop()
+            if isolated:self.local.stack=previous
+
+    def depend(self,scope):
+        with self.lock:
+            row=self.db.execute('SELECT revision FROM input_revisions WHERE scope=?',(scope,)).fetchone()
+        revision=row[0] if row else 0
+        self._record({scope:revision})
+
+    def token_for(self,scopes):
+        scopes=tuple(scopes)
+        if not scopes:return {}
+        with self.lock:
+            rows=dict(self.db.execute('SELECT scope,revision FROM input_revisions WHERE scope IN ('+','.join('?' for _ in scopes)+')',scopes))
+        return {k:rows.get(k,0) for k in scopes}
+
+    def _record(self,token):
+        for active in getattr(self.local,'stack',[]):
+            for scope,revision in token.items():
+                if scope in active and active[scope]!=revision:
+                    raise InputRevisionChanged(f'Stale Trading Engine input dependency: {scope} {active[scope]}->{revision}')
+                active[scope]=revision
+
+    def dependencies(self,local=False):
+        result={}
+        for token in (getattr(self.local,'stack',[])[-1:] if local else getattr(self.local,'stack',[])):result.update(token)
+        return result
+
+    def current(self,token):
+        # A single SQLite statement checks one coherent revision snapshot.
+        if not token:return True
+        with self.lock:
+            rows=dict(self.db.execute('SELECT scope,revision FROM input_revisions WHERE scope IN ('+','.join('?' for _ in token)+')',tuple(token)))
+        return all(rows.get(k,0)==v for k,v in token.items())
+
+    def assert_current(self,token):
+        revisions=self.token_for(token)
+        changed=[f'{key} {value}->{revisions[key]}' for key,value in token.items() if revisions[key]!=value]
+        if changed:raise InputRevisionChanged('Stale Trading Engine input dependency: '+'; '.join(changed[:12]))
+
+    def version(self):
+        with self.lock:return self.db.execute('PRAGMA data_version').fetchone()[0]
+
+    def get(self,key,loader,*,scoped=False,inputs=None,category=None,content_addressed=False):
+        if category not in (None,'analytics'):raise ValueError('Unknown cache category')
+        if content_addressed and (scoped or inputs):raise ValueError('Pure calculation cannot use database dependencies')
+        items=self.analytics_items if category=='analytics' else self.items
+        limit=self.analytics_limit if category=='analytics' else self.limit
+        with self.lock:
+            version=self.version()
+            cached=items.get(key)
+            if cached is not None and ((content_addressed and not cached[2]) or (self.current(cached[2]) if scoped and cached[2] else cached[0]==version)):
+                self._record(cached[2]);items.move_to_end(key)
+            else:cached=None
+        # Cached objects are private immutable copies. Copying large frames and
+        # DQ metadata must not hold the lock needed by Tk's revision reads.
+        if cached is not None:return copy.deepcopy(cached[1])
+        with self.track_inputs() as dependencies:
+            if inputs:self._record(inputs)
+            result=loader()
+        # Only exact, fully serialized pure-function inputs may outlive an
+        # unrelated database commit. Any actual DB dependency rejects this path.
+        if content_addressed and dependencies:raise ValueError('Pure calculation read database dependencies')
+        saved=copy.deepcopy(result)
+        with self.lock:
+            # Never cache a read that overlaps a commit.
+            if content_addressed or (self.current(dependencies) if scoped and dependencies else version==self.version()):
+                items[key]=(version,saved,dict(dependencies));items.move_to_end(key)
+                while len(items)>limit:items.popitem(last=False)
+        return result
+
+    def close(self):
+        with self.lock:self.items.clear();self.analytics_items.clear();self.db.close()
+
+class CachedStoreMixin:
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        self.read_cache=ReadCache(self.path)
+
+    def setting(self,key,default=None):
+        # Fetch heartbeat is displayed as telemetry, never a signal input.
+        if hasattr(self,'read_cache') and not key.startswith('gettex_last_success:'):
+            self.read_cache.depend('setting:'+key)
+        return super().setting(key,default)
+
+    def load_official(self,*args,**kwargs):
+        self.read_cache.depend('market:'+args[0]+':'+(args[1] if len(args)>1 else kwargs.get('base','15m')))
+        call=super().load_official
+        return self.read_cache.get(('official',args,tuple(sorted(kwargs.items()))),lambda:call(*args,**kwargs),scoped=True,inputs=self.read_cache.token_for(['market:'+args[0]+':'+(args[1] if len(args)>1 else kwargs.get('base','15m'))]))
+
+    def load_series(self,*args,**kwargs):
+        self.read_cache.depend('market:'+args[0]+':'+args[1])
+        call=super().load_series
+        return self.read_cache.get(('series',args,tuple(sorted(kwargs.items()))),lambda:call(*args,**kwargs),scoped=True,inputs=self.read_cache.token_for(['market:'+args[0]+':'+(args[1] if len(args)>1 else kwargs.get('base','15m'))]))

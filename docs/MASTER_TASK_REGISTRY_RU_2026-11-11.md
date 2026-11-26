@@ -1087,8 +1087,6 @@ ROUTE_ERROR0, смешенияsource/ложногоCOMPLETEприnonREADY не �
 
 **Исходный комментарий:** https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6299133638
 
-
-
 ## 20.10.2026 — приоритет пяти EUR-акций и paper account
 Расширение на остальные49 приостановлено владельцем; Performance PAUSED. Подробный checkpoint: FIVE_EUR_PAPER_CHECKPOINT_RU.md. Проверены55 маршрутов(5x11TF), индикаторы доступны; все5 реально открыты в Windows. Реальный ChatGPT snapshot публикуется, но GAP/SOURCE_GAP/MTF identity сохраняют WAIT/DATA BLOCKED. Создан отдельный виртуальный EUR account10000, комиссия1EUR/сторона, модельный спред10bps; 21 новый targeted test PASS, Save/Close/Restart подтверждён, integrity ok. Реальных paper fills0: попытки Siemens безопасно блокированы identity, затем stale quote; один bounded incremental запрос не добавил закрытых баров. История/CORE/DQ/Store не изменены; Siemens eur_listings подтверждены существующим Resolver, backup сохранён. Свежий реальный MCP health подтверждает ACTIVE/cash10000/0fills и принятую публикацию input_revisions; сервер объявляет14команд, текущий ChatGPT каталог12, read_analytics/paper_trade отсутствуют. Нужен поддерживаемый refresh каталога владельцем; прямой paper E2E BLOCKED. Общий PASS/100% не присваивать; 6.4 остаётся прежние~70%, текущий приоритет PARTIAL/BLOCKED. Старые tests/аудиты/загрузки не повторять.
 
@@ -1099,7 +1097,6 @@ ROUTE_ERROR0, смешенияsource/ложногоCOMPLETEприnonREADY не �
 <summary>Комментарий 31 из 325 — </summary>
 
 **Исходный комментарий:** https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6299700418
-
 
 ## 20.10.2026, вечер — только открытые критерии пяти акций
 Принято уточнение владельца: read_analytics и paper_trade уже проверены в ChatGPT, прежний блокер регистрации закрыт по подтверждению владельца; не повторять Refresh. В текущем tool-каталоге эти два метода не экспонированы, их E2E заново не утверждался и не исследовался.
@@ -1123,7 +1120,6 @@ ROUTE_ERROR0, смешенияsource/ложногоCOMPLETEприnonREADY не �
 <summary>Комментарий 32 из 325 — </summary>
 
 **Исходный комментарий:** https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6300268174
-
 
 ## 20.10.2026 — latest-page / indicator / fresh-window continuation
 Без production-изменений, сетевых OHLCV-загрузок, перезапуска или рабочих paper-сделок.
@@ -1153,7 +1149,6 @@ CORE indicators фиксированы независимо от chart_indicator
 <summary>Комментарий 33 из 325 — </summary>
 
 **Исходный комментарий:** https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6304898858
-
 
 ## 21.10.2026 — GETTEX evening chain, scoped verification
 Новая адресная проверка только5ISIN/одного сохранённого дня20Oct. Production/workingSQLite/userchoices не менялись, сетьOHLCVне использовалась, старыеPASSнеповторены. Официальные страницы https://www.gettex.de/handelszeitverlaengerung/ и https://www.gettex.de/handel/delayed-data/ подтверждают часы07:30–23:00 и delayed posttrade; это не realtime SLA конкретного бара.
@@ -1217,7 +1212,6 @@ Final observation for the same run: full54 automatic snapshot attempt1 FAILED af
 
 **Исходный комментарий:** https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6347052520
 
-
 ## 22.10.2026 — Priority #1, five EUR stocks: receipt + calculation listing fixes
 Tesla work paused by owner; no Tesla-specific requests/changes, no new trades, Performance PAUSED. Prior indicator/history/paper persistence/UI PASS not repeated.
 - Reproduced live command_status HTTP400 for user-demo-sap-buy-one-20261021-1430. Queue receipts are instance-memory only; audit hash absent; working paper_fills empty. Original rejection/expiry cause UNCONFIRMED, not reconstructed. No resubmission.
@@ -1241,7 +1235,6 @@ Priority remains PARTIAL/BLOCKED, not100%: same-venue daily rejected archives, t
 <summary>Комментарий 38 из 325 — </summary>
 
 **Исходный комментарий:** https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6362681216
-
 
 ## 23.10.2026 — доказательная классификация интервалов и venue routing
 Продолжение существующих evidence без повторного общего аудита/загрузок/старых PASS. Область только DBK, Siemens, SAP, Allianz, Apple. Tesla/Performance PAUSED.
@@ -1270,7 +1263,6 @@ Evidence: interval23-extension.json, interval23-cached-5m-manifest.json, interva
 <summary>Комментарий 39 из 325 — </summary>
 
 **Исходный комментарий:** https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6370368576
-
 
 ## 23.10.2026 — Universal automatic history (continuation, not full archive PASS)
 DONE reused: history/backfill/normalization/venue calendars, aggregation, indicators, paper ledger, MCP and prior20Oct evidence; no old suites, 54-wide OHLCV audit or manual history downloads repeated. Performance PAUSED; Store0.15 unchanged.
@@ -4241,7 +4233,7 @@ Remaining five native Apple intervals (Berlin):20Oct22:15;21Oct13:30;23Oct18:00;
 
 Before/after/restart hashes of instruments, paper_accounts and paper_fills match;63 registered instruments,57 stocks,existing single Apple demo fill preserved. No trades, no source/user settings/CORE/risk-rule/Store0.15/Work2 changes. Performance remains PAUSED. No mass download or TV recheck.
 
-Evidence: C:/Users/panus/Documents/Codex/СМ-Архив/TV принятые интервалы результат.json; read-only comparison script alongside it. Backup: TV принятые интервалы откат 2026-11-03.zip (four original production files, byte comparison/testzip verified). Rollback: normal close TEST; restore only those four relative files into СМ/Рабочая версия 0.16, restart via СМ/Запустить СМ.cmd; do NOT replace SQLite. Existing verified consistent database backup retained in СМ/Резервная копия данных. New fixture SQLite/WAL/SHM cleaned after tests; no archive cleanup or new task directories.
+Evidence: %USERPROFILE%/Documents/Codex/СМ-Архив/TV принятые интервалы результат.json; read-only comparison script alongside it. Backup: TV принятые интервалы откат 2026-11-03.zip (four original production files, byte comparison/testzip verified). Rollback: normal close TEST; restore only those four relative files into СМ/Рабочая версия 0.16, restart via СМ/Запустить СМ.cmd; do NOT replace SQLite. Existing verified consistent database backup retained in СМ/Резервная копия данных. New fixture SQLite/WAL/SHM cleaned after tests; no archive cleanup or new task directories.
 
 </details>
 
@@ -4262,7 +4254,7 @@ CP сам безRefresh23:27:41.543→23:27:43.140 получил/сохрани
 Изменены9productionfiles:gettex_chart.py,timeframes.py,partial_chart.py,analytics.py,candle_schedule.py,chart_modes.py,chart_worker.py,desktop014.py,performance_cache.py; новыйtest_live_candle.py. Backup СМ-Архив/Живая свеча откат 2026-11-03.zip (testzip+bytecompare);patch/SHAmanifest«Живая свеча.patch»,«Живая свеча внедрение.json»; readonlyevidence«Живая свеча результат.json»,«Живая свеча MCP.json». Gitcheckoutнет,commitневыдуман. Откат после normalClose только9codefiles при совпаденииafterSHA; при позднихизменениях inversepatch. SQLiteнеподменять. СуществующийcoherentDBbackupсохранён.
 Instruments/paper_accounts/paper_fills hashes до/послефинальногоrestartравны:63инструмента/57акций;Apple1,cash9686.39EUR,единственнаяпокупкасохранены. Новыхсделок/прямыхgrants/импортаTV0. ПятьApple15m20Oct22:15,21Oct13:30,23Oct18:00,27Oct13:30,28Oct13:30 остаютсяотдельнымприостановленнымзаданием; принятыеTVABSENTнепересматривались. Store0.15/Work2/историческиеархивы не затронуты.
 
-Текущий короткий отчёт: `C:/Users/panus/Documents/Codex/СМ/Живая свеча.txt`. Контроль сохранности и точечный откат отражены в #14. Это отдельная функция отображения/предварительного анализа, не утверждение общего ANALYSIS/TRADE READY Apple.
+Текущий короткий отчёт: `%USERPROFILE%/Documents/Codex/СМ/Живая свеча.txt`. Контроль сохранности и точечный откат отражены в #14. Это отдельная функция отображения/предварительного анализа, не утверждение общего ANALYSIS/TRADE READY Apple.
 
 </details>
 
@@ -6995,7 +6987,7 @@ Work №2, 28.10.2026: проверено восстановление наст�
 
 **Исходный комментарий:** https://github.com/swindler2010/StockMonitor/issues/12#issuecomment-6469678958
 
-Дополнение: реальный frozen Review bundle (143 MB, ранее проверенный launcher/engine) теперь прошёл установку → обновление review.1→review.2 → запуск обоих --self-test → откат указателя на review.1. Контрольный файл пользовательских данных сохранён. Evidence ACTUAL_REVIEW_INSTALLER_CHECK.json, isolated root C:/Users/panus/Documents/Codex/smr-125953/StockMonitor-Review. Найдены и исправлены: ошибочное исключение публичного certifi cacert.pem (разрешён только точный hash из locked wheel; подмена private key отвергается), непонятный WinError206 для длинного пути (теперь явный preflight отказ до извлечения и предложение короткого корня). 12 installer/migration tests PASS. Пакет — ранее frozen Review, не финальный installer текущей 0.16; чистая Windows ещё NOT RUN, Store/production не устанавливались. Неудачные попытки оставлены, никаких удалений.
+Дополнение: реальный frozen Review bundle (143 MB, ранее проверенный launcher/engine) теперь прошёл установку → обновление review.1→review.2 → запуск обоих --self-test → откат указателя на review.1. Контрольный файл пользовательских данных сохранён. Evidence ACTUAL_REVIEW_INSTALLER_CHECK.json, isolated root %USERPROFILE%/Documents/Codex/smr-125953/StockMonitor-Review. Найдены и исправлены: ошибочное исключение публичного certifi cacert.pem (разрешён только точный hash из locked wheel; подмена private key отвергается), непонятный WinError206 для длинного пути (теперь явный preflight отказ до извлечения и предложение короткого корня). 12 installer/migration tests PASS. Пакет — ранее frozen Review, не финальный installer текущей 0.16; чистая Windows ещё NOT RUN, Store/production не устанавливались. Неудачные попытки оставлены, никаких удалений.
 
 </details>
 
@@ -9630,7 +9622,7 @@ CP autonomy 27.10: до изменений сохранены согласова
 **Исходный комментарий:** https://github.com/swindler2010/StockMonitor/issues/14#issuecomment-6437115205
 
 27.10.2026 — P1 full-reference execution: standing-rule evidence. Backup work/v016/history64-evidence/cp-autonomy27/full-reference-before-20261027: calculation_window.py,candlepilot_health.py, onlineTESTSQLite (quick_checkok).2productionfileschanged;12newtargetedPASS;Save/Close/Restart+Windows and naturalqueue verified. Userdata55instruments/account1/fills0/selectionSHA unchanged. Patch/tested SHA/deployment evidence in samefolder; checkpoint and existingRESULT_RU appended;#5/#13 synchronizedPARTIAL. Rollback restoreonly2sourcefiles after normalClose, neverreplaceworkingDB. Store0.15/CORE/Work2 untouched, noorders.
-Cleanup: successfultemporaryStoresremovedbyTemporaryDirectory. Failedfixture C:/Users/panus/AppData/Local/Temp/tmp0xxm4ji8 retained: exactscopedRemove-Item rejectedbyautomaticreview(blockedbypolicy). No retry/bypass; previouslyprotectedfourfolders untouched. Backup/evidence preserved. No Git checkout/commit manufactured. Real trading readiness not claimed.
+Cleanup: successfultemporaryStoresremovedbyTemporaryDirectory. Failedfixture %USERPROFILE%/AppData/Local/Temp/tmp0xxm4ji8 retained: exactscopedRemove-Item rejectedbyautomaticreview(blockedbypolicy). No retry/bypass; previouslyprotectedfourfolders untouched. Backup/evidence preserved. No Git checkout/commit manufactured. Real trading readiness not claimed.
 
 </details>
 
@@ -10240,9 +10232,9 @@ Code SHA256 b2d4fa7375b7b94bcba6e7c5a733006a76fad8e385120cc4211f7d06a0b739e8. Ba
 
 03.11.2026 20:47 Berlin — Apple remaining5, new bounded evidence only; task BLOCKED by provider data, not DONE. Production code/OHLCV/DQ/grants/trades unchanged. Shared gettex_chart_next_request used normally for 8 bounded diagnostic jobs; native cooldown and identity/EUR respected. All five TNS targets empty; known adjacent control returns4rows and reveals non-uniform timestamp differences vs official GETTEX. Separate trade-time fields not supplied. No source splicing/retimestamping/falseNO_TRADES or READY. Isolated approved recent15m suffix has270real closed candles but only15required4H/min35: no strategy permission. Instruments/accounts/fills before-after SHA256 identical (Apple пять итог проверки.json). No restart, oldtests or fullaudit. Existing queue rollback remains available; no DB rollback required. Checkpoint and ownIssue5comment6601389005 contain exact5dates, evidencefiles, externaldependency and no-repeat rules. RuntimeMCP confirms same runningTESTinstance; not analyticsPASS. Store0.15/Work2/PAUSED untouched.
 
-03.11.2026 22:59 Berlin — TV accepted absence chart/aggregation fix. Scoped DONE; full Apple admission still PARTIAL. Four-file verified byte-exact ZIP rollback: C:/Users/panus/Documents/Codex/СМ-Архив/TV принятые интервалы откат 2026-11-03.zip. No SQLite rewrite/migration; existing consistent DB backup retained. 14 unique new targeted PASS, normal Save/Close/Restart, Windows/MCP270 bars vs189;54→5 separators. Post-restart instruments/accounts/fills hashes unchanged. Single fixture DB/WAL/SHM cleaned; no new task dirs or broad cleanup. Restore only ZIP's four files after normal TEST close, relaunch current СМ launcher; never replace SQLite. Evidence and exact remaining five paused cases: https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6601389005 .
+03.11.2026 22:59 Berlin — TV accepted absence chart/aggregation fix. Scoped DONE; full Apple admission still PARTIAL. Four-file verified byte-exact ZIP rollback: %USERPROFILE%/Documents/Codex/СМ-Архив/TV принятые интервалы откат 2026-11-03.zip. No SQLite rewrite/migration; existing consistent DB backup retained. 14 unique new targeted PASS, normal Save/Close/Restart, Windows/MCP270 bars vs189;54→5 separators. Post-restart instruments/accounts/fills hashes unchanged. Single fixture DB/WAL/SHM cleaned; no new task dirs or broad cleanup. Restore only ZIP's four files after normal TEST close, relaunch current СМ launcher; never replace SQLite. Evidence and exact remaining five paused cases: https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6601389005 .
 
-03.11.2026 23:36 Berlin — «Живая свеча»: verified rollback ZIP C:/Users/panus/Documents/Codex/СМ-Архив/Живая свеча откат 2026-11-03.zip,9codefiles; exactbefore/afterSHA and inverse-safe diff in Живая свеча внедрение.json / Живая свеча.patch. 25newuniquePASS; finalnormalrestart instance21ba3c8996e4a0b5e3692763dd512fac; Windows/MCPverified. NoDBschemachange, no provisionalOHLCVwritten toseries; pinnedrawreceiptmetadataonly. CPnormalminuteingestion72realrows; no manualhistoricalrewrite. Finalinstruments/accounts/fillshashesunchanged; Apple1/cash9686.39/singlefillretained. Rollback normalClose→verifyafterSHA→restore only9files→currentlauncher; iflaterchangesuseinversepatch; neverreplaceSQLite. ExistingcoherentDBbackupretained. Firstlive/open-sessiongrowth NOTOBSERVED; scopedPARTIAL. Evidence/report: https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6616736181
+03.11.2026 23:36 Berlin — «Живая свеча»: verified rollback ZIP %USERPROFILE%/Documents/Codex/СМ-Архив/Живая свеча откат 2026-11-03.zip,9codefiles; exactbefore/afterSHA and inverse-safe diff in Живая свеча внедрение.json / Живая свеча.patch. 25newuniquePASS; finalnormalrestart instance21ba3c8996e4a0b5e3692763dd512fac; Windows/MCPverified. NoDBschemachange, no provisionalOHLCVwritten toseries; pinnedrawreceiptmetadataonly. CPnormalminuteingestion72realrows; no manualhistoricalrewrite. Finalinstruments/accounts/fillshashesunchanged; Apple1/cash9686.39/singlefillretained. Rollback normalClose→verifyafterSHA→restore only9files→currentlauncher; iflaterchangesuseinversepatch; neverreplaceSQLite. ExistingcoherentDBbackupretained. Firstlive/open-sessiongrowth NOTOBSERVED; scopedPARTIAL. Evidence/report: https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6616736181
 
 </details>
 
@@ -10264,9 +10256,9 @@ Code SHA256 b2d4fa7375b7b94bcba6e7c5a733006a76fad8e385120cc4211f7d06a0b739e8. Ba
 
 04.11.2026 — адресный backup/rollback Apple scoped risk, итог #5: https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-6618207202
 
-До изменения разрешений выполнен согласованный SQLite backup через sqlite3.backup; integrity_check=ok. Текущая полная копия: C:/Users/panus/Documents/Codex/СМ/Резервная копия данных/Актуальная 0.16.sqlite3. Не заменять ею рабочую базу без отдельной необходимости: после неё появились настоящие хвостовые свечи.
+До изменения разрешений выполнен согласованный SQLite backup через sqlite3.backup; integrity_check=ok. Текущая полная копия: %USERPROFILE%/Documents/Codex/СМ/Резервная копия данных/Актуальная 0.16.sqlite3. Не заменять ею рабочую базу без отдельной необходимости: после неё появились настоящие хвостовые свечи.
 
-Исходники: C:/Users/panus/Documents/Codex/СМ-Архив/Apple пять допуск откат.zip, ZIP CRC проверен после закрытия файла;8original файлов, фактически7изменены. calculation_window.py присутствует в резерве, но не менялся. Current SHA256: Apple пять допуск файлы.json. Оригинальные settings перед разрешением: Apple пять допуск настройки до.json. История/сделки при выдаче5грантов не менялись — hashes candles/series/instruments/paper_accounts/paper_fills до/после совпали. После рестартов instruments/accounts/fills также неизменны.
+Исходники: %USERPROFILE%/Documents/Codex/СМ-Архив/Apple пять допуск откат.zip, ZIP CRC проверен после закрытия файла;8original файлов, фактически7изменены. calculation_window.py присутствует в резерве, но не менялся. Current SHA256: Apple пять допуск файлы.json. Оригинальные settings перед разрешением: Apple пять допуск настройки до.json. История/сделки при выдаче5грантов не менялись — hashes candles/series/instruments/paper_accounts/paper_fills до/после совпали. После рестартов instruments/accounts/fills также неизменны.
 
 Точечный откат:
 1. Штатный Save/Close TEST; дождаться остановки его рабочих процессов.
@@ -10522,7 +10514,6 @@ MCP снова AVAILABLE, instance 2882b660c35db04c48f64731139102e5, failures=0;
 
 </details>
 
-
 ## VI. Проверка целостности и ограничения
 
 - 16/16 полных описаний Issues; 713/713 полных текстов комментариев.
@@ -10670,7 +10661,6 @@ MCP снова AVAILABLE, instance 2882b660c35db04c48f64731139102e5, failures=0;
 **Итог второй задачи:** матрица статусов составлена и непосредственно сверена с доступным live Bridge и исходниками. **Полное закрытие всех технических требований невозможно на имеющемся уровне доступа**: нет идентичности source/build и полной Windows E2E приёмки. Это внешний факт проверки, не повод объявить DONE.
 
 **Безопасность:** архив 16 Issues и 713 комментариев не изменялся; старые Issues/PR не закрывались и не удалялись, Store 0.15/рабочая SQLite/брокерские средства/торговые настройки не трогались. Apple/NVIDIA → Amazon последовательно; не готовить все остальные инструменты массово.
-
 
 ## X. Полный архив дополнительных документов — исторический контекст (не параллельный реестр)
 
@@ -11422,7 +11412,6 @@ ATR, уровни и живую свечу. После запуска обе а�
 автоматическое последовательное подключение Amazon и оставшиеся функции
 универсального исполнения ещё не объявлены завершёнными.
 
-
 ## 11.11.2026 — последовательный автоматический допуск и согласованное чтение
 
 Подтверждённый недостающий путь: Runtime брал только фиксированные
@@ -11477,7 +11466,6 @@ readonly worker также отработал; оставшаяся устаре
 SQLite старой копией не заменять. Фактическая открытая приёмка этого этапа
 будет добавлена после естественного цикла TEST; полная готовность Amazon
 пока не заявляется.
-
 
 ## 11.11.2026 — граница закрытого CORE и принятый последний child
 
@@ -11543,7 +11531,6 @@ Amazon выбран самой очередью, подготовка переж
 текущие identities/позиции/журнал. PR остаётся draft без auto-merge.
 Общее задание PARTIAL до подтверждения устойчивого естественного цикла
 и устранения/доказательной классификации всех актуальных блокировок.
-
 
 ## 11.11.2026 — ограниченный слот последовательной подготовки
 
@@ -11624,7 +11611,6 @@ HTTP-бюджета. База и writer завершались штатно, с�
 Это новое поступление, не доказательство исторического восстановления
 или готовности всех TF. Внутридневная обработка продолжается автономно.
 
-
 ## 11.11.2026 — переоценка кандидата после новых данных
 
 CP самостоятельно получил также Amazon 15m: plan 09:43:53.860 CET,
@@ -11667,7 +11653,6 @@ DQ/прогрева/benchmark/identity/несвежей цены. Наборы �
 
 Windows: штатный запуск правки переоценки 09:52:02 CET; долгий feed writer
 дождались, принудительное завершение не использовалось.
-
 
 ## 11.11.2026 — совместный этап Work 2: доказательства восстановленных родителей
 
@@ -11725,7 +11710,6 @@ bind воспроизвёл оба сбоя. Общий empty guard теперь
 Полные предыдущие наборы не повторялись. Применение в Windows ожидается
 следующим согласованным перезапуском. Откат partial_chart.py и записи
 каталога к 86dc54f; новый test_empty_partial_context.py можно убрать.
-
 
 ## 11.11.2026 — совместный этап: дубликаты старых DQ-отчётов
 
@@ -11797,7 +11781,6 @@ PASS. Каталог32сценария с доказательствами и о
 Это время фонового расчёта, не задержка рынка, не обещание скорости GUI
 и не доказательство процентного ускорения всего CandlePilot.
 
-
 ## K — аудит и восстановление обслуживаются отдельно
 
 Совместный этап Work1/Work2 опубликован в commit 2294bfc (PR #18).
@@ -11864,7 +11847,6 @@ Johnson & Johnson 30.10 22:00, Newmont 30.10 22:00, Siemens Energy
 V2 остаётся теневой. Откат: вернуть только семь путей commit 2294bfc
 к e886d6f либо использовать проверенный адресный ZIP; новые тесты можно
 убрать. Рабочую SQLite старой копией не заменять.
-
 
 ## L — снятие устаревшей диагностики удалённых инструментов
 
@@ -12199,7 +12181,6 @@ TV семантическими или только служебными; при
 ещё не доказана, поэтому защитные проверки не менялись. Наблюдатель Q
 завершился сам после первого ACCEPTED, фоновых скриптов проверки не осталось.
 
-
 ## R — ложные межтаймфреймовые зависимости квитанций
 
 Найдено по коду и воспроизведено: attach_tv_absence и accepted_gap_input
@@ -12229,7 +12210,6 @@ OHLCV и метаданные совпали кроме времени пров�
 
 Адресный rollbackR: вернуть cp_controls.py, каталог и документ кd82214e;
 убрать новый test_cp_receipt_dependencies.py. ZIP проверен. БД не откатывать.
-
 
 ## R — естественное применение, 11.11.2026
 
@@ -12308,7 +12288,6 @@ T пока не загружен в Windows. Эта правка сама по �
 Rollback T: вернуть feed_worker.py, каталог и документ к ff6a0da; убрать
  test_cp_fresh_assessment_request.py. Адресный ZIP проверен; БД не откатывать.
 
-
 ## S — естественный результат; T — восстановление старой заявки
 
 Обычная очередь пересчитала Apple в13:01:45 и NVIDIA в13:03:08CET.
@@ -12334,7 +12313,6 @@ PASS. Отрицательный случай без отметки и новы�
 ИтогоT:6уникальных новыхPASS,3затронутыхPASS; один новыйnegative повторён
 по причине изменения ветки. Последние4строки требуют финального запуска.
 Rollback всегоT остаётся кff6a0da по прежнему ZIP.
-
 
 ## T — внедрение и естественная передача подтверждены
 
@@ -12366,7 +12344,6 @@ Rollback всего T: адресный архив, вернуть feed_worker.p
 новый test_cp_fresh_assessment_request.py, вернуть соответствующие записи
 каталога и документации. Базу и работающую очередь не откатывать.
 
-
 ## U — служебные поля повторной сверки
 
 Наблюдение сохранённых записей Apple 13:18:41–13:20:40 CET выявило семь
@@ -12395,7 +12372,6 @@ OHLCV/evidence, identity/решение, expiry, strict execution, malformed/leg
 Код подготовлен; Windows ожидает окончания текущей TV-сверки Work2.
 Rollback U: адресный ZIP до 804ef813, вернуть performance_cache.py, каталог
 и документ; убрать test_cp_review_metadata.py. Базу не откатывать.
-
 
 ## U/P — естественная приёмка
 
@@ -12445,7 +12421,6 @@ V подготовлен, требуется штатное применение
 Rollback V: вернуть features.py, snapshot_worker.py, каталог и документ
 к759debc по адресному ZIP, убрать новый test_snapshot_publication_isolation.py.
 SQLite/счёт/очередь не откатывать. Общий проект PARTIAL.
-
 
 ## W — новый хвост источника и прежний закрытый расчёт
 
@@ -20142,7 +20117,7 @@ Stock Monitor 0.16 — контекст и план                             
 
  11.2. Обнаруженные места проекта и принцип повторного использования
  Рабочий каталог по истории Work:
- C:/Users/panus/Documents/Codex/2026-09-19/referenced-chatgpt-conversation-this-is-an/work/v016/. Запуск
+ %USERPROFILE%/Documents/Codex/2026-09-19/referenced-chatgpt-conversation-this-is-an/work/v016/. Запуск
  Open_Test_016.cmd; stock_monitor/app.py. Среди уже используемых модулей: desktop014.py, extras016.py,
  timeframes.py, history_service.py, history_backfill.py, data_quality.py, snapshot_worker.py, eur_listings.py. В
  истории также упоминаются CHECKPOINT_2026-10-01_MCP014_RU.md, AGENTS.md, тестовые
@@ -22061,7 +22036,7 @@ Stock Monitor 0.16 — контекст и план                             
 
  11.2. Обнаруженные места проекта и принцип повторного использования
  Рабочий каталог по истории Work:
- C:/Users/panus/Documents/Codex/2026-09-19/referenced-chatgpt-conversation-this-is-an/work/v016/. Запуск
+ %USERPROFILE%/Documents/Codex/2026-09-19/referenced-chatgpt-conversation-this-is-an/work/v016/. Запуск
  Open_Test_016.cmd; stock_monitor/app.py. Среди уже используемых модулей: desktop014.py, extras016.py,
  timeframes.py, history_service.py, history_backfill.py, data_quality.py, snapshot_worker.py, eur_listings.py. В
  истории также упоминаются CHECKPOINT_2026-10-01_MCP014_RU.md, AGENTS.md, тестовые
@@ -22654,7 +22629,7 @@ Stock Monitor 0.16 TEST | передача в новый чат | 16.10.2026    
 
  Status: PARTIAL. LOCAL PASS for the tested health/snapshot/select/read-back/security scenarios; CHAT E2E BLOCKED. No global
  PASS.
- User full specification: C:/Users/panus/.codex/attachments/6e759320-f378-4046-95fb-98eaec6db66c/Вставленный текст.txt.
+ User full specification: %USERPROFILE%/.codex/attachments/6e759320-f378-4046-95fb-98eaec6db66c/Вставленный текст.txt.
  All other work including FIX7 paused.
 
 
@@ -23801,7 +23776,6 @@ PASS.
 
 </details>
 
-
 ## XI. Метаданные всех комментариев GitHub — проверка 714/714
 
 В оригинальном разделе V уже сохранены **полные тексты** и URLs всех **713 комментариев Issues #1–#16**. Ниже дополнительно сохранены ID, исходный issue, автор, время создания и последнего изменения, признаки edited/minimized/pinned, число реакций, исходная ссылка. Также отдельно сохранён **1 комментарий PR #18**; PR #17 не имеет обычных issue comments. Исторические предыдущие редакции комментариев GitHub REST не предоставляет, поэтому архив фиксирует **последнюю доступную версию**, а не каждый редактировавшийся вариант текста.
@@ -24533,7 +24507,6 @@ Work2: ограниченный этап сверки NVIDIA/Swiss Re завер
 
 **Итог сверки:** 713/713 текстов Issues сохранены и повторно сопоставлены, плюс 1/1 PR-комментарий. Архив не содержит данных о бинарных вложениях, если они находятся только на локальном ПК или в сторонних сервисах.
 
-
 ## XII. Полные метаданные 16 исторических Issues (GitHub snapshot до архивного закрытия)
 
 Полные тела всех Issues и всех комментариев находятся в разделе V; таблица добавляет метаданные, не показанные в старом текстовом архиве. Состояния на момент фиксации — **OPEN**; это статусы GitHub-записей, не техническая готовность задач. Все Issues №1–16 остаются доступными в истории GitHub.
@@ -24578,7 +24551,6 @@ Work2: ограниченный этап сверки NVIDIA/Swiss Re завер
 
 **Ограничение полноты:** Github API предоставляет опубликованное текущее тело и комментарии, но не все предыдущие версии отредактированного текста или локальные бинарные файлы, которые нигде не прикреплены. Сохранено состояние, доступное на момент этой сверки.
 
-
 ## XIII. История событий Issues (редактирования заголовков, labels и ссылки-события)
 
 Экспортированы все события GitHub `/issues/{n}/events` по #1–#16; комментарии уже полностью сохранены в V/XI. Эти события дополняют историю и не являются новыми задачами. Для событий cross-reference по `/timeline` полный обход в данном отчёте не заявляется.
@@ -24604,7 +24576,6 @@ Work2: ограниченный этап сверки NVIDIA/Swiss Re завер
 | 16 | 34505732778 | 2026-10-28T18:11:12Z | renamed | swindler2010 | rename: v0.17: допуск к анализу и торговле при возрасте рыночных данных ≤15 минут → PRIORITY Work №2 · v0.16 TEST: измерение задержки данных и допуск ≤15 минут |
 
 Сводка событий по Issues: #1=0, #2=4, #3=0, #4=0, #5=2, #6=3, #7=0, #8=0, #9=0, #10=0, #11=1, #12=3, #13=3, #14=0, #15=0, #16=1. Бывшие редакции **полных текстов** Issue и комментариев не извлекаются через этот endpoint. Не выдавать данную таблицу за такую историю редактирования.
-
 
 ## XIV. Снимок двух активных Pull Requests — задачи в MASTER, код остаётся в PR
 
@@ -24653,6 +24624,7 @@ PR №17 и №18 содержат исходники, тесты и истор�
 **Полный исходный текст описания PR:**
 
 ~~~~~markdown
+
 ## Проблема и результат
 
 Оперативные расчёты Apple/NVIDIA задерживались из-за общей очереди восстановления, конкуренции за HTTP-бюджет и повторного отклонения неизменных входных данных. PR использует существующие Dispatcher, SQLite и CORE: выделяет независимое согласованное чтение для часового PAPER, сохраняет приоритет свежих данных и последовательную подготовку одного следующего инструмента.
@@ -24780,7 +24752,6 @@ Windows штатно перезапущен11:59:50CET, MCP нового экз�
 
 
 **Сопутствующие документы, audit и manifest** полностью сохранены в разделе X; PR #18 issue-комментарий сохранён в разделе XI. Приоритет требований: новые решения владельца и текущие секции I–IX, затем архивные PR-описания; фактический статус по live-коду/тестам, не по старым словам PASS.
-
 
 ## XV. GitHub Timeline: перекрёстные ссылки и события (кроме уже архивированных комментариев)
 
@@ -24925,7 +24896,6 @@ GitHub timeline содержит повторные события коммен�
 
 Прочитанные события PR: #17=6, #18=37. Подробные commit SHAs и полные тексты описаний PR сохранены в разделе XIV; код PR не удалялся и не преобразовывался в архив задач.
 
-
 ## XVI. Завершённое архивирование исторических Issues и очистка активного реестра
 
 **11.11.2026 — административная миграция, НЕ закрытие технических задач.** На момент повторной проверки старые Issues #1–#16 закрыты как `duplicate`/superseded by canonical MASTER: это означает устранение параллельного трекера, а не утверждение, что 16 технических направлений выполнены. **Исторические GitHub-записи не удалены физически**, все original body+713 комментариев доступны через GitHub и дословно перенесены в раздел V, с метаданными в XI–XV. Запрос на безвозвратное удаление Issues не выполнялся: подключённый GitHub-интерфейс позволяет безопасное архивное закрытие, но не имеет операции удаления Issues; а прежние редакции текстов/внешние или локальные бинарные вложения невозможно гарантированно восстановить байт-в-байт из Markdown.
@@ -24957,7 +24927,6 @@ GitHub timeline содержит повторные события коммен�
 
 **Для ChatGPT/Work дальше:** читать и обновлять только файл `docs/MASTER_TASK_REGISTRY_RU_2026-11-11.md` на `main` как регистр заданий. Не возобновлять Issue-based tracking и не смешивать `closed/duplicate` с реальным `DONE`. Реальный код/Bridge/Windows/тесты читать и проверять по необходимости, сохраняя результаты здесь.
 
-
 ## 13.11.2026 — независимая проверка G06/G10
 
 > **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 13.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** Проверка выполнена 13.11.2026; завершение G06/G10 не подтверждено. Дата отчёта не заменяет исходную дату родительских задач G06/G10; T06/T09/T13/T14; основание — сохранённый отчёт ниже.
@@ -24968,7 +24937,6 @@ GitHub timeline содержит повторные события коммен�
 - G10 / T09: Bridge и SQLite совпали: 2999 восстановлений и 5581 уникальная изменённая свеча; 74839 подтверждённых 5m интервалов без сделок по Bridge. Все 58 общих оценок STALE, 58 запросов ожидают. Естественный EXPIRED NVIDIA в 12:20 CET сохранил запрос с EXPIRED_AT_PUBLICATION. CandlePilot продолжал загрузку, общая актуальность остаётся PARTIAL.
 - G06 / T13: Amazon WAITING, 1H/4H UNCONFIRMED и PAPER_STALE_QUOTE в наблюдаемой оценке. Допуск не выдан. Work2 T03 отдельно.
 - PR №18 открыт; рабочие исходники совпали с опубликованным деревом 65b0b2bd67186cefd8b1ee9925c171a1a1f42815. Рабочая база проверялась только чтением.
-
 
 ## 13.11.2026 — Work1 AF / G06: Apple 1H DATA BLOCKED при соседнем 4H READY
 
@@ -25132,7 +25100,6 @@ GitHub timeline содержит повторные события коммен�
 
 Запись закрепляет единый критерий дальнейшей последовательной работы; не закрывает остальные задачи MASTER и не означает, что все будущие акции уже допущены. Код, история, счёт и прежние ограничения не изменены. Откат при необходимости — только отмена этой документальной записи; рабочие данные восстанавливать из старых копий не требуется.
 
-
 ## Work1 AK — 13.11.2026: оформление TEST, масштаб и логотипы
 
 > **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 13.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** 13.11.2026 — DONE задания AK, приёмка Windows 15:52–15:55 CET. Дата отчёта не заменяет исходную дату родительских задач Work1 AK; G01/G02/G08; N08/D08; основание — сохранённый отчёт ниже.
@@ -25163,7 +25130,6 @@ GitHub timeline содержит повторные события коммен�
 Резерв логотипов использует [официальный Elbstream Logo API](https://elbstream.com/logos/berkshire-hathaway); учтены [условия бесплатного API и атрибуция](https://elbstream.com/terms). Атрибуция доступна в списке акций и меню «Справка». Аккаунты/подписки не создавались. Это источник изображений, не источник рыночных цен.
 
 **Точечный откат:** откатить только commit 91e8e08 в рабочей ветке и штатно перезапустить TEST; локально сохранены проверенные адресные SM design AK rollback.zip и SM design AK logo cache backup.zip. Не восстанавливать старую SQLite и счёт. Данные свечей, CORE, риск, разрешения, Work2, Store 0.15 и Performance Engine не менялись. Механизм ремонта свечей CandlePilot не дублировался: исправления этого этапа относятся к общему отображению и загрузке artwork.
-
 
 ## Work1 AL — 13.11.2026: Apple, NVIDIA и Amazon, повторная проверка штатной PAPER-работы
 
@@ -25216,7 +25182,6 @@ Windows: до перезапуска в «Демо» наблюдались ше
 
 **Контроль после публикации, 16:23:41.089 CET:** MCP снова показал все шесть расчётов CORE READY / WAIT без quote/execution blocker: Apple 1H 16:23:13 и 4H 16:23:19, новая цена закрытия 16:20; NVIDIA 1H 16:21:56 и 4H 16:22:00, цена закрытия 16:10; Amazon 1H 16:22:14 и 4H 16:22:21, цена закрытия 16:15. Между снимками у Apple в 16:21:10 сработал PAPER_STALE_QUOTE; штатное получение новой цены сняло его без вмешательства, сначала на 4H в 16:21:46, затем на 1H. Это дополнительное наблюдение нормального ограничения свежести, не основание продлевать разрешённые 900 секунд.
 
-
 ## Work1 AM — 13.11.2026: Amazon отсутствовала в выборе ручной PAPER-сделки
 
 > **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 13.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** 13.11.2026 — DONE дефекта AM; реальная Windows-проверка после запуска 16:38:46 CET. Дата отчёта не заменяет исходную дату родительских задач Work1 AM; G06/T13; основание — сохранённый отчёт ниже.
@@ -25237,7 +25202,6 @@ Windows: до перезапуска в «Демо» наблюдались ше
 **Код:** [6e0ec4ec](https://github.com/swindler2010/StockMonitor/commit/6e0ec4ec0c217eeac1f7e591f845cd536cc8f678) в [PR #18](https://github.com/swindler2010/StockMonitor/pull/18). Локальный eb01f0c49ad9d7c538503ddb9181434ed3d9e7a2; одинаковое дерево b549e22bfdf1f7a2fdebfd7765e6106812b29334. Изменены paper_orders.py, paper_view.py, две строки маршрутизации features.py и новый test_paper_order_universe.py. Публикация с проверкой предыдущего head, без force/merge. Точечный откат — только этот commit и штатный запуск; исходные три файла сохранены и проверены в Amazon demo selector AM rollback.zip. Рабочую SQLite/счёт не откатывать.
 
 Этап не означает, что появилась естественная покупка или завершена проверка всех будущих акций: каждый новый инструмент сначала проходит действующий допуск CP, а каждое исполнение — актуальные проверки данных, цены, риска, средств и позиции. Исправлена конкретная недоработка, из-за которой уже подключённая Amazon была скрыта от ручного выбора.
-
 
 ## Work1 AN — 13.11.2026: Meta, четыре готовых наблюдения TV и штатная переоценка
 
@@ -25287,7 +25251,6 @@ Windows: до перезапуска в «Демо» наблюдались ше
 **Сохранность и границы.** Код не менялся; новый программный дефект в обработке этих четырёх наблюдений не установлен. Старые тесты, полный аудит, массовые загрузки и перезапуск не выполнялись. Проверены неизменные хеши instruments, PAPER account/fills/fill_archive и неизменная конфигурация автоматики; частные значения счёта не публикуются. Четыре отсутствующих слота и соседние строки совпадают с before. Первичное сравнение tuple/list в диагностике давало ложное неравенство; повторное каноническое JSON-сравнение подтвердило равенство, это не дефект приложения. Новых сделок Work не создавал.
 
 Адресный before, точные привязки, квитанции и последовательные штатные результаты сохранены в существующем локальном архиве (Meta AN). Для возможного отката использовать только эти четыре наблюдения и их подтверждённые идентификаторы через действующий механизм пересмотра; не восстанавливать старую SQLite целиком и не затирать фоновую работу/счёт. Source остаётся PR18 6e0ec4ec0c217eeac1f7e591f845cd536cc8f678 (local eb01f0c49ad9d7c538503ddb9181434ed3d9e7a2, совпадающее дерево). Work2, Store 0.15, Performance Engine и V2 не изменялись.
-
 
 ## Work1 AO — 13.11.2026: Meta, ещё шесть наблюдений TradingView и штатная переоценка
 
@@ -25402,8 +25365,6 @@ CP22. Понижение доверия источнику. Есть DQ-блок
 Дополнительно 28 тестов актуальной review_stability/source_acceptance и 9 watchlist-тестов — PASS. Все модули форматирования, fundamentals и drawing из целевого набора прошли на текущих исходниках.
 Итог: 6 ID подтверждены в указанном объёме; 22 не закрываются целиком. Это не 22 уникальные ошибки: алиасы пересекаются, часть — недостающая приёмка/данные/решение владельца. Формального общего DONE продукта нет.
 
-
-
 ## Work1 — G06 / №49: первый текстовый этап «Советы по развитию», 13.11.2026
 
 > **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 13.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** 13.11.2026 — текстовый этап готов; полная задача №49 остаётся PARTIAL. Дата отчёта не заменяет исходную дату родительских задач G06/49; основание — сохранённый отчёт ниже.
@@ -25452,8 +25413,6 @@ CP22. Понижение доверия источнику. Есть DQ-блок
 
 Текстовый этап с двумя направлениями, фактическими основаниями, нумерацией и экспортом **готов**. Полный AI Development Advisor **не объявлен DONE**: он пока не генерирует произвольные идеи через внешнюю модель, не читает весь исходный код/MASTER автоматически, не оценивает доказанную прибыльность улучшений и не выполняет их. Работа при закрытом окне не запущена. Торговые предложения требуют истории/теневого сравнения и решения владельца перед активацией. Work2, Store0.15, Performance Engine, V2-активация, действующие торговые правила и защиты не изменялись.
 
-
-
 ## Work1 — G02 / №47: управление индикаторами через MCP, 13.11.2026
 
 > **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 13.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** На момент этого отчёта №47 PARTIAL; окончательная приёмка №47 — 13.11.2026, 23:15 CET, в следующей записи. Дата отчёта не заменяет исходную дату родительских задач G02/47; основание — сохранённый отчёт ниже.
@@ -25497,7 +25456,6 @@ Volume Profile сохраняет существующие 24 корзины и 
 
 Backup: адресный `СМ-Архив/Indicators47 before.zip` проверен по CRC и байтам; `Indicators47 own.patch` отделяет свои изменения desktop014. Частные квитанции и контроль сохранности остаются только локально. Откат — собственный commit/новые файлы и обычный restart, при необходимости только прежний ключ индикаторов через штатное управление; не заменять SQLite/счёт и не восстанавливать целый desktop014 поверх чужих изменений. Store 0.15, Work2, брокер, торговая политика и Performance Engine не изменялись.
 
-
 ## Work1 — №47 / G02: проверка прямого подключения ChatGPT, 13.11.2026, 22:43 CET
 
 > **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 13.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** На 13.11.2026, 22:43 CET приёмка BLOCKED; окончательная №47 DONE — 13.11.2026, 23:15 CET. Дата отчёта не заменяет исходную дату родительских задач G02/47; основание — сохранённый отчёт ниже.
@@ -25522,7 +25480,6 @@ Backup: адресный `СМ-Архив/Indicators47 before.zip` провер�
 Уточнение предыдущей инструкции владельцу: [официальный порядок Refresh metadata](https://developers.openai.com/plugins/deploy/connect-chatgpt) включает **новый чат после обновления подключения**. Этот шаг ранее не был указан. Повторный Refresh и повтор локальной реализации сейчас не требуются; следующий шаг — новый чат с подключённым Stock Monitor. Не предполагать, что одно сообщение «готово» доказывает наличие новых команд.
 
 Точка продолжения для нового чата: проверить фактическое наличие двух инструментов; получить instance из health, прочитать индикаторы, сохранить исходные значения и revision, изменить только один обратимый параметр через нативный `set_indicators`, дождаться COMPLETED/SAVED, заново прочитать значение и вернуть только тестовый параметр с актуальной revision. Если команды отсутствуют и в новом чате — зафиксировать доступный каталог, не подменять запись read/select или локальным shell-вызовом. Уже пройденные 12 тестов, Windows SMA21, сохранение после штатного перезапуска и восстановление исходных параметров не повторять без новых изменений. Код f376a6a9 / PR #18, прежний backup и rollback сохранены; свечи, счёт и стратегии в этом продолжении не затронуты.
-
 
 ## Work1 — №47 / G02: исправлены BRIDGE_TIMEOUT и устаревший MCP-адаптер, 13.11.2026
 
@@ -25550,7 +25507,6 @@ Backup: адресный `СМ-Архив/Indicators47 before.zip` провер�
 
 Backup `СМ-Архив/Indicators47 connection before.zip` — четыре исходных файла, CRC и байты проверены. Откат только этого коммита, затем штатное применение TEST и существующего MCP runtime; без отката базы/счёта. Work не создавал сделок и не менял индикаторы, свечи или торговые параметры в этом продолжении. Приватные данные, ключи и профиль туннеля не публиковались.
 
-
 ## Work1 — №47 / G02: управление индикаторами непосредственно из ChatGPT — DONE, 13.11.2026, 23:15 CET
 
 > **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 13.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** 13.11.2026, 23:15 CET — DONE задачи №47: прямое управление из чата, сохранение, Windows, перезапуск и возврат исходных настроек. Дата отчёта не заменяет исходную дату родительских задач G02/47; основание — сохранённый отчёт ниже.
@@ -25577,7 +25533,6 @@ Backup `СМ-Архив/Indicators47 connection before.zip` — четыре и�
 Новых правок кода в этой заключительной приёмке нет. Использован опубликованный [4565ce16](https://github.com/swindler2010/StockMonitor/commit/4565ce1675a3ace0ce1ed85296140f2860c4e7ab), реализация индикаторов [f376a6a9](https://github.com/swindler2010/StockMonitor/commit/f376a6a9b8379adff27b315242440a9e01bcad5b), существующий [PR #18](https://github.com/swindler2010/StockMonitor/pull/18). Ранее прошедшие 12 тестов индикаторов и один адресный тест bounded health сохранены, повторно не запускались. Не заявляется повторная математическая верификация всех индикаторов/TF; №47 относится к управлению существующими настройками и их сохранению. Существующие ограничения Volume Profile и DQ не изменялись.
 
 Частные квитанции, ревизии, контроль сохранности и описание Windows-наблюдений сохранены только локально: `СМ-Архив/Indicators47 cloud acceptance.json`. Прежние адресные backup и rollback действуют; тестовое изменение уже полностью возвращено через штатную команду. Никаких новых ключей, подписок, разрешений или сделок. Следующая задача автоматически не запускалась.
-
 
 ## Work1 — Meta: завершена визуальная сверка оставшихся диапазонов, 14.11.2026, 00:34 CET — PARTIAL
 
@@ -25626,7 +25581,6 @@ Backup `СМ-Архив/Indicators47 connection before.zip` — четыре и�
 CandlePilot **сам** применяет допустимую политику, перепроверяет привязки и запускает расчёт. Визуальная сверка TV в этом этапе выполнялась Work; режим остаётся **ASSISTED_ONLY**, самостоятельное управление TradingView из CP не объявляется реализованным.
 
 **Статус PARTIAL:** блокировки по 107 дополнительным диапазонам обработаны штатно, однако полный допуск Meta не подтверждён. Остались отдельное решение по 21 октября либо подтверждённое восстановление источником, последующий CORE и действующая проверка свежей цены в открытой сессии. Broadcom — после завершения Meta.
-
 
 ## 14.11.2026 — общая обработка совпадающих пропусков TradingView: восстановление старых сверок
 
@@ -25729,7 +25683,6 @@ MCP независимо подтвердил8 revision events. Свежая ord
 Уточнение владельца: готовность новой акции означает не только исправленные свечи, но доступность в выборе графика/индикаторов, BUY/SELL в «Демо», существующем маршруте ChatGPT PAPER, автоматической V1, оценке/защите позиции и журнале, с приоритетным обновлением CandlePilot. Отдельное повторное поручение на включение готовой акции не требуется.
 Адресное чтение действующего кода: paper_preparation.admit() добавляет подтверждённую identity/name в общий config; paper_orders.owner_route/order_choices и paper_view используют тот же допущенный набор. Существующий механизм повторно не переписывался. Зафиксировано постоянное правило приёмки в AGENTS.md. Это документирование требования и проверка связей кода, не новая Windows/MCP-приёмка и не объявление Meta или остальных акций полностью TRADE READY. Новых тестов, сделок, изменений счёта/стратегии/разрешений и массовых загрузок нет. Свежесть/DQ/риск сохраняются. Откат этого этапа — удалить только добавленный абзац правила; рабочие данные не менялись.
 
-
 ## 14.11.2026 — Meta: подключение PAPER вне торговой сессии и проверка восстановленных входов
 
 > **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 14.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** 14.11.2026 — автоматическое подключение Meta подтверждено в TEST; это не завершение всех проверок истории и рыночного исполнения. Дата отчёта не заменяет исходную дату родительских задач G06/T13; G10 Meta closed-session preparation; основание — сохранённый отчёт ниже.
@@ -25818,7 +25771,6 @@ TradingView Desktop открыт; выбран GETTEX:1YD / 15m / UTC+1. [Кар
 
 Адресный откат в существующем СМ-Архив: Broadcom candle_schedule before.py, Broadcom chart budget test before.py, Broadcom experience before.json, Broadcom catchup addressed.patch; настройки очереди до этапа — Broadcom preparation before.json. Откатывать только собственные фрагменты и конкретный приоритет с проверкой текущих значений; не заменять всю SQLite/config и не удалять новые реальные свечи. Диагностика, снимки TV и результаты расчётов остались локально.
 
-
 ## 14.11.2026 — Work1: помощь CandlePilot по Palantir и Broadcom, подтверждение пустых интервалов
 
 > **Даты этапа — уточнение реестра 18.11.2026.** Этот этап зафиксирован не позднее 14.11.2026; точная первоначальная дата поручения отдельно не установлена. **Завершение / результат:** 14.11.2026 — механизм подтверждения пустых интервалов внедрён и проверен; полный допуск Palantir/Broadcom остаётся PARTIAL. Дата отчёта не заменяет исходную дату родительских задач G10 Palantir/Broadcom matched absence; основание — сохранённый отчёт ниже.
@@ -25872,7 +25824,6 @@ MCP в **11:40:43 CET** подтвердил обычную переоценку
 Локальный commit **927854e**. В PR #18 опубликованы только собственные изменения: [77c362e — проверка источника](https://github.com/swindler2010/StockMonitor/commit/77c362e9892bf9947368b3c2daf9c89a35bfdb78), [8c5dd89 — происхождение](https://github.com/swindler2010/StockMonitor/commit/8c5dd8902120fce8d311cc2f15f080743f3514c5), [80f440f — штатная очередь](https://github.com/swindler2010/StockMonitor/commit/80f440f508a0fe6209fa1c4cc8634124b1304277), [46c2a88 — тест](https://github.com/swindler2010/StockMonitor/commit/46c2a88b9293f6d1ef3f1e22460396eaa28284b7), [25fc6de — опыт CP](https://github.com/swindler2010/StockMonitor/commit/25fc6dec2e9d0d0d60eca1bde0cc6ef06bf57802). Все пять файлов прочитаны обратно, точное совпадение PASS. Чужие незакоммиченные изменения не включены.
 
 Адресный rollback: существующий СМ-Архив, файлы **Matched absence *.before**, **Matched absence addressed.patch**, настройки до этапа **Palantir Broadcom preparation before.json**. Откатывать только собственные изменения, не всю рабочую базу/config и не удалять реальные новые свечи. Локальные диагностические reference/снимки/SQLite/счёт на GitHub не опубликованы. Полная торговая готовность этих двух акций остаётся незавершённой задачей; новая автоматическая проверка продолжает ограниченный обход на обычных ходах CP.
-
 
 ## 14.11.2026 — G10: ежечасный мониторинг самостоятельной работы CandlePilot
 
@@ -25975,7 +25926,6 @@ MCP подтвердил новый TEST ad6ced4c350e251e72e2b69102e23998. По�
 
 При чтении Windows обнаружено независимое сохранённое переключение владельцем/параллельной работой V1/1D→V4/1H; данный этап не менял стратегию. Свежие хеши непосредственно перед и после перезапуска совпали для paper_accounts/paper_fills/paper_fill_archive, paper_auto_1h и cp_official_timebase_policy. Новых сделок не создавали. Адресный откат в СМ-Архив: revision_watcher before exact trade partition.py / before positive opening extreme.py; исходные OHLCV — в журнале ревизий, runtime — Palantir exact tape repair runtime.json. Полную БД старой копией не заменять.
 
-
 ## XVII. G10 — срочная постановка 17–18.11.2026: повторная DQ-блокировка принятых интервалов
 
 **Каноническая группа:** G10; связанные условия CP04/CP05/CP13/CP18/CP20/CP26, G04/Bridge, G03/DQ и G06/T01. Это продолжение существующего общего механизма, не новый параллельный backlog.
@@ -26042,6 +25992,7 @@ MCP подтвердил новый TEST ad6ced4c350e251e72e2b69102e23998. По�
 Это обязательное условие приёмки Issue #19, не факультативное улучшение и не последующее отдельное issue.
 
 ---
+
 ## СРОЧНО — 18.11.2026: повторная DQ-блокировка уже проверенных исторических интервалов
 
 **Приоритет владельца: начать немедленно.** Это переопределяет прежнюю очередность «после V5/Bridge» для данного дефекта. Не дублировать задачу, не удалять SQLite/историю/подтверждения и не повторять сверки TV там, где сохранились действительные доказательства.
@@ -26066,6 +26017,7 @@ MCP подтвердил новый TEST ad6ced4c350e251e72e2b69102e23998. По�
 **Критерий:** действующее утверждённое подтверждение TV/GETTEX не возвращается в ошибки лишь из-за пересчёта старого архива; это не является разрешением создавать синтетические свечи или скрывать новые реальные дефекты.
 
 ---
+
 ## Цель и границы
 **Статус: OPEN / BACKLOG — 17.11.2026.** После завершения исходной V5 и стабилизации Bridge проверить и устранить *ложные* блокировки качества свечей (DQ) и торгового допуска CandlePilot, не объявляя произвольно все данные корректными. Не изменять агрессивность, входы/выходы, ATR, SL/TP и риск V5. Только v0.16 TEST; Store v0.15 не затрагивать.
 
@@ -26162,7 +26114,6 @@ MCP подтвердил новый TEST ad6ced4c350e251e72e2b69102e23998. По�
 
 [Подробный design/test matrix/ограничения](https://github.com/swindler2010/StockMonitor/blob/work1/gettex-first-issue20/docs/GETTEX_FIRST_ISSUE20_RU.md) · [PR21, draft](https://github.com/swindler2010/StockMonitor/pull/21) · [Issue20](https://github.com/swindler2010/StockMonitor/issues/20). Основные новые коммиты:90a1b89,4344925,7618898,501405d,690597d,d17c9e3,0f81f8a. Скриншот79f6e9e; отчётf10ac8c. Слияния и релиза не было.
 
-
 ## 20.11.2026 — Issue #20: приёмка 11 TF, новой акции и естественного PAPER-входа
 
 Windows Apple: все 11 TF отображены с индикаторами; длинные целые архивы сохранены. Новая Coca-Cola US1912161007 добавлена штатно, CP самостоятельно загрузил 5m/15m GETTEX/EUR и запустил аудит/переоценку. После перезапуска MCP COMPLETED/AVAILABLE, 70 реальных 15m, индикаторы; старшим зависимостям пока действительно не хватает прогрева (5 закрытых 4H, 2 дневные), поэтому полного допуска нет. Исходно 64 зарегистрированных инструмента, теперь 65, удалений нет.
@@ -26173,7 +26124,6 @@ Windows Apple: все 11 TF отображены с индикаторами; д
 
 
 20.11, последующее наблюдение до10:18CET: CP без Refresh обновил NVIDIA15m до10:00CET, очередной PAPER расчёт CORE READY / WAIT / V5_NO_VOLUME_EXPANSION, quote_blocker=None. Apple остаётся CORE READY / HOLD по действующему плану; в последнем прочитанном ходе PAPER_STALE_QUOTE, не DQ-блокировка. Нового естественного выхода пока нет. Существующая статистика сравнений прочитана без повторного аудита: официальный GETTEX29/29 совпадений наличия, GETTEX Chart225/239 (94.14%); OHLCV equality UNKNOWN. Эти выбранные проблемные scopes не являются оценкой всего архива. Подробности и поздние ценовые отказы добавлены в текущий отчёт. Дальнейший эксперимент не объявлен DONE.
-
 
 ## 20.11 — завершена доставка полной диагностики CP через MCP
 
@@ -26191,7 +26141,6 @@ Windows Apple: все 11 TF отображены с индикаторами; д
 
 **Ежечасное наблюдение CandlePilot / Palantir–Broadcom, 20.11.2026 10:33 CET.** Фактический период с08:14:57CET —2ч18мин26с; одна read-only транзакция1.953s, без аудита/загрузок/правок программы. Palantir15m PTXG.GTX:208в189диапазонах, DQchecked19.11 19:01:14CET, диапазоны неизменны. Broadcom15m1YD.GTX:121в108диапазонах вместо115в102; DQchecked20.11 10:13:08CET. Новые выявленные исторические отметки:16.11 13:45,22:15,22:45;17.11 11:45;18.11 14:15,22:45CET. Это вновь учтённые предупреждения, не доказанные новые потери данных сегодня. Новых подтверждённых восстановлений/NO_TRADES/принятых рисков за этот период не установлено; одна новая SUCCESS-строка опыта Palantir без соответствующей квитанции не засчитана восстановлением. Обычные загрузки отдельно: chart15mPalantir9, Broadcom253, chart1DBroadcom4; официальныйGETTEX:Palantir5m15/15m7, Broadcom5m22/15m8. Не суммировать поставщиков/TF как независимые восстановления. Последние ходы сверки09:08:35/10:16:59CET; сохранённые даты next_check уже прошли, точный будущий ход не подтверждён. Оперативные ранее прочитанные CORE READY/WAIT не названы свежим торговым допуском после истечения их next_check. Сравнение новых job-ID не подтверждено из-за смены представления ключей снимка; не выданы ложные244/242«новые задачи». Текущий снимок и компактная история атомарно обновлены локально, рабочая SQLite не менялась.
 
-
 ## 20.11.2026 — CP: короткие обновления без лишнего обслуживания исторических разрешений
 
 Проверены действующие FeedContext, планировщик, история и локальные помощники. Новости/карточки/дивиденды не входят в feed-worker. Помощники ограничены16просматриваемыми акциями/4локальными задачами за ход и используют сохранённые сроки повторов; отдельные потоки для каждой акции не создаются. В измеренном15-минутном интервале до правки было13обычных feed_result по9разным инструментам; это активность, не13восстановлений. Зарегистрировано59акций, все остаются в обычной очереди, приоритет открытых позиций и свежих стратегических данных сохранён.
@@ -26203,7 +26152,6 @@ Windows Apple: все 11 TF отображены с индикаторами; д
 После штатного Save/Close/Restart Windows TEST жив; MCP instance faf84d8c81a184d756cdef2bafef4815, bridge running. Штатная очередь получила gettex_chart NVIDIA15m в10:07:18UTC и официальныйGETTEX Coca-Cola в10:07:40UTC без ошибок, без ручного Refresh. Политика счёта, исполнения/архив, epoch, стратегия, индикаторы и source-policy совпали по хешам до/после перезапуска. Не утверждается измеренный множитель ускорения всей программы: сеть, cooldown и доступность исторических данных сохраняют свои ограничения.
 
 Коммиты d51453f / da6781f, draft PR21. Before исходник и компактные проверки сохранности — СМ-Архив/feed_worker before recovery focus.py и CP recovery focus*.json. Откат только этих трёх условных вызовов; текущую SQLite не заменять, очередь/историю/позиции не сбрасывать. Work2, Store0.15, Performance Engine и торговые пороги не менялись этой правкой.
-
 
 ## 20.11.2026 — Work1: проверка программы, устранение пяти причин лишней нагрузки
 
@@ -26224,7 +26172,6 @@ Windows Apple: все 11 TF отображены с индикаторами; д
 
 
 20.11.2026 — финальная проверка сохранности этого этапа: счёт, исполнения/архив, epoch, индикаторы и source-policy совпали с начальным снимком. Изменение paper_auto_1h оказалось штатным автоматическим admission Munich Re (DE0008430026, receipt ADMITTED at=1795172368.5255222): добавлены только names/identities. При исключении только этих двух новых записей хеш всей конфигурации совпадает с исходным. Стратегия/риск не менялись; Work ручного допуска или сделки не создавал. Это наблюдение работы существующей последовательной очереди, не доказательство исполнения покупки. [Отчёт этапа в Issue5](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-7037933751).
-
 
 ## 20.11.2026 — Work1: свежие свечи всех акций и отдельный список серьёзных аномалий
 
@@ -26297,7 +26244,6 @@ Windows: видны EMA10/30, RSI, MACD, ATR, обычный и боковой �
 
 Общий статус №16: PARTIAL. Рабочий producer и диагностический возраст теперь реализованы и проверены. Не завершены: несколько полноценных будущих сессий статистики именно нового producer; доказанный точный clock остальных поставщиков; реальная матрица59×11 и сквозная приёмка дополнительного event-time guard у всех сигнальных/торговых потребителей. Нынешний общий PAPER quote guard ≤900с сохранён; отдельная диагностическая таблица не заменяет его и не выдаёт исполнение. Старые104711receipts и синтетическая11TFматрица не объявлены выполнением этих критериев. Полная задержка провайдера остаётся UNKNOWN без его времени публикации.20/25мин в торговле не включались. Issue16 не закрыт.
 
-
 ## 20.11.2026 — Work1: основной экран по выбранному макету Amazon
 
 Внедрена переработанная композиция главного экрана 0.16 TEST: тонкое меню/дата/часы/синхронизация, боковой список/поиск/логотипы/цветные изменения/избранное, шапка, все 11 TF, правые цены и метки уровней, индикаторные панели и Volume Profile, сигнал/причины/контекст, сегментная сила и категориальная DQ-шкала, общая нижняя строка новостей/календаря. Все прежние callbacks, настройки и торговые проверки сохранены. Первый упрощённый вариант владельцем не принят и заменён. Пиксельное тождество концепту и готовность остальных шести окон не заявляются.
@@ -26307,7 +26253,6 @@ Windows: видны EMA10/30, RSI, MACD, ATR, обычный и боковой �
 Устранены вытеснение периода в узком окне, сохранение старой ленты при переключении ISIN и цвет заголовка после смены fullscreen HWND. Отсутствующие календарь/премаркет/численный процент DQ не подменены примером. Дополнительные подробности и Benchmark сохранены при прокрутке. Реальные котировки/сигналы и число акций отличаются от картинки по данным. Откат адресными UI-hunks, без замены SQLite.
 
 [Код 403836d](https://github.com/swindler2010/StockMonitor/commit/403836dd98806b79b88053f28b11161e8a77527f) · [PR #21](https://github.com/swindler2010/StockMonitor/pull/21) · [Подробный отчёт](https://github.com/swindler2010/StockMonitor/blob/work1/gettex-first-issue20/docs/MAIN_SCREEN_DESIGN_RU.md). Автоматического слияния нет; приватные базы, настройки счёта и скриншоты не публиковались.
-
 
 ## 21.11.2026 — Work1: выбранный дизайн окна индикаторов
 
@@ -26321,7 +26266,6 @@ Windows: видны EMA10/30, RSI, MACD, ATR, обычный и боковой �
 
 Следующие этапы оформления остаются открыты: список акций, поиск/добавление, новости и рисование. Календарь/премаркет главного экрана требуют отдельного фактического источника; этот этап не создаёт фиктивных событий/цен и не объявляет их подключёнными.
 
-
 ## 21.11.2026 — Work1: выбранное оформление списка акций
 
 Установлено в 0.16 TEST. Добавлены верхняя навигация, сводные карточки, поиск/фильтры статуса/ТФ/площадки, сортировка, таблица с логотипами/избранным/реальными статусами и датами, правая карточка инструмента, прежние действия выбора/обновления и кнопка существующего добавления. Порядок по умолчанию — прежний stock_order. Сортировка и фильтрация не меняют universe, CP и разрешения.
@@ -26334,7 +26278,6 @@ display_details использует только уже прочитанные 
 
 Остаются выбранные окна поиска/добавления, новостей и рисования. Отсутствовавшие ранее CSV/Yahoo-импорты не изображены работающими. Календарь/премаркет всё ещё требуют фактического источника, а не копирования примера.
 
-
 ## 21.11.2026 — Work1: выбранный дизайн поиска/добавления акции
 
 Установлено в Windows 0.16 TEST. Новое представление: заголовок/подсказка, поиск с очисткой, отдельные столбцы результата, семь прежних полей в двух колонках, закреплённые действия. ISIN/валюта не угадываются: в Search-ответе неизвестные поля остаются прочерком, подтверждённые заполняет прежний resolver.
@@ -26344,7 +26287,6 @@ display_details использует только уже прочитанные 
 Windows: штатный запуск, открытие прежним меню, реальный Search Apple вернул четыре строки, очистка убрала их и сохранила Add disabled. Финальный повторный запуск подтвердил тёмный заголовок после Map и полностью видимые поля/кнопки. Контрольные хеши PAPER/журналов/global_indicators/paper_epoch/theme/selected совпали. Прежний Search и источник identity не менялись.
 
 [Код a7de5a1](https://github.com/swindler2010/StockMonitor/commit/a7de5a1ebb37fcf520344a34a1c1f5908cd6ac17) · [PR #21](https://github.com/swindler2010/StockMonitor/pull/21) · [Отчёт](https://github.com/swindler2010/StockMonitor/blob/work1/gettex-first-issue20/docs/INSTRUMENT_DIALOG_DESIGN_RU.md). Откат только собственных UI-hunks и instrument_dialog; SQLite не заменять. Чужие изменения/приватные данные не публикуются, слияния нет. Пиксельное тождество концепту не заявляется; остаются новости/рисование и фактический источник календаря/премаркета.
-
 
 ## 21.11.2026 — Work1: оформление новостей и рисования установлено в TEST
 
@@ -26359,7 +26301,6 @@ Windows: штатный запуск, открытие прежним меню, 
 **Оставшиеся отличия от иллюстраций.** Не подключены календарь/премаркет, числовая тональность и процент влияния новости, поставщик новостных иллюстраций/закладок. Расширенные инструменты рисования (Фибоначчи/Ганн/волны), стили объектов, слои и шаблоны не поддерживаются действующим renderer. Они не заменены кнопками с фиктивным результатом. Поэтому полное функциональное и попиксельное совпадение со всеми картинками НЕ объявлено DONE. Это ограничения функциональности/источников, отдельно от установленного оформления.
 
 **Откат.** Адресно вернуть news_panel и Desktop014.show_drawing к предыдущим реализациям, убрать новые drawing_* ветви ui_icons при необходимости. Before-исходники и `News drawing design own.diff` в существующем СМ-Архив; база не заменяется. Документ `docs/NEWS_DRAWING_DESIGN_RU.md`. Код в TEST и PR, автоматического merge/release нет.
-
 
 ## 21.11.2026 10:29 CET — Work1: настоящие стили и управление рисунками
 
@@ -26379,7 +26320,6 @@ Windows TEST штатно перезапущен. Открыты список о
 
 Документ: `docs/DRAWING_STYLE_CONTROLS_RU.md`. Предыдущее ограничение «стили/слои/шаблоны отсутствуют» для этого набора снято. **Осталось:** математические инструменты с концептов (Фибоначчи/Ганн/волны и другие), календарь, премаркет, числовая тональность/влияние новости. Полное совпадение всех иллюстраций и весь дизайн ещё не объявлены DONE. Следующий этап не должен повторять текущие 14 PASS без изменения соответствующего кода.
 
-
 ## 21.11.2026 — Work1: 18 инструментов рисования в 0.16 TEST
 
 Код [8484c837](https://github.com/swindler2010/StockMonitor/commit/8484c837870913c751a158bc3bb57a213eb59692) установлен в TEST и отправлен в PR #21 / `work1/gettex-first-issue20`. Опубликованы только 11 собственных файлов/адресных hunks. Чужие изменения общего рабочего дерева не включены.
@@ -26397,7 +26337,6 @@ Windows TEST штатно перезапущен. Открыты список о
 CORE, индикаторы, свечи/источники, стратегии, риск, позиции, CandlePilot, Work2, Store 0.15 и Performance Engine не менялись. Общие аудиты акций/очереди не запускались. Адресные исходники `before extended tools.py` и `Extended drawing own.diff` сохранены в СМ-Архив. Откат только собственных UI/annotation hunks, без подмены базы; старый renderer новые типы не покажет, но координаты сохранены.
 
 **Осталось:** Ганн, волны/паттерны и остальные сложные инструменты концептов, календарь, премаркет, числовая тональность/влияние новостей. Все иллюстрации и весь дизайн не объявлены DONE. Следующее продолжение должно начинаться с оставшегося, не с повторения этих PASS.
-
 
 ## 21.11.2026 — Work1: Ганн и ручная разметка волн установлены в TEST
 
@@ -26593,7 +26532,6 @@ Bridge подтвердил0.16-dev/TEST/running и ту же рабочую SQL
 
 **Откат:**адресные before child-aware repair retry, before scoped child retry, before missing file diagnostic и CP child retry own.diff в СМ-Архив. Возвращать только собственный патч, не весь грязный checkout и не SQLite. Новые правила внесены в действующий cp_experience_catalogue.json и реальный CP path; это не обещание универсального самоисправления внешних данных.
 
-
 ## 22.11.2026 — визуальная сверка TV и реестр принятых интервалов (IN_PROGRESS)
 
 Общий запрос «все ошибки всех акций» не завершён. Реально открыты 59 карточек поиска GETTEX в установленном TradingView; по 58 акциям сохранены 66 новых адресных наблюдений. У Exxon проверка остановлена на identity: сохранён US30231G1022, в TV доступен преемник US30233Q1085 / 7DZ; взаимозаменять их без штатного перехода нельзя. Это не сверка всех дат/всех TF каждой акции.
@@ -26684,7 +26622,6 @@ Windows: обычные Save/Close/Restart, сохранён Meta/4H/6месяц
 | AbbVie | 1 | ZERO_VOLUME: 1 | AWAITING_SOURCE: 1 | 0 |
 | MICRON TECHNOLOGY INC | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
 | COCA-COLA CO/THE | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
-
 
 ## 22.11.2026 — Work: ложные активные сообщения по уже подтверждённому GETTEX
 
@@ -26784,6 +26721,7 @@ Windows: обычные Save/Close/Restart; выбранный Meta/4H/6меся
 
 
 <a id="work1-closing-tick-and-review-route-20261122"></a>
+
 ## 22.11.2026 — Work1: две реальные ошибки Palantir и маршрут сохранённой сверки
 
 **Счёт именно этого подэтапа:** было 2 доказанных ценовых дефекта 15m Palantir GETTEX/EUR:23.10 17:30 и16.11 12:00 (Берлин). После общей доработки Work штатный CandlePilot исправил оба: осталось0 из этих2. Изменены4 существующие записи (по одной15m и одной связанной5m на дефект); добавлено0, перенесено0. Это2 уникальные ценовые ошибки, не4 независимые свечные проблемы. Прямых OHLCV-записей Work0. Work реализовал новый общий маршрут восстановления и исправил отдельный дефект назначения исторического хода; обычные прочие изменения СР к своим исправлениям не приписывает. Прежние903 ложных сообщения здесь повторно не считаются. Общий новый остаток всего расширившегося списка акций в этом подэтапе не пересчитывался.
@@ -27237,7 +27175,422 @@ Windows: штатные Save/Close/Restart21:25 и21:40, Meta4H/6месяцев 
 | Walmart Inc. | 5m | 2026-10-29 16:50:00 — 2026-10-29 16:50:00 | SOURCE_TIMEBASE_UNCONFIRMED; требуется доказательство/обработка |
 
 
+<a id="cp-short-review-zero-parent-20261122"></a>
+### 22.11.2026 — очередь новых сверок и подтверждённый перенос нулевого родителя
+
+Продолжение существующего задания, не полный аудит. Неизменяемая область: 82 оставшихся диапазона плюс 63 старых = 145 уникальных диапазонов. Снимок 22:36:24 CET: обработано 120, осталось 25. Из исходных 82 обработаны все: 69 подтверждены первичным источником, 13 получили действующий исторический допуск по политике владельца; это разные основания. Из старых 63 подтверждены 38, осталось 25. По сравнению с опубликованными 109/145 в 21:51 прирост 11; это работа штатного CandlePilot после общих правок и визуальных наблюдений Work. Личных записей свечей Work — 0. Широкие 442 задачи пересекаются с этими 145 и не складываются с ними: 385 RESOLVED_NATIVE, 57 ожидают подтверждения.
+
+1. **Подтверждённый дефект очереди исправлен** в [94f38e6](https://github.com/swindler2010/StockMonitor/commit/94f38e604d19a56f3649e97a3ba05f2b6fb67aa1). Короткий запрос с новой сверкой либо повтором после изменения соседнего ряда не попадал в существующий быстрый пакет, если его прежняя версия проверки уже была выполнена. Теперь наступившие QUEUED/RECHECK_QUEUED для GETTEX/EUR5m/15m, не более 30 минут, проходят тем же последовательным исполнителем: явная сверка, затем повтор, затем ограниченный проход новой версии. Общий предел 8, будущий срок поставщика и завершённые задачи сохраняются. Служебная постановка не сбрасывает срок и не продлевает наблюдение.
+
+Фактическая штатная проверка JNJ 13.11 в 14:45 5m, отдельный случай вне 145: после прежнего ожидания очередь выполнила свежую проверку 22:14:18 CET и записала AWAITING_SOURCE / SOURCE_TIMEBASE_UNCONFIRMED с RETIME_INCOMPLETE_PUBLICATION. Исправлено прохождение очереди, а не недостаток исходного доказательства. Этот случай не объявлен восстановленным. Точные публичные исходники: 4 целевых теста PASS за 3,938 с, в том числе 53/200 задач, наступивший/будущий срок, явный приоритет, предел пакета и отказ при отозванной политике источника.
+
+2. **Уточнён доказанный случай нулевого родителя** в [6006943](https://github.com/swindler2010/StockMonitor/commit/6006943f68ef463b98942649b1a45bcc1eb06eb0). При уникальном точном сопоставлении всех младших свечей с полным парным первичным GETTEX-файлом нулевая плоская 15m-свеча могла переходить в уже существующего родителя. Прежнее правило допускало только перенос родителя в пустое место и отказывало. Новый узкий вариант переносит только её собственные уникальные события нулевого объёма по той же цене в реальные исходные родительские интервалы. Для исчезающих родителей с положительным объёмом прежнее строгое правило сохранено. Кандидат обязан покрывать весь проверенный диапазон; сохранение полного OHLCV, исходные значения, происхождение, предельная задержка 45 минут, текущие визуальные факты и окончательная проверка ревизий обязательны.
+
+Фактический результат обычной очереди TEST: **Nordex 28.10, 13:50–14:00 5m**, проверка 22:24:59 CET, RESOLVED_NATIVE, квитанция актуальна при независимом чтении. Окно 13:30–14:15: добавлена 1 физическая строка, изменена 1, перенесены 3 записи разных TF. Это не пять независимых ошибок. Точные публичные исходники: 4 целевых теста PASS за 3,651 с; положительный случай, отказ при изменении родителя/источника, прежний строгий перенос положительного родителя и очередь 53/200.
+
+Код установлен в TEST: после последующего штатного перезапуска другой работы Bridge подтвердил новый instance и нужную TEST-базу; отдельный лишний перезапуск не выполнялся. Свежая квитанция Nordex создана уже обычной очередью. Эти две причины добавлены в действующий каталог опыта, [69ac389](https://github.com/swindler2010/StockMonitor/commit/69ac3899ead62dd3622ad74b2ec06ad065d818fe); публичное чтение совпало. Визуальная сверка TV остаётся ASSISTED_ONLY, права самостоятельного извлечения CP не объявлены полученными.
+
+Во всём текущем проходе с 19:19 CET накоплено 426 квитанций; физический итог по ним 71 добавленная, 201 изменённая и 55 перенесённых записей 5m/15m. Это строки разных TF, не 327 уникальных ошибок и не 426 восстановленных свечей. Счёт и исполнения PAPER имеют прежние контрольные суммы. Контрольная сумма общей торговой конфигурации изменилась параллельно с зафиксированным отдельным этапом V5; одно это сравнение не устанавливает автора. Данная правка конфигурацию, счёт, позиции, стратегию и торговые разрешения не меняет.
+
+Следующие наблюдения Siemens, Infineon, ASML и Alphabet переданы штатно после этого снимка; их постановка сама по себе не считается исправлением. Полного DONE нет. Оставшиеся на снимке 25 диапазонов перечислены ниже; уже принятые исходные 82 повторно не сверяются.
+
+Откат: небольшие адресные before/patch/ZIP в существующем СМ-Архив — CP short review queue и CP zero parent composition. ZIP закрыты и проверены CRC; откатывать только собственные изменения поверх актуального кода. Проверенная согласованная SQLite backup сохранена, рабочую базу старой копией не заменять. Новый вариант использует существующий режим TRADE_PARTITION и сохраняет before/lineage для адресного отката; фактический откат нового рабочего диапазона не выполнялся и не заявляется PASS. Локальные доказательства: CP short review queue live after.json, CP zero parent composition live verified.json, CP remaining TV acceptance.json. Приватные базы, снимки и счёт в GitHub не публикуются.
+
+| Акция | TF | Дата и время Берлина | Причина на снимке |
+|---|---|---|---|
+| Novartis AG | 5m | 2026-10-23 17:50:00 — 2026-10-23 18:10:00 | AWAITING_SOURCE |
+| Novartis AG | 5m | 2026-10-23 17:40:00 | AWAITING_SOURCE |
+| DHL AG | 5m | 2026-10-26 16:50:00 | AWAITING_USER |
+| DHL AG | 5m | 2026-10-26 16:15:00 — 2026-10-26 16:40:00 | AWAITING_USER |
+| Infineon Technologies AG | 15m | 2026-10-21 13:30:00 — 2026-10-21 13:45:00 | RETIME_NOT_CONSERVED |
+| SAP SE | 5m | 2026-10-20 22:25:00 — 2026-10-20 22:30:00 | AWAITING_SOURCE |
+| Siemens AG | 15m | 2026-10-29 17:45:00 | RETIME_INCOMPLETE_PUBLICATION |
+| Nordex SE | 5m | 2026-10-28 16:15:00 — 2026-10-28 16:25:00 | RETIME_CURRENT_TV_BOUND_CONTEXT_CHANGED |
+| BASF SE | 5m | 2026-11-13 18:00:00 — 2026-11-13 18:10:00 | AWAITING_USER |
+| SIEMENS ENERGY AG | 15m | 2026-10-21 13:30:00 | RETIME_NOT_CONSERVED |
+| AIRBUS SE | 5m | 2026-10-29 17:45:00 — 2026-10-29 17:55:00 | AWAITING_USER |
+| ASML HOLDING NV | 15m | 2026-10-21 13:30:00 — 2026-10-21 13:45:00 | RETIME_INCOMPLETE_PUBLICATION |
+| ADVANCED MICRO DEVICES | 15m | 2026-10-20 21:15:00 | RETIME_INCOMPLETE_PUBLICATION |
+| Alphabet Inc. | 5m | 2026-10-21 13:25:00 — 2026-10-21 13:50:00 | AWAITING_USER |
+| Alphabet Inc. | 15m | 2026-10-26 11:30:00 | RETIME_NOT_CONSERVED |
+| Alphabet Inc. | 15m | 2026-10-21 13:30:00 | RETIME_NOT_CONSERVED |
+| Apple | 15m | 2026-10-23 18:00:00 | RETIME_INCOMPLETE_PUBLICATION |
+| Apple | 15m | 2026-10-20 22:15:00 | RETIME_NOT_CONSERVED |
+| MICROSOFT CORP | 15m | 2026-10-21 13:15:00 — 2026-10-21 13:45:00 | AWAITING_USER |
+| MICRON TECHNOLOGY INC | 5m | 2026-10-20 22:25:00 | AWAITING_SOURCE |
+| MICRON TECHNOLOGY INC | 15m | 2026-10-21 13:30:00 | RETIME_NOT_CONSERVED |
+| MICRON TECHNOLOGY INC | 5m | 2026-10-21 13:25:00 — 2026-10-21 13:50:00 | AWAITING_USER |
+| NVIDIA Corporation | 15m | 2026-10-21 13:30:00 | RETIME_NOT_CONSERVED |
+| Tesla | 15m | 2026-10-21 13:30:00 — 2026-10-21 13:45:00 | RETIME_RELOCATION_NOT_EXACT_OR_AMBIGUOUS |
+| Tesla | 15m | 2026-11-02 11:15:00 | RETIME_INCOMPLETE_PUBLICATION |
+
+
+
+<a id="cp-sampled-partition-20261122"></a>
+### 22.11.2026 — ещё одна общая причина исправлена и проверена обычной очередью
+
+Область остаётся прежней: 145 уникальных диапазонов (82 оставшихся плюс 63 старых), не все ошибки всего архива. Снимок 23:06:37 CET: обработано **132/145, осталось 13**. Исходные 82: 69 первичных подтверждений + 13 действующих исторических допусков, остаток 0. Старые 63: подтверждены 50, остаются 13. С прошлого этапа 120/145 прирост 12; не все эти двенадцать вызваны новым правилом. Work исправил одну общую программную причину; прямых записей свечей Work 0. Все изменения строк выполнены существующим CandlePilot. Отдельные наблюдения TV не считаются восстановлением до подтверждения CP.
+
+**Причина и правка.** В полном проверенном первичном GETTEX-файле присутствовала положительная сделка с крайней ценой. Её количество уже было учтено в исходном ряду, но цена не вошла в его минимум; вместе со сдвигом времени это мешало точному сопоставлению всех событий. [b800965](https://github.com/swindler2010/StockMonitor/commit/b8009651a5244cec353f1baa68fa97d8c61b50c3) сначала пробует прежнее точное сопоставление. Только при текущем привязанном DIFFERENT допускается одна подтверждённая внутренняя крайняя цена, пропущенная из ценовой выборки, при полном сохранении всех количеств. Единственное упорядоченное сопоставление должно объяснить каждую исходную свечу; начало/конец, остальные цены, точная агрегация исходных родителей, полный OHLCV всего окна и предел задержки 45 минут сохраняются. Количество сделки не удаляется. Нулевая сделка, изменение объёма, первая/последняя цена, несколько пропусков, неоднозначность и изменившиеся входы не подходят. Проверки остальных текущих наблюдений TV и окончательная проверка источника/ревизий остаются.
+
+**Реальная очередь TEST:** Alphabet 21.10, **13:25–13:50 5m**, штатная проверка **23:05:26 CET**, алгоритм 11, RESOLVED_NATIVE, актуальность квитанции независимо подтверждена чтением базы. Окно 13:15–14:15: CP добавил 4, изменил 7, перенёс 1 физическую запись разных TF; не 12 независимых ошибок. Квитанция сохраняет исходный ряд и точную сделку 13:38:05.062769, цена 295,80, объём 7: количество сохранилось. Связанный 15m проходит обычную повторную классификацию.
+
+Новые визуальные сверки также дали штатные результаты прежними общими правилами: Infineon 21.10 13:30–13:45 15m, 22:42:04 CET, 8 добавленных и 7 изменённых физических строк; ASML тот же диапазон, 22:43:10 CET, 9 добавленных и 5 изменённых; обе квитанции актуальны. Micron 21.10 13:30 15m, 22:51:49 CET, 7 добавленных и 8 изменённых; квитанция актуальна, младший 13:25–13:50 5m поставлен на штатную переоценку. Устаревшую повторную привязку наблюдения младшего TF механизм правильно отклонил как REVIEW_INPUT_CHANGED после ремонта родителя; данные вручную не перепривязывались. Другие разрешённые даты видны в сохранённом срезе, повторный аудит не выполнялся.
+
+**Проверки:** четыре теста на точном предлагаемом публичном коммите PASS за 5,422 с: новый положительный сценарий с реальной записью в изолированную базу, отказы при изменении родителя/источника/объёма/начала/конца/нулевой крайней сделки, прежние guards сопоставления, нулевой родитель и ограниченная очередь 53/200. Первый локальный сценарий был исправлен до публикации: его искусственное время оказалось до открытия GETTEX; затем обновлено соответствующее имя контрольного файла. Эти два неуспешных прогона не выдаются за дефект источника. После исправления сценария и проверки точных публичных исходников тесты прошли.
+
+**Windows/MCP:** штатные Save → Close → Restart в 23:03–23:04 CET, сохранение подтверждено на экране. Новый TEST Bridge instance81e15fe98a9b7f5b96f51016cf95de94, соединение работает. Прежний выбор Meta4H/6месяцев и настройки сохранены. Рабочий результат Alphabet получен обычной очередью уже после этого запуска; вручную исполнять CP.turn в рабочей базе не пришлось. Проверка health подтверждает соединение, а не торговую готовность. Каталог опыта дополнен [c68bcc6](https://github.com/swindler2010/StockMonitor/commit/c68bcc63f13db52f91b7580575af4016156bee89), точное публичное чтение совпало.
+
+За весь проход с 19:19 CET: 438 квитанций, физически 114 добавленных, 244 изменённых, 59 перенесённых записей 5m/15m; это пересекающиеся TF, не 417 независимых ошибок. Пересекающийся широкий набор442: 387 RESOLVED_NATIVE,55 ожидают; его не складывать с145. Хеши счёта и исполнений совпали с исходными. Общая конфигурация торговли менялась в параллельной V5-работе, не этими правками. Новых сделок Work не создавал, стратегию/разрешения/позиции не менял. Временная потеря одного исторического допуска при изменении зависимых входов в промежуточном срезе23:02 не скрывалась; к23:06 штатная очередь снова подтвердила все82. Это подтверждённый итог конкретного снимка, не вечный допуск без проверки входов.
+
+**Откат:** CP sampled partition before.json / own patches.json / rollback.zip в существующем СМ-Архив. ZIP закрыт и CRC проверен; обратный patch только своих изменений, не целые файлы поверх другой работы. Исходные before/lineage в рабочей квитанции сохранены. Рабочий откат данных не выполнялся. Доказательства: CP sampled partition live verified.json, CP October21 reviewed normal results.json, CP remaining TV publication test.json, CP remaining TV acceptance.json. Приватные базы/скриншоты/счёт не публикуются.
+
+**Статус:** задача продолжается. Ниже только оставшиеся на снимке13 диапазонов; Tesla/AMD ещё сверяются, новые постановки после снимка не считаются выполненными. MASTER публикуется через существующую рабочую ветку PR21. Прямая запись main ранее отклонена автоматической проверкой; main не изменяется, слияние не выполняется.
+
+| Акция | TF | Дата/время Берлина | Причина на снимке |
+|---|---|---|---|
+| Novartis AG | 5m | 2026-10-23 17:50:00 — 2026-10-23 18:10:00 | AWAITING_SOURCE |
+| Novartis AG | 5m | 2026-10-23 17:40:00 | AWAITING_SOURCE |
+| SAP SE | 5m | 2026-10-20 22:25:00 — 2026-10-20 22:30:00 | AWAITING_SOURCE |
+| Nordex SE | 5m | 2026-10-28 16:15:00 — 2026-10-28 16:25:00 | RETIME_CURRENT_TV_BOUND_CONTEXT_CHANGED |
+| SIEMENS ENERGY AG | 15m | 2026-10-21 13:30:00 | RETIME_NOT_CONSERVED |
+| AIRBUS SE | 5m | 2026-10-29 17:45:00 — 2026-10-29 17:55:00 | RECHECK_QUEUED |
+| ADVANCED MICRO DEVICES | 15m | 2026-10-20 21:15:00 | RETIME_INCOMPLETE_PUBLICATION |
+| Apple | 15m | 2026-10-23 18:00:00 | RETIME_INCOMPLETE_PUBLICATION |
+| Apple | 15m | 2026-10-20 22:15:00 | RETIME_NOT_CONSERVED |
+| MICRON TECHNOLOGY INC | 5m | 2026-10-20 22:25:00 | AWAITING_SOURCE |
+| NVIDIA Corporation | 15m | 2026-10-21 13:30:00 | RETIME_NOT_CONSERVED |
+| Tesla | 15m | 2026-10-21 13:30:00 — 2026-10-21 13:45:00 | RETIME_RELOCATION_NOT_EXACT_OR_AMBIGUOUS |
+| Tesla | 15m | 2026-11-02 11:15:00 | RETIME_INCOMPLETE_PUBLICATION |
+
+
+
+<a id="cp-current-difference-lane-20261122"></a>
+### 22.11.2026 — текущие DIFFERENT соседних свечей: штатный ремонт Apple/NVIDIA
+
+Область прежняя:145 уникальных диапазонов,82 оставшихся+63 старых. Снимок23:35:30CET: **141 обработан,4 остаются**. Исходные82:70 первичных подтверждений+12 действующих исторических допусков,остаток0. Старые63:59 подтверждены,4 остаются. От предыдущих132 прирост9,не все девять относятся к новой правке. Work исправил общий дефект выбора запросов и ограничение окна; прямых записей свечей Work0. Все изменения строк выполнял CandlePilot.
+
+Причина: действующие DIFFERENT соседних15m-свечей Apple/NVIDIA оставались вне короткого маршрута даже при просроченном next_check. Пропуски правильно блокировались этими расхождениями. В [3c36d64](https://github.com/swindler2010/StockMonitor/commit/3c36d64d91e0479e041f3635b2407eb131b7d34c) добавлен один версионный проход только наступивших одиночных15m DIFFERENT на прежнем последовательном маршруте≤8запросов. Будущие сроки, завершённые и уже обработанные запросы сохраняются. Защита от других текущих TV-наблюдений не отключалась. Для текущего DIFFERENT добавлено полное окно75минут; пределы9исходных свечей,5000событий,20000попыток и задержки45минут сохранены. Полный OHLCV окна, исходные родители, уникальное распределение сделок, парные файлы источника и финальные guards обязательны.
+
+**Реальная обычная очередь TEST после Save/Close/Restart23:29–23:30:**
+
+| Связанная проверка | Время CP, CET | Окно источника | Физические строки добавлено/изменено/перенесено |
+|---|---|---|---|
+| Apple20.10,22:30 15m |23:31:11|22:15–23:00|2/3/3|
+| Apple23.10,18:15 15m |23:31:11|18:00–18:30|2/1/1|
+| NVIDIA21.10,13:45 15m |23:31:52|13:15–14:30|7/7/0|
+
+Все три проверки RESOLVED_NATIVE, квитанции независимо прочитаны и retime_current=true. Проверка статуса завершилась не позднее23:33:39CET. Это три связанные проверки, а не дополнительное число независимых ошибок поверх145. Связанные исходные диапазоны Apple20.10,22:15;23.10,18:00 и NVIDIA21.10,13:30 обработаны штатно. Данные TV не импортировались, ручного CP.turn в рабочей базе не было.
+
+Точный публичный коммит:6тестов PASS7,015с; новый75минутный сценарий с реальным изолированным ремонтом и 53/200сценариев due/future/completed; затронутые sampled/zero-parent/visual-conflict проверки. Прежние общие аудиты не повторялись. Новое правило внесено в существующий каталог опыта. Сохранённые данные счёта и исполнений совпали с исходными хешами. Общая торговая конфигурация менялась в параллельной работеV5, этим этапом не изменялась. Торговый допуск/freshness/risk не подменялись.
+
+Всего с начала прохода19:19CET:454 квитанции,149 добавленных,286 изменённых,72 перенесённых физических записей5m/15m; это пересекающиеся строки, не507 независимых ошибок. Широкий пересекающийся набор442:390 RESOLVED_NATIVE,52 прочих статуса; его не складывать с145. Техническое разрешение диапазонов не равно полному анализу/торговой готовности всех акций.
+
+Оставшиеся на снимке четыре диапазона: Novartis23.10 **17:40 5m** и **17:50–18:10 5m**; SAP20.10 **22:25–22:30 5m**; Micron20.10 **22:25 5m**. Для них работа продолжается отдельным адресным правилом, они не объявлены исправленными этим этапом.
+
+Откат: CP current difference lane before.json / own patches.json / rollback.zip, ZIP закрыт и CRC проверен. Обратный patch только собственных изменений. Рабочий откат данных не выполнялся, исходные значения/lineage сохранены в квитанциях. Доказательства в существующем СМ-Архив: CP current difference route diagnosis.json, CP current difference lane live verified.json, CP remaining TV publication test.json, CP remaining TV acceptance.json. Приватные базы и изображения не публикуются. MASTER и код публикуются через существующий PR21; прямое изменение main ранее отклонено автоматической проверкой, слияние не выполняется.
+
+
+<a id="cp-opening-session-tail-20261123"></a>
+### 23.11.2026 — исходные82+63 обработаны; продолжаются дополнительные старые диапазоны
+
+На снимке **23.11,00:11:31CET** исходная область145 уникальных диапазонов: **145 обработаны,0 остаются**. Из82 оставшихся:71 первичное подтверждение+11 действующих исторических допусков. Все63 старых подтверждены первичным источником. Это не объявление полного DONE по всем ошибкам архива: дополнительно в прежнем широком наборе найдено32 непересекающихся старых диапазона; на00:12CET5 уже обработаны CP,27 остаются. Общая уточнённая область177=145+32;150 обработаны,27 остаются. Пересекающиеся родительские/дочерние проверки и широкий442 не суммируются.
+
+Work исправил два общих ограничения доказанного восстановления и связанный маршрут совместной сверки; прямых исправлений/записей свечей Work **0**. Новые факты получены визуально в TradingView, все изменения строк выполнял штатный CandlePilot. Готовые сверки не повторялись; отдельно исправлены две неточные текстовые заметки наблюдений с сохранением исходной истории. Ошибочные заметки не использовались как источник OHLCV.
+
+Код [19b0383](https://github.com/swindler2010/StockMonitor/commit/19b03831e3ddbc66d667222de1e2a48d26b735c5):
+
+1. **Начальная цена уже учтённого объёма.** Единственное полное упорядоченное сопоставление может объяснить1–3 подряд идущие положительные сделки по одной начальной цене внутри одного5m-блока. Из исходной выборки цен эта цена выпала, количество сохранилось. Все остальные цены/закрытия/количества, родители и полный OHLCV окна должны точно совпасть. Для одного положительного исчезающего родителя допускается только доказанная пересборка единственного исходного ребёнка по его полным событиям в соседнего фактического родителя≤15минут; события и before/lineage сохраняются. Общие пределы9свечей/5000событий/20000попыток/45минут задержки сохранены.
+2. **Совместная проверка связанных DIFFERENT.** Только для этого полного доказанного opening-burst сопоставления непересекающиеся текущие5m DIFFERENT, целиком находящиеся в окне, связываются атомарно точными digest запросов и входов. Каждый диапазон действительно отличается по первичному ряду; исходные строки совпадают с before. Неполное окно пробуется расширить в прежних пределах. Конфликтующие ABSENT/PRESENT/ZERO_VOLUME, перекрывающиеся диагнозы и изменившиеся входы не игнорируются. Окончательная проверка повторяет всё перед записью.
+3. **Обрезанный конец сессии.** Отдельный режим VERIFIED_NATIVE_SESSION_TAIL использует полные парные файлы GETTEX до подтверждённого календарного закрытия. В последних30/45/60минутах две неизменные начальные5m-свечи закрепляют соответствие. Уникальный полный префикс событий обязан объяснить каждый исходный OHLCV/объём и всех родителей≤15минут задержки. Только1–64 оставшихся положительных события последних15минут восстанавливаются как недостающий конец. Это явно добавление реальных данных, а не ложное заявление о сохранении объёма всего окна. Произвольный новый источник, пропущенная исходная сделка, неполный файл или неясное сопоставление не принимаются.
+4. Одно версионное применение12 на прежней последовательной очереди≤8запросов. Будущие next_check, завершённые и уже обработанные запросы сохраняются. Новых потоков/очередей нет. Пересчёт DQ/CORE и исторической политики остаётся штатным.
+
+**Фактическая очередь установленного TEST:**
+
+| Акция/исходная проблема | Последняя штатная проверка,CET | Окно первичного источника | Физические строки добавлено/изменено/перенесено |
+|---|---|---|---|
+| SAP20.10,22:25–22:30 5m |22.11,23:49:45|22:00–23:00|2/6/0|
+| Micron20.10,22:25 5m |22.11,23:56:15|22:15–23:00|1/9/0|
+| Novartis23.10,17:50–18:10 5m;связанный17:40 |23.11,00:07:17|17:30–18:30|2/3/3|
+| Novartis23.10,18:20 5m,повтор после изменения соседей |23.11,00:09:35|18:15–18:30|0/0/0,первичное подтверждение пустого интервала|
+
+Все квитанции текущие по retime_current. У Novartis17:35 подтверждена начальная цена134,78 при уже учтённом объёме31; две сделки8+6 не удалены. Связанный17:40 восстановлен,18:05/18:10 разделены по фактическим публикациям. После ремонта исторический допуск18:20 временно правильно потерял актуальность из-за новых соседей; обычная очередь подтвердила пустое окно первичным источником без нового ручного наблюдения. Это обработанный переход, а не скрытое вечное разрешение.
+
+**TV:** у SAP новая точная проверка22:35 показала объём3, а не20: прежняя заметка ошибочно отнесла объём22:20 к другой свече. У Micron дополнительно подтверждён конец20.10,22:55:811,70/812,10/810,10/810,10,V30,совпадает с полным GETTEX. У нового старого диапазона Novartis26.10,12:05 сначала ошибочно процитированы объединённые native-значения; заметка исправлена по снимку до окончательного результата: TV12:05,137,76/137,92/137,76/137,92,V12;12:10 flat138,02,V16. Первичный источник дополнительно содержит нулевое наблюдение138,00 в12:13,поэтому полное совпадение OHLCV12:10 сTV не заявляется. Прежние записи и изображения сохранены, TV не импортировался в данные. Общее ограничение ASSISTED_ONLY остаётся: CP не получает права управлять чужой авторизацией TV из разрешения Work.
+
+**Приёмка:**9адресных тестов точного предлагаемого публичного коммита PASS9,358с: два новых нормальных изолированных ремонта, положительный родитель/совместный диагноз, отказы при изменении входов/источника/родителя/объёма/наблюдения, прежние guards,53/200очередь due/future/completed. Два первоначальных неуспешных assert нового теста ожидали иной вид безопасного отказа(None вместо ValueError и наоборот); ожидания исправлены, проверки не ослаблены. Изолированный адресный rollback нового session-tail режима восстановил исходные строки и отказал при изменившихся входах; рабочий откат не выполнялся.
+
+Windows Save/Close/Restart23:46CET,на экране подтверждено сохранение. TEST instance d340910252f8fb25e64133fd49a94277; рабочие ремонты получены обычной очередью после запуска. Read-only MCP00:10:14CET вернул8последовательных фактических строк Novartis23.10 с исправленными17:35/17:40/18:05/18:10 и пустыми17:45/18:15/18:20. Выбор Meta4H/6месяцев и настройки сохранились. **Ограничение:** общая диагностическая публикация Bridge на00:09 была устаревшей,два её расчёта не завершились; raw archive read при этом свежий. Общую готовность анализа/торговли этот этап не подтверждает; проблема общей сводки относится к параллельной работе, её код не изменялся.
+
+Всего с начала прохода19:19CET:468квитанций,156добавленных/307изменённых/82перенесённых физических записей5m/15m; это не545 независимых ошибок. Хеши счёта и исполнений совпали с исходными, Work не создавал сделок. Параллельное изменение конфигурацииV5 не относится к этому этапу и не откатывалось. Широкий442:398RESOLVED_NATIVE/44прочих статуса; это необработанные/исторически допущенные/устаревшие диагностические запросы,не44доказанные ошибки и не слагаемое177.
+
+Новые решения внесены в существующий каталог опыта. Откат только своих hunks: CP opening session tail before.json / own patches.json / rollback.zip,CRC проверен. Существующая согласованная резервная SQLite сохранена, новые полные копии не размножались. Доказательства в СМ-Архив: CP opening session tail live verified.json, MCP verified.json, session tail rollback verified.json, remaining TV publication test.json, remaining TV acceptance.json, older additional current.json. Приватные базы/счёт/изображения не публикуются. Код и MASTER через существующий PR21,main не изменяется. Работа продолжается по перечисленным ниже27дополнительным старым диапазонам; весь запрос владельца пока не объявлен DONE.
+
+| Акция | TF | Дата/время Берлина | Статус на дополнительном снимке |
+|---|---|---|---|
+|Alphabet Inc.|5m|2026-10-26 16:40:00|AWAITING_SOURCE / GAP|
+|Northern Star Resources Limited|5m|2026-10-28 20:50:00–21:05:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|Northern Star Resources Limited|5m|2026-10-27 14:20:00–14:25:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|Oracle Corporation|5m|2026-11-02 10:50:00–11:05:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|HENSOLDT AG|5m|2026-10-28 20:50:00–21:05:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|Meta Platforms Inc. Class A|5m|2026-10-23 20:20:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|MICHELIN (CGDE)|5m|2026-10-26 11:50:00–11:55:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|MICHELIN (CGDE)|5m|2026-10-23 12:50:00–12:55:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|GENERAL MOTORS CO|5m|2026-10-26 11:50:00–11:55:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|CANCOM SE|5m|2026-11-13 16:20:00–16:25:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|AIRBUS SE|5m|2026-10-28 13:55:00–14:05:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|BASF SE|5m|2026-11-13 22:20:00–22:35:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|RWE AG|5m|2026-10-28 17:15:00–17:30:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|RWE AG|5m|2026-10-27 12:20:00–12:35:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|PALANTIR TECHNOLOGIES INC-A|5m|2026-10-27 08:25:00–08:35:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|ADOBE INC|5m|2026-11-13 21:20:00–21:35:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|BAYERISCHE MOTOREN WERKE AG|5m|2026-11-05 18:45:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|DHL AG|5m|2026-10-28 21:20:00–21:35:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|Johnson & Johnson|5m|2026-10-29 21:20:00–21:35:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|Procter & Gamble|5m|2026-10-29 18:20:00–18:35:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|Berkshire Hathaway B|5m|2026-11-13 13:20:00–13:30:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|Newmont|5m|2026-10-28 17:45:00–17:50:00|AWAITING_USER / GAP|
+|Duke Energy|5m|2026-10-28 20:50:00–21:05:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|Duke Energy|5m|2026-10-28 13:50:00–13:55:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|AbbVie|5m|2026-10-30 11:50:00–12:05:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|AbbVie|5m|2026-10-29 13:50:00–14:05:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|AbbVie|5m|2026-10-28 13:50:00–13:55:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+
+
+<a id="cp-autonomous-zero-primary-20261123"></a>
+### 23.11.2026 — самостоятельная обработка нулевых наблюдений и восстановление подтверждённого первичного окна
+
+Исходная область задания:82 оставшихся+63 старых=145 уникальных диапазонов; ранее подтверждены145/145. Дополнительно в том же сохранённом наборе обнаружены32 непересекающихся старых диапазона. На23.11,00:57:22CET дополнительный набор:21 обработан,11 остаются; совокупный последний подтверждённый результат166/177. Это не полный DONE и не новая проверка всего архива. Work исправил два общих программных ограничения; прямых записей свечей Work0. Девять дополнительных ремонтов без наблюдений TV выполнены самим CP после обычного запуска, шесть из них новым строго ограниченным правилом нулевого времени. Ручная сверка Work не выдаётся за автономию CP.
+
+Код: [cd92f90](https://github.com/swindler2010/StockMonitor/commit/cd92f908605539bd4f2ba8a3da082c554dc83619), [cbf8581](https://github.com/swindler2010/StockMonitor/commit/cbf8581ac6e68187e76d533bdca4d510dcacf705).
+
+1. **Без TV, полностью внутри CP.** При полном парном первичном GETTEX/EUR, точном сохранении всех положительных5m OHLCV/количеств и всех15m родителей, единственном полном сопоставлении событий разрешено восстановить время существующих плоских нулевых наблюдений с задержкой≤5минут. Нулевой объём не превращается в сделку или доказательство NO_TRADES; новые наблюдения не создаются. Обычная последовательная очередь≤8 получает один версионный проход; завершённые записи и будущие сроки сохраняются. Пределы9свечей/5000событий/20000попыток сохранены.
+2. **Точное подтверждение одного15m родителя.** Если native действительно потерял количество, перенос с сохранением объёма применять нельзя. Добавлена отдельная метадатная функция confirm_primary_window: ручное подтверждение вTV всех шести полей timestamp/O/H/L/C/V связывается с предварительно захваченным полным независимым первичным источником, текущими5m/15m входами и снимками. Значения TV не принимаются как вход записи. Обычный CP повторно проверяет источник, identity, политики, доказательства и исходные строки непосредственно перед записью. Только один закрытый15m родитель, максимум3 исходных5m ребёнка; исходные строки и происхождение сохраняются. Старое ошибочное время учитывается отдельно как superseded, не как точный перенос. Противоречащие текущие наблюдения TV не игнорируются. Изменившийся источник/вход/подтверждение оставляет блокировку.
+
+**Фактический самостоятельный результат после штатного Save/Close/Restart00:39–00:40CET:** Oracle02.11,10:50–11:05; Michelin26.10,11:50–11:55 и23.10,12:50–12:55; GM26.10,11:50–11:55; CANCOM13.11,16:20–16:25; Airbus28.10,13:55–14:05; RWE28.10,17:15–17:30; Berkshire13.11,13:20–13:30; AbbVie28.10,13:50–13:55. Все9 RESOLVED_NATIVE и текущие по независимому валидатору, без observations. Michelin/GM/CANCOM/Berkshire/AbbVie — новое нулевое правило; Oracle/Airbus/RWE — прежнее полное строгое сопоставление, которому новая версия дала штатный проход. Доказательства: CP autonomous zero live verified.json; отдельная диагностическая проверка не записывала свечи.
+
+**Alphabet26.10,16:40 5m:** TV GETTEX ABEC, ISIN US02079K1079,EUR, время биржи/Берлин. TV15m16:30 O283,50 H283,70 L283,45 C283,45 V189 точно совпал с полным первичным GETTEX. Старый native родитель284/284/283,80/283,80,V50 действительно неполный. CP сам восстановил окно16:30–16:45 после обычного запуска новой версии00:51–00:52CET; последняя штатная проверка00:53:55CET RESOLVED_NATIVE, текущий receipt:1 добавлено,2 изменено,0 перенесено,1 superseded. Ошибочный старый16:30 ребёнок сохранён в before/журнале; фактические источник5m16:35,V118 и16:40,V71 не импортированы изTV. Рабочая база вручную не редактировалась. CP primary window live verified.json хранит точный receipt и исходные данные; приватный файл не публикуется.
+
+**Адресная проверка:** точный предлагаемый публичный код12PASS/12,795с. Новый сценарий проверил реальный normal queue ремонт с недостающим количеством, отсутствие записи при подтверждении, отказы при изменении ребёнка/родителя/первичного файла/политики/снимка и конфликтующем TV ABSENT, сохранение исходных значений и изолированный адресный rollback с отказом при чужих изменениях. Изменённые общие участки проверены прежними затронутыми сценариями, включая53/200 due/future/completed. Начальный запуск нового теста обнаружил лишний отступ правки; исправлен до публикации и перезапуска. Новое автономное правило отдельно11PASS/10,596с до следующего изменения. Старые полные аудиты не повторялись.
+
+Windows два штатных Save/Close/Restart, настройки Meta4H/6месяцев сохранены. Текущий MCP instance c55fccccc6d6f505cd3fc8a98597dead подтвердил соединение; health не является доказательством аналитической готовности. Ранее общая диагностическая публикация Bridge была устаревшей/FAILED, raw archive работал; эта отдельная параллельная проблема не исправлялась в данном этапе. Новое чтение свечей через MCP будет проверено отдельно после оставшихся диапазонов.
+
+Автономия CP относится к доказанным правилам первичного источника. Получение нового визуального подтверждения TV остаётся ASSISTED_ONLY; API confirm_primary_window не выдаёт CP прав управлять TradingView. Неполные исходные файлы и недостаточные доказательства не превращаются в NO_TRADES или торговый допуск. Account/позиции/исполнения/стратегии этим кодом не меняются. Существующая согласованная backup сохранена, новые полные базы не размножались. Откат только своих hunks: CP autonomous zero before/own patches/rollback.zip и CP primary window before/own patches/rollback.zip; изолированный откат нового режима проверен. Работа по оставшимся11 диапазонам продолжается, итоговый отчёт владельцу до завершения не отправляется.
+
+
+
+<a id="cp-remaining-intervals-complete-20261123"></a>
+### 23.11.2026 — завершён сохранённый список82 оставшихся и старых свечных диапазонов
+
+**Область и результат.** Реестр82акций, исходные82 оставшихся+63 старых=145 уникальных диапазонов. Финальная адресная приёмка23.11,01:18:14CET:145 обработаны,0 остаются; в82 —71 подтверждены первичным источником и11 имеют действующий исторический допуск;63 старых —63 первично подтверждены. Дополнительно в прежнем сохранённом наборе обнаружены32 непересекающихся старых диапазона. Приёмка01:18:42CET:32 обработаны,0 остаются, из них22 первично подтверждены и10 имеют действующий исторический допуск. Итого **177/177,0 неподтверждённых в указанном списке:156 первично подтверждены+21 исторически приняты**. Исторический допуск не выдаётся за исправленный OHLCV или биржевое NO_TRADES. Пересекающиеся родительские/дочерние задачи и широкий442 не прибавляются к177.
+
+**Личный вклад Work и фактические записи CP.** Work выполнил визуальную сверку TV, передал72 различных диапазона через реестр новых наблюдений, отдельно подтвердил точный15m первичный родитель Alphabet, исправлял неточные текстовые заметки с сохранением истории и внедрил общие ограниченные способы восстановления. Это не72 прямые правки свечей. Прямых записей свечей Work — **0**; все изменения выполнил штатный CandlePilot после независимой проверки первичных GETTEX/EUR. Для девяти новых диапазонов визуальная помощь вообще не понадобилась: CP после обычного запуска сам выполнил шесть новых доказанных переносов нулевых наблюдений и три прежних строгих сопоставления событий. Новая ручная сверка через TV остаётся ASSISTED_ONLY; права автономного управления TradingView этому коду не выдавались.
+
+**Что восстановлено без двойного счёта.** Сравнение только680 ключей из журнала изменений с согласованной исходной backup19:19CET22.11:5m —190 новых временных отметок,173 изменённых OHLCV,88 удалённых старых отметок;15m —52 новые отметки,153 изменённых OHLCV,24 удалённые старые отметки. Всего242 новых отметки и326 изменённых,112 прежних отметок сохранены в before/lineage и журнале. Новые отметки включают переносы; их нельзя называть242 совершенно новыми независимыми свечами. Чистое увеличение ряда —102 реальных5m свечи и28 пересчитанных15m родителей, всего130 записей. Отдельный журнал физических операций:501 квитанция,161 добавление/326 изменений/111 переносов/1 superseded. Эти счётчики имеют разную семантику и не суммируются как число ошибок. Прежние корректные участки вне подтверждённых окон не заменялись.
+
+**Последние результаты.** Meta23.10,20:20 5m:TV20:25 O575,80/H575,80/L575,70/C575,70,V2 против прежней плоской575,70; CP восстановил пропущенную начальную цену из первичного источника. BMW05.11,18:45 5m:TV18:40 61/61/60,98/60,98,V27;native прежде объединил51, включив24 из18:35. CP восстановил разделение. Newmont28.10,17:45–17:50:17:45 действительно пуст,17:50 присутствует101/101,06/101/101,06,V11;17:55 отдельно flat101,02,V30 вместо прежнего объединённого41. CP восстановил реальную17:50. Alphabet26.10,16:30–16:45:точное полное подтверждениеTV15m,V189 привело к первичному восстановлению16:35,V118 и16:40,V71; старый неверный16:30 сохранён как superseded. Все четыре результата текущие; ни OHLCV TV, ни искусственные свечи не импортировались.
+
+**Пустые участки последней сверки.** BASF13.11,22:20–22:35;RWE27.10,12:20–12:35;Palantir27.10,08:25–08:35;Adobe13.11,21:20–21:35;DHL28.10,21:20–21:35;JNJ29.10,21:20–21:35;Procter29.10,18:20–18:35;AbbVie30.10,11:50–12:05 и29.10,13:50–14:05. TV подтверждает отсутствие свечей и окружающий ряд. Они обработаны действующей исторической политикой, без создания свечей и без ложного утверждения об отсутствии сделок на бирже. УRWE объём12:40 отображается вTV округлённо1,23K, поэтому точное сравнение1225 не заявляется. У ранее проверенного Novartis26.10,12:10 первичный источник содержит нулевое наблюдение138,00, тогда какTV показывает flat138,02; эта особенность явно сохранена, полное совпадение этой свечи сTV не заявляется.
+
+**Неправильно было бы считать26 незакрытых старых статусов ошибками.** В прежнем широком наборе442 на01:19:19CET416 имеют RESOLVED_NATIVE; отдельно проверены только26 оставшихся статусов:5 уже подтверждаются текущими первичными квитанциями,21 имеют действующие исторические допуски;неподтверждённых0. Старый статус задания не подменяет результат независимого текущего валидатора. Полный повторный аудит/массовая загрузка не запускались.
+
+**Механизмы и приёмка.** Реализованные в предыдущих этапах bounded strict partition, нулевое время, sampled/opening price, конец сессии, атомарная сверка связанных различий и точное подтверждение первичного окна действуют в существующем последовательном writer CP. Все guards identity/ISIN/GETTEX/EUR/source/full-file coverage/native5m+15m/policy/revisions/current evidence остаются; изменившийся вход отклоняется непосредственно перед записью. DQ/CORE переоцениваются штатно. Последний проверенный публичный код [cbf8581](https://github.com/swindler2010/StockMonitor/commit/cbf8581ac6e68187e76d533bdca4d510dcacf705):12 адресных PASS/12,795с, включая53/200 очередь и изолированный точечный rollback. Повтор этих тестов после одних новых наблюдений не выполнялся.
+
+Windows Save/Close/Restart после установки, сохранён Meta4H/6месяцев; экран01:18CET работает, индикаторы и боковой объём отображаются, CP ACTIVE. Read-only MCP01:20:34CET, TEST c55fccccc6d6f505cd3fc8a98597dead, exact ABECG.GTX/GETTEX/EUR5m:16:35 283,50/283,70/283,50/283,70,V118;16:40 283,50/283,50/283,45/283,45,V71,следующие16:45/16:50 также прочитаны. Первое чтение по неподходящему обозначению вернуло DATA_UNAVAILABLE; оно не использовано как доказательство. Для правильного источника сначала получена revision, затем страница4строк с обязательной revision успешно прочитана.
+
+**Ограничение общей сводки.** Диагностическая публикация Bridge на01:19 устарела примерно27минут и имела3FAILED, хотя raw archive MCP свежий. На экране Meta остаётся отдельная общая отметка INVALID. Поэтому этот этап не объявляет все глобальные DQ-индикаторы исчезнувшими, всю программу безошибочной или все акции готовыми к исполнению. В данном сохранённом списке177 диапазонов/442 связанных запросов неподтверждённых0. Отдельная работа общей диагностической публикации не подменяется исправлением свечей и не изменялась этим этапом. Свежесть цены, сессия, риск, CORE и торговый сигнал должны проверяться перед исполнением.
+
+Хеши счёта и исполнений совпали с исходными. Торговых команд Work не отправлял. Параллельное изменение конфигурацииV5 не принадлежит этому этапу и не откатывалось. Work2,Store0.15,Performance Engine и реальные счета не изменены. Согласованная backup сохранена; откат собственных ограниченных окон и кода описан в предыдущем этапе. Опыт внесён в существующий каталог; новые исходные файлы/ключи/SQLite/счёт/снимки пользователя вGitHub не публикуются. Код,MASTER и отчёты — существующий PR21,main не перезаписывается.
+
+Подробные локальные доказательства:CP remaining TV acceptance.json;CP older additional current.json;CP broader remaining current.json;CP remaining unique candle changes.json;CP primary window live verified.json;CP autonomous zero live verified.json;CP remaining TV review receipts.jsonl. Даты всех177 диапазонов перечислены в приложенной адресной таблице; незавершённых дат в этой области нет.
+
+[Адресная таблица177 диапазонов](CP_TV_REMAINING_INTERVALS_RU.md).
+
+
+
+<a id="cp-candles-recheck-20261123-am"></a>
+### 23.11.2026,08:19–08:21CET — повторная проверка: общий ноль не подтверждён
+
+По прямому запросу владельца повторно прочитаны текущие сохранённые результаты, без нового аудита OHLCV, загрузок и повторных визуальных сверок TV. **Область прежнего отчёта177 диапазонов: сейчас174 подтверждены/допущены,3 не проходят текущую проверку исторического допуска.** Исходные82 —80 действующих/2 непринятых;старые63 —63/0;дополнительные32 —31/1. Первичное подтверждение156 диапазонов сохранилось, действующих исторических допусков18 вместо21. Прежние177/177 относятся к снимку01:18CET, их нельзя использовать как актуальный утренний результат.
+
+| Акция | TF | Интервал,Берлин | Причина текущего отказа |
+|---|---|---|---|
+|Novo Nordisk,DK0062498333|5m|28.10.2026,11:50|Изменились версии market:5m и interval_evidence; строгая проверка допуска отказала|
+|Novo Nordisk,DK0062498333|5m|28.10.2026,13:15|То же изменение зависимостей|
+|BASF,DE000BASF111|5m|13.11.2026,22:20–22:35|Изменились версии market:5m и interval_evidence; строгая проверка допуска отказала|
+
+У всех3 точная привязка native rows/neighbors/listing/observation совпадает с прежним допуском; fingerprint визуального подтверждения также текущий. У Novo market:5m15325→15331,interval_evidence254→255;уBASF14915→14923 и258→259. Текущий механизм _reviewed_market_tail_current допускает перепроверку изменившихся market/review-service версий, но не изменение interval_evidence; поэтому effective_accepted возвращает отказ. Это доказанная техническая причина текущего снятия допуска, а не доказательство вновь потерянных свечей. Полный смысл изменения реестра источника отдельно не проверялся; называть его безусловно служебным и обходить guard нельзя. Новое подтверждение/перевыдача допуска вручную не выполнялись.
+
+**Вся программа шире прежних177.** Свежий read-only MCP CandlePilot section generated_at23.11,08:20:00CET,revision4c527c8122b1eaa7c06cc0ac2f13dbb3c2484110aa56f8620460b38b5e477625:сохранённая текущая область446серий,72READY и374 проблемных отчёта, включая6INVALID,39GAP,311UNCONFIRMED,18SOURCE_UNAVAILABLE. Это сохранённые диагностические мнения по сериям, не374 заново доказанные повреждённые свечи. Другие площадки и неизвестные identity учитываются отдельно, не суммируются как ошибки GETTEX.
+
+С момента прежней приёмки появились163 ещё незавершённых запроса сверки у69акций:58QUEUED/105AWAITING_USER на согласованном снимке08:20:40CET. Родительские/дочерние и пересекающиеся интервалы не дедуплицировались в ошибки: это163задания, не163 потерянные свечи и не слагаемое177. В сохранённых официальных GETTEX-отчётах дополнительно есть INVALID:AbbVie15m иMicron5m/15m с EXCHANGE_NOTICE_CONFLICT;уMicron также SOURCE_COVERAGE_CONFLICT. Это отдельные текущие ограничения, они не исследованы/не исправлены этим read-only этапом.
+
+Общая диагностическая публикация аналитики Bridge по-прежнему устарела:около7ч27минут/45FAILED на первом health. Сам CandlePilot section удалось получить свежим, после двух INDETERMINATE и ожидания обычного расчёта; возраст основной публикации не подменяет generated_at отдельного свежего CP-раздела. Сохранённые общие оценки:80STALE/2EXPIRED, текущих0. Эти нули не означают отсутствия свечей и не являются проверкой отдельных торговых контекстов.
+
+**Личный вклад и изменения:**из177 перепроверяемых случаев3 сейчас не приняты;Work исправил0 и записал0свечей, этот этап только проверочный. Новых тестов не запускалось, код/свечи/допуски/счёт/позиции/стратегии не менялись. CP продолжает обычную работу:квитанции588 против501 на прежнем снимке;физические операции+1добавление/+4изменения/+5переносов. Это не87 исправленных ошибок. Доказательства сохранены локально:CP candle scope recheck current.json,CP remaining TV acceptance.json,CP older additional current.json. Старые результаты и публичная адресная таблица177 остаются историей снимка01:18CET; текущую оценку использовать из этой записи. Итог:утверждать «все свечные проблемы программы решены» нельзя.
+
+
+
+<a id="cp-recovery-scoped-20261123"></a>
+### 23.11.2026 — CandlePilot: четыре общие причины исправлены; восстановлено подтверждённое окно Siemens
+
+**Исходная область:** три повторно снятых исторических допуска из прежнего списка177 и отдельно163 новых незавершённых запроса у69акций. Это разные счётчики;163 — не число потерянных свечей. После штатной работы три допуска Novo Nordisk28.10,11:50/13:15 иBASF13.11,22:20–22:35 (5m,GETTEX/EUR) действуют. CP успел сам обновить их до окончательной установки правки; Work не приписывает себе их ручное восстановление.
+
+**Личный вклад Work:** исправлены4общие программные причины: ложный отказ точного TV-допуска после обновления глобального interval_evidence; ожидание пользователя при известной неполной официальной публикации; задержка такой дешёвой проверки за архивным проходом; неподдержанный случай полностью отсутствующего native5m/15m окна при точном подтверждении первичного родителя. Прямых свечных записей Work —0. Все guards source/ISIN/GETTEX/EUR/listing/DQ/policy/revisions/freshness/risk сохранены; read-only перепроверка не продлевает допуск/сроки и не выдаёт NO_TRADES.
+
+**Фактическое восстановление с помощью Work:** Siemens DE0007236101,21.10.2026,13:30–13:45Берлин. Work один раз визуально сверил TV GETTEX/EUR15m:265,35/265,50/264,90/265,50,V124 — все6полей совпали с заранее сохранённым полным первичным GETTEX. Штатный CP23.11,10:01:48CET восстановил3реальных5m свечи13:30/13:35/13:40 и1производный15m родитель13:30,added4/changed0,квитанция текущая. Повторный штатный ход10:02:57CET далRESOLVED_NATIVE/NATIVE_ROWS_CONFIRMED. Это1исправленный диапазон и3самостоятельных свечи+1родитель, не4независимые ошибки. Данные TV не импортировались.
+
+**Новый список163 на10:04:29CET:**8текущих подтверждений,155пока неподтверждённых;24изпоследних ждут конкретную неполную официальную публикацию. Сохранённые статусы:36QUEUED/100AWAITING_USER/22AWAITING_SOURCE/5RESOLVED_NATIVE; они не подменяют текущую проверку источника. Первые7подтверждений не считаются ручными исправлениями Work этого этапа. К09:53 короткий маршрут CP сам перепроверил206заданий у55акций; это не206восстановлений. Общий «все ошибки устранены» не заявляется. [Точные даты/TF/источники всех163 и оставшиеся причины](CP_CANDLE_RECOVERY_CURRENT_RU.md).
+
+**Внешние ограничения:** posttrade.20261120.08.15.mund.csv.gz обрывается наUTC08:05:51,парныйMUNC идёт до08:14:57;точное повторное получение вернуло404. Пустой/недоступный файл не доказательство отсутствия торгов. Отдельные сохранённые EXCHANGE_NOTICE_CONFLICT AbbVie15m/Micron5m/15m26.10 и SOURCE_COVERAGE_CONFLICT Micron не скрыты. AbbVie07:55:нулевая255,25совпала сTV,но это не доказательство сделки и не отмена биржевого уведомления. Новые визуальные подтверждения TV остаютсяASSISTED_ONLY; CP использует готовые доказательства и собственную очередь, автоматических прав GUI/OAuth ему не добавлено.
+
+**Проверки и установка:** публичный [1627148](https://github.com/swindler2010/StockMonitor/commit/1627148adedc3be15e83a59ed4a5af5a0ef27b6c),9адресныхPASS/3,814с,18точных публичных файлов; включая53/200, приоритет TV, будущие сроки, отказ при реальных изменениях native/source/политики/файлов/снимка, старый частично присутствующий родитель и новый полный пропуск. Не GitHub Actions/не полный аудит. Save/Close/Restart выполнены штатно;Meta4H/6месяцев сохранён. ИтоговыйTEST подтверждён read-only MCPhealth,instancef0c1c10f8b0ca9898902a8a6c09cc4a4. Один CP-раздел MCP прочитан ранее;последующее чтение подробностей вернулоPATH_NOT_FOUND/transport timeout — отсутствие снимка не выдаётся за ноль. Общая Bridge-публикация не изменялась. Selector выполнен внеTk:2,143→3,506с на текущем реестре,цель250мс не достигнута;устранённая промежуточнаяSQL-корреляция32,790с вTESTне устанавливалась.
+
+Счёт и исполнения совпали по хешам до/после. Work не создавал сделок, не менял позиции, настройки стратегии/риска, Work2,Store0.15,Performance Engine и реального брокера. Согласованная backup сохранена; собственные before/hunks иCP scoped recovery rollback.zip — в существующем архиве. Откат только собственных hunks после проверки текущего кода, без замены рабочейSQLite/параллельных модулей. Новые правила внесены в существующий опыт CP. Публикация — существующий draftPR21;main/force/merge не применялись.
+
+
+<a id="cp-tv-joint-20261123"></a>
+### 23.11.2026 � ����� TV-������; ����� ������ ������������� ����������� ��������� CP
+
+�������� �������:163 ����� ������� � 69 �����; � 10:04:29 CET ������������ 8. �� 23.11.2026 12:37:22 CET: **28 ������������/������, 135 ��� ������������ �������������**. ��� ��������� ����������/TF, �� ���������� �����. ����� ���������� Work ������� ������ ���������� 15 �������� �� 163; ��� 5 CP ���������� ��������������. ������ ������ ������� ������� Work0; ����� ����� ����������� ������� ���������, �������� � �������� ������ 5. ������������� NO_TRADES, �������������� �������� ������ � ������������ ���� ����������� ��������.
+
+����� �������� ��������� ��������� disjoint15m DIFFERENT ������ ��� ����������� ������� ������������ OHLCV ��������� GETTEX, ��������� �������� ���������� �������� ��� ���������� ��������� ������ ������, ������ ����� �������� ������� � ���� ��� ��������� ������ due ������ ��������. ��� ������� ������������� ���������. �������� ��������� source/native/listing/policy/������, ������� ����� � �������������� ����� ��-�������� �����������.
+
+��� [9eed266](https://github.com/swindler2010/StockMonitor/commit/9eed26679a943c542d82cb968fd6c83f64033098),7 �������� PASS,19 ������ ��������� ������, ������� 53/200. �� 23.11 � 12:28:15 CET �������� ���� 19.11,14:00�14:45 (added0/changed3/relocated2); ������� 14:15 ���������� ��� �� ���������� ����������, �������� �������� �� ��������. � 12:31:37 CET CP �������� 15:00�15:15 (added0/changed3/relocated0). � 12:36:05 CET ������� ��������� ������ �������� 15:00 � ���������� NO_TRADES14:45 �� ������� ���������� ���� 14:30�15:15 (added0/changed0). ��� ������ ��������� ������� �������� RESOLVED_NATIVE; ��� ����������� ��������� � ��������� ������������� 14:15 ��������� ��������. Work ������ ������/��������� ���������� � ��������� ����� ���; ����� ����� ������� CP. Deutsche Bank 11.11,18:40�18:55 �Schneider 18.11,14:30 ��� ���������� ������������ ������� ��������. ����� ������ ����, ��� 27 ���������� � ������� 163 � � [������� ������](CP_CANDLE_RECOVERY_CURRENT_RU.md#cp-tv-joint-20261123).
+
+TradingView Basic ������ ��������� intraday ��� Cancom/Hannover Re: ������ �� ���������, �������� �� �����������. Northern Star 20.08.2024/Michelin 22.09.2022 ������������� ���� � TV, �� � �� ���� �� ������������� ��� ����������� ������ GETTEX/EUR ������. �� Newmont 17.02.2015 �������� ������� ������� ���� ����� 2,45%, ������� �� ��������. ������� ������������ ����� 20.11,08:15 UTC � ������� �������� ��������� �������� �������������. read-only MCP12:35:05 CET ������ ������ SCHN.GTX/GETTEX/EUR15m:19.11,14:15 flat239,85,V3;14:30 flat239,55,V0;15:00 239,00/239,20/238,95/239,15,V116;14:45 ���������� ����������� ����� ��������. �������� �������� � ����� ������������ revision �� TEST7450158322e301e79611e46e801988fe. MCP12:38 ���������� Bridge running, ������ Meta4H/6 �������,76 ������������ CURRENT; ����� ������������� ������ 88 ������������ ��� RUNNING49/88 � �� ����������� �� ������� �����������, �� ����������� ����� �������. Save/Close/Restart � ����������� PAPER �� ����� ���������; ���������/�������/����������/�������� ������ �� ��������. �������� �������� patch/ZIP �������� � ������������ ������, ����� _memo � ���� ���������. ���������� ��������� ������� ���������� ��������, ����� TV-����� �������� ASSISTED_ONLY. ��� ������� �������� �� ���� ������ �� ��������� ���������.
+
+
+Публикация этого дополнения: [1418792](https://github.com/swindler2010/StockMonitor/commit/1418792b0de2498fbaf177d712be70a52a8e475a), [PR21](https://github.com/swindler2010/StockMonitor/pull/21), [подробный комментарий Issue5](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-7099989597). Публичные MASTER, текущий отчёт и запись опыта прочитаны обратно и точно совпали. Это завершённый программный этап; оставшиеся 135 запросов не объявлены исправленными.
+
+
+<a id="cp-weekly-20261123"></a>
+### 23.11.2026 — недельный пересмотр GETTEX:15 фактических дневных сверок, ограничение управления
+
+Исходный реестр сроков до30.11.2026 10:00 Europe/Berlin:366 активных записей (291 уже due),21 дневная и345 внутридневных;227 завершённых первичных/RESOLVED_NATIVE не перепроверялись. Это не366 новых ошибок и не прежний список163. Work заново просмотрел15 дневных записей (Apple6,NVIDIA9) и передал через штатный observe;10 уже получили обычную проверку CP и сохранили AWAITING_SOURCE/UNCONFIRMED,5 ещё RECHECK_QUEUED на13:21:17CET. Лично исправленных свечных ошибок0, прямых свечных записей0; новых подтверждённых восстановлений CP0. Все старые результаты TV подтвердились на уровне наличия/отсутствия/нулевого объёма; независимого точного старого GETTEX/EUR всё ещё недостаточно. Только эти15 реально проверенных observation получили новый внешний срок30.11,12:58–13:18CET; все остальные сроки не продлевались.
+
+Не выполнены шесть дневных строк:Apple26.01–03.02.2015,25.05.2015,09.10.2017,23.05.2019;NVIDIA25.01.2018;SwissRe08.07.2025. 345 внутридневных кандидатов не объявлены проверенными при тарифном ограничении Basic. Средство Windows после unknown screenshotId/active request вернуло изображение «Демо» СМ вместо запрошенного окна TradingView393484; дальнейший ввод остановлен. Это ограничение средства управления, не повод ослаблять CP. Точные15 дат/исходные идентичности, сохранённые результаты и следующие сроки — [в текущем отчёте](CP_CANDLE_RECOVERY_CURRENT_RU.md#cp-weekly-20261123).
+
+Код/стратегия/риск/источники/разрешения/позиции/счёт не редактировались наблюдателем;торговых команд0. Старые PASS, пилот42 и общий аудит не повторялись;тестов кода нет, код не менялся. Совпадение полных хешей счёта с утренним этапом не заявлено:между этапами они изменились в рабочей базе, параллельные действия не исследовались. MCP13:21:Bridge running,TEST c5bf74c9f5732dacb791d7e7190d273a,общий расчёт RUNNING1/88,не готовность торговли. Доказательства и история наблюдений сохранены в существующем архиве;еженедельное продолжение остаётся полезным и не отключено. Общий DONE и исправление оставшихся351 внешних сверок не заявляются.
+
+
+### 23.11.2026 — окна и переключение графика: пять общих исправлений Work
+
+В адресном разборе найдены пять причин; Work исправил пять. Общее исходное число ошибок программы неизвестно. Свечных исправлений Work — 0; автономные действия CP этим этапом не пересчитывались и Work не приписываются.
+
+Убраны повторный SQLite-проход по всем акциям, очистка bitmap до готовности нового кадра, смена высоты карточки сигнала, повторные неизменные раскладки и лишний перезапуск прогретого CORE. Сохранены сброс старого сигнала, финальные проверки выбора/ревизий и ограниченная отмена read-only запроса. 12 адресных PASS, включая 53/200; после последнего изменения logger три затронутых PASS на финальном кандидате.
+
+Установлено в TEST: код 0a2ea08, штатный запуск 23.11 в 16:46:48 CET, instance 700a8a8728717cd5b44a0178c24d8cbf. Окна индикаторов/рисования/CP, Meta/Microsoft 1H/4H, масштаб после автообновления и размеры проверены. Живая передача CORE подтверждена: старый результат не опубликован; display 2,578 с / CORE 5,375 с в тёплом случае. Повтор с конечным logger: grace 4,531 с, display 7,328 с / CORE 10,281 с. Это не SLA. Исходный Meta/4H/6 месяцев восстановлен. MCP подтвердил совпадение настроек и отсутствие черновика; CP продолжает обычную очередь.
+
+Прежнее PARTIAL о незагруженной правке/недоступном окне снято. Остаются холодные расчёты/ожидание до 10–17 с, отдельный Agg около секунды, промежуточная нативная перерисовка Windows; ранее отмечен callback параллельных новостей 1,438 с. Полный максимум производительности не заявлен. Свечи, счёт, позиции, стратегия и торговые проверки этим этапом не менялись.
+
+[Подробные замеры, границы проверки, код и адресный откат](SM_PROGRAM_PERFORMANCE_REVIEW_RU.md#23112026--зависания-окон-и-рывки-при-переключении-графика). Публикация в draft PR21, без слияния и без приватной базы/ключей.
+
+## 23.11.2026 — Work1: ещё 4 причины задержек UI, установленный этап
+
+В ограниченном этапе найдено4 общих источника лишней CPU-работы, Work исправил4: копирование attrs в OHLCV-проверке/уровнях и тяжёлые read-only планировщик CP/порядок списка в GUI-интерпретаторе. Последние два теперь используют существующий compute_feed; writer/политики/финальные проверки token/identity не менялись. Свечных записей Work0, ремонты CP отдельно не пересчитывались; общего исходного числа ошибок программы нет.
+
+16 адресных тестов публичного пакета PASS, включая53/200, readonly, изменённые входы и отказ stale/expired. Установлено штатными перезапусками TEST: Agg10замеров среднее0,381с/максимум0,500с вместо прежних2–4с-всплесков; окно индикаторов callback0,109с, содержимое проверено. MCP после последующей смены instance подтвердил исходные настройки saved=true/unsaved=false; выбор Microsoft1H и возврат Meta4H выполнены. CP/Bridge продолжают работать; свечи, стратегии/позиции/счёт не менялись.
+
+**Общая скорость PARTIAL:** cold display9,891–12,718с, CORE13,860–15,437с; остаются подготовка/очередь, nativepaint и прежний news callback. Повтор всех окон не объявлен: Windows helper затем отказал foreground pid/active request. Код[f909698](https://github.com/swindler2010/StockMonitor/commit/f9096981f1d0d40651d66f178f3370039d6c23f7), draft[PR21](https://github.com/swindler2010/StockMonitor/pull/21), без merge. [Подробные измерения/границы](SM_PROGRAM_PERFORMANCE_REVIEW_RU.md#23112026--продолжение-фоновый-cpu-и-копирование-метаданных). Адресный rollbackZIP/patch в существующем СМ-Архив проверен CRC/SHA/reversecheck; только собственные блоки, без замены SQLite и чужих правок.
+
+## 23.11.2026 — Work1: резерв chart/trading, один дефект очереди исправлен
+
+Воспроизведён1 новый общий дефект: trading занимал последний chart-резерв при3 фоновых задачах. Work исправил1, в ограниченном сценарии осталось0; общее число оставшихся ошибок не измерялось, предыдущие4 исправления не пересчитываются. Пул Dispatcher4→5, отдельные места chart/trading, прежний максимум3 фоновых заданий; под нагрузкой2, один writer и все guards сохранены. Свечных записей Work0; ремонты CP отдельно не аудированы.
+
+16 адресных тестов точного публичного пакета PASS, включая53+200, stale-result/input rejection, pressure, persistence/cancel и single writer. Штатно установлен в TEST6f4a8aa9a6391496536e01edd3d6bc61; Windows NVIDIA1H↔4H: display2,907–3,343с (mean3,152), CORE4,969–5,453с, Agg0,375–0,531с; это не SLA всего холодного архива. Индикаторы/обычный и боковой объём/уровни видны, окно настроек проверено без изменения параметров. Исходный NVIDIA1H/неделя восстановлен; MCP running/saved=true/unsaved=false. CP продолжает работать, общий failed6 этим этапом не разобран.
+
+Остаются холодная подготовка данных, прежние startup/native/news exceptions и ограничение ресурсов; общего DONE скорости нет. Код[ed83a8a](https://github.com/swindler2010/StockMonitor/commit/ed83a8a0c8f23649a1379b3425c9f2598bf78d7b), draft[PR21](https://github.com/swindler2010/StockMonitor/pull/21), без merge. [Доказательства/границы/откат](SM_PROGRAM_PERFORMANCE_REVIEW_RU.md#23112026--отдельные-места-графика-и-торговли-в-dispatcher). Откат2оригиналов/newtest и reversecheck проверен в существующем СМ-Архив. Данные/позиции/счёт/стратегии не менялись.
+
+## 23.11.2026 — Work1: ускорение холодной истории без смены DQ
+
+В ограниченном этапе было3 лишние операции, Work устранил3: поштучная геометрия крупных NO_TRADES-наборов, повторное декодирование подтверждённого заголовка в одном read-only WAL-виде, сразу отбрасываемый deepcopy attrs при привязке GETTEX-first. В данном объёме осталось0; общее число оставшихся ошибок не измерялось, прежние4+1 исправления не пересчитаны. Свечных записей Work0, автономные ремонты CP отдельно не пересчитывались.
+
+26 адресных тестов публичного пакета PASS, включая53+200 дифференциальных случаев, полный DQ-отчёт, реальные дыры/trades/zero/INVALID/неполную публикацию, DST/clock/identity, согласованное чтение/ревизии и невозможность заимствовать соседний допуск. Scalar-fallback, финальные guards и writer-путь сохранены. CP использует общий код автоматически.
+
+Две серии на отдельных неизменных Meta4H WAL-видах: средние7,154→6,232с и6,934→6,664с, совокупно~8,5%; разброс большой, это не универсальная гарантия. Чтения подтверждения103→5, сами свечи331/DQ/provenance/уровни/зависимости попарно совпали внутри каждой серии. В TEST75098bb916b3cfd815f1f318bac13d48: cold Meta4H display6,360с/CORE9,672с, последующие display3,109–3,312с; исходный NVIDIA1H/неделя восстановлен, display2,984с/CORE5,422с. Визуально индикаторы/боковой объём/уровни, INVALID не скрыт; MCP running/saved=true/unsaved=false. Очередь продолжает работу; торговли вручную/смены истории, стратегии, риска, счёта и позиций нет.
+
+Остаются необходимые вычисления/доказательства, фон и прежние native/startup/news exceptions; общего DONE скорости нет. Код[66e3a2d](https://github.com/swindler2010/StockMonitor/commit/66e3a2d0a8cb57894a8228143ec1004058580544), draft[PR21](https://github.com/swindler2010/StockMonitor/pull/21), без merge. [Измерения, границы и точечный откат](SM_PROGRAM_PERFORMANCE_REVIEW_RU.md#23112026--холодная-история-пакетная-проверка-доказательств). CRC/хеши/reversecheck3оригиналов/newtest в существующем СМ-Архив PASS; чужие правки и базы не заменять.
+
+## 23.11.2026 — Work1: продолжение выбранного дизайна, новости и поиск
+
+В исходном ограниченном перечне6 доработок, Work сделал6: превью источника, постоянные отметки/закладки, фактические OHLCV/цвет сводки, сортировка, избранное поиска, защита позднего логотипа. Дополнительно Work устранил2 выявленных в приёмке дефекта — перестройку карточек при отметке и ожидание ручного Search за misc/логотипами. В этом этапе0 незакрытых программных пунктов; общий остаток дизайна не измерялся, все7 макетов DONE не объявляются. Work свечных записей0, CP-ремонты не пересчитывались.
+
+21 различный адресный сценарий PASS (20, затем4 по изменённому поиску, затем1 по hover; повторы не суммировать),24 локализационных проверки PASS. Проверялся публичный кандидат с локальными неизменными зависимостями, не полный CI. Windows: реальные карточки NVIDIA/русский машинный перевод, правая сводка1H, закладка и фильтр1/8 после штатного Restart; живые5 результатов nv, сортировка и избранное без добавления/допуска. Обе временные UI-коллекции возвращены к0. Превью источника в этой сохранённой ленте отсутствуют — честный fallback, live-фото Windows не подтверждено.
+
+История, DQ/CORE, CP-очередь, PAPER/стратегии/счёт/позиции и настройки индикаторов не менялись этим этапом. Только2 UI-settings, ограниченный preview-cache, существующий Dispatcher/read-приоритет, без новых потоков. Сохраняется NVIDIA1H/неделя. Остались ранее записанные отличия других экранов, массовые действия/группировка/экспорт рисования и поля макета без реального источника.
+
+Код[5a85ac7b](https://github.com/swindler2010/StockMonitor/commit/5a85ac7beb7416284e26afbedea80f39cfac8092); [проверка, границы и адресный откат](DESIGN_SCREEN_MATRIX_AND_PROJECTIONS_RU.md#news-search-20261123), draft[PR21](https://github.com/swindler2010/StockMonitor/pull/21), без merge. Только собственные hunks, чужие локальные правки сохранены; CRC/SHA/reverse-check8 оригиналов PASS, новые4 файла описаны в rollback.json. Базы/счёт/ключи не публикуются.
+
+## 23.11.2026 — Work1: фоновая лента всех акций и недельное хранение
+
+2 запроса владельца реализованы. В узком объёме5 препятствий (календарное голодание RSS, misc-ожидание, замена/лимиты30–100, отсутствие TTL-очистки связанных записей, перевод по открытию); Work исправил5/5, остаток0. Общее число ошибок СМ неизвестно, свечных исправлений0. Существующий один NewsRuntime/Dispatcher, без новых потоков или массового параллельного запроса всех акций; график/торговля/явные чтения сохраняют приоритет.
+
+Все82 акции+рынок загружаются/переводятся без открытия графика. Новости накапливаются7дней от публикации, при отсутствии даты — от зафиксированного получения. Пустая/повторная выдача не продлевает срок. Примерно раз в минуту в доступном фоне очищаются истёкшие статьи, переводы и отметки; после закрытого СМ — при следующем запуске. Физический архив отката отдельно сохраняется. У источников остаются rate limits/Retry-After,30мин — порог необходимости обновления, не гарантия длительности полного обхода. Перевод3 статьи за ход с явным fallback и backoff, без подмены языка.
+
+41 различный локальный адресный сценарий PASS, из них25 отдельно на публичном кандидате (один дополнительный локальный BLS-сценарий не публиковался); новые53/200 обход/очередь, exact7d, накопление, guards, backoff и сохранность соседних settings подтверждены. Не полный CI/аудит свечей.
+
+TEST:83/83 недельных политик;1422→931 после автоматической очистки до новых загрузок (491 истёкшая публикация, это не ручной ремонт Work и не свечи);0 старых по дате,0 потерявших статью переводов. В19:30:31/19:32:36UTC штатно обновились DÜRR/ASML без их открытия Work; затем933 статьи. Чтение новой metadata83 лент11,35–12,89мс. Windows-подпись7дней/карточки/сохранение проверены после штатного Save/Restart. Сохранён текущий Amazon4H/6месяцев и прежние несохранённые настройки владельца; при его активном вводе оставлено окно новостей, дальнейших кликов нет. Bridge running instance3daad08b122f825d71d99e88c5ecf43f. Торговая логика/разрешения/риск/счёт/позиции/история не менялись, сделок нет.
+
+Код[2273df2f](https://github.com/swindler2010/StockMonitor/commit/2273df2f362b1dd254316a9d9d4627683eef340d); [правила, результаты и точечный откат](NEWS_DRAWING_DESIGN_RU.md#background-week-20261123), draft[PR21](https://github.com/swindler2010/StockMonitor/pull/21), без merge. Только собственные изменения, локальный опциональный company-calendar адаптер сохранён и не опубликован этим этапом; публикация работает без него. CRC scoped-backup/10 оригиналов/экспорта новостных ключей, SHA и reverse-check PASS;2 новых файла. Не восстанавливать целую SQLite/чужие модули. Приватный backup и рабочие статьи/база/ключи не публикуются. Ограничения источников/перевода не скрыты, полного DONE всех прежних задач дизайна нет.
+
+## 23.11.2026 — Work1: вкладки главного экрана
+
+Исходно5 неверных переходов; Work исправил5/5: «Обзор», «Анализ», «Финансы» больше не вызывают общую карточку, «Отчёты»/«События» — новости. Дополнительно исправлены3 связанные причины (4 непереведённых заголовка, смешение дат кешей, ожидание короткого чтения за фоном). Всего8 описанных пунктов исправлены Work,0 осталось в этом объёме; нижние дубликаты отдельно не считать. Общее число ошибок СМ неизвестно, свечных записей Work0, CP-ремонты не пересчитывались.
+
+Семь разделов внутри главного окна, отдельное содержимое/активная вкладка, сохранённый canvas/viewport/рисунки. CORE переиспользуется с точным capture/ревизиями/файлами и финальной проверкой; нет актуального результата — честное ожидание. Вспомогательные данные с собственными источниками/датами/валютами; отсутствующие не выдумываются. Существующий Dispatcher/chart-резервация, без новых работников/смены writer/торговых правил.
+
+19 различных адресных сценариев PASS:16 на закреплённом публичном кандидате, после изменения резервации4 затронутых PASS (новый53/200), два ранее затронутых TF/fullscreen/viewport PASS; повторы не суммируются.50 проверок переводов de/en PASS. Это не полный CI/аудит программы. Windows после штатного Save/Close/Restart:7 вкладок, нижние кнопки, реальные финансы/отчёты/события AIRBUS/Amazon,8 новостей, принятый4H WAIT с331 закрытой свечой/причинами/показателями и ожидание пересчёта. Вернули AIRBUS/4H/6месяцев/«График», шкала/EMA/объём/уровни сохранены. Bridge running972a2d2638b8144c618555e3e16d8173; MCP независимо подтвердил текущие ISIN/TF/период. Ручных сделок/изменения свечей, допуска, риска, счёта или позиций нет.
+
+Ограничения: отдельный overview-cache AIRBUS пуст; финансовая таблица/отчёты доступны отдельно. Вспомогательные refresh читают кеш, загрузка полной отчётности — в прежнем подробном окне; перевод источника может ожидаться и явно показан оригинал. Уже запущенный расчёт/ресурсы могут задерживать показ; общего SLA250мс и DONE всего дизайна нет.
+
+Код [25e827c4](https://github.com/swindler2010/StockMonitor/commit/25e827c42119034d834edf073e5e052bb9faa224), draft[PR21](https://github.com/swindler2010/StockMonitor/pull/21), без merge. [Подробная проверка и границы](DESIGN_SCREEN_MATRIX_AND_PROJECTIONS_RU.md#asset-tabs-20261123). Адресный before.zip/own.patch/reverse.patch/rollback.json в существующем СМ-Архив: CRC/хеши/обратное восстановление3 оригиналов и хеши2 новых файлов PASS. Только свои изменения, чужие категории/диагностика сохранены; приватные базы/новости/счёт/ключи не публикуются.
+
+## 23.11.2026 — Work1: краткое оформление всех семи разделов
+
+4 запрошенных улучшения отображения выполнены Work4/4: суммы/единицы, выравнивание, служебные строки, даты. Найденные при приёмке2 недочёта геометрии (7 строк обзора и исходное число под таблицей) исправлены Work2/2. Остаток0 в этом объёме; исходное/остаточное число ошибок всей программы неизвестно, свечных записей Work0, CP-ремонты не пересчитывались.
+
+Сокращения тыс/млн/млрд/трлн по выбранному ru/de/en; цена/EPS/P/E/ratio и валюты не смешиваются. Исходные числа в подсказке/по выбору финансовой строки, подробные окна сохранены. Свои источники/даты, STALE→Устарело, ISIN не проверен виден. Berlin/CET/CEST только при известной временной базе, внешнему naive timestamp пояс не додумывается. Записи анализа/отчётов выровнены, события/новости/шапка графика компактнее; текст причин/новостей не заменяется выдуманным резюме.
+
+11 различных адресных сценариев PASS (9 публичного кандидата, затем2 после изменения геометрии),18 переводных подписей PASS. Windows после Save/Close/Restart:7 разделов,7 чисел обзора без прокрутки, точное значение tooltip/финансовой строки, отчёты/события/принятый4H WAIT/11 новостей, компактный объём и даты; Amazon/4H/6месяцев сохранены, оставлен Обзор. Bridge running64e629a190126f197841db83f5cec4ae; MCP независимо подтвердил выборку. Торговая логика/счёт/позиции/история не менялись, ручных сделок нет. Это оформление, не общий аудит или SLA250мс.
+
+Код[e45fb0d1](https://github.com/swindler2010/StockMonitor/commit/e45fb0d1d4a0c8fc61bc1cea9bd14df2d48476ac), draft[PR21](https://github.com/swindler2010/StockMonitor/pull/21). [Подробности и адресный откат](DESIGN_SCREEN_MATRIX_AND_PROJECTIONS_RU.md#compact-figures-20261123): before.zip/own.patch/reverse.patch/rollback.json в существующем СМ-Архив, CRC/SHA/reverse-check5 оригиналов и хеш нового теста PASS. Только свои изменения; базы/ключи/счёт не публикуются.
+
+## 23.11.2026 — Work1: исправлен общий виджет DQ/анализа
+
+1 ранее установленный UI-недостаток исправлен Work1/1, остаток0 в этом механизме. Убрана полоса-константа100; история CP сTF/исходнымDQ/причинами отделена от принятого анализа. ОжиданиеCORE не стирает DQ; новая акция/TF/период сбрасывает старую область, пустой/чужой ряд не сохраняет прежнюю готовность.ⓘ показывает source/identity/время/исходные причины и даты, read-only и bounded. Все акции/11 TF используют общий код. Реальные INVALID/ошибки не скрыты, новой торговой готовности/процента этот виджет не выдаёт.
+
+10 адресных сценариев публичного кандидата PASS,56 переводных подписей PASS; kernel-проверка подтвердила существующее различение доказанного отсутствия ребёнка и неизвестного пропуска, изменения агрегатора не потребовалось. Не полный CI/аудит всех свечей. Windows Save/Close/Restart:Apple4H21 неполный/17 неподтверждённых/coverage conflict и отдельно доступныйWAIT; подробности gettex/GETTEX/EUR сдатами;1H очистка затем25/75 и свойWAIT; вернулиApple4H/6месяцев/График. MCP подтвердилвыборку, Bridge runningbaceae54d6a28128cef873553f4363c3. История/CORE/CP/источники/риск/счёт/позиции не менялись, ручных сделок0.
+
+Данные не объявлять восстановленными:Work candle writes0; глобальные начальный/остаточный счётчики неизвестны, CP-ремонты не пересчитывались. Прежние NVIDIA4H2(25.09 19:30,26.10 07:30)/Amazon4H17(07.08–17.11.2026) остаются на штатной проверке CP, исходные даты/источники различаются; текущие Apple-предупреждения сохранены. Только достоверные данные/доказательства могут снять их. Пустой источник и отображение процента не являются подтверждением. Гарантии отсутствия любых будущих ошибок нет.
+
+Код[28ecbe71](https://github.com/swindler2010/StockMonitor/commit/28ecbe718cee82ec406dfbc5903752fd9eb09103), draft[PR21](https://github.com/swindler2010/StockMonitor/pull/21). [Проверка и адресный откат](DESIGN_SCREEN_MATRIX_AND_PROJECTIONS_RU.md#quality-panel-20261123):2 исходника CRC/SHA/reverse-check и2 новых файла с хешами в существующем СМ-Архив, только свои изменения. Базы/ключи/счёт не публикуются.
+
+## 24.11.2026 — Work1: четыре оставшихся блока дизайна
+
+Реализованы адаптивные размеры/оформление окон и контекстные действия списка; множественный выбор/группировка/массовые операции/JSON-экспорт разметки; справочный премаркет существующей карточки с identity/currency/time и архивной отметкой; шкала/фильтр словарной тональности исходных заголовков. Переводы ru/de/en. Undo/redo, защита закреплённых групп и финальные проверки контекста сохранены. Торговые/свечные механизмы не менялись.
+
+Исходный план4 блока, общий исходный счётчик программных ошибок неизвестен. При приёмке новой версии Work лично устранил2 UI-недочёта (подписи фильтров и активная вкладка рисования), остаток по ним0. Work candle writes0; CP repairs не пересчитывались. 50 адресных PASS, после уточнения14 PASS публичного кандидата; всего51 различный сценарий, плюс60 de/en проверок. Windows: ASML4H/неделя после штатного сохранения/запуска; список/контекстное меню, поиск, индикаторы, рисование/таблица/экспорт, русские новости/сводка/шкала. Пользовательские рисунки/сделки для теста не создавались.
+
+Ограничения: в проверенной карточке ASML нет premaket-полей — live-премаркет не подтверждён; процент влияния новости на цену отсутствует у источника; тональность — явно подписанная словарная эвристика без исследования точности, не торговый сигнал. Попиксельный паритет всех изображений и SLA всех окон не заявляются. Два образца рисования обслуживает один каталог. MCP health дал транспортный timeout, независимая торговая готовность в этом этапе не проверялась.
+
+Код[86f0e44c](https://github.com/swindler2010/StockMonitor/commit/86f0e44c31e32350251fba30a3ec79dbcdb24d1b), [bfa7ceff](https://github.com/swindler2010/StockMonitor/commit/bfa7ceffd9952c9294d6987a978d1148be108cc1), draft[PR21](https://github.com/swindler2010/StockMonitor/pull/21), без merge. [Доказательства/ограничения/адресный откат](DESIGN_SCREEN_MATRIX_AND_PROJECTIONS_RU.md#completion-20261124). Только свои hunks; архив исходных11 файлов CRC/SHA, кандидат/обратный патч проверены, приватные базы и счёт не публикуются.
+
+<a id="final-design-20261124"></a>
+
+## 24.11.2026 — Work1: оставшиеся три блока дизайна завершены
+
+В Windows TEST реализованы и проверены 3/3 согласованных блока: визуальный проход по семи изображениям/шести окнам, автоматический премаркет и контекстная тональность новостей. Общий исходный счётчик ошибок программы неизвестен; в адресной приёмке найдены 2 технических дефекта (белая вспышка окон, повторное ожидание уже полученной котировки), Work исправил 2/2, остаток этого набора 0. Work candle writes0, ручных сделок0; CP repairs не пересчитывались.
+
+Премаркет выбранной акции работает через прежний Dispatcher, с проверкой TLS, источника, символа/валюты/площадки, pre-сессии, возраста, поколения и cooldown; отдельный информационный ряд, без подмены GETTEX/исполнения. Apple AAPL/NMS/USD автоматически обновлялся 24.11 в12:04,12:11,12:15–12:16 CET и после штатного перезапуска. ASME.DE: NOT_PROVIDED, без подстановки другой площадки.
+
+Тональность: на фиксированной отложенной части FinancialPhraseBank 56/58 верно (96,55% среди выданных оценок), покрытие58/459=12,64%,401 без оценки,2 ошибки классификации остаются. Это не точность всего потока и не прогноз цены; ru/de имеют15 адресных смысловых случаев без независимой оценки рынка. Проверены43 различных сценария (29чистых+14GUI), повторные5GUI не суммируются,28de/en сообщений; синтаксис/rollback/15файлов read-back PASS. В новостях фильтр1/10 и возврат«Все»; исходный ASML4H/неделя восстановлен и сохранён.
+
+Итоговый код[0663b0f2](https://github.com/swindler2010/StockMonitor/commit/0663b0f24a022aa1cef9903042ff29e0095eb1ab), [draft PR21](https://github.com/swindler2010/StockMonitor/pull/21), без merge. [Полный отчёт, таблица окон, источники, ограничения и откат](DESIGN_SCREEN_MATRIX_AND_PROJECTIONS_RU.md#final-design-20261124). Полный аудит свечей/торговой готовности не выполнялся, реальные DQ не скрывались, счёт/CORE/стратегии/история не изменялись.
+
+
 <a id="paper-v2-runtime-issue24-20261124"></a>
+
 ## 24.11.2026 — Issue #24, новая V2 30m в штатном PAPER
 
 **Положительные исследования — да на ранее проверенной истории; новые прибыли не подтверждены.** Использована комбинация «Ложный пробой вниз с персональным прогнозом V2», 30.07–20.11.2026: +199,37 € после €2/сторону и полного спреда20б.п.,16сделок,9/7 дней,просадка0,846%; не доказана устойчивость и цель€500/месяц не выполнена. Новый поиск параметров и повтор старых исследований не проводились. Подключён замороженный `v2_frozen_forward_watch_1` (не Early Entry), неделя23.11, обучение до20.11, SHA b8a24119c66b9188ada6a70007522539398e765c691253c49db8f93d415ec2f2. Общий существующий PAPER/CORE, независимая V2€10000, один риск0,5%/позиция, до10шт.,45%средств, задержка30мин, step30/lock75, стоп/цель/безубыток/трейлинг, ежедневный замок после плюса. V5, прочие позиции и история сохранены.
@@ -27261,6 +27614,1523 @@ Windows: штатные Save/Close/Restart21:25 и21:40, Meta4H/6месяцев 
 
 
 <a id="v2-calendar-expiry-correction-20261124"></a>
+
+## 24.11.2026 21:37 CET — исправление не заданного владельцем недельного срока
+
+Владелец не ограничивал V2 неделей. Недельная остановка и прежнее закрытие #24 с таким ограничением были ошибкой Work. Утверждения выше о необходимости обновить модель к30ноября отменены этой записью. Научный недельный протокол не объявляется распоряжением владельца о сроке работы программы.
+
+В `validate_model` удалено сравнение исследовательской недели с текущей неделей как срока допуска. Поле `week_start` остаётся исходной датой исследовательского расчёта, `training_end` — фактической датой обучения. Не изменялись даты, веса, хеш b8a24119c66b9188ada6a70007522539398e765c691253c49db8f93d415ec2f2, признаки, пороги, риск, source/identity/DQ/CORE, свежесть15m-цены до900секунд, издержки, сопровождение и счета. Версия остаётся замороженной до отдельно проверенной замены или отключения. Автопереобучение/автоматическая подмена стратегии не добавлялись. Это исправление доступности установленной версии, не новое исследование доходности и не доказательство устойчивости прогнозов после исследовательского периода.
+
+Сохраняются отказы для повреждённого хеша/контракта, неизвестных дат, модели из будущего и обучения после исходного временного среза.25 затронутых V2-сценариев PASS:2новых и1скорректированный; прежние65общего исполнения не повторялись. В изолированном сценарии30ноября модель/допуск остаются неизменными, старая котировка отклоняется, свежая допустимая BUY проходит; отдельно30ноября/7декабря/4января не переписывают модель и не создают календарную блокировку. Это управляемые тестовые даты, не фактические будущие рыночные данные. Старые рыночные исследования и торговый цикл Micron не повторялись.
+
+Код da05b59b5027349bd7de41c36804ea5104328ae8 загружен штатным перезапуском. TEST instance c2e9655a61b909fa35f4200fd88b84d7, Bridge running. На реальной БД read-only проверено: модель байтово прежняя, даты/параметры/хеш прежние,2исходных исполнения сохранены. Во время этапа по отдельному распоряжению владельца была отключена V2 в другом рабочем чате; Work не восстанавливал этот флаг. V2остаётся на паузе, V1/V4/V5 активны. Контрольный future-вызов валидирует модель, но фактический торговый допуск по-прежнему отклонён из-за этой паузы. Новых рабочих сделок и изменений свечей этим этапом0.
+
+Подтверждённый дефект этого дополнения:1, исправил Work1, осталось0. Это отдельный седьмой дефект реализации, дополнительно к предыдущим6; глобальный счётчик ошибок не измерялся, CPремонт не пересчитывался. Issue24 вновь открыта и не закрывается автоматически при отдельном распоряжении владельца о паузе/параллельной проверке цен.
+
+Адресный откат только этого дополнения: СМ-Архив/PAPER issue24 lifetime before.zip и lifetime.patch, reverse-check PASS. Результаты lifetime tests.json, live before.json и applied.json остаются локально. Не восстанавливать старую БД, не менять позицию/журнал и не снимать отдельную паузу владельца. Текущее исправление не требует изменения сохранённых весов/дат или переиздания допуска.
+
+
+<a id="pr25-applied-20261125"></a>
+
+## 25.11.2026 — Work1: установка PR25 и рабочая область
+
+**Результат1 — установлен и проверен в запущенном TEST.** Контрольный b95e73ae: дневные сессии V2, исправление ATR0, персональное продление pullback/lock75 Micron и SiemensEnergy. Три компонента отсутствовали локально; Work1 применил3/3, остаток применения0. Исходные алгоритмы опубликованы чатомV2; личная доработка интеграции — ru/de/en новых дневных строк. Локальная UI-логика дизайна/четырёх кнопок сохранена AST-проверкой. **83 уникальных адресных теста PASS** в объединённой локальной версии, не GitHub Actions. После штатного Save/Close/Restart instance e59bed73a343581e37261cda5ccb85ce, Bridge running; в V2 фактически показаны5 последних сессий,24.11LOSS/1BUY+1SELL,25.11IN_PROGRESS, сохранённый журнал. Открыты «Подробности счёта» и «Журнал V1–V5»; ручных новых сделок0. Все6 settings, instruments/paper_accounts и4таблицы исполнений/архивов совпали по SHA до/после. V2 была активна до этапа; её режим и параметры остальных стратегий не менялись. Рыночные ошибки/CP-ремонт не пересчитывались, прямых OHLCV0. Общий dispatcher/diagnostic code не редактировался, повторный restart для V2 не нужен.
+
+**Результат2 — доступ будущих задач пока не решён и не проверен.** Один исходный блокер рабочей области остаётся1. Текущие адресные escalation не меняли постоянные writable_roots. Нет локального projectId в доступном инвентаре и команды добавления локальной папки; разрешение владельца есть, автоматизация ChatGPT UI запрещена. Нужен штатный шаг владельца Add new project/Ctrl+O → существующая0.16 → новый Local-чат с workspace-write; Full access не нужен. В отдельной проектной задаче проба write/read/delete не выполнена, PASS не заявлен. Нужность администратора не доказана.
+
+[Подробности установки/тестов/отката](PAPER_V2_30M_ISSUE24_RU.md#pr25-applied-20261125), [точный путь рабочей области и будущая проверка](SM_PROJECT_WORKSPACE_ACCESS_RU.md). Новые код/переводы/регрессии и отчёт в PR25, без слияния; это не публикация всей параллельно изменяемой рабочей версии. Приватные журнал/база/счёт остались локально.
+
+
+<a id="local-v1-access-verified-20261125"></a>
+
+## 25.11.2026, 11:51 CET — запись проверена из нового Local-чата V1
+
+По поручению владельца создан «V1 — проверка доступа к СМ». **Пробу выполнил новый чат, не Work1:** CreateNew одного временного файла в0.16, запись/чтение SM_ACCESS_PROBE_ONLY, закрытие handle, удаление и проверка отсутствия. Команда exit0/1,364с: **BASE_WRITE=PASS, FILE_REMOVED=true**, без escalation. Work1 проверил исходный лог и отдельно отсутствие файла.
+
+Практический критерий продолженияV1:1 заблокированная возможность →1 проверенная новая локальная задача →0 блокеров записи в ней. **Старая среда new-chat-4 не исправлена:** ранее AccessDenied, сейчас новый ход не стартует из-за invalid legacy sandbox writable root. Точная действующая политика старой среды новым ходом не прочитана. Work1 раньше применял одобренные адресные escalation, а его нынешний профиль read-only; постоянное право записи Work1 не предполагается.
+
+Новый чат получил workspace-write с унаследованным корнем Documents/Codex, включающим СМ; cwd остался автоматически созданным. Это не новый проект с правами ровно на СМ: проектное ограничение отдельно не настроено. ACL/config/managed policy не переписывались, Full access не включался. В новый чат переданы Issue26/PR27 и v1-readable.patch с обязательной сверкой текущих правок перед применением. Сам V1-патч, БД, счёт, CP/PAPER и TEST не менялись, перезапусков0, ручных OHLCV0; CP-ремонт не пересчитывался.
+
+[Полная проверка и штатный путь проекта](SM_PROJECT_WORKSPACE_ACCESS_RU.md#local-v1-access-verified-20261125). Единственный файл удалён, откат не нужен. Приватная квитанция и идентификаторы команд/задач остаются локально. Прежняя запись о непроверенном доступе V2 отражает состояние до этой новой независимой пробы.
+
+
+<a id="sm-project-access-pass-20261125"></a>
+
+## 25.11.2026, 13:41 CET — локальный проект СМ и его доступ проверены
+
+Владелец штатно создал Local-проект «СМ» с существующей папкой СМ. Work1 создал новую задачу **«V1 — проект СМ» внутри проекта**, без worktree. API подтвердил project membership и cwd=СМ. Из текущего контекста новой задачи: workspace-write, корень записи СМ плюс системные временные области; более широкий Documents/Codex не указан.
+
+**Проба выполнена именно новой проектной задачей:** обычный PowerShell без расширения прав, эксклюзивное создание одного временного файла в0.16, запись/чтение SM_PROJECT_ACCESS_ONLY, закрытие handle, удаление и проверка отсутствия. **PROJECT_WRITE=PASS / FILE_REMOVED=true, exit0.** Work1 проверил исходную команду/вывод и независимо отсутствие файла.
+
+Был1 незавершённый пункт постоянного проектного доступа: владелец добавил проект, Work1 создал1задачу и проверил1/1сценарий; остаток для новых задач этого проекта0. Старая durable-среда new-chat-4 не исправлялась; прежние чаты автоматически новых прав не получили. Более ранняя projectless-проба была отдельной, с более широким корнем, и теперь не нужна как основное место продолжения V1.
+
+Далее использовать проект «СМ» → «V1 — проект СМ». Контекст Issue26/PR27/готового v1-readable.patch передан с обязательной сверкой текущих файлов; патч ещё не устанавливался этой задачей. Программа, БД, счёт, CP/PAPER и параметры стратегий не менялись, перезапусков0, прямых OHLCV0; CP-ремонт не пересчитывался. Full access/ACL/config/managed policy вручную не менялись. Единственный файл удалён, откат не нужен.
+
+[Полная проверка и инструкция](SM_PROJECT_WORKSPACE_ACCESS_RU.md#sm-project-access-pass-20261125). Частная квитанция дописана в существующий архив, предыдущие доказательства сохранены. Предыдущие записи о ненастроенном проекте — историческое состояние до действия владельца и новой независимой пробы.
+
+## 24.11.2026 — Work1: оставшиеся три блока дизайна завершены
+
+В Windows TEST реализованы и проверены 3/3 согласованных блока: визуальный проход по семи изображениям/шести окнам, автоматический премаркет и контекстная тональность новостей. Общий исходный счётчик ошибок программы неизвестен; в адресной приёмке найдены 2 технических дефекта (белая вспышка окон, повторное ожидание уже полученной котировки), Work исправил 2/2, остаток этого набора 0. Work candle writes0, ручных сделок0; CP repairs не пересчитывались.
+
+Премаркет выбранной акции работает через прежний Dispatcher, с проверкой TLS, источника, символа/валюты/площадки, pre-сессии, возраста, поколения и cooldown; отдельный информационный ряд, без подмены GETTEX/исполнения. Apple AAPL/NMS/USD автоматически обновлялся 24.11 в12:04,12:11,12:15–12:16 CET и после штатного перезапуска. ASME.DE: NOT_PROVIDED, без подстановки другой площадки.
+
+Тональность: на фиксированной отложенной части FinancialPhraseBank 56/58 верно (96,55% среди выданных оценок), покрытие58/459=12,64%,401 без оценки,2 ошибки классификации остаются. Это не точность всего потока и не прогноз цены; ru/de имеют15 адресных смысловых случаев без независимой оценки рынка. Проверены43 различных сценария (29чистых+14GUI), повторные5GUI не суммируются,28de/en сообщений; синтаксис/rollback/15файлов read-back PASS. В новостях фильтр1/10 и возврат«Все»; исходный ASML4H/неделя восстановлен и сохранён.
+
+Итоговый код[0663b0f2](https://github.com/swindler2010/StockMonitor/commit/0663b0f24a022aa1cef9903042ff29e0095eb1ab), [draft PR21](https://github.com/swindler2010/StockMonitor/pull/21), без merge. [Полный отчёт, таблица окон, источники, ограничения и откат](DESIGN_SCREEN_MATRIX_AND_PROJECTIONS_RU.md#final-design-20261124). Полный аудит свечей/торговой готовности не выполнялся, реальные DQ не скрывались, счёт/CORE/стратегии/история не изменялись.
+
+
+<a id="automatic-disputed-recovery-20261125"></a>
+
+## 25.11.2026 — Work1: готовые доказательства спорных интервалов
+
+PARTIAL. Исходные **14 192 CP-задания** (08:31:30 UTC) → **219 разрешены автономно CP / 13 973 остаются** (09:51:10 UTC); новых 36 отдельно, пропавших 0. Это задания, не количество доказанных ошибочных свечей. **Work исправил 3 общие программные причины; ручных записей OHLCV — 0.** Все 219 результатов — подтверждённое NO_TRADES, не новые свечи.
+
+Необозреваемые single15m получают существующий строгий источник проверки; изменённые own-gettex доказательства не ждут архива: **111/111** готовых номинаций выполнены обычными пакетами CP. Общий validator исключает **2 203** актуально подтверждённые диагностические области на попарно одинаковых входах 75+7 акций (отдельная единица, не CP-задания). DQ/identity/сроки/допуск/окончательная проверка сохранены; источники, стратегия, риск и счёт вручную не менялись. **7 новых + 4 затронутых существующих уникальных сценария PASS**, опыт CP обновлён.
+
+Остаток: 12 703 UNCONFIRMED, 1 004 SOURCE_TIMEBASE_UNCONFIRMED, 215 NATIVE_ROWS_PRESENT, 12 GAP, 13 SOURCE_DISCREPANCY, 26 без finding. Требуется достаточное первичное/независимое подтверждение; пустой ответ и неполная публикация не доказывают отсутствие. Автоматический доступ Onvista ожидает письменного ответа. Три MCP-прохода другого чата ещё продолжаются, не считаются завершёнными. Адресный queue-only rollback проверен; совместный r10 не откатывался. Полный код этим документальным коммитом не синхронизируется.
+
+[Подробный новый отчёт и ограничения](CP_CANDLE_RECOVERY_CURRENT_RU.md#automatic-disputed-recovery-20261125), [коммит отчёта](https://github.com/swindler2010/StockMonitor/commit/559ded99c8d1fe1c8778ef507d48e79d8cbcdb65).
+
+## 21.11.2026 — Work1: оформление новостей и рисования установлено в TEST
+
+Код: [5db321ca](https://github.com/swindler2010/StockMonitor/commit/5db321caeb4eec235dbc56884fdcec720599bb02), ветка `work1/gettex-first-issue20`, PR #21. Продолжение уже завершённых главного экрана, индикаторов, списка и поиска/добавления. В публикацию вошли только 8 файлов/адресных UI-изменений; чужие правки общего дерева не включены.
+
+**Новости.** Карточки, периоды, поиск, источник, категории по ключевым словам, сортировка, компактный режим, до 12 карточек на страницу; правая сводка и соответствующий архив открытого графика при наличии. Сохранены реальные тексты, исходный язык, безопасные ссылки и неопределённость издателя/дат/событий, ошибки лент. Нормализация до 100 материалов вне Tk, через существующий Dispatcher; пользовательское чтение кэша в read lane, сеть в прежнем NewsRuntime. Ответы сверяются по ISIN/поколению окна, при минутном ожидании предыдущая лента остаётся видимой. В Windows проверена реальная сохранённая лента Apple (10 публикаций), карточки, первоисточник, правая колонка, окончательный размер окна и тёмный заголовок. Положительная проверка URL выполнена изолированно, без отправки данных пользователя.
+
+**Рисование.** Новый тёмный toolbox, чёткие значки, таблица/поиск, свойства объекта, действия и история. Прежние шесть инструментов сохранены; дублирование, цена, дата, удаление и undo/redo используют существующие drawing_actions.commit/modify/travel. Смена ISIN/черновика/контекста при модальном вводе отклоняет старое действие. Индекс после фильтра соответствует исходному объекту. В Windows выявлены и исправлены обрезание нижних кнопок и сжатие таблицы после выбора объекта. Итоговая проверка 21.11 около 09:25 CET: строка/свойства/кнопки видимы, выбор не меняет разметку. Минимум окна 850×780; набор инструментов уменьшен по высоте для рабочей области этого компьютера. Реальные рисунки не создавались/не изменялись.
+
+**Проверки.** Новости — 6 целевых PASS (неизменённый модуль в прогоне 10 тестов, 55,044 с). Финальное рисование — 5 целевых PASS на опубликованных объектах 5db321ca, 22,985 с; добавлены проверки видимости строки и кнопок. Ранее падавший сценарий после выбора объекта исправлен и перепроверен. Старые торговые/очередные аудиты не повторялись. Штатный Close/Restart, MCP подтвердил связь TEST; health не использовался как доказательство торговой готовности. Контрольные хеши PAPER account/fills/archive, глобальных индикаторов, paper_epoch, theme и selected совпали с исходным baseline. CORE, CandlePilot, стратегии/допуски/позиции не менялись.
+
+**Оставшиеся отличия от иллюстраций.** Не подключены календарь/премаркет, числовая тональность и процент влияния новости, поставщик новостных иллюстраций/закладок. Расширенные инструменты рисования (Фибоначчи/Ганн/волны), стили объектов, слои и шаблоны не поддерживаются действующим renderer. Они не заменены кнопками с фиктивным результатом. Поэтому полное функциональное и попиксельное совпадение со всеми картинками НЕ объявлено DONE. Это ограничения функциональности/источников, отдельно от установленного оформления.
+
+**Откат.** Адресно вернуть news_panel и Desktop014.show_drawing к предыдущим реализациям, убрать новые drawing_* ветви ui_icons при необходимости. Before-исходники и `News drawing design own.diff` в существующем СМ-Архив; база не заменяется. Документ `docs/NEWS_DRAWING_DESIGN_RU.md`. Код в TEST и PR, автоматического merge/release нет.
+
+## 21.11.2026 10:29 CET — Work1: настоящие стили и управление рисунками
+
+Код [91a63010](https://github.com/swindler2010/StockMonitor/commit/91a6301000e3f71e624287060579d6a42454f64d) установлен в 0.16 TEST и отправлен в PR #21, ветка `work1/gettex-first-issue20`. 9 собственных файлов/адресных изменений; чужие изменения общего рабочего дерева не включены.
+
+**Добавлено.** Выбор цвета, толщины, типа и непрозрачности линии; заливка зоны; размер/показ цены маркера. Применение выбранному объекту, слою или всем объектам акции. Скрытие/показ, закрепление/открепление, название слоя, передний/задний план. Закреплённый объект не перетаскивается и не изменяется до открепления; групповое применение при закреплённом объекте отклоняется целиком. Таблица сохраняет исходные индексы при фильтрации.
+
+Шаблоны сохраняют только стиль и имя (до 20 на акцию), без цен/дат/координат. Загрузка заполняет поля, применение выполняется отдельно. Постоянное сохранение — штатная кнопка «Сохранить» главного окна, в пользовательском черновике инструмента. Повреждённые шаблоны не перезаписываются. Вся работа с объектами использует существующие commit/modify/travel, историю undo/redo и проверки ISIN/исходного черновика/контекста до применения. Открытие окна данные не меняет.
+
+**Реальная отрисовка.** Desktop014.draw_objects выделен в drawing_renderer; параметры меняют Matplotlib artists, скрытые объекты не выводятся, закреплённые не попадают в перетаскивание. Прежние шесть типов и их значения оформления по умолчанию сохранены, включая пунктир вертикали и alpha .18 у зоны. Свечи, индикаторы, CORE, торговые уровни, стратегия, CandlePilot, счёт и позиции не менялись.
+
+**Проверки.** 14 целевых PASS локально 33,687 с и на подготовленных опубликованных объектах 58120ce1 — 39,270 с. Затем изменено только оформление переключателей окна стиля: 3 UI-теста финального 91a63010 PASS 28,461 с. Проверены реальные artists, отсутствие изменения геометрии/кадра/позиции, скрытие/закрепление, слои/порядок, недопустимые параметры, атомарный отказ, смена контекста, undo/redo. Настоящий Store.save_user_state и повторное чтение проверены на маленькой изолированной SQLite без счёта, в СМ-Архив; тестовый файл убран после закрытия соединения. Первоначальный ERROR был в очистке тестового соединения, исправлен через closing; это не ошибка Save приложения.
+
+Windows TEST штатно перезапущен. Открыты список объектов и окончательное окно стиля; поля, шаблоны, переключатели и кнопки помещаются. В рабочем TEST изменения стиля не применялись к существующим рисункам: положительные изменения проверены изолированно. Контрольные хеши рисунков/шаблонов, PAPER account/fills/archive, global_indicators, paper_epoch, theme и selected совпали. MCP health: 0.16-dev / test / bridge running; это проверка связи, не торговой готовности. Старые аудиты всех акций/очереди/торговли не запускались.
+
+**Откат.** Три адресных исходника `before style controls.py` и `Drawing style own.diff` находятся в существующем СМ-Архив. Возвращать только собственные UI-hunks, без замены SQLite. Старый renderer не понимает новые сохранённые visible/locked/style: при откате теряется их визуальная поддержка, данные свечей/позиций не меняются.
+
+Документ: `docs/DRAWING_STYLE_CONTROLS_RU.md`. Предыдущее ограничение «стили/слои/шаблоны отсутствуют» для этого набора снято. **Осталось:** математические инструменты с концептов (Фибоначчи/Ганн/волны и другие), календарь, премаркет, числовая тональность/влияние новости. Полное совпадение всех иллюстраций и весь дизайн ещё не объявлены DONE. Следующий этап не должен повторять текущие 14 PASS без изменения соответствующего кода.
+
+## 21.11.2026 — Work1: 18 инструментов рисования в 0.16 TEST
+
+Код [8484c837](https://github.com/swindler2010/StockMonitor/commit/8484c837870913c751a158bc3bb57a213eb59692) установлен в TEST и отправлен в PR #21 / `work1/gettex-first-issue20`. Опубликованы только 11 собственных файлов/адресных hunks. Чужие изменения общего рабочего дерева не включены.
+
+**Добавлены 12 инструментов:** расширенная линия, параллельный канал, коррекция и расширение Фибоначчи, эллипс, круг, треугольник, текст, заметка, стрелка, двойная стрелка, измерение диапазона. С прежними шестью — 18. Окно разделено на четыре группы, добавлена вкладка перехода к шаблонам стиля. Новые типы используют прежние стили, видимость, закрепление, слои, историю undo/redo и Save. Текст можно редактировать в панели объектов и через контекстное меню.
+
+**Построение и защита.** Незавершённый объект не записывается до последней из 1–3 точек. Проверяются ISIN, контекст источника/площадки/валюты/символа/TF, шкала индексов и исходный черновик. При их изменении захват отменяется. После текстового modal проверки повторяются. Дополнительно отвергается принятый график с тем же названием, но другим ISIN. Сдвиг цены/даты переносит третью точку вместе с остальными. Круг привязан к данным и остаётся круглым на экране при изменении размера/масштаба. Текст буквальный, до 240 символов. Это разметка, не новые свечи, торговые уровни или заявки.
+
+Коррекция Фибоначчи линейная: B+(A−B)×r, 0 у конца движения и 1 у начала; расширение C+(B−A)×r. Набор уровней и ограничения описаны в `docs/EXTENDED_DRAWING_TOOLS_RU.md`, с первичными ссылками TradingView/Matplotlib. Полный набор настроек TradingView не копировался.
+
+**Проверки.** Первый адресный прогон 22 PASS 40,107 с; подготовленный опубликованный 62096153 — 23 PASS 67,503 с, включая группы UI. После усиления начального ISIN/TF-контроля финальный 8484c837: 9 сценариев изменённого модуля PASS 0,930 с, в том числе новый случай одинакового имени при другом ISIN. Всего 24 различных сценария; неизменённые проверки повторно не гонялись. Проверены конкретные численные уровни, реальные Matplotlib artists каждого из 18 типов, круг после resize/zoom, трёхкликовая запись ровно одного объекта, сдвиг всех якорей, отмена при смене контекста/шкалы/черновика, вырожденные фигуры, source identity, скрытие/закрепление. Реальный Store.save_user_state и повторное чтение трёх точек проверены на маленькой изолированной SQLite без счёта в архиве; тестовый файл удалён после закрытия соединения.
+
+**Windows.** Обычный Save/Close/Restart; в рабочем окне проверены все четыре группы, кнопки, таблица и нижние действия. Положительное создание/изменение новых объектов выполнено изолированно, реальная разметка не менялась. Хеши рисунков/шаблонов, PAPER account/fills/archive, global_indicators, paper_epoch и theme совпали с исходными. Отличие selected от раннего baseline объяснено отдельно: перед закрытием в рабочем окне уже были выбраны Apple / 4H / неделя; этот текущий выбор сохранён и подтверждён после перезапусков, без возврата к старому 1H. MCP health: TEST / bridge running; это не доказательство торговой готовности.
+
+CORE, индикаторы, свечи/источники, стратегии, риск, позиции, CandlePilot, Work2, Store 0.15 и Performance Engine не менялись. Общие аудиты акций/очереди не запускались. Адресные исходники `before extended tools.py` и `Extended drawing own.diff` сохранены в СМ-Архив. Откат только собственных UI/annotation hunks, без подмены базы; старый renderer новые типы не покажет, но координаты сохранены.
+
+**Осталось:** Ганн, волны/паттерны и остальные сложные инструменты концептов, календарь, премаркет, числовая тональность/влияние новостей. Все иллюстрации и весь дизайн не объявлены DONE. Следующее продолжение должно начинаться с оставшегося, не с повторения этих PASS.
+
+## 21.11.2026 — Work1: Ганн и ручная разметка волн установлены в TEST
+
+Код [0dba35ae](https://github.com/swindler2010/StockMonitor/commit/0dba35ae46399d2ce32d1c88ee9dcfb4856b7f1d), PR #21 / `work1/gettex-first-issue20`. Только 10 собственных файлов/адресных hunks, чужие правки общего дерева не включены.
+
+**Девять новых инструментов, всего 27 / шесть групп.** Веер, сетка и квадрат Ганна; ABCD, XABCD, импульс/коррекция/треугольник Эллиотта; циклы. Ганн использует явную калибровку A→B как 1×1, с подписью цены на бар текущего TF. Это линейное подмножество функций, не весь набор TradingView и не обещание экранного угла 45°. На логарифмической шкале вместо неверного построения появляется требование линейной шкалы. Сетка делит рамку на четверти; квадрат добавляет ограниченный рамкой веер и обратную диагональ.
+
+Волны/ABCD/XABCD — только ручные опоры и подписи, без автоматического признания волн, гармонических отношений и торгового сигнала. Это явно указано в группе и подсказках. Точки вводятся слева направо, для импульса и треугольника — шесть. Незаконченный объект не сохраняется; после последней точки выполняется один существующий commit. vertices сохраняет все опоры, изменение даты/цены и перетаскивание переносит их вместе. Сохранены undo/redo, стили, скрытие, закрепление, слои, проверки ISIN/source/контекста/шкалы/черновика. Циклы ограничены 64 линиями с пояснением при ограничении, без добавления свечей или будущих рыночных данных.
+
+**Проверки:** локальный промежуточный 17 PASS 28,118 с; финальный подготовленный опубликованный код — 18 PASS 33,402 с. Проверены численные наклоны/границы Ганна, отсутствие изменения viewport, линейная/логарифмическая шкала, предел циклов, ровно одна запись после шести кликов, сдвиг всех опор, хронология и отмена при смене контекста, undo, настоящий Store.save_user_state и повторное открытие изолированной SQLite без счёта. Тестовый файл убран после закрытия соединения. Перепроверены только затронутые прежние сценарии: реестр отрисовки всех 27 типов, двух-/трёхточечная разметка, стиль и UI.
+
+**Windows TEST:** обычный Close/Restart, проверены обе новые группы, подписи ограничений, значки, таблица и нижние действия. Рабочие рисунки не создавались/не изменялись; положительное построение и Save проверены изолированно. Хеши реальной разметки/шаблонов, PAPER account/fills/archive, global_indicators, paper_epoch и theme совпали. Текущий Apple / 4H / неделя сохранён; отличие selected от раннего baseline 1H было объяснено на предыдущем этапе и не возвращалось. MCP health: TEST / bridge running, не проверка торговой готовности.
+
+Свечи, CORE, торговые уровни/сигналы, стратегия, риск, счёт, CandlePilot, Work2, Store 0.15 и Performance Engine не менялись. Полные аудиты акций и очереди не запускались. Документ `docs/GANN_WAVE_DRAWING_RU.md` содержит определения и первичные ссылки. До-файлы `before gann waves.py` и `Gann wave own.diff` находятся в СМ-Архив. Откат только собственных annotation/UI hunks без замены базы; старый renderer не покажет новые типы, но координаты сохранены.
+
+**Остаётся открытым:** календарь, премаркет, числовая тональность/влияние новостей; из полного набора инструментов концептов — дополнительные Фибоначчи (веер/дуги/спираль/временные зоны), регрессионный канал, кисть/произвольные фигуры, позиционный калькулятор и прочие ещё не реализованные команды. Не считать весь дизайн или полный функциональный паритет с картинками DONE. Эти 18 PASS повторять только при изменении соответствующего кода.
+
+
+
+### Work1 — 21.11.2026: официальный календарь и язык новостей, Windows TEST
+
+Код: [2290685c](https://github.com/swindler2010/StockMonitor/commit/2290685c98c005ee3b4e8eb5f19e562013442a44), PR #21, ветка `work1/gettex-first-issue20`. Только 15 собственных файлов/адресных изменений; общий грязный checkout, чужие изменения и исследования Work2 не публиковались.
+
+**Календарь.** Нижняя карточка главного экрана и отдельное окно получают официальные расписания ЕЦБ и FOMC. В TEST сохранены 52 строки ЕЦБ и 16 ФРС; это строки расписания, не число свечей или исправлений DQ. Ближайшие отображённые даты: 25/26 ноября и 8–9 декабря. Сохраняются день 1/2 и диапазоны заседаний. Не добавлены неуказанные часы, прогноз влияния, важность или выдуманные события. Это календарь заседаний ФРС/ЕЦБ, не полный экономический/корпоративный календарь. Источники: [ЕЦБ](https://www.ecb.europa.eu/press/calendars/mgcgc/html/index.en.html), [ФРС](https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm).
+
+Один суточный ход в существующем NewsRuntime/Dispatcher misc. Прежний транспорт сохраняет лимиты, кэш и cooldown без обхода 403/429. При отказе одного провайдера его старые строки остаются с предупреждением; изменённая/пустая HTML-структура не выдаётся за подтверждённое отсутствие событий. Отдельный UI-ключ `ui_official_calendar` не подключён к торговому макрокалендарю или V5. Расписания могут меняться.
+
+**Язык новостей.** По новому указанию владельца отменена прежняя политика «только оригинал». Заголовки и предоставленные источником краткие описания отображаются на выбранном ru/de/en. Перевод локальный CTranslate2 CPU/int8 + модели Argos; без ключей, платного API или передачи текста на перевод. Между de/ru используется английский промежуточный перевод. Неизвестный язык, отсутствие модели, изменение чисел или слишком длинный текст дают явный отказ с оригиналом. Машинный перевод может ошибаться по смыслу; он помечен и не используется как рыночное доказательство.
+
+Точный оригинал, издатель, дата, ссылка и исходная классификация событий сохранены. Отдельный кэш привязан к инструменту, языку, исходному тексту и версии движка, до 100 материалов; максимум три перевода за ход, только видимые новости. Один поток inference на модель, максимум две направленные модели в памяти. Ключи UI не меняют свечи, CORE или торговый допуск. Смена языка применяется после перезапуска по существующему правилу настроек. Правило добавлено в AGENTS.md. Воспроизводимые необязательные зависимости и установщик опубликованы; четыре ZIP-модели (653 006 933 байта) остаются локально, не в GitHub.
+
+**Найденная UI-ошибка:** в окне статьи обрезалась кнопка открытия первоисточника при добавлении просмотра исходного текста. Кнопки вынесены в постоянно видимую нижнюю панель. Также исправлены обрезание диапазона дат в маленькой карточке и непереведённые состояния/фильтры новостей.
+
+**Проверки:** 22 уникальных адресных сценария. Промежуточный опубликованный кандидат a846b4ba: 21 PASS / 49,308 с. После исправления нижних кнопок — отдельный новый тест PASS / 5,279 с; финальный 2290685c — 8 затронутых проверок новостной панели PASS / 57,064 с. Между кандидатами изменились только news_dashboard.py и его тест; механизмы календаря и перевода и их 14 проверок не менялись, повторно не запускались. Проверены даты/диапазоны/исторические разделы, отказ источника со старым кэшем, закрытие окна, три языка календаря, немецкие новостные widgets, неизменность оригиналов, изменение входного текста/языка, отказ при подмене чисел, 53/200 синтетических входов, ограничение кэша и отбрасывание результата изменившегося источника.
+
+**Windows TEST:** штатные Save/Close/Restart, фактические русские заголовки/описания четырёх новостей, отдельный английский исходный текст, обе постоянно видимые кнопки оригинала, расписание и повторное чтение переводов после нового запуска. Текущий выбранный владельцем ASML / 4H / неделя сохранён. Хеши PAPER account/fills/archive, global_indicators, paper_epoch, theme совпали. MCP health подтверждает TEST/bridge running; торговую готовность он не проверяет. Измеренный отдельный холодный процесс перевода: en→ru 3,328 с, en→de 1,656 с, de→en 2,297 с; это фоновая работа, не время Tk-callback. Общая максимальная производительность СМ этим этапом не доказана.
+
+Свечи, DQ, стратегия, риск, позиции/счёт, CandlePilot, Work2, Store 0.15 и Performance Engine не изменены. Откат только собственных UI/новостных hunks по before-файлам и `Calendar translation own.diff` в СМ-Архив; SQLite не подменять.
+
+**Остаётся:** источник премаркета, числовая тональность/влияние новостей, остальные ещё не реализованные инструменты полного графического концепта. Весь дизайн и функциональный паритет с иллюстрациями не объявлены DONE. Подробности: `docs/OFFICIAL_CALENDAR_NEWS_TRANSLATION_RU.md`.
+
+Отчёты: [Issue #5](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-7064520867), [PR #21](https://github.com/swindler2010/StockMonitor/pull/21#issuecomment-7064520647). Итоговая документация: [83de6ede](https://github.com/swindler2010/StockMonitor/commit/83de6edeab8edcce778eb3bdb212e8067ee9fbfe).
+
+
+### Work1 — 21.11.2026: новые инструменты Фибоначчи в Windows TEST
+
+Код [8a8844f2](https://github.com/swindler2010/StockMonitor/commit/8a8844f249d333ad11af19987632eb3fcc274c75), PR #21 / `work1/gettex-first-issue20`. Опубликованы только девять собственных файлов/адресных изменений общего рабочего дерева.
+
+**Добавлено:** веер, дуги и временные зоны Фибоначчи; всего 30 инструментов в существующей панели. Веер использует шесть линейных ценовых долей 0,236/0,382/0,5/0,618/0,786/1. Дуги — полуокружности с центром B и долями экранного расстояния A–B, с пересчётом через pan/zoom/resize; зависимость от экранного масштаба явно подписана. Временные зоны — 11 линий по числам 0,1,2,3,5,8,13,21,34,55,89 относительно базового интервала двух опор в барах текущего ТФ. Это не календарные дни и не новые свечи.
+
+Разметка ручная, без CORE/торговых сигналов и автоматической оценки паттернов. Веер/дуги требуют линейной шкалы. Вырожденные/обратные опоры отклоняются; масштаб графика не сбрасывается. Сохранены существующие проверки принятого графика, ISIN/source/venue/currency/TF/черновика, commit, стиль, скрытие, закрепление, слои и undo/redo. Не обещается полный паритет с TradingView или всеми настройками уровней концепта.
+
+**Исправление языка:** меню групп теперь показывает переведённые названия, сохраняя внутренние ключи через существующий CanonicalCombobox. Новые названия, подсказки и предупреждения подготовлены для ru/de/en.
+
+**Проверки:** локально 11 PASS / 17,570 с; финальные опубликованные Git-объекты — 11 PASS / 20,212 с. Восемь численных/защитных/сохранения сценариев, немецкий/английский диалог, обновлённая проверка рендера всего реестра и затронутое переключение группы. Проверены доли веера в обе стороны, радиусы и опоры дуг при изменении масштаба/размера, отсутствие autoscale и изменения frame, предел зон, логарифмическая шкала, смена контекста до commit, один commit и undo, source/venue/visible/locked, настоящий Store.save_user_state и повторное открытие изолированной SQLite с сохранением исходного поля позиции. Первая команда содержала неверное имя одного прежнего теста; после исправления выбора теста получен чистый PASS.
+
+**Windows TEST:** штатное Close/Restart; в «Рисование • ASML HOLDING NV» открыта группа «Фибоначчи», проверены пять кнопок группы, новые значки, поясняющая подпись, таблица и нижние действия. Положительное построение/Save проверены изолированно; реальные рисунки для демонстрации не создавались. Хеши PAPER account/fills/archive, indicators, epoch, theme, selected и всех сохранённых drawings совпали. Текущий выбор ASML / 4H / неделя сохранён. MCP health: TEST / bridge running, не доказательство торговой готовности.
+
+Свечи, DQ, CORE, стратегии, риск, счёт и позиции, CandlePilot, Work2, Store 0.15 и Performance Engine не менялись. Новых потоков, загрузчиков, зависимостей или массовых аудитов не добавлено. Адресные before-файлы и `Fibonacci own.diff` сохранены в СМ-Архив; откат только этих UI/annotation изменений, SQLite не подменять. Старый renderer не покажет новые типы, но исходные опоры сохраняются.
+
+Документ: `docs/FIBONACCI_DRAWING_RU.md`. Определения опираются на [справку временных зон](https://www.tradingview.com/support/solutions/43000518155-fib-time-zone-drawing-tool/) и [справку дуг](https://www.tradingview.com/support/solutions/43000518157-fib-speed-resistance-arcs-drawing-tool/); точные формулы и ограничения реализованного подмножества приведены в документе.
+
+**Остаток дизайна:** спираль и дополнительные варианты Фибоначчи, регрессионный канал, кисть/произвольные фигуры, позиционный калькулятор и прочие ещё не реализованные команды. Для премаркета и числовой тональности нужен подтверждённый источник. Весь дизайн не DONE; прежние проверки без изменения соответствующего кода повторять не нужно.
+
+Публикация: [Issue #5](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-7067890537), [PR #21](https://github.com/swindler2010/StockMonitor/pull/21#issuecomment-7067890826), документация [cd918e98](https://github.com/swindler2010/StockMonitor/commit/cd918e984c1e8d2ff6df8b568ba7aec6a9e14ff1).
+
+
+### Work1 — 21.11.2026: регрессионный канал, кисть, произвольные фигуры и калькулятор
+
+Код [f5fe9427](https://github.com/swindler2010/StockMonitor/commit/f5fe9427a8a2d854927b7e1b387a053f5d27afe9), PR #21 / `work1/gettex-first-issue20`. Включены только 15 собственных файлов/адресных изменений. В Desktop014 изменены только три mouse-hook метода; стратегия и остальные методы не переписаны.
+
+**Регрессионный канал.** Две опоры, OLS по доступным close выбранного участка (3–5000 значений), центр и ±2σ остатков с делителем N. Сохраняется явно обозначенный снимок с исходным ТФ, числом значений, правилом и хешем цен. Если выбрана формирующаяся свеча, входит её доступный close. Снимок не обновляется автоматически: для новой регрессии нужно перестроить. Перенесённый вручную снимок получает соответствующую подпись. На логарифмической шкале построение не выдаётся за корректное.
+
+Расчёт вне Tk через существующий Dispatcher. На Windows выявлено длительное ожидание в общей read-очереди; интерактивный расчёт отнесён к существующей chart-lane. Сам Dispatcher не изменён. Приоритет подтверждён сценарием с 53 и 200 фоновыми задачами и занятыми фоновыми слотами. Это не доказательство максимальной общей производительности СМ или измерение всех startup-пиков. Перед commit сохранены проверки ISIN/source/venue/currency/TF/календаря/черновика/поколения и всех использованных close; поздний/изменившийся результат отклоняется.
+
+**Кисть и фигуры.** Кисть завершает один штрих отпусканием левой кнопки. Ломаная и многоугольник завершаются двойным кликом. Esc/правая кнопка отменяют незаконченный объект. До завершения только preview, затем один commit/undo. До 256 опор с явным предупреждением, без синтетических суббаровых координат. Сохранены стили, заливка многоугольника, скрытие/закрепление/слои/перенос и штатные Save/Close/Restart. В панели теперь 34 инструмента и отдельный калькулятор.
+
+**Калькулятор позиции.** Ручная модель long/short: капитал, доступные средства, риск%, вход/стоп/цель, шаг количества, переменные и фиксированные издержки полного цикла. Decimal, округление количества вниз одновременно по риску и средствам. Показаны количество, риск/бюджет, условный результат у цели, R/R, номинал/резерв и издержки. При изменении полей старый результат сбрасывается. Неверные уровни/NaN/Infinity/отрицательные расходы отклоняются. Short — только нелевереджированная модель без проверки займа. EUR/USD/GBP без конвертации, все входы в одной валюте. Начальные значения — подписанный пример, не котировка или баланс. Параметры остаются в сеансе окна. Нет чтения счёта, записи торговых настроек или отправки заявок. Кнопки закреплены снизу, содержимое прокручивается; это исправило найденное ранним UI-тестом обрезание кнопки.
+
+Названия, подсказки, сообщения и калькулятор подготовлены для ru/de/en. Не подключены новые платные сервисы, потоки или зависимости.
+
+**Проверки:** финальные опубликованные Git-объекты — 16 PASS / 16,546 с. Численные OLS/σ и границы входа, очередь/53/200/повторная проверка close/поколение/закрытие, настоящие Desktop mouse hooks, кисть/двойной клик/отмена/предел опор/undo/перенос, viewport и неизменность frame, полный реестр renderer, существующие source/ISIN-отказы, настоящий Save/Reopen отдельной SQLite с сохранением исходного поля позиции. Для калькулятора — long/short/дробный шаг/лимиты средств/комиссии/ошибочные входы, три языка реальных widgets, отсутствие чтения счёта/записи настроек. Повторены только затронутые прежние capture/renderer-сценарии.
+
+**Windows TEST:** канал действительно построен на ASML 4H, в подписи 16 значений / 4H; затем отменён штатным undo до списка 0 объектов. Кисть проверена мышью: один штрих, одна строка объекта, затем штатная отмена до 0. Новые группы/значки/кнопки и калькулятор открыты в рабочем СМ. В учебной модели вход100/цель110/капитал10000/риск1%: стоп95 → количество20, риск100, результат200; стоп98 → количество50, риск100, результат500, R/R5, резерв5000. Проверены сброс старого результата и прокрутка при неизменно доступных кнопках.
+
+После Save/Close/Restart временных рисунков нет. Хеши PAPER account/fills/archive, global_indicators, paper_epoch, theme, всех drawings/style_templates и сохранённых позиций совпали. Selected отличается от раннего baseline: владелец сам переключал график и в конце выбрал ASML / 4H / 6 месяцев; сохранён именно этот последний выбор. MCP health подтверждает TEST / bridge running, не торговую готовность.
+
+Свечи, DQ, CORE, риск/стратегии, счёт/позиции, CandlePilot, Work2, Store 0.15 и Performance Engine не менялись. Откат — только собственные before advanced drawings / `Advanced drawings own.diff` в СМ-Архив, без подмены SQLite. Старый renderer не покажет новые типы, но опоры остаются.
+
+Документ: `docs/ADVANCED_DRAWING_CALCULATOR_RU.md`. Эти четыре запрошенных блока реализованы. Полный паритет со всеми командами иллюстраций не заявлен: ещё остаются спираль/другие варианты и отдельные расширенные инструменты; премаркет и числовая тональность требуют подтверждённого источника.
+
+Публикация: [Issue #5](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-7068242372), [PR #21](https://github.com/swindler2010/StockMonitor/pull/21#issuecomment-7068242155), документация [a254762f](https://github.com/swindler2010/StockMonitor/commit/a254762fd0ebc07c79b90dc7d08de7d33ae99383).
+
+
+### Work1 — 21.11.2026: каталог рисования и избранное (продолжение дизайна)
+
+Установлены и опубликованы [c652af42](https://github.com/swindler2010/StockMonitor/commit/c652af427a6fdbf0b79c4c44ac45d32fe754bb82) и [5d9fda5f](https://github.com/swindler2010/StockMonitor/commit/5d9fda5f8e01087cbcd7bd6607926a167c0110e4), PR #21. Каталог всех 8 групп/34 действующих инструментов со сворачиванием, фильтр, боковой быстрый доступ и редактируемое избранное до 12 инструментов. Содержимое прокручивается, нижние действия закреплены; исправлен переход от объектов к избранному, закрытые окна освобождают подписку. UI-ключ ui_drawing_favorites читается/записывается вне Tk через существующую очередь, с сериализацией, явной ошибкой/повтором и сообщением сохранения. После наблюдённой задержки misc собственные небольшие задания используют существующую read lane; Dispatcher не менялся, уже идущий read не прерывается.
+
+13 затронутых PASS по Git-объектам каталога (251,239 с); окончательная проверка переходов/подписки c652af42 — 6 PASS/32,138 с. Финальные настройки/приоритет 5d9fda5f — 6 PASS/0,124 с, включая настоящий Dispatcher с 53/200 фоновыми заданиями и занятым фоном при сниженной ёмкости. В Windows ASML/4H/6 месяцев проверены каталог, сворачивание, звёздочка с чтением SQLite и сохранением после штатного перезапуска, переход к объектам и нижние действия. Рисунки не создавались; список 0. Завершающая очистка тестового избранного и повторный запуск фиксируются следующей адресной записью.
+
+PAPER account/fills/archive, индикаторы, epoch, theme, selected, рисунки и позиции по хешам прежние. MCP подтвердил TEST/Bridge, не торговую готовность. CP, свечи/DQ/CORE, стратегии и позиции, Work2, Store 0.15, Performance Engine не менялись. Публикация только 5 собственных файлов/адресных UI-изменений. Откат: before drawing gallery / адресный патч в существующем СМ-Архив, без замены SQLite/всего дерева.
+
+Статус: каталог внедрён; весь концепт не DONE. Ещё остаются отдельные инструменты (спираль/угол/смещённый канал/проекции/декоративные метки), дополнительные действия с объектами и элементы, требующие реального поставщика (премаркет, числовая тональность, новостные иллюстрации). Подробности: docs/DRAWING_GALLERY_RU.md. Длительности тестов не являются замером задержки рабочего клика; уже выполняющееся read-задание может задерживать UI-предпочтение.
+
+
+**Завершение Windows-приёмки каталога, 21.11.2026.** После 5d9fda5f проверочная «Расширенная линия» удалена штатной звёздочкой; чтение SQLite подтвердило исходные 7 избранных инструментов. В текущем СМ проверен переход Объекты → Избранное с возвратом к началу. До заключительного штатного Close/Restart все 8 защищённых групп хешей совпали (включая selected); рисунков 0. Очередь уже выполняющийся read не прерывает, поэтому сохранение может ждать — это явно показано, мгновенная запись не заявлена. Документация [9719241b](https://github.com/swindler2010/StockMonitor/commit/9719241b614777e3c48de1ba0bd372ae47452f2f); [Issue #5](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-7068704633), [PR #21](https://github.com/swindler2010/StockMonitor/pull/21#issuecomment-7068704844). Каталог/избранное внедрены, остающиеся части полного макета перечислены выше.
+
+## Work1 — 21.11.2026: проекции/метки и новое окно CandlePilot с приоритетной кнопкой
+
+**Сданы отдельные этапы дизайна; весь комплект семи макетов не объявляется DONE.** Источник кода: PR [#21](https://github.com/swindler2010/StockMonitor/pull/21), ветка work1/gettex-first-issue20. Автоматическое слияние/релиз не выполнялись.
+
+1. **Инструменты рисования:** 21f24d5a — добавлены 11 типов (угол, смещённый канал, спираль Фибоначчи, ценовая/временная проекции, Long/Short модель, выноска, значок, смайлик, флаг), всего 45 зарегистрированных. Фигуры ручные, не создают свечи/торговые заявки. Сохранены проверки identity/ISIN/TF/source, черновик/Save/undo. Проекции используют реальные индексы свечей, не вымышленные даты. Long/Short рассчитывают геометрию и R/R на единицу, не выставляют позицию. Общий стиль выпадающих списков — также Новости/Акции/Индикаторы/Добавление.
+2. **Семь макетов:** реальные отдельные окна просмотрены; docs/DESIGN_SCREEN_MATRIX_AND_PROJECTIONS_RU.md содержит матрицу реализации/ограничений. Не считать главный экран выполнением всех вкладок. Иллюстрации реальных новостей, премаркет, достоверная числовая тональность требуют источников; отдельные функции группировки/экспорта/библиотеки украшений остаются.
+3. **Простой CP:** 247b292c, a101de2b, 8ebf53b2 — выбор акции + таблица TF/диапазон/понятная проблема/серьёзность/сохранённая сверка TV/влияние/источник. Детали причины/последней проверки/следующей попытки. Пагинация100, фоновая read lane, query_only SQLite, защита от поздних ответов и смены акции. Старый подробный CP сохранён. История старше5лет и известные архивы другой площадки по умолчанию отдельно; неизвестная identity и контекст не скрываются. Это фильтр отображения, не изменение DQ/разрешений. Точное связывание TV по ISIN/TF/source/venue/currency/symbol/timezone/range; прошлое совпадение OHLCV не подменяется простым наличием свечи.
+4. **Кнопка владельца:** c1a1e866 — существующая cp_repair_requests, optional priority=True; последний явный клик обслуживается первым из доступных, без отмены уже работающего писателя. Сохранены next_retry/cooldown/attempts/origin, дедупликация и финальные проверки. Используются существующие start_feed и Dispatcher.prioritize_feed, новой очереди/потоков нет. Автоматическое задание после явного выбора сохраняет origin и получает ручной приоритет.
+5. **Замечание «всё красное»:** первоначальная UI-формула требовала прежнего успешного подтверждения. Она ошибочно показывала красным даже доступную самостоятельную проверку. 2255b42c исправляет именно определение возможности: зелёное «Автоисправление» при существующем адресном маршруте GETTEX/EUR 5m/15m/1H/1D или штатной переоценке контекста; красное «Нужна помощь» для неподдерживаемого пути. Отсутствие TV/прежнего подтверждения само по себе больше не окрашивает доступную проверку красным. Это возможность попытки, не обещание данных, успешного исправления или допуска. Итог попытки/причина ожидания отдельно. Ни доказательства у писателя, ни DQ/торговые защиты не ослаблены.
+6. **Пролистывание:** кнопки привязаны к стабильным ID, рисуются только для видимых строк; не скрываются все разом при каждой перерисовке. Добавлена проверка прокрутки40строк. Промежуточный кадр может быть без overlay до следующей перерисовки; окончательная сверка Windows подтвердила кнопки после прокрутки.
+
+**Адресная проверка.** Проекции: 10 PASS опубликованных объектов/2,380с (45 renderer, геометрия, zoom/resize, неверные модели, source guard, поздний modal, SQLite Save/Reopen), 3 затронутых UI PASS/15,411с. CP read/TV/смена акции: 4 PASS/2,667с; fallback «нет сохранённого задания»:3 PASS/1,250с. Финальные опубликованные 2255b42c:8 PASS/2,753с — маршруты и цвета без предыдущего успеха, неподдерживаемый путь, настоящая Tk-кнопка, одна постановка и feed priority, stale ID, cooldown/origin/дедупликация, ротация/новейший клик, 53/200 задач, прокрутка и изоляция чтения/TV/поздних ответов. Старые полные аудиты/26тестов очереди не повторялись.
+
+**Windows TEST.** На ASML/4H/6месяцев проверена Long-модель с зонами/подписями, затем штатно undo до0 объектов. Просмотрены остальные окна семи макетов. В простом CP ASML:1169 текущих/3542 отдельных архивных замечаний (не число отсутствующих свечей/блокировок). Чтение1,553–1,764с вне Tk — исключение целевых250мс, не глобальный performance PASS. После разрешённого обычного Close/Restart 21.11 около22:33 CET загружена финальная версия. В выбранном владельцем Deutsche Telekom GETTEX/EUR15m в22:35–22:36 видны зелёные «Автоисправление» при TV «Не проверено», после реальной прокрутки кнопки снова на соответствующих строках. Реальные случайные запросы восстановления/сделки ради UI-приёмки не создавались; постановка проверена изолированно.
+
+Хеши paper_accounts/fills/fill_archive, global_indicators, paper_epoch, theme, selected, annotations/positions совпали с baseline. Счёт/позиции/стратегии/Store0.15/Work2/PE не менялись. Свечей не восстановлено данным UI-этапом; новые допуски не выдавались. Существующий CP продолжает обычную работу.
+
+Документация: docs/CP_SIMPLE_PROBLEM_DESIGN_RU.md (5d78f36e), матрица дизайна; отчёты Issue#5:7069288629 и7069353732; новый отчёт о кнопках — отдельным комментарием. Откат — адресные before projections / before simple CP / before repair button / before capability colors и CP owner priority own.diff в СМ-Архив, без замены рабочей SQLite/полного грязного дерева. Опубликованы только собственные файлы/адресные изменения; приватные базы/счёт/ключи не опубликованы.
+
+## Work1 — 21.11.2026: автоматические исправления без кнопки и реальное обслуживание очереди
+
+**Установлено в TEST; не означает, что все ошибки поставщика исправлены.** Код PR#21: 7fcc7cb5, 6f56885f, eaca3af9, dd7dbaba. Последний — финальный охват состояний. Только собственные изменения, без merge/release.
+
+Подтверждены и устранены две программные причины:
+1. automatic_repair_turn видел только сохранённые зависимости заблокированного анализа. Исправимые архивные интервалы при READY/отсутствующей оценке могли вообще не получать задание. Теперь тот же планировщик включает сохранённые закрытые GETTEX/EUR диапазоны всех состояний с поддерживаемой базой5m/15m/1H/1D; _spec/_input подтверждают листинг и актуальные входы перед постановкой. Неверные источники/площадки/валюты/время и будущие интервалы не допускаются. Сначала зависимости/свежие торговые окна, затем архив; существующие cursor/core_streak сохранены в TEST. До4 проверяемых кандидатов и одного нового запроса за ход; один день в задании; одна активная автоматическая работа на акцию. Нет параллельной массовой загрузки. Для старших TF восстанавливается реальная младшая база, контекст переоценивается существующей очередью.
+2. service_request мог уступить обычной загрузке, после чего запрос ждал следующего обхода акций. FeedContext теперь после завершённой обычной работы обслуживает ОДИН due-запрос в том же последовательном writer, если попытки ещё не было. Свежие acquisition-only слоты не выполняют историю. next_retry/cooldown/лимит попыток/недельная перепроверка и окончательные проверки не обходятся. План очищает прежние request_id/range/reason, если новый ход не относится к старому запросу.
+
+Нажатие владельца по-прежнему ставит owner_priority_at: выбранная ошибка обслуживается первой среди доступных, текущая работа не прерывается. Запрет поставщика на запрос до next_retry не обходится, остальные доступные работы могут идти в это время.
+
+**Проверка не ограничилась цветом.** 11 PASS опубликованных Git-объектов dd7dbaba /1,856с. В изолированном воспроизведении сохранённых настоящих GETTEX-свечей использован реальный FeedContext.calculate → planner → _calculate/service_request → data_quality.repair → SQLite → запрос переоценки: без UI восстановлена1 свеча, ровно1 candle_recoveries и COMPLETED. Отдельно воспроизведён yield_regular и проверено завершение в этом же ходе после обычной работы. Пустой источник сохраняет WAITING/BLOCKED и причину, без вставки/разрешения. Проверены изменившиеся входы, неправильная identity, будущий диапазон, все поддерживаемые состояния, обязательная approved policy, реальный выбор writer в пользу клика владельца, cooldown/dedup/origin, 53/200 задач и сохранение свежих acquisition-only слотов. Старые полные аудиты не повторялись.
+
+**Естественный TEST, 21 ноября CET.** После обычного запуска без UI-кликов сами поставлены архивные запросы, включая FR001400AJ45 (Airbus) и FR0000120321 (L'Oréal), оба без зависимостей analysis (dependency_candidates=0). Для точности идентификаторы являются первичным доказательством. На Tesla US88160R1014 запрос15m 20.10.2026 12:15–12:15 создан автоматически22:43:26; origin=AUTOMATIC_DEPENDENCY, owner_priority_at отсутствует. Штатный writer начал22:48:43, закончил22:48:49 (5,650с): WAITING, attempts=1, «Источник не вернул пригодные закрытые свечи», next_retry23:08:43 CET. Это доказанный запуск источника и запись итога без кнопки, а не успешное восстановление этой свечи. Уже существовавшая приоритетная просьба ASML обслужена22:48:14–22:48:18 до Tesla; её отсутствие подтверждения осталось явным. Начальные22:43–22:46 очередные запросы выявили задержку до исправления yield; финальная версия загружена ещё одним обычным запуском.
+
+На рабочей базе данным этапом не подтверждена новая вставленная свеча: рабочее восстановление Tesla=0; изолированный сохранённый replay=1. Нельзя суммировать их как рабочие восстановления. Пустые ответы не доказательство NO_TRADES. При появлении подтверждения штатный writer восстановит данные и поставит переоценку; без доказательств блокировка/ожидание остаются. Источники вне GETTEX и неподдерживаемые виды исправлений не получают фиктивного автоматического результата.
+
+Откат — адресный CP automatic archive own.diff и before automatic archive coverage в СМ-Архив, без замены SQLite/счёта. Защищённые хеши счёта/исполнений/индикаторов/настроек/выбора/рисунков проверены без изменений. Bridge health подтвердил TEST/running (не торговый допуск). Work2/стратегии/V2/Store0.15/PE не менялись. Подробности также в docs/CP_SIMPLE_PROBLEM_DESIGN_RU.md.
+
+## Work1 — 21.11.2026: кнопка исправления показывает квитанцию и ход работы
+
+**Дефект подтверждён.** Пользователь нажимал кнопку, а она оставалась зелёной даже при WAITING/BLOCKED. В рабочей SQLite найдены его реальные ASML-запросы:30.07.2026 21:15, клик21.11 в22:53:57 CET, обслуживание22:54:01–22:54:05, WAITING/«Источник не вернул пригодные закрытые свечи»;31.07.2026 21:15, клик22:54:19, обслуживание22:54:29–22:54:31, WAITING_PROVIDER/cooldown. Таким образом, сохранение клика и работа писателя подтверждены; отображение итога было неверным. Это не доказательство исправления OHLCV.
+
+**Исправлено в 11a61bb9 (PR#21).** Зелёный только доступный маршрут без квитанции; QUEUED — жёлтая «В очереди», RUNNING — синяя «Исправляется», WAITING — красная «Ждёт источник», BLOCKED — красная «Не исправлено», SUPERSEDED — красная «Перепроверить». COMPLETED/RECHECKED при ещё видимой проблеме — жёлтая «Перепроверка» до перечитывания списка, без ложного «решено». Красный WAITING не означает запрет следующего допустимого запроса: клик сохраняет приоритет, но не обходит next_retry.
+
+После сохранения запроса квитанция применяется в строке сразу; появился столбец «Работа СР». Состояние/причина/срок следующей попытки видны в строке/деталях. Отдельный read-only poll существующего ключа cp_repair_requests выбранной акции примерно каждые3сек, через прежнюю read lane, без сети/аудита/расчёта свечей. Полный тяжёлый список не перечитывается на каждом poll. Получение terminal-результата вызывает обычное обновление списка. Сохраняется выбор строки; устаревшая квитанция не заменяет более новую ни из poll, ни из полного снимка. Поздний ответ другой акции/закрытого окна отклоняется, таймеры завершаются. Новых писателей/очередей/потоков нет.
+
+**Проверка:**11 PASS опубликованных Git-объектов11a61bb9 /3,840с: настоящий invoke ttk.Button → один priority request → жёлтая строка → фоновая WAITING-квитанция → красная кнопка, причина и местное время; устаревший снимок, смена акции и закрытие; scoped query-only чтение без изменения SQLite; шесть состояний, приоритет/cooldown/dedup и прежние проверки CP TV/изоляции/scroll. Авторские ошибки тестового закрытия SQLite и ручного вызова таймера исправлены; финальный прогон без Tcl-after ошибки. Изменённый backend восстановления не перепроверялся полным аудитом: он данным этапом не менялся.
+
+Измерение нового receipt-read на рабочей ASML (20 квитанций,5 чтений):среднее6,391мс, максимум15,715мс, вне Tk. Это не оценка полной скорости приложения или восстановления. Переводы новых элементов ru/de/en добавлены.
+
+Откат: cp_problem_view.py / test_cp_priority_button.py before live repair receipts в СМ-Архив; адресные UI-файлы, без подмены SQLite. Счёт/исполнения/индикаторы/epoch/theme/рисунки сохранены по прежним7 хешам; selected отличается от старого ASML-baseline вследствие выбора владельцем Meta до перезапуска. Штатное Save/Close сохраняет этот выбор, не возвращает старый график. Данные/торговая стратегия/разрешения/Work2/Store0.15/PE не менялись. Свечей этим UI-исправлением восстановлено0.
+
+**Windows TEST, фактическая приёмка.** Штатное Save/Close/Restart выполнено с сохранением выбранной владельцем Meta/4H/6месяцев. В новом окне непосредственно наблюдалась пользовательская кнопка по Meta US30303M1027, официальный gettex/GETTEX/EUR,15m 12.10.2026 10:15–10:15: зелёная → постановка → жёлтая «В очереди»/«Приоритетная очередь» → красная «Ждёт источник», без ручного повторного обновления таблицы. В базе owner_priority_at/requested_at=21.11 23:09:18CET; started_at23:09:39, finished_at23:09:40; WAITING_PROVIDER, next_retry22.11.2026 00:07:26CET. Точная причина и дата/UTC-offset видны в деталях. Переход RUNNING проверен тестом; отдельный синий кадр в рабочем окне не фиксировался. Короткая попытка не дала биржевого подтверждения и не снимала DQ. Это подтверждает работоспособность кнопки, очереди и отображения результата, а не восстановление интервала. Окно оставлено на Meta с красным итогом. Переключение не меняло основной график. Bridge подтвердил TEST/running (не торговую готовность).
+
+Ограничение: poll3сек — интервал постановки чтения, не обещание ответа при занятой read lane. Следующая попытка означает нижнюю границу допуска поставщика, а не гарантированное время исполнения. Реальные ошибки остаются; данным этапом0 восстановленных рабочих свечей.
+
+## Work1 — 22.11.2026: проверен обещанный повтор Meta после00:07 CET
+
+**Пункт проверки выполнен, свеча не восстановлена.** Только адресное чтение рабочей SQLite и Bridge health; без повторного аудита, новых сетевых загрузок, ручного перезапуска запроса, сброса попыток или изменений кода/данных/допуска.
+
+Meta US30303M1027, источник gettex, GETTEX/EUR, Europe/Berlin,15m12.10.2026 10:15–10:15. Тот же запрос e237fd6c (постановка21.11 в23:09:18 CET) получил штатный повтор22.11 в00:25:38–00:25:41 CET — после разрешённой нижней границы00:07:26, не ровно в неё. last_attempt_at совпадает с началом. Квитанция: attempts=3, state=BLOCKED, quality=UNCONFIRMED; причина «Три адресные попытки без исправления; новая попытка при новых доказательствах или плановой перепроверке. В доступных файлах GETTEX нет сделок EUR для US30303M1027». Значит, очередь дошла до обработки и сохранила итог; подтверждения дефекта зависшего повтора нет.
+
+Независимое адресное чтение той же базы: на15m-времени12.10 10:15 в candles/gettex нет строки, целевой диапазон остаётся в фактическом data_quality ranges. DQ-серия UNCONFIRMED, checked_at22.11 06:53:44 CET, та же recovery_error. Новых подтверждённых свечей в целевом интервале0. Пустой/неполный набор доступных файлов не считается доказательством биржевого NO_TRADES и не даёт основания создавать свечу либо снимать DQ.
+
+Сроки НЕ смешивать:
+- Конкретный исчерпавший3 попытки запрос: recheck_after29.11.2026 00:25:38 CET; ранее — при новых подтверждённых входах/доказательствах по существующим правилам. Поле next_retry этой квитанции ещё содержит исторический срок00:45:38 CET; оно не отменяет terminal BLOCKED/recheck_after и не означает назначенный новый запуск.
+- Продолжающаяся общая обработка DQ-серии: её отдельный next_retry22.11.2026 07:53:45 CET в последнем снимке. Это нижняя граница допустимости обращения, не гарантия исполнения ровно в это время и не автоматическое снятие terminal-состояния адресной квитанции.
+
+Bridge подтвердил0.16-dev/TEST/running и ту же рабочую SQLite. Возраст Bridge snapshot около210сек, поэтому факты по запросу/свече взяты из отдельного согласованного read-only чтения базы, а не выданы за свежую общую сводку. Торговая готовность через health не оценивалась.
+
+Изменения программы для этой проверки не требовались; старые тесты не повторялись. Счёт, позиции, стратегия, Work2, Store0.15, PE, свечи и разрешения не изменены. Публикуется только новый результат проверки. Препятствие остаётся внешним/доказательным: нет подтверждённых данных для указанной GETTEX/EUR свечи. Дальнейшая штатная обработка не должна заменять их предположением.
+
+## Work1 — 22.11.2026: все59 акций, два общих исправления CP; весь запрос НЕ DONE
+
+**Охват:**59 зарегистрированных акций,6 индексов исключены. Использованы существующие DQ/квитанции/архив, без нового полного аудита OHLCV и без массовой загрузки. Таблица всех59: docs/CP_ALL_STOCK_RECOVERY_RU.md. На датированном снимке285 отчётов gettex/gettex_chart GETTEX/EUR:3 READY,282 иных состояний (это серии/отчёты, НЕ число плохих свечей и НЕ готовность торговли). Отдельно412 отчётов других источников/площадок и10 без identity. В официальном источнике13 172 сохранённых диапазона заканчиваются до20.10 — первой даты имеющегося локального файлового кэша. Это не утверждение о максимальной глубине источника.
+
+**1. Подтверждён и исправлен дефект повторного восстановления.** _input() рассчитан на сверку TV и не включает младшие ряды. Использовать только его hash как origin восстановления было недостаточно: после terminal BLOCKED появление новых совместимых детей не ставило родителя заново. До правки сценарий воспроизведён: CHECKED вместо QUEUED. Теперь отдельный repair_children_fingerprint учитывает реальные закрытые строки детей внутри точного окна, scoped DQ/lineage/listing, версию валидаторов, тот же source/venue/currency/ISIN. Отпечаток TV не меняется. Посторонний источник, другая дата, сервисный checked_at не сбрасывают бюджет. Старым квитанциям без детского hash записывается baseline без новой постановки, сброса attempts/recheck_after или разрешения. Только новые существенные детские входы допускают очередную штатную попытку; финальный writer остаётся прежним.
+
+Сохранённый реальный GETTEX-фрагмент19.11 08:00 (три5m) восстановил одну15m без HTTP и пользователя в изолированной SQLite. На текущей рабочей очереди не найдено полного тройного5m-набора при отсутствующем одноинтервальном15m родителе среди BLOCKED, поэтому новых рабочих свечей этим тестом не заявляется. Естественное положительное поступление после terminal остаётся не наблюдавшимся случаем; положительный путь доказан replay.
+
+**2. Исправлена неверная причина отсутствия данных.** В gettex_history._download выбранные по времени файлы считаются отдельно. Когда для исторического запроса нет ни опубликованных, ни локальных подходящих файлов, возвращается SOURCE_LIMITED/«нет опубликованных или сохранённых файлов GETTEX для запрошенного периода». Больше не утверждается «нет сделок EUR» по самому отсутствию файла. Если файл действительно прочитан, но строк ISIN нет, это прежний отдельный результат; NO_TRADES требует полного проверенного парного покрытия. DQ/данные/разрешения не ослаблены, HTTP/cooldown прежние; исторические квитанции не переписываются.
+
+**Код/тесты:**a02a1a6d,c8d7c23b,7a223ae8 в PR#21; без merge/release. 8 PASS опубликованных Git-объектов7a223ae8 /1,507с: четыре новых сценария child retry (включая базы всех11 UI TF), два file-availability, два затронутых прежних (terminal/restart/unrelated tail и fresh-only53/200). Первый прогон выявил отсутствие прежнего локального TF-теста в опубликованной базе; добавлен собственный воспроизводимый тест вместо публикации чужих незакоммиченных изменений. Дневной KeyError1D найден локально и исправлен до установки. Внешние реальные OHLCV не опубликованы: локальный replay в СМ-Архив, для воспроизводимого CI есть явно тестовые данные только в изолированном тесте.
+
+**Windows/MCP:**обычный Close/Restart, сохранён Meta/4H/6месяцев. Наблюдались рабочий график и штатная активность CP; Bridge0.16 TEST/running (не разрешение сделки). Новая положительная детская комбинация в живой базе не создавалась ради приёмки. Измерение readonly hash рабочего15m по3 чтения:среднее62,932/максимум175,242мс;1D11,216/11,766мс, вне Tk. Это не глобальный performance PASS.7 защищённых хешей счёта/исполнений/индикаторов/epoch/theme/рисунков совпали; selected отличается только из-за прежнего выбора владельцем Meta вместо старого ASML baseline. Work2, Store0.15, стратегии/V2/риск/позиции не менялись; TradingView Work2 не тронут.
+
+**Оставшиеся ограничения, не скрытые как успех:**неполное покрытие файлов и старые диапазоны; пустые ответы; исходные некорректные OHLCV у провайдера; неустановленная identity.6 официальных INVALID у AbbVie/Micron/Nike содержат EXCHANGE_NOTICE_CONFLICT — публикации внутри подтверждённой остановки26.10, не просто пропуск. Проверено первичное объявление биржи: https://www.gettex.de/fileadmin/bulletin/bekanntmachungen.gtx.20261110.pdf#page=148 ; область МUNC/MUND и часы остановки подтверждены, отменять её или удалять реальные строки без доказательства нельзя. Массовой новой визуальной сверки всех интервалов59 акций с TV не было. Число новых рабочих свечей, восстановленных именно данным этапом, подтверждено0; локальный replay1 — отдельно. Полностью исправленными все акции/ошибки НЕ объявляются. Для оставшихся фактических интервалов нужны подтверждённые данные/источник или надлежащая сверка, а не снятие предупреждений.
+
+**Откат:**адресные before child-aware repair retry, before scoped child retry, before missing file diagnostic и CP child retry own.diff в СМ-Архив. Возвращать только собственный патч, не весь грязный checkout и не SQLite. Новые правила внесены в действующий cp_experience_catalogue.json и реальный CP path; это не обещание универсального самоисправления внешних данных.
+
+## 22.11.2026 — визуальная сверка TV и реестр принятых интервалов (IN_PROGRESS)
+
+Общий запрос «все ошибки всех акций» не завершён. Реально открыты 59 карточек поиска GETTEX в установленном TradingView; по 58 акциям сохранены 66 новых адресных наблюдений. У Exxon проверка остановлена на identity: сохранён US30231G1022, в TV доступен преемник US30233Q1085 / 7DZ; взаимозаменять их без штатного перехода нельзя. Это не сверка всех дат/всех TF каждой акции.
+
+Снимок 22.11.2026 12:22:05 CET: ABSENT 51, ZERO_VOLUME 8, PRESENT 4, смешанные UNCONFIRMED 3. Последние три родительских диапазона разделены на шесть точных дочерних наблюдений, поэтому эти числа нельзя складывать как количество отдельных свечей. По новым наблюдениям очередь довела 16 записей до RESOLVED_NATIVE, 50 до AWAITING_SOURCE; оставшихся RECHECK_QUEUED на снимке нет. В сохранённой политике найдены ссылки на 35 новых наблюдений; это не 35 новых свечей и не общее торговое разрешение.
+
+Сам CandlePilot, без ручной правки OHLCV, применил независимое официальное подтверждение: General Motors 13.11 16:15→16:00, L’Oréal 13.11 18:15→18:00, Airbus 13.11 19:45→19:30 (Berlin). В каждой квитанции moved 2: по одной 5m и 15m записи. Итого 6 перемещённых временных меток в трёх случаях, added=0, changed=0; это не шесть новых исторических свечей. Сохранены original/before, официальная причина и ревизии. 13 прочих новых исходов RESOLVED_NATIVE подтверждены как пустые полными GETTEX-публикациями, а не самим отсутствием в TV.
+
+### Реестр и активные ошибки
+
+Исправлен общий дефект представления: действующая OWNER_ACCEPTED_TV_ABSENCE показывалась рядом со старой BLOCKED/WAITING квитанцией как неисправленная проблема. Теперь эффективное подтверждение по текущим ревизиям, identity, TF и точному диапазону выводится в «Принятые сверки TV», а не в активные ошибки. Запись по акции остаётся в общем SQLite-реестре CP с доказательствами и датой. Старый DQ не удаляется и не превращается в READY. При отзыве подтверждения/изменении значимых данных проблема возвращается в активный список. INVALID и обычный ручной риск этой маской не скрываются.
+
+Код f4481196f7f3ac2d030025007a1948bb532d1b79 в draft PR #21. Три адресных сценария PASS /1,324 с: старый отрицательный receipt против действующей сверки, исчезновение только из активного списка с сохранением реестра и повторное появление при отзыве, смена акции/закрытие окна против запоздалого ответа. Проверены исходные свечи, read-only режим и отсутствие записи из представления. ru/en/de строки добавлены; прежние общие тесты/аудиты не повторялись.
+
+Windows: обычные Save/Close/Restart, сохранён Meta/4H/6месяцев. В окне СР проверено раздельное отображение: Meta 1304 активных диапазона и 105 ранее и вновь принятых сверок TV; в принятом разделе — зелёная «Принято по TV», дата, источник, причина и исходный DQ. Кнопка не ставит уже принятый диапазон заново. Это диагностические диапазоны, не 1304 плохие свечи. Все 8 защищённых хешей счёта/исполнений/индикаторов/epoch/theme/выбора/рисунков совпали. MCP подтвердил TEST/Bridge running; health не выдаётся за DQ или торговую готовность, возраст снимка на проверке 277 с.
+
+### Подтверждённые ограничения
+
+- TV Basic показывает максимум 5000 баров: запрос NVIDIA 5m за 07.10 фактически упёрся в 12.10. Отсутствие доступа не записано как отсутствие свечи. Ограничение двух одновременных подключений также наблюдалось; Work2 не отключали и платный доступ не оформляли.
+- Для Adobe/Procter & Gamble 20.11 в 09:00 TV показывает реальные сделки, а соответствующий официальный файл MUND обрывается в 08:05:51 UTC. Штатное приобретение конкретного 08:15 файла получало HTTP404, next retry 22.11 14:17:14 CET. Cooldown не сброшен, пустой файл не принят за NO_TRADES.
+- Нулевая свеча TV не равна отсутствию свечи. Разница соседних OHLCV и округление экранного объёма не записаны как полное совпадение OHLCV. 6 серий AbbVie/Micron/Nike с EXCHANGE_NOTICE_CONFLICT остаются отдельными фактическими конфликтами.
+- Старые 5m, широкие исторические диапазоны, неразрешённая identity Exxon и положительные расхождения не закрыты этим проходом. У каждой акции остаётся IN_PROGRESS, не «полностью проверена».
+
+До изменения наблюдений создан SQLite backup с integrity_check=ok. Доказательства/скриншоты/нативные ссылки и scoped before/after хранятся в СМ-Архив; приватные SQLite, счёт, ключи и полные OHLCV не публикуются. Откат — только собственный патч cp_problem_view/UI translations/каталог, исходники before в СМ-Архив «CP TV accepted status ...»; не восстанавливать весь живой SQLite поверх новых feed/Work2 изменений. Старый вид может снова показать принятые диапазоны, но доказательства не теряются.
+
+### Охват новых наблюдений по общему списку акций
+
+Таблица показывает только новые наблюдения этого прохода, а не полноту исторической проверки. Числа «записано по политике» — ссылки в сохранённой политике; действительность каждого допуска повторно проверяет effective_accepted.
+
+| Акция | Новых наблюдений | Результаты TV | Штатная обработка | Записано по политике TV |
+|---|---:|---|---|---:|
+| Tesla | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| Alphabet Inc. | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| Broadcom Inc. | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| Infineon Technologies AG | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| Apple | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| Novartis AG | 1 | ZERO_VOLUME: 1 | AWAITING_SOURCE: 1 | 0 |
+| thyssenkrupp AG | 1 | ABSENT: 1 | RESOLVED_NATIVE: 1 | 0 |
+| Northern Star Resources Limited | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| Nordex SE | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| NVIDIA Corporation | 1 | PRESENT: 1 | AWAITING_SOURCE: 1 | 0 |
+| Space Exploration Technologies Corp. | 1 | PRESENT: 1 | AWAITING_SOURCE: 1 | 0 |
+| Novo Nordisk A/S | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| Walmart Inc. | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| Oracle Corporation | 1 | ABSENT: 1 | RESOLVED_NATIVE: 1 | 0 |
+| MICROSOFT CORP | 1 | ABSENT: 1 | RESOLVED_NATIVE: 1 | 0 |
+| SCHNEIDER ELECTRIC SE | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| BAYER AG-REG | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| SAP SE | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| DEUTSCHE BOERSE AG | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| HENSOLDT AG | 1 | ABSENT: 1 | RESOLVED_NATIVE: 1 | 0 |
+| Meta Platforms Inc. Class A | 3 | ABSENT: 3 | AWAITING_SOURCE: 3 | 3 |
+| Siemens AG | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| MICHELIN (CGDE) | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| GENERAL MOTORS CO | 3 | ABSENT: 1, UNCONFIRMED: 1, ZERO_VOLUME: 1 | AWAITING_SOURCE: 2, RESOLVED_NATIVE: 1 | 0 |
+| SWISS RE AG | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| CANCOM SE | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| CONTINENTAL AG | 1 | ZERO_VOLUME: 1 | AWAITING_SOURCE: 1 | 0 |
+| ASML HOLDING NV | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| RHEINMETALL AG | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| ALLIANZ SE-REG | 1 | ABSENT: 1 | RESOLVED_NATIVE: 1 | 0 |
+| SIEMENS ENERGY AG | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| AIRBUS SE | 3 | ABSENT: 1, UNCONFIRMED: 1, ZERO_VOLUME: 1 | AWAITING_SOURCE: 2, RESOLVED_NATIVE: 1 | 0 |
+| DEUTSCHE TELEKOM AG-REG | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| MUENCHENER RUECKVER AG-REG | 1 | ABSENT: 1 | RESOLVED_NATIVE: 1 | 0 |
+| DEUTSCHE BANK AG-REGISTERED | 1 | ABSENT: 1 | RESOLVED_NATIVE: 1 | 0 |
+| BASF SE | 1 | ABSENT: 1 | RESOLVED_NATIVE: 1 | 0 |
+| RWE AG | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| E.ON SE | 1 | ABSENT: 1 | RESOLVED_NATIVE: 1 | 0 |
+| MERCEDES-BENZ GROUP AG | 1 | ABSENT: 1 | RESOLVED_NATIVE: 1 | 0 |
+| ADVANCED MICRO DEVICES | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| PALANTIR TECHNOLOGIES INC-A | 1 | ABSENT: 1 | RESOLVED_NATIVE: 1 | 0 |
+| ADOBE INC | 1 | PRESENT: 1 | AWAITING_SOURCE: 1 | 0 |
+| SALESFORCE INC | 1 | ABSENT: 1 | RESOLVED_NATIVE: 1 | 0 |
+| LVMH MOET HENNESSY LOUIS VUI | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| L'OREAL | 3 | ABSENT: 1, UNCONFIRMED: 1, ZERO_VOLUME: 1 | AWAITING_SOURCE: 2, RESOLVED_NATIVE: 1 | 0 |
+| BAYERISCHE MOTOREN WERKE AG | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| DHL AG | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| NIKE INC -CL B | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| AMAZON.COM INC | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| Johnson & Johnson | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| Procter & Gamble | 1 | PRESENT: 1 | AWAITING_SOURCE: 1 | 0 |
+| Berkshire Hathaway B | 1 | ABSENT: 1 | RESOLVED_NATIVE: 1 | 0 |
+| Newmont | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| Exxon Mobil | 0 | ISIN не совпал с доступным листингом | identity blocked | 0 |
+| Duke Energy | 1 | ZERO_VOLUME: 1 | AWAITING_SOURCE: 1 | 0 |
+| Merck & Co. | 1 | ZERO_VOLUME: 1 | AWAITING_SOURCE: 1 | 0 |
+| AbbVie | 1 | ZERO_VOLUME: 1 | AWAITING_SOURCE: 1 | 0 |
+| MICRON TECHNOLOGY INC | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+| COCA-COLA CO/THE | 1 | ABSENT: 1 | AWAITING_SOURCE: 1 | 1 |
+
+## 22.11.2026 — Work: ложные активные сообщения по уже подтверждённому GETTEX
+
+**Было:**108 183 активных сохранённых диагностических диапазона/сообщения по59 акциям (пакет чтения12:39:45–12:40:32CET). **Осталось в следующем пакете:**107 031 (12:55:56–12:57:48CET). Это строки действующего окна СР с его фильтрами, не количество испорченных свечей, DQ-серий или торговых запретов; времена для каждой акции сохранены отдельно.
+
+**Что исправил именно Work:**одну общую программную причину, из-за которой903 уже подтверждённых GETTEX-интервала продолжали отображаться активными ошибками. Для каждого из903 receipt существовал до исходного чтения этой акции и в новом чтении прошёл штатный текущий валидатор; ни одного не было в уже принятых TV-рисках. Это исправление ложной диагностики, не903 новых/исправленных OHLCV. Прямых изменений свечей Work:0.
+
+**Ручная новая работа Work с TV:**6 проверенных15m-пропусков, которые после наблюдения оформил штатный CandlePilot по действующей политике: Meta16.11 12:15;17.11 19:45 и20:45;18.11 07:45; Broadcom28.10 22:15 и29.10 19:15 (2026,Europe/Berlin). Все6 наблюдений вошли через guarded API, без свечных значений/новых разрешений. При последующем чтении эффективная политика приняла эти конкретные отсутствия; это не самопроизвольная сверка Desktop силами CP. Итого909 адресных диагностических результатов связано с новой правкой/ручной сверкой Work, из них903 — снятые ложные сообщения и6 — исторические пропуски после сверки. Программную причину не следует дополнительно складывать как ещё одну свечную ошибку.
+
+**СР отдельно:**полная разница между пакетами1152 не приписывается Work. Оставшиеся243 нетто относятся к другим изменениям штатных отчётов/СР во время чтения; это не доказанное число автономно исправленных свечей. В конце904 действующих официальных подтверждения:903 были ранее,1 поступило после исходного чтения. Данных для точного общего числа новых самостоятельных исправлений CP этим проходом не собирали; ноль либо243 вместо неизвестного не подставляются.
+
+### Причина и адресное исправление
+
+Воспроизведено на Apple10.11 22:45 и Broadcom16.11 22:45: старый DQ сохранял UNCONFIRMED, хотя существующий _official_empty_problem_current с актуальными зависимостями возвращал true и штатный job был RESOLVED_NATIVE/NO_TRADES. Окно СР читало только старый DQ/repair receipt, не действующее официальное подтверждение.
+
+cp_problem_view теперь использует тот же существующий валидатор: exactISIN/identity/15m/одиночный диапазон, APPLIED VERIFIED_NATIVE_EMPTY, текущая политика, доказательство полного парного покрытия и соответствие реальных рядов. Одного текста RESOLVED_NATIVE недостаточно. Подтверждение остаётся в общем реестре акции и выводится в «Подтверждено GETTEX», отдельно от активных ошибок и от принятых TV-рисков. При новых входах/отзыве политики/INVALID проблема остаётся либо возвращается. Сырые DQ, OHLCV, risk/admission/CORE и цена исполнения не меняются; чтение выполняется в прежнем фоновом read-задании, без нового writer/потоков и без сети.
+
+Код e2ee9696c337e0df012c5b536d18edc61ff19059, PR21/draft. Проверено7 затронутых сценариев/2,295с, из них новый интеграционный сценарий с реальным официальным receipt в изолированной SQLite: до подтверждения active1; после active0/native1; отзыв/INVALID/новая реальная5m возвращают active1; чтение не меняет свечи, DQ, настройки или разрешения. Остальные6 проверок повторены потому, что менялся тот же view/paging/UI-код; общие прежние аудиты/тесты очереди не запускались.
+
+Windows: обычные Save/Close/Restart; выбранный Meta/4H/6месяцев сохранён. Реально проверен раздел Siemens с4 официально подтверждёнными датами и подробностью первого интервала21.10 22:45; исходный UNCONFIRMED сохранён, следующий retry пуст, TV-чек не выдуман. Зелёная кнопка показывает причину и не создаёт повторный repair. Все8 защищённых хешей счёта/исполнений/индикаторов/epoch/theme/выбора/рисунков совпали. Bridge TEST/running; возраст снимка371с отдельно, это не признак торговой готовности. Чтение пакета59 сохранённых диагностик заняло46,53с до и112,37с после добавления проверок подтверждения, вне Tk; общего performance PASS нет.
+
+### Отдельные несовпадения и ограничения
+
+У Meta обнаружены два отличающихся соседних15m-бара:16.11 12:30 и17.11 20:30. Они сохранены как отдельные DIFFERENT-наблюдения с native-reference и скриншотами через штатную очередь, не объявлены исправленными вместе с соседними отсутствиями. Полные OHLCV и private SQLite остаются локально. Историческое принятие пропуска не подтверждает соседние цены/объёмы.
+
+Полная задача всех акций/всех интервалов остаётся IN_PROGRESS. Доступное Desktop-подключение восстановлено владельцем; Basic5000 баров для старых5m, неполный20.11 MUND/его штатный retry и identity-преемник Exxon остаются ограничениями. Work2, Store0.15, позиции и торговая стратегия не менялись, искусственных сделок/свечей нет. Новые исправления не считаются полным допуском ко всем инструментам.
+
+Доказательства: существующий СМ-Архив/CP TV current pass baseline.json, after.json, CP native resolution attribution.json, CP native resolved Siemens Windows.png и адресные screenshots/native-references. Откат только own diff/файлы CP native resolution ... rollback, без полной замены SQLite. Журнал предыдущего неправильного понимания Bayer сохранён с явной отменой: в СМ он восстановлен, только строка BAYN удалена из TV по уточнённому поручению.
+
+### Сравнение того же списка акций
+
+Числа в последнем столбце — результат ручной сверки Work с последующим штатным оформлением CP; не автономная сверка TV со стороны CP. Другие изменения пакетов не приписываются Work.
+
+| Акция | Активных до | Активных после | Ложных сообщений снято правкой Work | Пропусков принято после новой TV-сверки Work |
+|---|---:|---:|---:|---:|
+| Tesla | 1598 | 1598 | 0 | 0 |
+| Alphabet Inc. | 2182 | 2181 | 1 | 0 |
+| Broadcom Inc. | 1478 | 1475 | 1 | 2 |
+| Infineon Technologies AG | 487 | 487 | 0 | 0 |
+| Apple | 2315 | 2314 | 1 | 0 |
+| Novartis AG | 3282 | 3244 | 38 | 0 |
+| thyssenkrupp AG | 2491 | 2478 | 13 | 0 |
+| Northern Star Resources Limited | 3444 | 3359 | 85 | 0 |
+| Nordex SE | 2539 | 2509 | 30 | 0 |
+| NVIDIA Corporation | 165 | 165 | 0 | 0 |
+| Space Exploration Technologies Corp. | 336 | 336 | 0 | 0 |
+| Novo Nordisk A/S | 1882 | 1877 | 5 | 0 |
+| Walmart Inc. | 2810 | 2797 | 13 | 0 |
+| Oracle Corporation | 1410 | 1409 | 1 | 0 |
+| MICROSOFT CORP | 1056 | 1055 | 1 | 0 |
+| SCHNEIDER ELECTRIC SE | 2474 | 2471 | 3 | 0 |
+| SAP SE | 797 | 795 | 2 | 0 |
+| DEUTSCHE BOERSE AG | 2740 | 2729 | 11 | 0 |
+| HENSOLDT AG | 2115 | 2102 | 13 | 0 |
+| Meta Platforms Inc. Class A | 1304 | 1300 | 0 | 4 |
+| Siemens AG | 1618 | 1614 | 4 | 0 |
+| MICHELIN (CGDE) | 3323 | 3214 | 109 | 0 |
+| GENERAL MOTORS CO | 3061 | 2813 | 85 | 0 |
+| SWISS RE AG | 3100 | 3033 | 67 | 0 |
+| CANCOM SE | 2985 | 2920 | 65 | 0 |
+| CONTINENTAL AG | 2844 | 2807 | 36 | 0 |
+| ASML HOLDING NV | 1168 | 1168 | 0 | 0 |
+| RHEINMETALL AG | 539 | 539 | 0 | 0 |
+| ALLIANZ SE-REG | 1355 | 1354 | 1 | 0 |
+| SIEMENS ENERGY AG | 333 | 333 | 0 | 0 |
+| AIRBUS SE | 2190 | 2179 | 11 | 0 |
+| DEUTSCHE TELEKOM AG-REG | 1168 | 1165 | 3 | 0 |
+| MUENCHENER RUECKVER AG-REG | 1631 | 1627 | 4 | 0 |
+| DEUTSCHE BANK AG-REGISTERED | 1385 | 1382 | 3 | 0 |
+| BASF SE | 2002 | 1995 | 7 | 0 |
+| RWE AG | 2260 | 2248 | 12 | 0 |
+| E.ON SE | 2226 | 2216 | 10 | 0 |
+| MERCEDES-BENZ GROUP AG | 1634 | 1634 | 0 | 0 |
+| ADVANCED MICRO DEVICES | 931 | 930 | 1 | 0 |
+| PALANTIR TECHNOLOGIES INC-A | 1523 | 1523 | 0 | 0 |
+| ADOBE INC | 2322 | 2314 | 8 | 0 |
+| SALESFORCE INC | 2146 | 2140 | 6 | 0 |
+| LVMH MOET HENNESSY LOUIS VUI | 1586 | 1582 | 4 | 0 |
+| L'OREAL | 2726 | 2892 | 49 | 0 |
+| BAYERISCHE MOTOREN WERKE AG | 1742 | 1733 | 9 | 0 |
+| DHL AG | 2491 | 2477 | 14 | 0 |
+| NIKE INC -CL B | 1641 | 1639 | 2 | 0 |
+| AMAZON.COM INC | 544 | 544 | 0 | 0 |
+| Johnson & Johnson | 2262 | 2255 | 6 | 0 |
+| Procter & Gamble | 2043 | 2034 | 9 | 0 |
+| Berkshire Hathaway B | 1860 | 1857 | 3 | 0 |
+| Newmont | 2123 | 2106 | 17 | 0 |
+| Exxon Mobil | 13 | 13 | 0 | 0 |
+| Duke Energy | 2741 | 2660 | 81 | 0 |
+| Merck & Co. | 2434 | 2402 | 32 | 0 |
+| AbbVie | 2492 | 2465 | 27 | 0 |
+| MICRON TECHNOLOGY INC | 92 | 92 | 0 | 0 |
+| COCA-COLA CO/THE | 1040 | 1040 | 0 | 0 |
+| BAYER AG-REG | 1704 | 1411 | 0 | 0 |
+
+Дополнение13:13CET: обе отдельные Meta-сверки приняты обычной очередью как SOURCE_DISCREPANCY/TV_DIFFERENCE, не как NATIVE_ROWS_CONFIRMED. Для17.11 20:30 штатный план ждёт RETIME_INCOMPLETE_PUBLICATION; для16.11 12:30 проверенный план нормализации отсутствует. Данные не менялись. Ещё один диапазон Broadcom26.10 07:30–09:30 вручную сверён с TV и передан RECHECK_QUEUED после окончания указанного пакета; он не прибавляется к уже зафиксированным6 закрытым диапазонам до штатной проверки.
+
+
+<a id="work1-closing-tick-and-review-route-20261122"></a>
+
+## 22.11.2026 — Work1: две реальные ошибки Palantir и маршрут сохранённой сверки
+
+**Счёт именно этого подэтапа:** было 2 доказанных ценовых дефекта 15m Palantir GETTEX/EUR:23.10 17:30 и16.11 12:00 (Берлин). После общей доработки Work штатный CandlePilot исправил оба: осталось0 из этих2. Изменены4 существующие записи (по одной15m и одной связанной5m на дефект); добавлено0, перенесено0. Это2 уникальные ценовые ошибки, не4 независимые свечные проблемы. Прямых OHLCV-записей Work0. Work реализовал новый общий маршрут восстановления и исправил отдельный дефект назначения исторического хода; обычные прочие изменения СР к своим исправлениям не приписывает. Прежние903 ложных сообщения здесь повторно не считаются. Общий новый остаток всего расширившегося списка акций в этом подэтапе не пересчитывался.
+
+### Доказанная причина и восстановление
+
+В обеих свечах исходный ряд пропустил ровно последнюю опубликованную запись. Полные парные файлы GETTEX и их реальные записи дают те же OHLCV, что наблюдались в TradingView Desktop по GETTEX:PTX/EUR.23.10 последняя запись была с нулевым количеством,16.11 — с количеством1. Прежний алгоритм для сохранённого родного ряда не обрабатывал этот вариант при изменении Close либо Volume.
+
+В существующий revision_watcher.retime_plan добавлен VERIFIED_NATIVE_CLOSING_TICK. Он требует текущий точный DIFFERENT, подтверждённую identity, закрытую единственную15m-свечу, обе действующие политики, полные публикации и точное воспроизведение ВСЕХ исходных5m/15m значений из официальной ленты после исключения только её последней записи. Последняя запись остаётся в прежнем5m-слоте; набор временных отметок не меняется. Произвольная замена данных не разрешена. Цены берутся из независимо проверенных официальных данных, не из текста или картинки TV. Штатный writer ещё раз строит тот же план перед записью, сохраняет исходные OHLCV/происхождение и запрос обычной переоценки. Отзыв исходной политики отзывает актуальность receipt.
+
+Обычная очередь Windows TEST опубликовала23.10 17:30 как RESOLVED_NATIVE22.11 в14:21:03CET;16.11 12:00 — в14:19:34CET. Итоги после записи:23.10 O175.14/H175.14/L175.02/C175.02/V10;16.11 O151.36/H151.68/L151.22/C151.22/V14. Оба официальных подтверждения повторно актуальны. Это не утверждение полного торгового допуска Palantir.
+
+### Отдельная причина задержки
+
+Для одного ISIN используется прежний общий feed-ключ. Если он уже ожидал как короткая свежая загрузка, выбор due_observation не менял захваченный payload, а поздняя fresh-подстановка могла снова вытеснить историческую сверку. Новый адресный сценарий воспроизвёл именно потерю текущего назначения. Планировщик теперь передаёт ISIN/job_id и время сохранённого назначения; перед выполнением существующий worker использует прежний _review_only-маршрут для совпадающего запроса не старше90с. Другие акции, отсутствующий и просроченный запрос не изменяют свежую загрузку. Нет второго writer, отмены работающего задания, изменения стратегии или продления freshness. Свежая загрузка остаётся в обычной справедливой очереди.
+
+### Проверка
+
+Новый интеграционный сценарий последней записи с двумя вариантами (нулевое/положительное количество), отсутствующим подтверждением, отзывом политики, изменением исходного ряда перед публикацией, неизменностью соседних значений, идемпотентностью и повторным открытием базы: PASS /2.168с. Затронутый прежний сценарий extrema тоже PASS; весь архив/старые аудиты не запускались. Для маршрута очереди1новый сценарий с4вариантами и2затрoнутые проверки53/200 задач: PASS /0.042с. Дополнительная защита отображения нового действующего TV-конфликта над старым official-empty receipt также проверена одним сценарием; фактических таких текущих конфликтов в исходном замере0, новых исправленных свечей ей не приписывается.
+
+Штатные Save/Close/Restart выполнены. Meta/4H/6месяцев сохранились; восемь проверок счёта/исполнений/индикаторов/epoch/theme/выбора/существующих рисунков и позиций совпали. Bridge нового TEST-экземпляра работает. Read-only MCP прочитал исправленную16.11 свечу, объём14 и конечные EMA10/30, RSI, MACD, ATR без missing_values. Получение результата заняло39.454с вычисления; это не PASS общей производительности. Для нового маршрута ожидается отдельный свежий ход с новым наблюдением21.10 14:15; пока не объявляется доказанным выигрышем во времени Windows.
+
+### Остаток и ограничения
+
+Вручную просмотрены дополнительные пропуски/различия Palantir через Desktop, а наблюдения записаны только guarded API. Три пропуска20.11 11:45,19.11 08:45,18.11 19:45 получили самостоятельное полное подтверждение GETTEX в обычной очереди; Broadcom26.10 07:30–09:30 принят действующей политикой по сохранённой TV-сверке. Они не являются новыми свечами. Другие соседние пропуски пока остаются в штатной перепроверке.
+
+Не исправлены отдельное различие Palantir18.11 19:30 (V91 в TV против126 в родном и официальном ряду), смешанный участок22.10 19:15–19:45 (TV-пустота, существующая нулевая свеча и отличающийся следующий бар), новые21.10 14:00/14:15. Для22.10 официальный архив уже совпадает с TV; существующий консервативный механизм пока не обрабатывает сочетание задержанной временной привязки и пропущенной последней записи. Это ограничение реализации, а не отсутствие доказательств у источника. Meta16.11 12:30 и17.11 20:30 остаются отдельными неподтверждёнными расхождениями.
+
+Обычная повторная попытка GETTEX20.11 закончилась22.11 в14:20:46CET причиной NO_PUBLISHED_OFFICIAL_FILE_TEMPLATE; следующая штатная попытка23.11 в14:20:46CET. Cooldown не сбрасывался. Лимит Basic5000 старых5m и identity-преемник Exxon сохраняются. Освобождённое владельцем подключение TV больше не записано активным препятствием. Ни пустой ответ поставщика, ни недоступные бары не объявлены NO_TRADES.
+
+Код:[closing tick ef25e1a](https://github.com/swindler2010/StockMonitor/commit/ef25e1a20f1c0fe71e76ba0891220b701bebb5f7),[маршрут ec1d63a](https://github.com/swindler2010/StockMonitor/commit/ec1d63a9f6ab817343ea009cd4144f1ef6b94428),[защита TV-конфликта6df4aed](https://github.com/swindler2010/StockMonitor/commit/6df4aed17bbb0627b127ac6c6a4acb97421443cb),[PR21](https://github.com/swindler2010/StockMonitor/pull/21). Опубликованы только собственные изменения, тесты и каталог; другие локальные изменения desktop014 сохранены и не подменяются целым удалённым файлом. Детальные private native/TV доказательства и SQLite остаются в СМ-Архив. Доступен адресный исходный патч и rollback ровно четырёх исправленных строк с проверкой неизменности; dry-run подтвердил оба случая, фактический откат не выполнялся.
+
+**Полная задача всех акций остаётся IN_PROGRESS.**
+
+
+
+Дополнение22.11 14:40CET: после штатного запуска с исправленным маршрутом новая сохранённая сверка Palantir21.10 14:15 (запись13:36:31.934856Z) и отдельная разница14:00 (13:36:34.181972Z) обработаны обычной очередью13:37:14.417970Z:42.483514с и40.235998с. Результаты AWAITING_SOURCE/SOURCE_TIMEBASE_UNCONFIRMED и SOURCE_DISCREPANCY; это не исправленные свечи и не торговый допуск. Предыдущая формулировка «ожидается свежий ход» описывала состояние до этого результата. Кнопки/прямой вызовturn не использовались.
+
+
+### 22.11.2026 — дополнительные исправления Palantir, Siemens, SAP и Microsoft; обычная очередь TEST
+
+**Статус этапа: адресная выборка завершена, общая задача сверки всех акций IN_PROGRESS.** Это дополнение к уже опубликованным closing-tick/маршрутным проверкам, без их повторного зачёта.
+
+**Счётчик владельца.** В этой явно ограниченной выборке до обработки было **9 уникальных проблемных интервалов 15m**, выявленных последовательно, а не в одном глобальном снимке. Work лично исправил **4 общих программных механизма**, выполнил необходимые визуальные сверки и передал доказательства штатному CP. **Прямых записей OHLCV Work — 0.** Обычный CandlePilot обработал **9 из 9**, в выборке осталось **0**. Из них исправлены/восстановлены значения трёх 15m-интервалов, ещё шесть интервалов получили самостоятельное биржевое подтверждение отсутствия сделок. Физически CP добавил **3 строки** и изменил **5 строк** хранения 5m/15m, переместил **0**; это не восемь независимых ошибок. Перекрывающийся родительский диапазон не считается десятой свечой. Два прежних closing-tick случая и ранее устранённые 903 ложные записи здесь повторно не засчитываются.
+
+| Акция | Дата/время, Europe/Berlin | Новый доказанный результат |
+|---|---|---|
+| Palantir | 22.10.2026 19:30 | Реальная нулевая ценовая запись восстановлена из полной ленты GETTEX; это не сделка и не синтетическая свеча |
+| Palantir | 22.10.2026 19:45 | O176.14/H176.30/L175.98/C175.98/V219; исправлены задержанная привязка и пропущенная последняя запись |
+| Palantir | 22.10.2026 19:15 | NO_TRADES, обычная очередь 22.11 16:11:43 CET |
+| Palantir | 23.10.2026 17:15 | NO_TRADES, обычная очередь 22.11 16:13:13 CET |
+| Palantir | 16.11.2026 11:45 | NO_TRADES, обычная очередь 22.11 16:13:13 CET |
+| SAP | 16.11.2026 22:45 | Отсутствует и в TV; соседние OHLCV совпали, затем CP самостоятельно подтвердил NO_TRADES 22.11 15:55:41 CET |
+| Microsoft | 17.11.2026 13:45 | Отсутствует и в TV; соседние OHLCV совпали, затем CP самостоятельно подтвердил NO_TRADES 22.11 15:58:33 CET |
+| Siemens | 16.11.2026 08:45 | После исправления следующей свечи CP подтвердил NO_TRADES 22.11 16:20:56 CET |
+| Siemens | 16.11.2026 09:00 | O/H278.95 вместо278.90; L274.75/C274.85/V3733 сохранены. CP APPLIED 22.11 16:15:01 CET и RESOLVED_NATIVE 16:20:56 CET |
+
+**Что внедрено в общий механизм.**
+
+1. VERIFIED_PRICE_CLOSING_TICK_PARTITION обрабатывает сочетание задержанной нулевой цены и ровно одной отсутствующей последней положительной записи. Полная парная публикация должна единственным образом воспроизводить все исходные дочерние значения без последней записи; родительские значения обязаны точно агрегировать исходные дочерние. Допустимая задержка существующей нулевой цены ограничена15мин. Так восстановлен Palantir22.10 19:30/19:45; обычная запись CP22.11 15:27:56 CET,3 добавления/3 изменения.
+2. После изменения свечей или появления локального подтверждения пустоты CP ставит только связанные диапазоны той же identity на перепроверку, когда их фактический входной отпечаток изменился. Старая TV-сверка не объявляется новой. Сохранены cooldown поставщика и прежний последовательный writer. Для уже применённых новых типов ремонта добавлен ограниченный метаданными сигнал существующему планировщику: не требуется ждать общего обхода82акций. Обработка ограничена, неизменившиеся входы не запускаются заново, изменившееся доказательство не даёт разрешения. В Windows22.11 16:11–16:13 подтверждено повторное рассмотрение зависимых диапазонов.
+3. VERIFIED_NATIVE_PRICE_SAMPLES исправляет случай Siemens: количество полностью сохранено, но в ценах первой5m-свечи отсутствуют первая положительная цена и максимум одна отдельная внутренняя крайняя цена. Ровно один вариант исключения этих цен обязан воспроизвести все исходные цены; объёмы, закрытия и временные отметки всех5m/15m остаются точными. Оригинальные родительские значения обязаны агрегировать исходные дочерние. Полная официальная лента подтвердила пропущенные цены278.95 и276.95; количество151 в первой5m и3733 в15m не менялось. Это узкое доказанное исправление, не произвольная замена поставщика. TV показал объём округлённо3.73K; точное количество3733 подтверждено GETTEX, а не выведено из округления TV.
+4. Смешанный диапазон теперь использует актуальное подтверждение своего пустого дочернего интервала той же площадки, источника, символа, валюты и TF. Раньше _input искал receipt только по идентификатору самого задания, поэтому Palantir22.10 19:15–19:30 оставался NATIVE_ROWS_PRESENT, хотя пустая часть уже подтверждена и реальная нулевая строка присутствует. Теперь каждый используемый receipt повторно проходит retime_current. Изменение исходного5m-объёма отзывает подтверждение; источник/TF не подменяются. **Обычная очередь Windows22.11 16:30:25 CET опубликовала этот родительский диапазон как RESOLVED_NATIVE / NATIVE_ROWS_CONFIRMED, actual_candles1, confirmed_empty_intervals1.** Это устранение ложного повторного предупреждения, не ещё одна восстановленная свеча.
+
+**Проверки.** Новое сочетание задержки/closing tick и2затронутых сценария:3PASS/4.314с. Для ценовой выборки Siemens новый сценарий и затронутый positive-opening:2PASS/2.276с. Новое пробуждение после ремонта, изменившееся доказательство и затронутый closing:3PASS/4.007с. Адресная нагрузка очереди53/200:2PASS/0.375с. Смешанный диапазон воспроизведён FAIL до исправления; изменённый сценарий с существующим ожидающим родителем, автоматической постановкой после NO_TRADES и отзывом при изменении5m:PASS/1.700с. Полные аудиты/массовые загрузки не выполнялись.
+
+Штатные Save/Close/Restart проведены, в TEST сохранены Meta/4H/6месяцев. Через read-only MCP прочитана исправленная Siemens16.11 09:00 с O/H278.95, C274.85,V3733 и конечными EMA10/30, RSI, MACD, ATR; missing_values=[]. Расчёт занял30.703с — **это не PASS общей производительности**. Диагностический общий снимок Bridge в момент отдельного чтения был NOT_AVAILABLE_YET; из этого не выводятся нулевые счётчики или полный торговый допуск.
+
+Семь исходных контрольных сумм счёта/исполнений/архива/общих индикаторов/epoch/theme/выбора совпали; существующие позиции, рисунки, уровни и настроенные индикаторы сохранены. После обычного сохранения у23ранее добавленных карточек пустые поля индикаторов инициализировались ровно DEFAULT_IND; настроенные карточки и общие настройки не изменены. Данные SQLite и изображения TV остаются локальными. При проверке публикации исправлены испорченные русские пути в двух собственных новых тестах; рабочие данные этим не менялись. Чужие локальные изменения сохранены, в ветку добавлены только собственные адресные изменения.
+
+**Остаток общей задачи, без ложного DONE.** Не устранены Palantir21.10 14:00/14:15: во временном окне официальное количество45 против55 в родном ряду, точное разбиение не доказано. Palantir18.11 19:30: TV показывает91 против126 в официальном/родном ряду;35реальных опубликованных единиц нельзя удалять ради совпадения. Meta16.11 12:30 и17.11 20:30 сохраняют отдельные расхождения/неполную публикацию. Ограничения старых5m Basic5000 и несопоставленный Exxon ISIN остаются. Официальная попытка GETTEX20.11 дала NO_PUBLISHED_OFFICIAL_FILE_TEMPLATE; следующая разрешённая попытка23.11 14:20:46 CET, cooldown не сбрасывался. Другие непроверенные интервалы не объявлены решёнными, сопоставимый начальный глобальный счёт для нынешних82акций не снят: расширение с59не смешивается со старым счётчиком.
+
+CP самостоятельно выполняет проверку полного официального источника, узкое доказанное восстановление, происхождение/ревизии, постановку зависимых интервалов и переоценку. Текущая визуальная сверка TV остаётся ASSISTED_ONLY; права автономного извлечения TV не получены. Подтверждённая пустота не добавляет наблюдений для прогрева. DQ, identity, freshness, торговые ограничения и реальный брокер не изменены.
+
+Код:[сочетание задержки/closing tick](https://github.com/swindler2010/StockMonitor/commit/53bb56387621fdd4869676b753fb997687ca46d9),[зависимые интервалы](https://github.com/swindler2010/StockMonitor/commit/35d27e1c00d2ff84f886bd5c2dab3d79e73cd02f),[выборка цен и пробуждение](https://github.com/swindler2010/StockMonitor/commit/e2e824ac51e987916ff6966d3580054657fa6afc),[общие подтверждения/UTF-8](https://github.com/swindler2010/StockMonitor/commit/9f0928e4f139231dfae97022a6808b5809d03298),[PR21](https://github.com/swindler2010/StockMonitor/pull/21). Доступны адресные исходные патчи и rollback каждой точной коррекции; dry-run нового Siemens подтвердил1допустимую коррекцию, фактический откат не выполнялся. При необходимости откат только конкретных неизменившихся строк/lineage при закрытом СМ, затем обратный собственный патч; не восстанавливать старую полную базу поверх текущей.
+
+
+
+
+
+<a id="cp-all-stock-five-minute-20261122"></a>
+### 22.11.2026 — все82акции: автономное подтверждение пустых5m и пакетная очередь
+
+Область — **все82зарегистрированные акции**, без benchmark. Полный новый аудит, массовая загрузка и повтор TV не выполнялись: использованы сохранённые DQ, очередь и полные официальные файлы GETTEX. Новый согласованный исходный снимок 22.11 в18:05:57CET:757DQ-серий, READY93, INVALID52, SOURCE_GAP44, GAP49, SOURCE_UNAVAILABLE58, UNCONFIRMED461. Это серии, а не число испорченных свечей. В очереди QUEUED89, AWAITING_USER13365, AWAITING_SOURCE366, RESOLVED_NATIVE8424;63сохранённых особо подозрительных случая. Числа не смешиваются с прежним составом59акций и не означают13365доказанных ошибок.
+
+Две общие технические причины устранены: (1) точное подтверждение официальной пустоты поддерживало15m, но не5m; (2) сохранённые5m-доказательства ждали медленного общего обхода. Новая ограниченная ветвь штатного planner/serial feed обходит до8акций и до8ранее выявленных диапазонов за ход, без HTTP, повторного декодирования архивов и расчёта CORE в этой короткой ветви. Сохраняются дедупликация feed:<ISIN>, приоритет свежих цен и явного запроса владельца, обычная очередь переоценки. Новые случаи также обрабатываются обычным turn. Собственных потоков/конкурирующей записи не добавлено.
+
+Условия строгие: тот же подтверждённый GETTEX/EUR листинг; закрытый одиночный5m; непосредственные реальные5m-соседи; полная парная официальная лента с явным NO_TRADES; полное точное совпадение исходных5m И15m окон не длиннее45мин; действующие политики и финальная проверка перед публикацией. Текущая противоречащая TV-сверка не перекрывается. Повреждённая/неполная публикация, иной ряд или изменившиеся условия не дают подтверждения. Записывается только доказательство и происхождение, **0добавленных/изменённых OHLCV**. UI/потребители проверяют фактическийTF и актуальность доказательства. Доказанная пустота не увеличивает прогрев и не выдаёт торговый допуск.
+
+После обычных Save/Close/Restart TEST 18:26–18:27CET СР сам, без ручных turn/SQL-исправлений акций, обработал весь сопоставимый набор **4055m-диапазонов по52акциям**. Снимок18:37:41CET: **405проверено,323RESOLVED_NATIVE по51акции,82неподтверждено по44акциям,0непроверенных в этом наборе**. Пересечение51/44нормально: у одной акции есть и решённые, и оставшиеся даты.404проверки прошли пакетной ветвью,1Meta — обычной очередью с тем же новым валидатором. В заранее выделенной контрольной выборке85из85по51акции получены актуальные доказательства; это подмножество323, не дополнительные85. **Work лично:2общих программных исправления,0ручных свечных записей; СР:323закрытых диапазона; осталось82в этом точном наборе.** Предыдущие9диапазонов/физические3добавления+5изменений и старые903строки сюда не включены.
+
+Оставшиеся82:41расхождение полного5m+15m окна с официальной лентой,19расхождение только5m окна,21нет двух точных соседей5m,1неполная публикация. Отдельная адресная проверка39сохранённых особо подозрительных5m не нашла случая, где можно безопасно вставить единственную отсутствующую свечу при неизменных совпадающих15m-родителях:21многосвечный диапазон,18различающиеся родители/дети. Эти39пересекаются с глобальными63; не прибавляются как новые ошибки. Наличие реальных сделок и временное распределение источников требуют отдельных доказательств. Ни пустой ответ, ни похожий график другой биржи не стали NO_TRADES.
+
+Решённые даты:20.10.2026 17:30–20.11.2026 22:50CET, точные323ISIN/TF/времени сохранены в локальном приёмочном реестре. Оставшиеся даты в наборе:20,21,22,23,26,27,28,29,30октября;2,9,11,13ноября2026. Точные времена по каждой акции перечислены ниже. Более ранние ограничения Palantir21.10 14:00/14:15 и18.11 19:30, Meta16.11 12:30/17.11 20:30, старые5m за пределами Basic5000, несопоставленный Exxon ISIN и неполная официальная20.11-публикация не объявлены закрытыми. TV-визуализация остаётся ASSISTED_ONLY; новый механизм использует официальный GETTEX и не означает права автоматического извлечения TV.
+
+Проверки:6адресных сценариев в рабочем коде PASS;7на точных объектах опубликованного коммита PASS за3.039с, включая изменённый5m, финальный отказ при изменении15m/политики/неполных файлов/противоречащего TV, повторное открытие SQLite, ограниченный общий selector, отсутствие provider/CORE маршрута, приоритет свежих/явных запросов,53/200очередей и затронутый прежний15m-сценарий. При подготовке GitHub найден отсутствующий там, но уже работающий локально валидатор официальной пустоты; соответствующая зависимость и вызов включены, проверка опубликованных объектов это покрывает. Другие локальные изменения не копировались целиком. В Windows подтверждены штатный запуск, ACTIVE CP, прежние Meta/4H/6месяцев и графические индикаторы/Volume Profile. Внешний read-only MCP подтвердил новую TEST-инстанцию c593ff4146d8cdf301f65bff8b43f702 и работающий Bridge. Его тяжёлая диагностическая сводка ещё RUNNING, поэтому новый полный READY через неё не выдуман. Рынок закрыт; сделок ради проверки нет.
+
+Счёт/исполнения/конфигурация PAPER совпали по контрольным суммам, реальные позиции/Work2/V5/Store0.15 не изменялись. Согласованная актуальная резервная SQLite:CP proof current backup.sqlite3, integrity_check=ok,36.08с. Адресный исходный rollback ZIP проверен testzip. Пробный точечный rollback одного Tesla-доказательства допустим:7принадлежащих ему записей lineage,0OHLCV; фактический rollback не выполнялся. Откат только собственного кода и конкретного неизменившегося доказательства при закрытом СМ; не восстанавливать старую полную базу поверх текущей.
+
+Текущий полный снимок всех82: QUEUED85, AWAITING_USER13052, AWAITING_SOURCE366, RESOLVED_NATIVE8755;63особо подозрительных без изменения. Сырой DQ READY93, UNCONFIRMED460, GAP49, INVALID52, SOURCE_UNAVAILABLE60, SOURCE_GAP44. Это сохранённые отчёты источников: они не превращены в READY SQL-перекраской. Решённая пустота проверяется актуальным доказательством и отделяется в CP; последующая DQ/CORE-переоценка идёт штатно. Изменение общей очереди331не равно323точечным исправлениям этого набора: параллельно идут обычные проверки. **Все свечные ошибки по всем акциям ещё не решены; весь список охвачен, но недостающие/противоречивые доказательства не подменены предположениями.**
+
+Код:[fff70c2](https://github.com/swindler2010/StockMonitor/commit/fff70c2df25b4c3c50fc158e63a9bd70a7348bc2),[PR21](https://github.com/swindler2010/StockMonitor/pull/21). Реестры/точные доказательства и откат в существующем СМ-Архив:CP all stock remaining baseline.json,CP five minute proof cohort before.json,CP five minute proof acceptance.json,CP five minute remaining source check.json,CP five minute proof rollback.zip/.py,CP five minute publication test.json/.zip. Приватная база, счёт и исходные файлы торгов в GitHub не публиковались.
+
+Таблица всех82акций: счётчики относятся только к сопоставимому5m-набору405. «Нет такого случая» не означает отсутствие прочих DQ/исторических проблем. Полные статусы по источникам и очереди сохранены в локальном реестре; никаких новых торговых разрешений эта таблица не выдаёт.
+
+| Акция | ISIN | Было5m | СР решено | Осталось | Оставшиеся5m CET / статус |
+| --- | --- | ---: | ---: | ---: | --- |
+| AbbVie | US00287Y1091 | 5 | 4 | 1 | 10-30 12:55 |
+| Adidas | DE000A1EWWW0 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+| ADOBE INC | US00724F1012 | 9 | 6 | 3 | 11-13 21:55; 11-13 18:20; 10-29 17:00 |
+| ADVANCED MICRO DEVICES | US0079031078 | 7 | 6 | 1 | 10-26 19:15 |
+| Air Liquide | FR0000120073 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+| AIRBUS SE | NL0000235190 | 8 | 6 | 2 | 10-27 21:55; 10-27 15:45 |
+| ALLIANZ SE-REG | DE0008404005 | 8 | 6 | 2 | 10-27 17:30; 10-26 22:55 |
+| Alphabet Inc. | US02079K1079 | 10 | 9 | 1 | 10-27 15:20 |
+| AMAZON.COM INC | US0231351067 | 5 | 3 | 2 | 10-26 11:05; 10-21 13:15 |
+| Apple | US0378331005 | 5 | 4 | 1 | 10-27 16:15 |
+| ASML HOLDING NV | NL0010273215 | 13 | 10 | 3 | 10-29 17:30; 10-28 18:30; 10-27 15:15 |
+| AXA | FR0000120628 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+| BASF SE | DE000BASF111 | 4 | 4 | 0 | Проверенные пустые интервалы подтверждены |
+| BAYER AG-REG | DE000BAY0017 | 2 | 1 | 1 | 10-27 19:30 |
+| BAYERISCHE MOTOREN WERKE AG | DE0005190003 | 1 | 1 | 0 | Проверенные пустые интервалы подтверждены |
+| Berkshire Hathaway B | US0846707026 | 11 | 9 | 2 | 11-13 14:25; 10-28 10:55 |
+| Broadcom Inc. | US11135F1012 | 11 | 11 | 0 | Проверенные пустые интервалы подтверждены |
+| CANCOM SE | DE0005419105 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+| Clorox | US1890541097 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+| COCA-COLA CO/THE | US1912161007 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+| CONTINENTAL AG | DE0005439004 | 5 | 5 | 0 | Проверенные пустые интервалы подтверждены |
+| DEUTSCHE BANK AG-REGISTERED | DE0005140008 | 8 | 6 | 2 | 11-11 19:25; 10-26 20:25 |
+| DEUTSCHE BOERSE AG | DE0005810055 | 5 | 3 | 2 | 10-28 16:15; 10-28 08:45 |
+| DEUTSCHE TELEKOM AG-REG | DE0005557508 | 12 | 7 | 5 | 10-28 17:15; 10-28 08:55; 10-26 22:55; 10-26 21:30; 10-23 22:00 |
+| DHL AG | DE0005552004 | 14 | 12 | 2 | 10-27 12:55; 10-27 11:55 |
+| Duke Energy | US26441C2044 | 1 | 0 | 1 | 10-27 14:55 |
+| E.ON SE | DE000ENAG999 | 10 | 9 | 1 | 10-28 17:00 |
+| Eli Lilly | US5324571083 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+| Exxon Mobil | US30231G1022 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+| Fresenius | DE000FRE5EN2 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+| GENERAL MOTORS CO | US37045V1008 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+| Hannover Re | DE0008402215 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+| Henkel Preferred | DE0006048432 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+| HENSOLDT AG | DE000HAG0005 | 13 | 9 | 4 | 11-13 13:30; 10-29 17:00; 10-27 08:45; 10-26 17:05 |
+| Infineon Technologies AG | DE0006231004 | 5 | 4 | 1 | 10-20 21:15 |
+| Johnson & Johnson | US4781601046 | 8 | 5 | 3 | 10-29 09:15; 10-28 08:25; 10-28 08:15 |
+| Kraft Heinz | US5007541064 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+| L'OREAL | FR0000120321 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+| LVMH MOET HENNESSY LOUIS VUI | FR0000121014 | 11 | 10 | 1 | 10-27 19:55 |
+| Main Street Capital | US56035L1044 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+| MERCEDES-BENZ GROUP AG | DE0007100000 | 3 | 3 | 0 | Проверенные пустые интервалы подтверждены |
+| Merck & Co. | US58933Y1055 | 6 | 4 | 2 | 10-28 20:55; 10-28 17:55 |
+| Merck KGaA | DE0006599905 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+| Meta Platforms Inc. Class A | US30303M1027 | 11 | 11 | 0 | Проверенные пустые интервалы подтверждены |
+| MICHELIN (CGDE) | FR001400AJ45 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+| MICRON TECHNOLOGY INC | US5951121038 | 8 | 7 | 1 | 11-09 16:30 |
+| MICROSOFT CORP | US5949181045 | 11 | 10 | 1 | 10-27 10:15 |
+| Moderna | US60770K1079 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+| MUENCHENER RUECKVER AG-REG | DE0008430026 | 12 | 8 | 4 | 11-13 13:25; 10-29 19:55; 10-28 19:55; 10-27 22:55 |
+| Newmont | US6516391066 | 15 | 13 | 2 | 10-30 15:25; 10-30 13:45 |
+| NIKE INC -CL B | US6541061031 | 8 | 7 | 1 | 10-29 16:55 |
+| Nordex SE | DE000A0D6554 | 4 | 3 | 1 | 10-28 16:35 |
+| Northern Star Resources Limited | AU000000NST8 | 3 | 1 | 2 | 10-27 09:25; 10-27 09:15 |
+| Novartis AG | CH0012005267 | 5 | 3 | 2 | 10-26 12:15; 10-23 18:20 |
+| Novo Nordisk A/S | DK0062498333 | 13 | 9 | 4 | 10-28 22:55; 10-28 20:25; 10-28 13:15; 10-28 11:50 |
+| NVIDIA Corporation | US67066G1040 | 2 | 2 | 0 | Проверенные пустые интервалы подтверждены |
+| Oracle Corporation | US68389X1054 | 11 | 10 | 1 | 11-02 10:15 |
+| PALANTIR TECHNOLOGIES INC-A | US69608A1088 | 9 | 7 | 2 | 10-27 14:20; 10-27 08:45 |
+| PepsiCo | US7134481081 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+| Procter & Gamble | US7427181091 | 8 | 8 | 0 | Проверенные пустые интервалы подтверждены |
+| RHEINMETALL AG | DE0007030009 | 8 | 7 | 1 | 10-28 18:00 |
+| RWE AG | DE0007037129 | 5 | 4 | 1 | 10-27 13:55 |
+| SALESFORCE INC | US79466L3024 | 7 | 5 | 2 | 10-28 21:30; 10-27 18:55 |
+| Sanofi | FR0000120578 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+| SAP SE | DE0007164600 | 9 | 7 | 2 | 10-27 08:25; 10-26 14:15 |
+| SCHNEIDER ELECTRIC SE | FR0000121972 | 14 | 12 | 2 | 10-28 18:05; 10-27 22:25 |
+| Siemens AG | DE0007236101 | 9 | 7 | 2 | 10-29 17:30; 10-28 20:25 |
+| SIEMENS ENERGY AG | DE000ENER6Y0 | 6 | 5 | 1 | 10-22 08:55 |
+| Siemens Healthineers | DE000SHL1006 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+| Singulus Technologies | DE000A1681X5 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+| Sony Group | JP3435000009 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+| Space Exploration Technologies Corp. | US84615Q1031 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+| SWISS RE AG | CH0126881561 | 4 | 3 | 1 | 10-28 09:25 |
+| Talanx | DE000TLX1005 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+| Tesla | US88160R1014 | 8 | 6 | 2 | 10-28 16:35; 10-27 13:35 |
+| thyssenkrupp AG | DE0007500001 | 5 | 4 | 1 | 10-26 13:50 |
+| UPS Class B | US9113121068 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+| Verizon | US92343V1044 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+| Visa | US92826C8394 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+| Walmart Inc. | US9311421039 | 10 | 7 | 3 | 10-29 16:50; 10-28 21:55; 10-28 20:55 |
+| Walt Disney | US2546871060 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+| Zalando | DE000ZAL1111 | 0 | 0 | 0 | Нет такого5m-случая; прочие статусы сохранены |
+
+
+<a id="cp-remaining82-old63-20261122"></a>
+### 22.11.2026 — Work1: автономная обработка оставшихся 82 интервалов и 63 старых подозрительных участков
+
+**Общая задача продолжается, DONE не объявлен. Снимок 22.11.2026 20:51:11 CET.** Реестр охватывает все 82 зарегистрированные акции; адресная исходная выборка — 145 уникальных диапазонов (82 оставшихся5m из прежнего набора405 +63 старых подозрительных5m/15m). Ранее закрытые323 не проверялись заново и не включены в прирост.
+
+| Выборка | Было нерешённых | Подтверждено СР | Принято только по действующей TV-политике | Осталось |
+| --- | ---: | ---: | ---: | ---: |
+| Оставшиеся82 |82|67|3|12|
+| Старые63 |63|25|0|38|
+| Всего адресно |145|92|3|50|
+
+**Личный вклад Work:** прямых записей/замен свечей вручную — **0**; семь общих доработок существующих механизмов и15 новых визуальных наблюдений через установленный TradingView (не количество решённых свечей). Применение подтверждений и восстановление выполняет штатный CandlePilot. Количество программных дефектов до этапа отдельно не фиксировалось; семь доработок не прибавляются к95 обработанным диапазонам.
+
+В дополнительном заранее сохранённом наборе442 коротких заданий CP обработал442, RESOLVED_NATIVE377, осталось65. Это пересекающийся более широкий набор — **не прибавлять377 к95**. С начала данного этапа зарегистрировано390 первичных квитанций: **52 новых реальных ряда OHLCV,168 изменений существующих строк,32 переноса** в5m/15m; переносы не считаются дополнительными новыми свечами. Числа строк обоих TF не равны числу независимых событий. Счёт, позиции, fills и конфигурация PAPER совпали с исходными контрольными суммами.
+
+Что внедрено последовательно в существующую очередь:
+
+1. Полный официальный GETTEX источник может подтвердить короткий5m пропуск по целому совпадающему окну5m/15m даже при отсутствии ближайшей свечи; пустой ответ поставщика/TV не превращается в NO_TRADES.
+2. Единственное полное упорядоченное распределение реальных сделок воспроизводит каждый исходный5m OHLCV, проверяет исходные родительские15m и сохранение O/H/L/C/V всего окна. Сначала30, затем45/60 минут; пределы9 native-свечей/5000 событий/20000 шагов сохранены. Нулевой объём остаётся ценовой записью, не оборотом.
+3. Для текущего подтверждённого расхождения15m допускается проверка пропущенных родителей с задержкой не более45 минут; пропавший родитель удаляется только при единственном **точном** переносе исходного OHLCV. Сохраняются исходные строки и происхождение, окончательная проверка перед записью и обычная переоценка. Два проверенных актуальных плана — MunichRe и Amazon21.10; планы других трёх старых участков остались отклонены.
+4. Уже принятый TV-пропуск5m/15m переживает только служебное изменение записи сверки либо более поздний хвост рынка при неизменном полном native-binding. Изменение наблюдения, проверяемых свечей, identity, политики, DQ или источника не принимается как служебное. Разрешение не продлевается чтением.
+5. Короткий штатный ход завершает существующую TV-политику и ставит пересчёт сразу после проверки наблюдения, без ожидания длинного обхода архива и без отдельного загрузчика/CORE на Tk.
+6. Действующее первичное подтверждение отделяет ошибку устаревшего DQ-отчёта от активных проблем. Окно СР следит за изменениями реальных входов/источника/политики и обновляется автоматически; ru/de/en подписи добавлены. Фактический DQ SQL-перекраской не меняется.
+7. Устранено повторное удержание уже исправленного участка старым source_comparison.observation_current=true: при наличии fingerprint сверка проверяется на текущих входах. Реальный новый конфликт TV остаётся активным; неподтверждённые старые свидетельства сохраняются консервативно.
+
+Визуальные новые наблюдения Work: Hensoldt13.11 13:30; MunichRe13.11 13:25,29.10 19:55,28.10 07:55–08:00/16:20–16:25/19:55,21.10 13:30–13:45; Novartis23.10 17:40/17:50–18:10/18:20; DeutscheBoerse28.10 08:45/13:30–13:40; Nordex28.10 13:50–14:00/16:15–16:25/16:35. Смешанные диапазоны с существующей свечой записаны DIFFERENT/PRESENT, не ABSENT. Все GETTEX/EUR, точный ISIN и TF, время Europe/Berlin; снимки и frozen native-reference хранятся локально, не в GitHub. TV используется визуально; самостоятельный сбор TV программой не включён.
+
+Проверки точных опубликованных объектов: c7a66a8 —9 PASS3.891с;1f1b867 —18 PASS8.240с;304f647 —19 PASS17.270с;5b1ea17 —22 PASS14.640с (включая53/200 заданий при изменении batch);6431c4e —8 затронутых PASS4.815с. Варианты новой проверки включают реальную смену входов/политики, противоречие TV, неоднозначное распределение, нулевой объём, пропавший родитель, финальное отклонение изменённого результата и отсутствие фиктивных свечей. Неизменённые аудиты/торговые тесты не запускались.
+
+В Windows выполнены штатные Save/Close/Restart, сохранён Meta4H/6месяцев, график и индикаторы; в окне СР видны11 текущих подтверждений GETTEX для MunichRe отдельно от активных проблем (снимок20:46, до заключительного исправления старого флага). После последнего запуска read-only MCP: TEST, Bridge running, новый instance c6bf297852e1db0c2d07a8a125ea8ba3; health не считается допуском. Измерение16 сохранённых пригодных планов вне Tk:0.160–1.435с; это исключение из цели250мс, не измерение времени Tk. Чтение большого списка СР остаётся заметно медленным и не объявлено быстрым.
+
+Опубликовано в PR21 без merge/force: [c7a66a8](https://github.com/swindler2010/StockMonitor/commit/c7a66a8f62f1c0355d9739e99d8b662784e67e5b),[1f1b867](https://github.com/swindler2010/StockMonitor/commit/1f1b867c2c4a099bef0d511f537ddd840a241b6d),[304f647](https://github.com/swindler2010/StockMonitor/commit/304f6478c64cc5c450ce9207e51e66fb575d3f69),[5b1ea17](https://github.com/swindler2010/StockMonitor/commit/5b1ea1794505840e8cf7b8e64e4c7da78e358bbe),[6431c4e](https://github.com/swindler2010/StockMonitor/commit/6431c4e8a1b34da83c025188506fadc1f09ea6af). Исходники для адресного отката сохранены в СМ-Архив, ZIP проверены; согласованная SQLite backup перед записью прошла integrity_check. Возврат отдельных данных требует before/lineage_before конкретной квитанции и проверки неизменности текущего окна; рабочую базу старой копией не заменять.
+
+Остаются50 диапазонов адресного реестра, другие старые ошибки вне145, ограничения глубины TV Basic, несопоставленный Exxon и отдельные неполные/неоднозначные публикации. Они не закрыты по одному факту наличия TV или официального файла. Торговая стратегия, риск, аккаунт, Work2, Store0.15 и Performance Engine не изменялись. Продолжается сверка оставшегося, не новый полный аудит.
+
+Даты ниже — только адресный реестр145, на20:51 CET. «Принято TV» означает историческую политику владельца, не биржевое доказательство отсутствия сделок.
+
+| Акция / ISIN | Группа | TF | Начало (Берлин) | Конец | Результат |
+| --- | --- | --- | --- | --- | --- |
+| Northern Star Resources Limited / AU000000NST8 | 82 |5m|2026-10-27 09:15:00|2026-10-27 09:15:00|Подтверждено GETTEX |
+| Northern Star Resources Limited / AU000000NST8 | 82 |5m|2026-10-27 09:25:00|2026-10-27 09:25:00|Подтверждено GETTEX |
+| Northern Star Resources Limited / AU000000NST8 | 63 |5m|2026-10-27 08:45:00|2026-10-27 09:05:00|Подтверждено GETTEX |
+| Novartis AG / CH0012005267 | 82 |5m|2026-10-23 18:20:00|2026-10-23 18:20:00|Принято TV |
+| Novartis AG / CH0012005267 | 63 |5m|2026-10-23 17:50:00|2026-10-23 18:10:00|GAP — остаётся |
+| Novartis AG / CH0012005267 | 63 |5m|2026-10-23 17:40:00|2026-10-23 17:40:00|GAP — остаётся |
+| Novartis AG / CH0012005267 | 82 |5m|2026-10-26 12:15:00|2026-10-26 12:15:00|Подтверждено GETTEX |
+| SWISS RE AG / CH0126881561 | 82 |5m|2026-10-28 09:25:00|2026-10-28 09:25:00|Подтверждено GETTEX |
+| DEUTSCHE BANK AG-REGISTERED / DE0005140008 | 82 |5m|2026-10-26 20:25:00|2026-10-26 20:25:00|Подтверждено GETTEX |
+| DEUTSCHE BANK AG-REGISTERED / DE0005140008 | 82 |5m|2026-11-11 19:25:00|2026-11-11 19:25:00|Подтверждено GETTEX |
+| DEUTSCHE BANK AG-REGISTERED / DE0005140008 | 63 |15m|2026-10-22 22:15:00|2026-10-22 22:15:00|GAP — остаётся |
+| DHL AG / DE0005552004 | 82 |5m|2026-10-27 12:55:00|2026-10-27 12:55:00|Подтверждено GETTEX |
+| DHL AG / DE0005552004 | 63 |5m|2026-10-26 16:50:00|2026-10-26 16:50:00|GAP — остаётся |
+| DHL AG / DE0005552004 | 82 |5m|2026-10-27 11:55:00|2026-10-27 11:55:00|Подтверждено GETTEX |
+| DHL AG / DE0005552004 | 63 |5m|2026-10-26 16:15:00|2026-10-26 16:40:00|GAP — остаётся |
+| DEUTSCHE TELEKOM AG-REG / DE0005557508 | 82 |5m|2026-10-28 17:15:00|2026-10-28 17:15:00|Подтверждено GETTEX |
+| DEUTSCHE TELEKOM AG-REG / DE0005557508 | 82 |5m|2026-10-28 08:55:00|2026-10-28 08:55:00|Подтверждено GETTEX |
+| DEUTSCHE TELEKOM AG-REG / DE0005557508 | 82 |5m|2026-10-26 22:55:00|2026-10-26 22:55:00|Подтверждено GETTEX |
+| DEUTSCHE TELEKOM AG-REG / DE0005557508 | 82 |5m|2026-10-26 21:30:00|2026-10-26 21:30:00|Подтверждено GETTEX |
+| DEUTSCHE TELEKOM AG-REG / DE0005557508 | 82 |5m|2026-10-23 22:00:00|2026-10-23 22:00:00|Подтверждено GETTEX |
+| DEUTSCHE BOERSE AG / DE0005810055 | 82 |5m|2026-10-28 16:15:00|2026-10-28 16:15:00|Подтверждено GETTEX |
+| DEUTSCHE BOERSE AG / DE0005810055 | 63 |5m|2026-10-28 13:30:00|2026-10-28 13:40:00|GAP — остаётся |
+| DEUTSCHE BOERSE AG / DE0005810055 | 82 |5m|2026-10-28 08:45:00|2026-10-28 08:45:00|Принято TV |
+| Infineon Technologies AG / DE0006231004 | 63 |15m|2026-10-21 13:30:00|2026-10-21 13:45:00|GAP — остаётся |
+| Infineon Technologies AG / DE0006231004 | 82 |5m|2026-10-20 21:15:00|2026-10-20 21:15:00|Подтверждено GETTEX |
+| RHEINMETALL AG / DE0007030009 | 82 |5m|2026-10-28 18:00:00|2026-10-28 18:00:00|Подтверждено GETTEX |
+| RWE AG / DE0007037129 | 63 |15m|2026-11-12 18:00:00|2026-11-12 18:00:00|GAP — остаётся |
+| RWE AG / DE0007037129 | 82 |5m|2026-10-27 13:55:00|2026-10-27 13:55:00|Подтверждено GETTEX |
+| MERCEDES-BENZ GROUP AG / DE0007100000 | 63 |15m|2026-10-23 18:00:00|2026-10-23 18:00:00|GAP — остаётся |
+| MERCEDES-BENZ GROUP AG / DE0007100000 | 63 |15m|2026-11-13 15:45:00|2026-11-13 15:45:00|GAP — остаётся |
+| MERCEDES-BENZ GROUP AG / DE0007100000 | 63 |5m|2026-10-28 18:15:00|2026-10-28 18:15:00|Подтверждено GETTEX |
+| MERCEDES-BENZ GROUP AG / DE0007100000 | 63 |5m|2026-10-26 11:40:00|2026-10-26 11:40:00|Подтверждено GETTEX |
+| SAP SE / DE0007164600 | 82 |5m|2026-10-26 14:15:00|2026-10-26 14:15:00|Подтверждено GETTEX |
+| SAP SE / DE0007164600 | 63 |5m|2026-10-20 22:25:00|2026-10-20 22:30:00|GAP — остаётся |
+| SAP SE / DE0007164600 | 63 |5m|2026-10-28 19:30:00|2026-10-28 19:30:00|Подтверждено GETTEX |
+| SAP SE / DE0007164600 | 82 |5m|2026-10-27 08:25:00|2026-10-27 08:25:00|SOURCE_TIMEBASE_UNCONFIRMED — остаётся |
+| Siemens AG / DE0007236101 | 82 |5m|2026-10-29 17:30:00|2026-10-29 17:30:00|Подтверждено GETTEX |
+| Siemens AG / DE0007236101 | 63 |15m|2026-10-29 17:45:00|2026-10-29 17:45:00|GAP — остаётся |
+| Siemens AG / DE0007236101 | 63 |5m|2026-10-29 17:20:00|2026-10-29 17:20:00|Подтверждено GETTEX |
+| Siemens AG / DE0007236101 | 82 |5m|2026-10-28 20:25:00|2026-10-28 20:25:00|Подтверждено GETTEX |
+| thyssenkrupp AG / DE0007500001 | 82 |5m|2026-10-26 13:50:00|2026-10-26 13:50:00|SOURCE_TIMEBASE_UNCONFIRMED — остаётся |
+| thyssenkrupp AG / DE0007500001 | 63 |5m|2026-10-26 16:45:00|2026-10-26 16:50:00|Подтверждено GETTEX |
+| thyssenkrupp AG / DE0007500001 | 63 |5m|2026-10-26 16:20:00|2026-10-26 16:25:00|Подтверждено GETTEX |
+| thyssenkrupp AG / DE0007500001 | 63 |5m|2026-10-26 11:50:00|2026-10-26 11:55:00|Подтверждено GETTEX |
+| thyssenkrupp AG / DE0007500001 | 63 |15m|2026-11-13 15:45:00|2026-11-13 15:45:00|GAP — остаётся |
+| ALLIANZ SE-REG / DE0008404005 | 82 |5m|2026-10-26 22:55:00|2026-10-26 22:55:00|Подтверждено GETTEX |
+| ALLIANZ SE-REG / DE0008404005 | 82 |5m|2026-10-27 17:30:00|2026-10-27 17:30:00|Подтверждено GETTEX |
+| MUENCHENER RUECKVER AG-REG / DE0008430026 | 82 |5m|2026-10-28 19:55:00|2026-10-28 19:55:00|Подтверждено GETTEX |
+| MUENCHENER RUECKVER AG-REG / DE0008430026 | 63 |5m|2026-10-28 16:20:00|2026-10-28 16:25:00|Подтверждено GETTEX |
+| MUENCHENER RUECKVER AG-REG / DE0008430026 | 63 |5m|2026-10-28 07:55:00|2026-10-28 08:00:00|Подтверждено GETTEX |
+| MUENCHENER RUECKVER AG-REG / DE0008430026 | 82 |5m|2026-10-27 22:55:00|2026-10-27 22:55:00|Подтверждено GETTEX |
+| MUENCHENER RUECKVER AG-REG / DE0008430026 | 82 |5m|2026-10-29 19:55:00|2026-10-29 19:55:00|Подтверждено GETTEX |
+| MUENCHENER RUECKVER AG-REG / DE0008430026 | 63 |15m|2026-10-21 13:30:00|2026-10-21 13:45:00|Подтверждено GETTEX |
+| MUENCHENER RUECKVER AG-REG / DE0008430026 | 82 |5m|2026-11-13 13:25:00|2026-11-13 13:25:00|Подтверждено GETTEX |
+| Nordex SE / DE000A0D6554 | 63 |5m|2026-10-28 13:50:00|2026-10-28 14:00:00|GAP — остаётся |
+| Nordex SE / DE000A0D6554 | 63 |5m|2026-10-28 16:15:00|2026-10-28 16:25:00|GAP — остаётся |
+| Nordex SE / DE000A0D6554 | 82 |5m|2026-10-28 16:35:00|2026-10-28 16:35:00|Принято TV |
+| Nordex SE / DE000A0D6554 | 63 |15m|2026-11-12 17:45:00|2026-11-12 18:00:00|GAP — остаётся |
+| BASF SE / DE000BASF111 | 63 |5m|2026-11-13 18:00:00|2026-11-13 18:10:00|GAP — остаётся |
+| BAYER AG-REG / DE000BAY0017 | 82 |5m|2026-10-27 19:30:00|2026-10-27 19:30:00|Подтверждено GETTEX |
+| BAYER AG-REG / DE000BAY0017 | 63 |5m|2026-10-27 12:50:00|2026-10-27 12:50:00|Подтверждено GETTEX |
+| E.ON SE / DE000ENAG999 | 82 |5m|2026-10-28 17:00:00|2026-10-28 17:00:00|Подтверждено GETTEX |
+| SIEMENS ENERGY AG / DE000ENER6Y0 | 82 |5m|2026-10-22 08:55:00|2026-10-22 08:55:00|Подтверждено GETTEX |
+| SIEMENS ENERGY AG / DE000ENER6Y0 | 63 |15m|2026-10-21 13:30:00|2026-10-21 13:30:00|GAP — остаётся |
+| HENSOLDT AG / DE000HAG0005 | 82 |5m|2026-10-29 17:00:00|2026-10-29 17:00:00|Подтверждено GETTEX |
+| HENSOLDT AG / DE000HAG0005 | 82 |5m|2026-11-13 13:30:00|2026-11-13 13:30:00|Подтверждено GETTEX |
+| HENSOLDT AG / DE000HAG0005 | 82 |5m|2026-10-27 08:45:00|2026-10-27 08:45:00|Подтверждено GETTEX |
+| HENSOLDT AG / DE000HAG0005 | 82 |5m|2026-10-26 17:05:00|2026-10-26 17:05:00|Подтверждено GETTEX |
+| Novo Nordisk A/S / DK0062498333 | 82 |5m|2026-10-28 22:55:00|2026-10-28 22:55:00|Подтверждено GETTEX |
+| Novo Nordisk A/S / DK0062498333 | 63 |5m|2026-10-28 16:20:00|2026-10-28 16:25:00|Подтверждено GETTEX |
+| Novo Nordisk A/S / DK0062498333 | 82 |5m|2026-10-28 13:15:00|2026-10-28 13:15:00|SOURCE_TIMEBASE_UNCONFIRMED — остаётся |
+| Novo Nordisk A/S / DK0062498333 | 82 |5m|2026-10-28 11:50:00|2026-10-28 11:50:00|SOURCE_TIMEBASE_UNCONFIRMED — остаётся |
+| Novo Nordisk A/S / DK0062498333 | 82 |5m|2026-10-28 20:25:00|2026-10-28 20:25:00|Подтверждено GETTEX |
+| LVMH MOET HENNESSY LOUIS VUI / FR0000121014 | 82 |5m|2026-10-27 19:55:00|2026-10-27 19:55:00|Подтверждено GETTEX |
+| LVMH MOET HENNESSY LOUIS VUI / FR0000121014 | 63 |5m|2026-10-28 14:05:00|2026-10-28 14:05:00|Подтверждено GETTEX |
+| SCHNEIDER ELECTRIC SE / FR0000121972 | 82 |5m|2026-10-28 18:05:00|2026-10-28 18:05:00|Подтверждено GETTEX |
+| SCHNEIDER ELECTRIC SE / FR0000121972 | 82 |5m|2026-10-27 22:25:00|2026-10-27 22:25:00|Подтверждено GETTEX |
+| SCHNEIDER ELECTRIC SE / FR0000121972 | 63 |5m|2026-10-27 15:15:00|2026-10-27 15:15:00|Подтверждено GETTEX |
+| AIRBUS SE / NL0000235190 | 82 |5m|2026-10-27 21:55:00|2026-10-27 21:55:00|Подтверждено GETTEX |
+| AIRBUS SE / NL0000235190 | 63 |5m|2026-10-29 17:45:00|2026-10-29 17:55:00|GAP — остаётся |
+| AIRBUS SE / NL0000235190 | 82 |5m|2026-10-27 15:45:00|2026-10-27 15:45:00|Подтверждено GETTEX |
+| ASML HOLDING NV / NL0010273215 | 82 |5m|2026-10-28 18:30:00|2026-10-28 18:30:00|Подтверждено GETTEX |
+| ASML HOLDING NV / NL0010273215 | 82 |5m|2026-10-29 17:30:00|2026-10-29 17:30:00|Подтверждено GETTEX |
+| ASML HOLDING NV / NL0010273215 | 63 |15m|2026-10-21 13:30:00|2026-10-21 13:45:00|GAP — остаётся |
+| ASML HOLDING NV / NL0010273215 | 63 |5m|2026-10-28 13:40:00|2026-10-28 13:40:00|Подтверждено GETTEX |
+| ASML HOLDING NV / NL0010273215 | 82 |5m|2026-10-27 15:15:00|2026-10-27 15:15:00|Подтверждено GETTEX |
+| AbbVie / US00287Y1091 | 82 |5m|2026-10-30 12:55:00|2026-10-30 12:55:00|SOURCE_TIMEBASE_UNCONFIRMED — остаётся |
+| ADOBE INC / US00724F1012 | 63 |15m|2026-11-13 13:00:00|2026-11-13 13:00:00|GAP — остаётся |
+| ADOBE INC / US00724F1012 | 82 |5m|2026-10-29 17:00:00|2026-10-29 17:00:00|Подтверждено GETTEX |
+| ADOBE INC / US00724F1012 | 82 |5m|2026-11-13 18:20:00|2026-11-13 18:20:00|Подтверждено GETTEX |
+| ADOBE INC / US00724F1012 | 63 |5m|2026-11-13 15:45:00|2026-11-13 15:45:00|Подтверждено GETTEX |
+| ADOBE INC / US00724F1012 | 82 |5m|2026-11-13 21:55:00|2026-11-13 21:55:00|Подтверждено GETTEX |
+| ADVANCED MICRO DEVICES / US0079031078 | 82 |5m|2026-10-26 19:15:00|2026-10-26 19:15:00|Подтверждено GETTEX |
+| ADVANCED MICRO DEVICES / US0079031078 | 63 |15m|2026-10-20 21:15:00|2026-10-20 21:15:00|GAP — остаётся |
+| Alphabet Inc. / US02079K1079 | 82 |5m|2026-10-27 15:20:00|2026-10-27 15:20:00|Подтверждено GETTEX |
+| Alphabet Inc. / US02079K1079 | 63 |5m|2026-10-21 13:25:00|2026-10-21 13:50:00|GAP — остаётся |
+| Alphabet Inc. / US02079K1079 | 63 |5m|2026-10-27 09:05:00|2026-10-27 09:05:00|Подтверждено GETTEX |
+| Alphabet Inc. / US02079K1079 | 63 |15m|2026-10-26 11:30:00|2026-10-26 11:30:00|GAP — остаётся |
+| Alphabet Inc. / US02079K1079 | 63 |15m|2026-10-21 13:30:00|2026-10-21 13:30:00|GAP — остаётся |
+| Alphabet Inc. / US02079K1079 | 63 |5m|2026-10-27 08:50:00|2026-10-27 08:50:00|Подтверждено GETTEX |
+| AMAZON.COM INC / US0231351067 | 63 |15m|2026-10-21 13:30:00|2026-10-21 13:45:00|GAP — остаётся |
+| AMAZON.COM INC / US0231351067 | 82 |5m|2026-10-26 11:05:00|2026-10-26 11:05:00|Подтверждено GETTEX |
+| AMAZON.COM INC / US0231351067 | 63 |5m|2026-10-21 13:25:00|2026-10-21 13:55:00|GAP — остаётся |
+| AMAZON.COM INC / US0231351067 | 82 |5m|2026-10-21 13:15:00|2026-10-21 13:15:00|SOURCE_TIMEBASE_UNCONFIRMED — остаётся |
+| Apple / US0378331005 | 63 |15m|2026-10-23 18:00:00|2026-10-23 18:00:00|GAP — остаётся |
+| Apple / US0378331005 | 63 |15m|2026-10-20 22:15:00|2026-10-20 22:15:00|GAP — остаётся |
+| Apple / US0378331005 | 82 |5m|2026-10-27 16:15:00|2026-10-27 16:15:00|Подтверждено GETTEX |
+| Berkshire Hathaway B / US0846707026 | 82 |5m|2026-10-28 10:55:00|2026-10-28 10:55:00|SOURCE_TIMEBASE_UNCONFIRMED — остаётся |
+| Berkshire Hathaway B / US0846707026 | 82 |5m|2026-11-13 14:25:00|2026-11-13 14:25:00|Подтверждено GETTEX |
+| Duke Energy / US26441C2044 | 82 |5m|2026-10-27 14:55:00|2026-10-27 14:55:00|Подтверждено GETTEX |
+| Johnson & Johnson / US4781601046 | 63 |5m|2026-10-28 20:35:00|2026-10-28 20:40:00|Подтверждено GETTEX |
+| Johnson & Johnson / US4781601046 | 82 |5m|2026-10-28 08:25:00|2026-10-28 08:25:00|Подтверждено GETTEX |
+| Johnson & Johnson / US4781601046 | 82 |5m|2026-10-29 09:15:00|2026-10-29 09:15:00|SOURCE_TIMEBASE_UNCONFIRMED — остаётся |
+| Johnson & Johnson / US4781601046 | 82 |5m|2026-10-28 08:15:00|2026-10-28 08:15:00|Подтверждено GETTEX |
+| Merck & Co. / US58933Y1055 | 82 |5m|2026-10-28 17:55:00|2026-10-28 17:55:00|Подтверждено GETTEX |
+| Merck & Co. / US58933Y1055 | 82 |5m|2026-10-28 20:55:00|2026-10-28 20:55:00|SOURCE_TIMEBASE_UNCONFIRMED — остаётся |
+| Merck & Co. / US58933Y1055 | 63 |5m|2026-10-28 17:45:00|2026-10-28 17:45:00|Подтверждено GETTEX |
+| MICROSOFT CORP / US5949181045 | 82 |5m|2026-10-27 10:15:00|2026-10-27 10:15:00|Подтверждено GETTEX |
+| MICROSOFT CORP / US5949181045 | 63 |5m|2026-10-28 13:40:00|2026-10-28 13:40:00|Подтверждено GETTEX |
+| MICROSOFT CORP / US5949181045 | 63 |15m|2026-10-21 13:15:00|2026-10-21 13:45:00|GAP — остаётся |
+| MICRON TECHNOLOGY INC / US5951121038 | 82 |5m|2026-11-09 16:30:00|2026-11-09 16:30:00|SOURCE_TIMEBASE_UNCONFIRMED — остаётся |
+| MICRON TECHNOLOGY INC / US5951121038 | 63 |5m|2026-10-20 22:25:00|2026-10-20 22:25:00|GAP — остаётся |
+| MICRON TECHNOLOGY INC / US5951121038 | 63 |15m|2026-10-21 13:30:00|2026-10-21 13:30:00|GAP — остаётся |
+| MICRON TECHNOLOGY INC / US5951121038 | 63 |5m|2026-10-21 13:25:00|2026-10-21 13:50:00|GAP — остаётся |
+| Newmont / US6516391066 | 82 |5m|2026-10-30 13:45:00|2026-10-30 13:45:00|Подтверждено GETTEX |
+| Newmont / US6516391066 | 82 |5m|2026-10-30 15:25:00|2026-10-30 15:25:00|Подтверждено GETTEX |
+| NIKE INC -CL B / US6541061031 | 82 |5m|2026-10-29 16:55:00|2026-10-29 16:55:00|Подтверждено GETTEX |
+| NVIDIA Corporation / US67066G1040 | 63 |15m|2026-10-21 13:30:00|2026-10-21 13:30:00|GAP — остаётся |
+| Oracle Corporation / US68389X1054 | 63 |5m|2026-10-26 16:20:00|2026-10-26 16:25:00|GAP — остаётся |
+| Oracle Corporation / US68389X1054 | 82 |5m|2026-11-02 10:15:00|2026-11-02 10:15:00|Подтверждено GETTEX |
+| PALANTIR TECHNOLOGIES INC-A / US69608A1088 | 82 |5m|2026-10-27 08:45:00|2026-10-27 08:45:00|Подтверждено GETTEX |
+| PALANTIR TECHNOLOGIES INC-A / US69608A1088 | 82 |5m|2026-10-27 14:20:00|2026-10-27 14:20:00|Подтверждено GETTEX |
+| SALESFORCE INC / US79466L3024 | 82 |5m|2026-10-27 18:55:00|2026-10-27 18:55:00|Подтверждено GETTEX |
+| SALESFORCE INC / US79466L3024 | 63 |5m|2026-10-27 16:25:00|2026-10-27 16:25:00|Подтверждено GETTEX |
+| SALESFORCE INC / US79466L3024 | 82 |5m|2026-10-28 21:30:00|2026-10-28 21:30:00|Подтверждено GETTEX |
+| Tesla / US88160R1014 | 63 |15m|2026-10-21 13:30:00|2026-10-21 13:45:00|GAP — остаётся |
+| Tesla / US88160R1014 | 82 |5m|2026-10-27 13:35:00|2026-10-27 13:35:00|Подтверждено GETTEX |
+| Tesla / US88160R1014 | 82 |5m|2026-10-28 16:35:00|2026-10-28 16:35:00|Подтверждено GETTEX |
+| Tesla / US88160R1014 | 63 |5m|2026-10-27 08:55:00|2026-10-27 08:55:00|Подтверждено GETTEX |
+| Tesla / US88160R1014 | 63 |15m|2026-11-02 11:15:00|2026-11-02 11:15:00|GAP — остаётся |
+| Tesla / US88160R1014 | 63 |5m|2026-10-26 12:00:00|2026-10-26 12:05:00|Подтверждено GETTEX |
+| Walmart Inc. / US9311421039 | 63 |15m|2026-10-23 18:00:00|2026-10-23 18:00:00|GAP — остаётся |
+| Walmart Inc. / US9311421039 | 82 |5m|2026-10-28 20:55:00|2026-10-28 20:55:00|SOURCE_TIMEBASE_UNCONFIRMED — остаётся |
+| Walmart Inc. / US9311421039 | 82 |5m|2026-10-28 21:55:00|2026-10-28 21:55:00|Подтверждено GETTEX |
+| Walmart Inc. / US9311421039 | 82 |5m|2026-10-29 16:50:00|2026-10-29 16:50:00|SOURCE_TIMEBASE_UNCONFIRMED — остаётся |
+
+
+Дополнение21:03CET: адресный откат одной реальной текущей квитанции проверен на малой изолированной SQLite: исходные5m/15m и lineage восстановлены, изменённые входы отклонены, working TEST записей0. Подробность в СМ-Архив/CP native window targeted rollback test.json; не применять общий откат рабочей базы. Уточнениеv9: дефект использования старого флага source_comparison воспроизведён адресным тестом; конкретную причину каждого прежнего UI-ярлыка нельзя выводить только из этого теста. Свежий текущий validator для MunichRe28.10 16:20–16:25 подтвердил CONFIRMED_NATIVE_REPAIR.
+
+
+<a id="cp-reviewed-price-parent-20261122"></a>
+### 22.11.2026 — новые подтверждения TV и два исправления штатного СР, задача продолжается
+
+Снимок 21:51:07 CET. Не DONE. Исходная адресная область остаётся прежней: 82 оставшихся интервала и 63 старых подозрительных диапазона, всего145 уникальных областей. Сейчас обработано109 (102 первичных подтверждения GETTEX и7 действующих исторических допусков по TV), остаётся36. От исходных82 остаётся6; от старых63 остаётся30. По сравнению с опубликованным снимком20:51 (95/145,50осталось) обработано ещё14 областей. Старые323/405 не пересчитывались и не добавлялись заново. Work лично внёс2 общих исправления кода и сделал адресные визуальные сверки; прямых ручных записей свечей Work —0. Восстановление и применение действующей политики выполнял сам CP обычной очередью.
+
+1. SAP27.10 08:20 5m: TV и полный парный первичный GETTEX подтверждают минимум211,50 вместо211,80. Объём378 уже учитывал положительную сделку08:24:29.339773 по211,50 объёмом2. Новый узкий режим восстанавливает ровно одну пропущенную внутреннюю цену при неизменных O/C/V, всех соседних детях, полном родительском окне15m и текущей сверке DIFFERENT. Сам CP опубликовал RESOLVED_NATIVE22.11 в21:28:16CET: изменены2 физические строки (5m и её15m родитель), добавлено0, перенесено0; исходные OHLCV сохранены. Это отдельный вновь обнаруженный соседний дефект вне исходных145, к их количеству не добавлен. Окончательный retime_current=true и две записи истории подтверждены чтением TEST.
+2. Сверка5m не включала уже существующее восстановление отсутствующих15m родителей, доступное после аналогичной сверки15m. Тот же ограниченный режим теперь использует текущие PRESENT/DIFFERENT5m при утверждённой политике источника, уникальном полном разбиении всех настоящих событий, сохранении OHLCV всего окна и точной родительской агрегации. Противоречащие актуальные наблюдения и изменённый связанный контекст дают явный отказ. Добавлен один ограниченный проход версии9 для таких ожидающих5m; завершённые задания повторно не запускаются. CP сам обработал DeutscheBörse28.10 13:30–13:40 в21:42:22CET, RESOLVED_NATIVE:1добавленная,1изменённая,1перенесённая физическая строка. Ручного запуска хода CP и SQL-правки свечей TEST не было.
+
+Версии: [пропущенная внутренняя цена6f248a5](https://github.com/swindler2010/StockMonitor/commit/6f248a55cdc5fc9b82f17bbc11f9c583bf734018), [сверка5m и родительa85cac6](https://github.com/swindler2010/StockMonitor/commit/a85cac6d678bb365565a7e4aed23b82bad9ad8dd), [каталог опыта5ccec04](https://github.com/swindler2010/StockMonitor/commit/5ccec040754a8ad6136871785cff299c0124e530), [PR21](https://github.com/swindler2010/StockMonitor/pull/21). Опубликованы только собственные адресные изменения поверх публичной ветки; прочие локальные изменения не затронуты.
+
+Проверки точных опубликованных Git-объектов: v10 —11 PASS/12,834с; v11 —4 PASS/11,704с, включая изменённый сценарий5m, отказ при текущем конфликте/изменённых входах и существующий ограниченный сценарий53/200. Ошибочное имя класса в первом запуске исправлено; оно было ошибкой выбора теста, а не успешной проверкой. Найденный при v11 регрессионный отказ из-за перехваченной причины конфликта устранён до публикации, затем оба затронутых сценария прошли. Полный аудит, старые торговые тесты и массовые загрузки не повторялись.
+
+Windows: штатные Save/Close/Restart21:25 и21:40, Meta4H/6месяцев сохранена. СМ запущен, CP ACTIVE, новая связь read-only MCP подтверждает экземпляр TEST bff27128b416928ed33a9c0152aebf96. Реальные записи выше выпустил штатный CP после запуска. Моя первая выборка окон искала только pythonw и не увидела работающий python; повторная полная инвентаризация подтвердила, что падения приложения не было. Проверка связи сама по себе не означает торговый допуск.
+
+За весь текущий этап с18:19UTC сохранено411 квитанций; фактически64 добавленных,193 изменённых и47 перенесённых физических строк5m/15m. Они пересекаются с родителями и несколькими диагностическими диапазонами: это не411 восстановленных свечей, перенос не новая свеча, числа не складываются с145/442. Параллельная выборка442 пересекается с145:384 RESOLVED,58 ожидают, не суммировать. Контрольные суммы paper_accounts и paper_fills неизменны. Хэш paper_auto_1h относительно раннего снимка изменился; параллельный checkpoint содержит этап V5, авторство изменения по одному хэшу не установлено. Эти настройки не менялись этой работой и не откатывались. Work2/счёт/стратегии не редактировались.
+
+Визуальная сверка TV остаётся с участием Work. CP автономно проверяет связанное наблюдение, полные первичные файлы и собственный ряд, применяет только доказанное восстановление либо существующую историческую политику и ставит зависимую переоценку. Отсутствие в TV не превращено в доказательство отсутствия биржевых сделок; пустой ответ поставщика не принят. Не обещается автоматическое управление TV или полная готовность всех82акций по всем TF.
+
+Адресный откат: проверенная согласованная резервная SQLite сохранена до этапа; собственные v10/v11 исходные участки и обратные изменения — в двух небольших ZIP архива. Проверка точечного отката реальной квитанции на малой изолированной SQLite прошла: исходные5m/15m и lineage восстановлены, изменённые входы отклонены; записей в working TEST0. Общая база не подменялась. Механизм отката этой проверки не распространялся автоматически на новую цену. Каталог опыта дополнен двумя рабочими правилами. Ограничение v9: тест доказывает ошибку старого флага source_comparison, но не устанавливает задним числом причину каждого прежнего ярлыка UI.
+
+Новые обработанные даты после20:51:
+
+| Акция | TF | Даты и время Europe/Berlin | Результат |
+|---|---|---|---|
+| DEUTSCHE BOERSE AG | 5m | 2026-10-28 13:30:00 — 2026-10-28 13:40:00 | Подтверждено GETTEX |
+| RWE AG | 15m | 2026-11-12 18:00:00 — 2026-11-12 18:00:00 | Подтверждено GETTEX |
+| SAP SE | 5m | 2026-10-27 08:25:00 — 2026-10-27 08:25:00 | Подтверждено GETTEX |
+| thyssenkrupp AG | 5m | 2026-10-26 13:50:00 — 2026-10-26 13:50:00 | Принято действующей политикой TV |
+| thyssenkrupp AG | 15m | 2026-11-13 15:45:00 — 2026-11-13 15:45:00 | Подтверждено GETTEX |
+| Nordex SE | 15m | 2026-11-12 17:45:00 — 2026-11-12 18:00:00 | Подтверждено GETTEX |
+| Novo Nordisk A/S | 5m | 2026-10-28 13:15:00 — 2026-10-28 13:15:00 | Принято действующей политикой TV |
+| Novo Nordisk A/S | 5m | 2026-10-28 11:50:00 — 2026-10-28 11:50:00 | Принято действующей политикой TV |
+| AbbVie | 5m | 2026-10-30 12:55:00 — 2026-10-30 12:55:00 | Принято действующей политикой TV |
+| ADOBE INC | 15m | 2026-11-13 13:00:00 — 2026-11-13 13:00:00 | Подтверждено GETTEX |
+| AMAZON.COM INC | 15m | 2026-10-21 13:30:00 — 2026-10-21 13:45:00 | Подтверждено GETTEX |
+| AMAZON.COM INC | 5m | 2026-10-21 13:25:00 — 2026-10-21 13:55:00 | Подтверждено GETTEX |
+| AMAZON.COM INC | 5m | 2026-10-21 13:15:00 — 2026-10-21 13:15:00 | Подтверждено GETTEX |
+| Oracle Corporation | 5m | 2026-10-26 16:20:00 — 2026-10-26 16:25:00 | Подтверждено GETTEX |
+
+Остающиеся даты снимка21:51 (следующие визуальные сверки и ходы CP продолжаются):
+
+| Акция | TF | Даты и время Europe/Berlin | Результат |
+|---|---|---|---|
+| Novartis AG | 5m | 2026-10-23 17:50:00 — 2026-10-23 18:10:00 | GAP; требуется доказательство/обработка |
+| Novartis AG | 5m | 2026-10-23 17:40:00 — 2026-10-23 17:40:00 | GAP; требуется доказательство/обработка |
+| DEUTSCHE BANK AG-REGISTERED | 15m | 2026-10-22 22:15:00 — 2026-10-22 22:15:00 | GAP; требуется доказательство/обработка |
+| DHL AG | 5m | 2026-10-26 16:50:00 — 2026-10-26 16:50:00 | GAP; требуется доказательство/обработка |
+| DHL AG | 5m | 2026-10-26 16:15:00 — 2026-10-26 16:40:00 | GAP; требуется доказательство/обработка |
+| Infineon Technologies AG | 15m | 2026-10-21 13:30:00 — 2026-10-21 13:45:00 | GAP; требуется доказательство/обработка |
+| MERCEDES-BENZ GROUP AG | 15m | 2026-10-23 18:00:00 — 2026-10-23 18:00:00 | GAP; требуется доказательство/обработка |
+| MERCEDES-BENZ GROUP AG | 15m | 2026-11-13 15:45:00 — 2026-11-13 15:45:00 | GAP; требуется доказательство/обработка |
+| SAP SE | 5m | 2026-10-20 22:25:00 — 2026-10-20 22:30:00 | GAP; требуется доказательство/обработка |
+| Siemens AG | 15m | 2026-10-29 17:45:00 — 2026-10-29 17:45:00 | GAP; требуется доказательство/обработка |
+| Nordex SE | 5m | 2026-10-28 13:50:00 — 2026-10-28 14:00:00 | GAP; требуется доказательство/обработка |
+| Nordex SE | 5m | 2026-10-28 16:15:00 — 2026-10-28 16:25:00 | GAP; требуется доказательство/обработка |
+| BASF SE | 5m | 2026-11-13 18:00:00 — 2026-11-13 18:10:00 | GAP; требуется доказательство/обработка |
+| SIEMENS ENERGY AG | 15m | 2026-10-21 13:30:00 — 2026-10-21 13:30:00 | GAP; требуется доказательство/обработка |
+| AIRBUS SE | 5m | 2026-10-29 17:45:00 — 2026-10-29 17:55:00 | GAP; требуется доказательство/обработка |
+| ASML HOLDING NV | 15m | 2026-10-21 13:30:00 — 2026-10-21 13:45:00 | GAP; требуется доказательство/обработка |
+| ADVANCED MICRO DEVICES | 15m | 2026-10-20 21:15:00 — 2026-10-20 21:15:00 | GAP; требуется доказательство/обработка |
+| Alphabet Inc. | 5m | 2026-10-21 13:25:00 — 2026-10-21 13:50:00 | GAP; требуется доказательство/обработка |
+| Alphabet Inc. | 15m | 2026-10-26 11:30:00 — 2026-10-26 11:30:00 | GAP; требуется доказательство/обработка |
+| Alphabet Inc. | 15m | 2026-10-21 13:30:00 — 2026-10-21 13:30:00 | GAP; требуется доказательство/обработка |
+| Apple | 15m | 2026-10-23 18:00:00 — 2026-10-23 18:00:00 | GAP; требуется доказательство/обработка |
+| Apple | 15m | 2026-10-20 22:15:00 — 2026-10-20 22:15:00 | GAP; требуется доказательство/обработка |
+| Berkshire Hathaway B | 5m | 2026-10-28 10:55:00 — 2026-10-28 10:55:00 | SOURCE_TIMEBASE_UNCONFIRMED; требуется доказательство/обработка |
+| Johnson & Johnson | 5m | 2026-10-29 09:15:00 — 2026-10-29 09:15:00 | SOURCE_TIMEBASE_UNCONFIRMED; требуется доказательство/обработка |
+| Merck & Co. | 5m | 2026-10-28 20:55:00 — 2026-10-28 20:55:00 | SOURCE_TIMEBASE_UNCONFIRMED; требуется доказательство/обработка |
+| MICROSOFT CORP | 15m | 2026-10-21 13:15:00 — 2026-10-21 13:45:00 | GAP; требуется доказательство/обработка |
+| MICRON TECHNOLOGY INC | 5m | 2026-11-09 16:30:00 — 2026-11-09 16:30:00 | SOURCE_TIMEBASE_UNCONFIRMED; требуется доказательство/обработка |
+| MICRON TECHNOLOGY INC | 5m | 2026-10-20 22:25:00 — 2026-10-20 22:25:00 | GAP; требуется доказательство/обработка |
+| MICRON TECHNOLOGY INC | 15m | 2026-10-21 13:30:00 — 2026-10-21 13:30:00 | GAP; требуется доказательство/обработка |
+| MICRON TECHNOLOGY INC | 5m | 2026-10-21 13:25:00 — 2026-10-21 13:50:00 | GAP; требуется доказательство/обработка |
+| NVIDIA Corporation | 15m | 2026-10-21 13:30:00 — 2026-10-21 13:30:00 | GAP; требуется доказательство/обработка |
+| Tesla | 15m | 2026-10-21 13:30:00 — 2026-10-21 13:45:00 | GAP; требуется доказательство/обработка |
+| Tesla | 15m | 2026-11-02 11:15:00 — 2026-11-02 11:15:00 | GAP; требуется доказательство/обработка |
+| Walmart Inc. | 15m | 2026-10-23 18:00:00 — 2026-10-23 18:00:00 | GAP; требуется доказательство/обработка |
+| Walmart Inc. | 5m | 2026-10-28 20:55:00 — 2026-10-28 20:55:00 | SOURCE_TIMEBASE_UNCONFIRMED; требуется доказательство/обработка |
+| Walmart Inc. | 5m | 2026-10-29 16:50:00 — 2026-10-29 16:50:00 | SOURCE_TIMEBASE_UNCONFIRMED; требуется доказательство/обработка |
+
+
+
+<a id="cp-short-review-zero-parent-20261122"></a>
+### 22.11.2026 — очередь новых сверок и подтверждённый перенос нулевого родителя
+
+Продолжение существующего задания, не полный аудит. Неизменяемая область: 82 оставшихся диапазона плюс 63 старых = 145 уникальных диапазонов. Снимок 22:36:24 CET: обработано 120, осталось 25. Из исходных 82 обработаны все: 69 подтверждены первичным источником, 13 получили действующий исторический допуск по политике владельца; это разные основания. Из старых 63 подтверждены 38, осталось 25. По сравнению с опубликованными 109/145 в 21:51 прирост 11; это работа штатного CandlePilot после общих правок и визуальных наблюдений Work. Личных записей свечей Work — 0. Широкие 442 задачи пересекаются с этими 145 и не складываются с ними: 385 RESOLVED_NATIVE, 57 ожидают подтверждения.
+
+1. **Подтверждённый дефект очереди исправлен** в [94f38e6](https://github.com/swindler2010/StockMonitor/commit/94f38e604d19a56f3649e97a3ba05f2b6fb67aa1). Короткий запрос с новой сверкой либо повтором после изменения соседнего ряда не попадал в существующий быстрый пакет, если его прежняя версия проверки уже была выполнена. Теперь наступившие QUEUED/RECHECK_QUEUED для GETTEX/EUR5m/15m, не более 30 минут, проходят тем же последовательным исполнителем: явная сверка, затем повтор, затем ограниченный проход новой версии. Общий предел 8, будущий срок поставщика и завершённые задачи сохраняются. Служебная постановка не сбрасывает срок и не продлевает наблюдение.
+
+Фактическая штатная проверка JNJ 13.11 в 14:45 5m, отдельный случай вне 145: после прежнего ожидания очередь выполнила свежую проверку 22:14:18 CET и записала AWAITING_SOURCE / SOURCE_TIMEBASE_UNCONFIRMED с RETIME_INCOMPLETE_PUBLICATION. Исправлено прохождение очереди, а не недостаток исходного доказательства. Этот случай не объявлен восстановленным. Точные публичные исходники: 4 целевых теста PASS за 3,938 с, в том числе 53/200 задач, наступивший/будущий срок, явный приоритет, предел пакета и отказ при отозванной политике источника.
+
+2. **Уточнён доказанный случай нулевого родителя** в [6006943](https://github.com/swindler2010/StockMonitor/commit/6006943f68ef463b98942649b1a45bcc1eb06eb0). При уникальном точном сопоставлении всех младших свечей с полным парным первичным GETTEX-файлом нулевая плоская 15m-свеча могла переходить в уже существующего родителя. Прежнее правило допускало только перенос родителя в пустое место и отказывало. Новый узкий вариант переносит только её собственные уникальные события нулевого объёма по той же цене в реальные исходные родительские интервалы. Для исчезающих родителей с положительным объёмом прежнее строгое правило сохранено. Кандидат обязан покрывать весь проверенный диапазон; сохранение полного OHLCV, исходные значения, происхождение, предельная задержка 45 минут, текущие визуальные факты и окончательная проверка ревизий обязательны.
+
+Фактический результат обычной очереди TEST: **Nordex 28.10, 13:50–14:00 5m**, проверка 22:24:59 CET, RESOLVED_NATIVE, квитанция актуальна при независимом чтении. Окно 13:30–14:15: добавлена 1 физическая строка, изменена 1, перенесены 3 записи разных TF. Это не пять независимых ошибок. Точные публичные исходники: 4 целевых теста PASS за 3,651 с; положительный случай, отказ при изменении родителя/источника, прежний строгий перенос положительного родителя и очередь 53/200.
+
+Код установлен в TEST: после последующего штатного перезапуска другой работы Bridge подтвердил новый instance и нужную TEST-базу; отдельный лишний перезапуск не выполнялся. Свежая квитанция Nordex создана уже обычной очередью. Эти две причины добавлены в действующий каталог опыта, [69ac389](https://github.com/swindler2010/StockMonitor/commit/69ac3899ead62dd3622ad74b2ec06ad065d818fe); публичное чтение совпало. Визуальная сверка TV остаётся ASSISTED_ONLY, права самостоятельного извлечения CP не объявлены полученными.
+
+Во всём текущем проходе с 19:19 CET накоплено 426 квитанций; физический итог по ним 71 добавленная, 201 изменённая и 55 перенесённых записей 5m/15m. Это строки разных TF, не 327 уникальных ошибок и не 426 восстановленных свечей. Счёт и исполнения PAPER имеют прежние контрольные суммы. Контрольная сумма общей торговой конфигурации изменилась параллельно с зафиксированным отдельным этапом V5; одно это сравнение не устанавливает автора. Данная правка конфигурацию, счёт, позиции, стратегию и торговые разрешения не меняет.
+
+Следующие наблюдения Siemens, Infineon, ASML и Alphabet переданы штатно после этого снимка; их постановка сама по себе не считается исправлением. Полного DONE нет. Оставшиеся на снимке 25 диапазонов перечислены ниже; уже принятые исходные 82 повторно не сверяются.
+
+Откат: небольшие адресные before/patch/ZIP в существующем СМ-Архив — CP short review queue и CP zero parent composition. ZIP закрыты и проверены CRC; откатывать только собственные изменения поверх актуального кода. Проверенная согласованная SQLite backup сохранена, рабочую базу старой копией не заменять. Новый вариант использует существующий режим TRADE_PARTITION и сохраняет before/lineage для адресного отката; фактический откат нового рабочего диапазона не выполнялся и не заявляется PASS. Локальные доказательства: CP short review queue live after.json, CP zero parent composition live verified.json, CP remaining TV acceptance.json. Приватные базы, снимки и счёт в GitHub не публикуются.
+
+| Акция | TF | Дата и время Берлина | Причина на снимке |
+|---|---|---|---|
+| Novartis AG | 5m | 2026-10-23 17:50:00 — 2026-10-23 18:10:00 | AWAITING_SOURCE |
+| Novartis AG | 5m | 2026-10-23 17:40:00 | AWAITING_SOURCE |
+| DHL AG | 5m | 2026-10-26 16:50:00 | AWAITING_USER |
+| DHL AG | 5m | 2026-10-26 16:15:00 — 2026-10-26 16:40:00 | AWAITING_USER |
+| Infineon Technologies AG | 15m | 2026-10-21 13:30:00 — 2026-10-21 13:45:00 | RETIME_NOT_CONSERVED |
+| SAP SE | 5m | 2026-10-20 22:25:00 — 2026-10-20 22:30:00 | AWAITING_SOURCE |
+| Siemens AG | 15m | 2026-10-29 17:45:00 | RETIME_INCOMPLETE_PUBLICATION |
+| Nordex SE | 5m | 2026-10-28 16:15:00 — 2026-10-28 16:25:00 | RETIME_CURRENT_TV_BOUND_CONTEXT_CHANGED |
+| BASF SE | 5m | 2026-11-13 18:00:00 — 2026-11-13 18:10:00 | AWAITING_USER |
+| SIEMENS ENERGY AG | 15m | 2026-10-21 13:30:00 | RETIME_NOT_CONSERVED |
+| AIRBUS SE | 5m | 2026-10-29 17:45:00 — 2026-10-29 17:55:00 | AWAITING_USER |
+| ASML HOLDING NV | 15m | 2026-10-21 13:30:00 — 2026-10-21 13:45:00 | RETIME_INCOMPLETE_PUBLICATION |
+| ADVANCED MICRO DEVICES | 15m | 2026-10-20 21:15:00 | RETIME_INCOMPLETE_PUBLICATION |
+| Alphabet Inc. | 5m | 2026-10-21 13:25:00 — 2026-10-21 13:50:00 | AWAITING_USER |
+| Alphabet Inc. | 15m | 2026-10-26 11:30:00 | RETIME_NOT_CONSERVED |
+| Alphabet Inc. | 15m | 2026-10-21 13:30:00 | RETIME_NOT_CONSERVED |
+| Apple | 15m | 2026-10-23 18:00:00 | RETIME_INCOMPLETE_PUBLICATION |
+| Apple | 15m | 2026-10-20 22:15:00 | RETIME_NOT_CONSERVED |
+| MICROSOFT CORP | 15m | 2026-10-21 13:15:00 — 2026-10-21 13:45:00 | AWAITING_USER |
+| MICRON TECHNOLOGY INC | 5m | 2026-10-20 22:25:00 | AWAITING_SOURCE |
+| MICRON TECHNOLOGY INC | 15m | 2026-10-21 13:30:00 | RETIME_NOT_CONSERVED |
+| MICRON TECHNOLOGY INC | 5m | 2026-10-21 13:25:00 — 2026-10-21 13:50:00 | AWAITING_USER |
+| NVIDIA Corporation | 15m | 2026-10-21 13:30:00 | RETIME_NOT_CONSERVED |
+| Tesla | 15m | 2026-10-21 13:30:00 — 2026-10-21 13:45:00 | RETIME_RELOCATION_NOT_EXACT_OR_AMBIGUOUS |
+| Tesla | 15m | 2026-11-02 11:15:00 | RETIME_INCOMPLETE_PUBLICATION |
+
+
+<a id="cp-sampled-partition-20261122"></a>
+### 22.11.2026 — ещё одна общая причина исправлена и проверена обычной очередью
+
+Область остаётся прежней: 145 уникальных диапазонов (82 оставшихся плюс 63 старых), не все ошибки всего архива. Снимок 23:06:37 CET: обработано **132/145, осталось 13**. Исходные 82: 69 первичных подтверждений + 13 действующих исторических допусков, остаток 0. Старые 63: подтверждены 50, остаются 13. С прошлого этапа 120/145 прирост 12; не все эти двенадцать вызваны новым правилом. Work исправил одну общую программную причину; прямых записей свечей Work 0. Все изменения строк выполнены существующим CandlePilot. Отдельные наблюдения TV не считаются восстановлением до подтверждения CP.
+
+**Причина и правка.** В полном проверенном первичном GETTEX-файле присутствовала положительная сделка с крайней ценой. Её количество уже было учтено в исходном ряду, но цена не вошла в его минимум; вместе со сдвигом времени это мешало точному сопоставлению всех событий. [b800965](https://github.com/swindler2010/StockMonitor/commit/b8009651a5244cec353f1baa68fa97d8c61b50c3) сначала пробует прежнее точное сопоставление. Только при текущем привязанном DIFFERENT допускается одна подтверждённая внутренняя крайняя цена, пропущенная из ценовой выборки, при полном сохранении всех количеств. Единственное упорядоченное сопоставление должно объяснить каждую исходную свечу; начало/конец, остальные цены, точная агрегация исходных родителей, полный OHLCV всего окна и предел задержки 45 минут сохраняются. Количество сделки не удаляется. Нулевая сделка, изменение объёма, первая/последняя цена, несколько пропусков, неоднозначность и изменившиеся входы не подходят. Проверки остальных текущих наблюдений TV и окончательная проверка источника/ревизий остаются.
+
+**Реальная очередь TEST:** Alphabet 21.10, **13:25–13:50 5m**, штатная проверка **23:05:26 CET**, алгоритм 11, RESOLVED_NATIVE, актуальность квитанции независимо подтверждена чтением базы. Окно 13:15–14:15: CP добавил 4, изменил 7, перенёс 1 физическую запись разных TF; не 12 независимых ошибок. Квитанция сохраняет исходный ряд и точную сделку 13:38:05.062769, цена 295,80, объём 7: количество сохранилось. Связанный 15m проходит обычную повторную классификацию.
+
+Новые визуальные сверки также дали штатные результаты прежними общими правилами: Infineon 21.10 13:30–13:45 15m, 22:42:04 CET, 8 добавленных и 7 изменённых физических строк; ASML тот же диапазон, 22:43:10 CET, 9 добавленных и 5 изменённых; обе квитанции актуальны. Micron 21.10 13:30 15m, 22:51:49 CET, 7 добавленных и 8 изменённых; квитанция актуальна, младший 13:25–13:50 5m поставлен на штатную переоценку. Устаревшую повторную привязку наблюдения младшего TF механизм правильно отклонил как REVIEW_INPUT_CHANGED после ремонта родителя; данные вручную не перепривязывались. Другие разрешённые даты видны в сохранённом срезе, повторный аудит не выполнялся.
+
+**Проверки:** четыре теста на точном предлагаемом публичном коммите PASS за 5,422 с: новый положительный сценарий с реальной записью в изолированную базу, отказы при изменении родителя/источника/объёма/начала/конца/нулевой крайней сделки, прежние guards сопоставления, нулевой родитель и ограниченная очередь 53/200. Первый локальный сценарий был исправлен до публикации: его искусственное время оказалось до открытия GETTEX; затем обновлено соответствующее имя контрольного файла. Эти два неуспешных прогона не выдаются за дефект источника. После исправления сценария и проверки точных публичных исходников тесты прошли.
+
+**Windows/MCP:** штатные Save → Close → Restart в 23:03–23:04 CET, сохранение подтверждено на экране. Новый TEST Bridge instance81e15fe98a9b7f5b96f51016cf95de94, соединение работает. Прежний выбор Meta4H/6месяцев и настройки сохранены. Рабочий результат Alphabet получен обычной очередью уже после этого запуска; вручную исполнять CP.turn в рабочей базе не пришлось. Проверка health подтверждает соединение, а не торговую готовность. Каталог опыта дополнен [c68bcc6](https://github.com/swindler2010/StockMonitor/commit/c68bcc63f13db52f91b7580575af4016156bee89), точное публичное чтение совпало.
+
+За весь проход с 19:19 CET: 438 квитанций, физически 114 добавленных, 244 изменённых, 59 перенесённых записей 5m/15m; это пересекающиеся TF, не 417 независимых ошибок. Пересекающийся широкий набор442: 387 RESOLVED_NATIVE,55 ожидают; его не складывать с145. Хеши счёта и исполнений совпали с исходными. Общая конфигурация торговли менялась в параллельной V5-работе, не этими правками. Новых сделок Work не создавал, стратегию/разрешения/позиции не менял. Временная потеря одного исторического допуска при изменении зависимых входов в промежуточном срезе23:02 не скрывалась; к23:06 штатная очередь снова подтвердила все82. Это подтверждённый итог конкретного снимка, не вечный допуск без проверки входов.
+
+**Откат:** CP sampled partition before.json / own patches.json / rollback.zip в существующем СМ-Архив. ZIP закрыт и CRC проверен; обратный patch только своих изменений, не целые файлы поверх другой работы. Исходные before/lineage в рабочей квитанции сохранены. Рабочий откат данных не выполнялся. Доказательства: CP sampled partition live verified.json, CP October21 reviewed normal results.json, CP remaining TV publication test.json, CP remaining TV acceptance.json. Приватные базы/скриншоты/счёт не публикуются.
+
+**Статус:** задача продолжается. Ниже только оставшиеся на снимке13 диапазонов; Tesla/AMD ещё сверяются, новые постановки после снимка не считаются выполненными. MASTER публикуется через существующую рабочую ветку PR21. Прямая запись main ранее отклонена автоматической проверкой; main не изменяется, слияние не выполняется.
+
+| Акция | TF | Дата/время Берлина | Причина на снимке |
+|---|---|---|---|
+| Novartis AG | 5m | 2026-10-23 17:50:00 — 2026-10-23 18:10:00 | AWAITING_SOURCE |
+| Novartis AG | 5m | 2026-10-23 17:40:00 | AWAITING_SOURCE |
+| SAP SE | 5m | 2026-10-20 22:25:00 — 2026-10-20 22:30:00 | AWAITING_SOURCE |
+| Nordex SE | 5m | 2026-10-28 16:15:00 — 2026-10-28 16:25:00 | RETIME_CURRENT_TV_BOUND_CONTEXT_CHANGED |
+| SIEMENS ENERGY AG | 15m | 2026-10-21 13:30:00 | RETIME_NOT_CONSERVED |
+| AIRBUS SE | 5m | 2026-10-29 17:45:00 — 2026-10-29 17:55:00 | RECHECK_QUEUED |
+| ADVANCED MICRO DEVICES | 15m | 2026-10-20 21:15:00 | RETIME_INCOMPLETE_PUBLICATION |
+| Apple | 15m | 2026-10-23 18:00:00 | RETIME_INCOMPLETE_PUBLICATION |
+| Apple | 15m | 2026-10-20 22:15:00 | RETIME_NOT_CONSERVED |
+| MICRON TECHNOLOGY INC | 5m | 2026-10-20 22:25:00 | AWAITING_SOURCE |
+| NVIDIA Corporation | 15m | 2026-10-21 13:30:00 | RETIME_NOT_CONSERVED |
+| Tesla | 15m | 2026-10-21 13:30:00 — 2026-10-21 13:45:00 | RETIME_RELOCATION_NOT_EXACT_OR_AMBIGUOUS |
+| Tesla | 15m | 2026-11-02 11:15:00 | RETIME_INCOMPLETE_PUBLICATION |
+
+
+<a id="cp-current-difference-lane-20261122"></a>
+### 22.11.2026 — текущие DIFFERENT соседних свечей: штатный ремонт Apple/NVIDIA
+
+Область прежняя:145 уникальных диапазонов,82 оставшихся+63 старых. Снимок23:35:30CET: **141 обработан,4 остаются**. Исходные82:70 первичных подтверждений+12 действующих исторических допусков,остаток0. Старые63:59 подтверждены,4 остаются. От предыдущих132 прирост9,не все девять относятся к новой правке. Work исправил общий дефект выбора запросов и ограничение окна; прямых записей свечей Work0. Все изменения строк выполнял CandlePilot.
+
+Причина: действующие DIFFERENT соседних15m-свечей Apple/NVIDIA оставались вне короткого маршрута даже при просроченном next_check. Пропуски правильно блокировались этими расхождениями. В [3c36d64](https://github.com/swindler2010/StockMonitor/commit/3c36d64d91e0479e041f3635b2407eb131b7d34c) добавлен один версионный проход только наступивших одиночных15m DIFFERENT на прежнем последовательном маршруте≤8запросов. Будущие сроки, завершённые и уже обработанные запросы сохраняются. Защита от других текущих TV-наблюдений не отключалась. Для текущего DIFFERENT добавлено полное окно75минут; пределы9исходных свечей,5000событий,20000попыток и задержки45минут сохранены. Полный OHLCV окна, исходные родители, уникальное распределение сделок, парные файлы источника и финальные guards обязательны.
+
+**Реальная обычная очередь TEST после Save/Close/Restart23:29–23:30:**
+
+| Связанная проверка | Время CP, CET | Окно источника | Физические строки добавлено/изменено/перенесено |
+|---|---|---|---|
+| Apple20.10,22:30 15m |23:31:11|22:15–23:00|2/3/3|
+| Apple23.10,18:15 15m |23:31:11|18:00–18:30|2/1/1|
+| NVIDIA21.10,13:45 15m |23:31:52|13:15–14:30|7/7/0|
+
+Все три проверки RESOLVED_NATIVE, квитанции независимо прочитаны и retime_current=true. Проверка статуса завершилась не позднее23:33:39CET. Это три связанные проверки, а не дополнительное число независимых ошибок поверх145. Связанные исходные диапазоны Apple20.10,22:15;23.10,18:00 и NVIDIA21.10,13:30 обработаны штатно. Данные TV не импортировались, ручного CP.turn в рабочей базе не было.
+
+Точный публичный коммит:6тестов PASS7,015с; новый75минутный сценарий с реальным изолированным ремонтом и 53/200сценариев due/future/completed; затронутые sampled/zero-parent/visual-conflict проверки. Прежние общие аудиты не повторялись. Новое правило внесено в существующий каталог опыта. Сохранённые данные счёта и исполнений совпали с исходными хешами. Общая торговая конфигурация менялась в параллельной работеV5, этим этапом не изменялась. Торговый допуск/freshness/risk не подменялись.
+
+Всего с начала прохода19:19CET:454 квитанции,149 добавленных,286 изменённых,72 перенесённых физических записей5m/15m; это пересекающиеся строки, не507 независимых ошибок. Широкий пересекающийся набор442:390 RESOLVED_NATIVE,52 прочих статуса; его не складывать с145. Техническое разрешение диапазонов не равно полному анализу/торговой готовности всех акций.
+
+Оставшиеся на снимке четыре диапазона: Novartis23.10 **17:40 5m** и **17:50–18:10 5m**; SAP20.10 **22:25–22:30 5m**; Micron20.10 **22:25 5m**. Для них работа продолжается отдельным адресным правилом, они не объявлены исправленными этим этапом.
+
+Откат: CP current difference lane before.json / own patches.json / rollback.zip, ZIP закрыт и CRC проверен. Обратный patch только собственных изменений. Рабочий откат данных не выполнялся, исходные значения/lineage сохранены в квитанциях. Доказательства в существующем СМ-Архив: CP current difference route diagnosis.json, CP current difference lane live verified.json, CP remaining TV publication test.json, CP remaining TV acceptance.json. Приватные базы и изображения не публикуются. MASTER и код публикуются через существующий PR21; прямое изменение main ранее отклонено автоматической проверкой, слияние не выполняется.
+
+
+<a id="cp-opening-session-tail-20261123"></a>
+### 23.11.2026 — исходные82+63 обработаны; продолжаются дополнительные старые диапазоны
+
+На снимке **23.11,00:11:31CET** исходная область145 уникальных диапазонов: **145 обработаны,0 остаются**. Из82 оставшихся:71 первичное подтверждение+11 действующих исторических допусков. Все63 старых подтверждены первичным источником. Это не объявление полного DONE по всем ошибкам архива: дополнительно в прежнем широком наборе найдено32 непересекающихся старых диапазона; на00:12CET5 уже обработаны CP,27 остаются. Общая уточнённая область177=145+32;150 обработаны,27 остаются. Пересекающиеся родительские/дочерние проверки и широкий442 не суммируются.
+
+Work исправил два общих ограничения доказанного восстановления и связанный маршрут совместной сверки; прямых исправлений/записей свечей Work **0**. Новые факты получены визуально в TradingView, все изменения строк выполнял штатный CandlePilot. Готовые сверки не повторялись; отдельно исправлены две неточные текстовые заметки наблюдений с сохранением исходной истории. Ошибочные заметки не использовались как источник OHLCV.
+
+Код [19b0383](https://github.com/swindler2010/StockMonitor/commit/19b03831e3ddbc66d667222de1e2a48d26b735c5):
+
+1. **Начальная цена уже учтённого объёма.** Единственное полное упорядоченное сопоставление может объяснить1–3 подряд идущие положительные сделки по одной начальной цене внутри одного5m-блока. Из исходной выборки цен эта цена выпала, количество сохранилось. Все остальные цены/закрытия/количества, родители и полный OHLCV окна должны точно совпасть. Для одного положительного исчезающего родителя допускается только доказанная пересборка единственного исходного ребёнка по его полным событиям в соседнего фактического родителя≤15минут; события и before/lineage сохраняются. Общие пределы9свечей/5000событий/20000попыток/45минут задержки сохранены.
+2. **Совместная проверка связанных DIFFERENT.** Только для этого полного доказанного opening-burst сопоставления непересекающиеся текущие5m DIFFERENT, целиком находящиеся в окне, связываются атомарно точными digest запросов и входов. Каждый диапазон действительно отличается по первичному ряду; исходные строки совпадают с before. Неполное окно пробуется расширить в прежних пределах. Конфликтующие ABSENT/PRESENT/ZERO_VOLUME, перекрывающиеся диагнозы и изменившиеся входы не игнорируются. Окончательная проверка повторяет всё перед записью.
+3. **Обрезанный конец сессии.** Отдельный режим VERIFIED_NATIVE_SESSION_TAIL использует полные парные файлы GETTEX до подтверждённого календарного закрытия. В последних30/45/60минутах две неизменные начальные5m-свечи закрепляют соответствие. Уникальный полный префикс событий обязан объяснить каждый исходный OHLCV/объём и всех родителей≤15минут задержки. Только1–64 оставшихся положительных события последних15минут восстанавливаются как недостающий конец. Это явно добавление реальных данных, а не ложное заявление о сохранении объёма всего окна. Произвольный новый источник, пропущенная исходная сделка, неполный файл или неясное сопоставление не принимаются.
+4. Одно версионное применение12 на прежней последовательной очереди≤8запросов. Будущие next_check, завершённые и уже обработанные запросы сохраняются. Новых потоков/очередей нет. Пересчёт DQ/CORE и исторической политики остаётся штатным.
+
+**Фактическая очередь установленного TEST:**
+
+| Акция/исходная проблема | Последняя штатная проверка,CET | Окно первичного источника | Физические строки добавлено/изменено/перенесено |
+|---|---|---|---|
+| SAP20.10,22:25–22:30 5m |22.11,23:49:45|22:00–23:00|2/6/0|
+| Micron20.10,22:25 5m |22.11,23:56:15|22:15–23:00|1/9/0|
+| Novartis23.10,17:50–18:10 5m;связанный17:40 |23.11,00:07:17|17:30–18:30|2/3/3|
+| Novartis23.10,18:20 5m,повтор после изменения соседей |23.11,00:09:35|18:15–18:30|0/0/0,первичное подтверждение пустого интервала|
+
+Все квитанции текущие по retime_current. У Novartis17:35 подтверждена начальная цена134,78 при уже учтённом объёме31; две сделки8+6 не удалены. Связанный17:40 восстановлен,18:05/18:10 разделены по фактическим публикациям. После ремонта исторический допуск18:20 временно правильно потерял актуальность из-за новых соседей; обычная очередь подтвердила пустое окно первичным источником без нового ручного наблюдения. Это обработанный переход, а не скрытое вечное разрешение.
+
+**TV:** у SAP новая точная проверка22:35 показала объём3, а не20: прежняя заметка ошибочно отнесла объём22:20 к другой свече. У Micron дополнительно подтверждён конец20.10,22:55:811,70/812,10/810,10/810,10,V30,совпадает с полным GETTEX. У нового старого диапазона Novartis26.10,12:05 сначала ошибочно процитированы объединённые native-значения; заметка исправлена по снимку до окончательного результата: TV12:05,137,76/137,92/137,76/137,92,V12;12:10 flat138,02,V16. Первичный источник дополнительно содержит нулевое наблюдение138,00 в12:13,поэтому полное совпадение OHLCV12:10 сTV не заявляется. Прежние записи и изображения сохранены, TV не импортировался в данные. Общее ограничение ASSISTED_ONLY остаётся: CP не получает права управлять чужой авторизацией TV из разрешения Work.
+
+**Приёмка:**9адресных тестов точного предлагаемого публичного коммита PASS9,358с: два новых нормальных изолированных ремонта, положительный родитель/совместный диагноз, отказы при изменении входов/источника/родителя/объёма/наблюдения, прежние guards,53/200очередь due/future/completed. Два первоначальных неуспешных assert нового теста ожидали иной вид безопасного отказа(None вместо ValueError и наоборот); ожидания исправлены, проверки не ослаблены. Изолированный адресный rollback нового session-tail режима восстановил исходные строки и отказал при изменившихся входах; рабочий откат не выполнялся.
+
+Windows Save/Close/Restart23:46CET,на экране подтверждено сохранение. TEST instance d340910252f8fb25e64133fd49a94277; рабочие ремонты получены обычной очередью после запуска. Read-only MCP00:10:14CET вернул8последовательных фактических строк Novartis23.10 с исправленными17:35/17:40/18:05/18:10 и пустыми17:45/18:15/18:20. Выбор Meta4H/6месяцев и настройки сохранились. **Ограничение:** общая диагностическая публикация Bridge на00:09 была устаревшей,два её расчёта не завершились; raw archive read при этом свежий. Общую готовность анализа/торговли этот этап не подтверждает; проблема общей сводки относится к параллельной работе, её код не изменялся.
+
+Всего с начала прохода19:19CET:468квитанций,156добавленных/307изменённых/82перенесённых физических записей5m/15m; это не545 независимых ошибок. Хеши счёта и исполнений совпали с исходными, Work не создавал сделок. Параллельное изменение конфигурацииV5 не относится к этому этапу и не откатывалось. Широкий442:398RESOLVED_NATIVE/44прочих статуса; это необработанные/исторически допущенные/устаревшие диагностические запросы,не44доказанные ошибки и не слагаемое177.
+
+Новые решения внесены в существующий каталог опыта. Откат только своих hunks: CP opening session tail before.json / own patches.json / rollback.zip,CRC проверен. Существующая согласованная резервная SQLite сохранена, новые полные копии не размножались. Доказательства в СМ-Архив: CP opening session tail live verified.json, MCP verified.json, session tail rollback verified.json, remaining TV publication test.json, remaining TV acceptance.json, older additional current.json. Приватные базы/счёт/изображения не публикуются. Код и MASTER через существующий PR21,main не изменяется. Работа продолжается по перечисленным ниже27дополнительным старым диапазонам; весь запрос владельца пока не объявлен DONE.
+
+| Акция | TF | Дата/время Берлина | Статус на дополнительном снимке |
+|---|---|---|---|
+|Alphabet Inc.|5m|2026-10-26 16:40:00|AWAITING_SOURCE / GAP|
+|Northern Star Resources Limited|5m|2026-10-28 20:50:00–21:05:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|Northern Star Resources Limited|5m|2026-10-27 14:20:00–14:25:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|Oracle Corporation|5m|2026-11-02 10:50:00–11:05:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|HENSOLDT AG|5m|2026-10-28 20:50:00–21:05:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|Meta Platforms Inc. Class A|5m|2026-10-23 20:20:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|MICHELIN (CGDE)|5m|2026-10-26 11:50:00–11:55:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|MICHELIN (CGDE)|5m|2026-10-23 12:50:00–12:55:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|GENERAL MOTORS CO|5m|2026-10-26 11:50:00–11:55:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|CANCOM SE|5m|2026-11-13 16:20:00–16:25:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|AIRBUS SE|5m|2026-10-28 13:55:00–14:05:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|BASF SE|5m|2026-11-13 22:20:00–22:35:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|RWE AG|5m|2026-10-28 17:15:00–17:30:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|RWE AG|5m|2026-10-27 12:20:00–12:35:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|PALANTIR TECHNOLOGIES INC-A|5m|2026-10-27 08:25:00–08:35:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|ADOBE INC|5m|2026-11-13 21:20:00–21:35:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|BAYERISCHE MOTOREN WERKE AG|5m|2026-11-05 18:45:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|DHL AG|5m|2026-10-28 21:20:00–21:35:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|Johnson & Johnson|5m|2026-10-29 21:20:00–21:35:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|Procter & Gamble|5m|2026-10-29 18:20:00–18:35:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|Berkshire Hathaway B|5m|2026-11-13 13:20:00–13:30:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|Newmont|5m|2026-10-28 17:45:00–17:50:00|AWAITING_USER / GAP|
+|Duke Energy|5m|2026-10-28 20:50:00–21:05:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|Duke Energy|5m|2026-10-28 13:50:00–13:55:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|AbbVie|5m|2026-10-30 11:50:00–12:05:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|AbbVie|5m|2026-10-29 13:50:00–14:05:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+|AbbVie|5m|2026-10-28 13:50:00–13:55:00|AWAITING_USER / SOURCE_TIMEBASE_UNCONFIRMED|
+
+
+<a id="cp-autonomous-zero-primary-20261123"></a>
+### 23.11.2026 — самостоятельная обработка нулевых наблюдений и восстановление подтверждённого первичного окна
+
+Исходная область задания:82 оставшихся+63 старых=145 уникальных диапазонов; ранее подтверждены145/145. Дополнительно в том же сохранённом наборе обнаружены32 непересекающихся старых диапазона. На23.11,00:57:22CET дополнительный набор:21 обработан,11 остаются; совокупный последний подтверждённый результат166/177. Это не полный DONE и не новая проверка всего архива. Work исправил два общих программных ограничения; прямых записей свечей Work0. Девять дополнительных ремонтов без наблюдений TV выполнены самим CP после обычного запуска, шесть из них новым строго ограниченным правилом нулевого времени. Ручная сверка Work не выдаётся за автономию CP.
+
+Код: [cd92f90](https://github.com/swindler2010/StockMonitor/commit/cd92f908605539bd4f2ba8a3da082c554dc83619), [cbf8581](https://github.com/swindler2010/StockMonitor/commit/cbf8581ac6e68187e76d533bdca4d510dcacf705).
+
+1. **Без TV, полностью внутри CP.** При полном парном первичном GETTEX/EUR, точном сохранении всех положительных5m OHLCV/количеств и всех15m родителей, единственном полном сопоставлении событий разрешено восстановить время существующих плоских нулевых наблюдений с задержкой≤5минут. Нулевой объём не превращается в сделку или доказательство NO_TRADES; новые наблюдения не создаются. Обычная последовательная очередь≤8 получает один версионный проход; завершённые записи и будущие сроки сохраняются. Пределы9свечей/5000событий/20000попыток сохранены.
+2. **Точное подтверждение одного15m родителя.** Если native действительно потерял количество, перенос с сохранением объёма применять нельзя. Добавлена отдельная метадатная функция confirm_primary_window: ручное подтверждение вTV всех шести полей timestamp/O/H/L/C/V связывается с предварительно захваченным полным независимым первичным источником, текущими5m/15m входами и снимками. Значения TV не принимаются как вход записи. Обычный CP повторно проверяет источник, identity, политики, доказательства и исходные строки непосредственно перед записью. Только один закрытый15m родитель, максимум3 исходных5m ребёнка; исходные строки и происхождение сохраняются. Старое ошибочное время учитывается отдельно как superseded, не как точный перенос. Противоречащие текущие наблюдения TV не игнорируются. Изменившийся источник/вход/подтверждение оставляет блокировку.
+
+**Фактический самостоятельный результат после штатного Save/Close/Restart00:39–00:40CET:** Oracle02.11,10:50–11:05; Michelin26.10,11:50–11:55 и23.10,12:50–12:55; GM26.10,11:50–11:55; CANCOM13.11,16:20–16:25; Airbus28.10,13:55–14:05; RWE28.10,17:15–17:30; Berkshire13.11,13:20–13:30; AbbVie28.10,13:50–13:55. Все9 RESOLVED_NATIVE и текущие по независимому валидатору, без observations. Michelin/GM/CANCOM/Berkshire/AbbVie — новое нулевое правило; Oracle/Airbus/RWE — прежнее полное строгое сопоставление, которому новая версия дала штатный проход. Доказательства: CP autonomous zero live verified.json; отдельная диагностическая проверка не записывала свечи.
+
+**Alphabet26.10,16:40 5m:** TV GETTEX ABEC, ISIN US02079K1079,EUR, время биржи/Берлин. TV15m16:30 O283,50 H283,70 L283,45 C283,45 V189 точно совпал с полным первичным GETTEX. Старый native родитель284/284/283,80/283,80,V50 действительно неполный. CP сам восстановил окно16:30–16:45 после обычного запуска новой версии00:51–00:52CET; последняя штатная проверка00:53:55CET RESOLVED_NATIVE, текущий receipt:1 добавлено,2 изменено,0 перенесено,1 superseded. Ошибочный старый16:30 ребёнок сохранён в before/журнале; фактические источник5m16:35,V118 и16:40,V71 не импортированы изTV. Рабочая база вручную не редактировалась. CP primary window live verified.json хранит точный receipt и исходные данные; приватный файл не публикуется.
+
+**Адресная проверка:** точный предлагаемый публичный код12PASS/12,795с. Новый сценарий проверил реальный normal queue ремонт с недостающим количеством, отсутствие записи при подтверждении, отказы при изменении ребёнка/родителя/первичного файла/политики/снимка и конфликтующем TV ABSENT, сохранение исходных значений и изолированный адресный rollback с отказом при чужих изменениях. Изменённые общие участки проверены прежними затронутыми сценариями, включая53/200 due/future/completed. Начальный запуск нового теста обнаружил лишний отступ правки; исправлен до публикации и перезапуска. Новое автономное правило отдельно11PASS/10,596с до следующего изменения. Старые полные аудиты не повторялись.
+
+Windows два штатных Save/Close/Restart, настройки Meta4H/6месяцев сохранены. Текущий MCP instance c55fccccc6d6f505cd3fc8a98597dead подтвердил соединение; health не является доказательством аналитической готовности. Ранее общая диагностическая публикация Bridge была устаревшей/FAILED, raw archive работал; эта отдельная параллельная проблема не исправлялась в данном этапе. Новое чтение свечей через MCP будет проверено отдельно после оставшихся диапазонов.
+
+Автономия CP относится к доказанным правилам первичного источника. Получение нового визуального подтверждения TV остаётся ASSISTED_ONLY; API confirm_primary_window не выдаёт CP прав управлять TradingView. Неполные исходные файлы и недостаточные доказательства не превращаются в NO_TRADES или торговый допуск. Account/позиции/исполнения/стратегии этим кодом не меняются. Существующая согласованная backup сохранена, новые полные базы не размножались. Откат только своих hunks: CP autonomous zero before/own patches/rollback.zip и CP primary window before/own patches/rollback.zip; изолированный откат нового режима проверен. Работа по оставшимся11 диапазонам продолжается, итоговый отчёт владельцу до завершения не отправляется.
+
+
+
+<a id="cp-remaining-intervals-complete-20261123"></a>
+### 23.11.2026 — завершён сохранённый список82 оставшихся и старых свечных диапазонов
+
+**Область и результат.** Реестр82акций, исходные82 оставшихся+63 старых=145 уникальных диапазонов. Финальная адресная приёмка23.11,01:18:14CET:145 обработаны,0 остаются; в82 —71 подтверждены первичным источником и11 имеют действующий исторический допуск;63 старых —63 первично подтверждены. Дополнительно в прежнем сохранённом наборе обнаружены32 непересекающихся старых диапазона. Приёмка01:18:42CET:32 обработаны,0 остаются, из них22 первично подтверждены и10 имеют действующий исторический допуск. Итого **177/177,0 неподтверждённых в указанном списке:156 первично подтверждены+21 исторически приняты**. Исторический допуск не выдаётся за исправленный OHLCV или биржевое NO_TRADES. Пересекающиеся родительские/дочерние задачи и широкий442 не прибавляются к177.
+
+**Личный вклад Work и фактические записи CP.** Work выполнил визуальную сверку TV, передал72 различных диапазона через реестр новых наблюдений, отдельно подтвердил точный15m первичный родитель Alphabet, исправлял неточные текстовые заметки с сохранением истории и внедрил общие ограниченные способы восстановления. Это не72 прямые правки свечей. Прямых записей свечей Work — **0**; все изменения выполнил штатный CandlePilot после независимой проверки первичных GETTEX/EUR. Для девяти новых диапазонов визуальная помощь вообще не понадобилась: CP после обычного запуска сам выполнил шесть новых доказанных переносов нулевых наблюдений и три прежних строгих сопоставления событий. Новая ручная сверка через TV остаётся ASSISTED_ONLY; права автономного управления TradingView этому коду не выдавались.
+
+**Что восстановлено без двойного счёта.** Сравнение только680 ключей из журнала изменений с согласованной исходной backup19:19CET22.11:5m —190 новых временных отметок,173 изменённых OHLCV,88 удалённых старых отметок;15m —52 новые отметки,153 изменённых OHLCV,24 удалённые старые отметки. Всего242 новых отметки и326 изменённых,112 прежних отметок сохранены в before/lineage и журнале. Новые отметки включают переносы; их нельзя называть242 совершенно новыми независимыми свечами. Чистое увеличение ряда —102 реальных5m свечи и28 пересчитанных15m родителей, всего130 записей. Отдельный журнал физических операций:501 квитанция,161 добавление/326 изменений/111 переносов/1 superseded. Эти счётчики имеют разную семантику и не суммируются как число ошибок. Прежние корректные участки вне подтверждённых окон не заменялись.
+
+**Последние результаты.** Meta23.10,20:20 5m:TV20:25 O575,80/H575,80/L575,70/C575,70,V2 против прежней плоской575,70; CP восстановил пропущенную начальную цену из первичного источника. BMW05.11,18:45 5m:TV18:40 61/61/60,98/60,98,V27;native прежде объединил51, включив24 из18:35. CP восстановил разделение. Newmont28.10,17:45–17:50:17:45 действительно пуст,17:50 присутствует101/101,06/101/101,06,V11;17:55 отдельно flat101,02,V30 вместо прежнего объединённого41. CP восстановил реальную17:50. Alphabet26.10,16:30–16:45:точное полное подтверждениеTV15m,V189 привело к первичному восстановлению16:35,V118 и16:40,V71; старый неверный16:30 сохранён как superseded. Все четыре результата текущие; ни OHLCV TV, ни искусственные свечи не импортировались.
+
+**Пустые участки последней сверки.** BASF13.11,22:20–22:35;RWE27.10,12:20–12:35;Palantir27.10,08:25–08:35;Adobe13.11,21:20–21:35;DHL28.10,21:20–21:35;JNJ29.10,21:20–21:35;Procter29.10,18:20–18:35;AbbVie30.10,11:50–12:05 и29.10,13:50–14:05. TV подтверждает отсутствие свечей и окружающий ряд. Они обработаны действующей исторической политикой, без создания свечей и без ложного утверждения об отсутствии сделок на бирже. УRWE объём12:40 отображается вTV округлённо1,23K, поэтому точное сравнение1225 не заявляется. У ранее проверенного Novartis26.10,12:10 первичный источник содержит нулевое наблюдение138,00, тогда какTV показывает flat138,02; эта особенность явно сохранена, полное совпадение этой свечи сTV не заявляется.
+
+**Неправильно было бы считать26 незакрытых старых статусов ошибками.** В прежнем широком наборе442 на01:19:19CET416 имеют RESOLVED_NATIVE; отдельно проверены только26 оставшихся статусов:5 уже подтверждаются текущими первичными квитанциями,21 имеют действующие исторические допуски;неподтверждённых0. Старый статус задания не подменяет результат независимого текущего валидатора. Полный повторный аудит/массовая загрузка не запускались.
+
+**Механизмы и приёмка.** Реализованные в предыдущих этапах bounded strict partition, нулевое время, sampled/opening price, конец сессии, атомарная сверка связанных различий и точное подтверждение первичного окна действуют в существующем последовательном writer CP. Все guards identity/ISIN/GETTEX/EUR/source/full-file coverage/native5m+15m/policy/revisions/current evidence остаются; изменившийся вход отклоняется непосредственно перед записью. DQ/CORE переоцениваются штатно. Последний проверенный публичный код [cbf8581](https://github.com/swindler2010/StockMonitor/commit/cbf8581ac6e68187e76d533bdca4d510dcacf705):12 адресных PASS/12,795с, включая53/200 очередь и изолированный точечный rollback. Повтор этих тестов после одних новых наблюдений не выполнялся.
+
+Windows Save/Close/Restart после установки, сохранён Meta4H/6месяцев; экран01:18CET работает, индикаторы и боковой объём отображаются, CP ACTIVE. Read-only MCP01:20:34CET, TEST c55fccccc6d6f505cd3fc8a98597dead, exact ABECG.GTX/GETTEX/EUR5m:16:35 283,50/283,70/283,50/283,70,V118;16:40 283,50/283,50/283,45/283,45,V71,следующие16:45/16:50 также прочитаны. Первое чтение по неподходящему обозначению вернуло DATA_UNAVAILABLE; оно не использовано как доказательство. Для правильного источника сначала получена revision, затем страница4строк с обязательной revision успешно прочитана.
+
+**Ограничение общей сводки.** Диагностическая публикация Bridge на01:19 устарела примерно27минут и имела3FAILED, хотя raw archive MCP свежий. На экране Meta остаётся отдельная общая отметка INVALID. Поэтому этот этап не объявляет все глобальные DQ-индикаторы исчезнувшими, всю программу безошибочной или все акции готовыми к исполнению. В данном сохранённом списке177 диапазонов/442 связанных запросов неподтверждённых0. Отдельная работа общей диагностической публикации не подменяется исправлением свечей и не изменялась этим этапом. Свежесть цены, сессия, риск, CORE и торговый сигнал должны проверяться перед исполнением.
+
+Хеши счёта и исполнений совпали с исходными. Торговых команд Work не отправлял. Параллельное изменение конфигурацииV5 не принадлежит этому этапу и не откатывалось. Work2,Store0.15,Performance Engine и реальные счета не изменены. Согласованная backup сохранена; откат собственных ограниченных окон и кода описан в предыдущем этапе. Опыт внесён в существующий каталог; новые исходные файлы/ключи/SQLite/счёт/снимки пользователя вGitHub не публикуются. Код,MASTER и отчёты — существующий PR21,main не перезаписывается.
+
+Подробные локальные доказательства:CP remaining TV acceptance.json;CP older additional current.json;CP broader remaining current.json;CP remaining unique candle changes.json;CP primary window live verified.json;CP autonomous zero live verified.json;CP remaining TV review receipts.jsonl. Даты всех177 диапазонов перечислены в приложенной адресной таблице; незавершённых дат в этой области нет.
+
+[Адресная таблица177 диапазонов](CP_TV_REMAINING_INTERVALS_RU.md).
+
+
+
+<a id="cp-candles-recheck-20261123-am"></a>
+### 23.11.2026,08:19–08:21CET — повторная проверка: общий ноль не подтверждён
+
+По прямому запросу владельца повторно прочитаны текущие сохранённые результаты, без нового аудита OHLCV, загрузок и повторных визуальных сверок TV. **Область прежнего отчёта177 диапазонов: сейчас174 подтверждены/допущены,3 не проходят текущую проверку исторического допуска.** Исходные82 —80 действующих/2 непринятых;старые63 —63/0;дополнительные32 —31/1. Первичное подтверждение156 диапазонов сохранилось, действующих исторических допусков18 вместо21. Прежние177/177 относятся к снимку01:18CET, их нельзя использовать как актуальный утренний результат.
+
+| Акция | TF | Интервал,Берлин | Причина текущего отказа |
+|---|---|---|---|
+|Novo Nordisk,DK0062498333|5m|28.10.2026,11:50|Изменились версии market:5m и interval_evidence; строгая проверка допуска отказала|
+|Novo Nordisk,DK0062498333|5m|28.10.2026,13:15|То же изменение зависимостей|
+|BASF,DE000BASF111|5m|13.11.2026,22:20–22:35|Изменились версии market:5m и interval_evidence; строгая проверка допуска отказала|
+
+У всех3 точная привязка native rows/neighbors/listing/observation совпадает с прежним допуском; fingerprint визуального подтверждения также текущий. У Novo market:5m15325→15331,interval_evidence254→255;уBASF14915→14923 и258→259. Текущий механизм _reviewed_market_tail_current допускает перепроверку изменившихся market/review-service версий, но не изменение interval_evidence; поэтому effective_accepted возвращает отказ. Это доказанная техническая причина текущего снятия допуска, а не доказательство вновь потерянных свечей. Полный смысл изменения реестра источника отдельно не проверялся; называть его безусловно служебным и обходить guard нельзя. Новое подтверждение/перевыдача допуска вручную не выполнялись.
+
+**Вся программа шире прежних177.** Свежий read-only MCP CandlePilot section generated_at23.11,08:20:00CET,revision4c527c8122b1eaa7c06cc0ac2f13dbb3c2484110aa56f8620460b38b5e477625:сохранённая текущая область446серий,72READY и374 проблемных отчёта, включая6INVALID,39GAP,311UNCONFIRMED,18SOURCE_UNAVAILABLE. Это сохранённые диагностические мнения по сериям, не374 заново доказанные повреждённые свечи. Другие площадки и неизвестные identity учитываются отдельно, не суммируются как ошибки GETTEX.
+
+С момента прежней приёмки появились163 ещё незавершённых запроса сверки у69акций:58QUEUED/105AWAITING_USER на согласованном снимке08:20:40CET. Родительские/дочерние и пересекающиеся интервалы не дедуплицировались в ошибки: это163задания, не163 потерянные свечи и не слагаемое177. В сохранённых официальных GETTEX-отчётах дополнительно есть INVALID:AbbVie15m иMicron5m/15m с EXCHANGE_NOTICE_CONFLICT;уMicron также SOURCE_COVERAGE_CONFLICT. Это отдельные текущие ограничения, они не исследованы/не исправлены этим read-only этапом.
+
+Общая диагностическая публикация аналитики Bridge по-прежнему устарела:около7ч27минут/45FAILED на первом health. Сам CandlePilot section удалось получить свежим, после двух INDETERMINATE и ожидания обычного расчёта; возраст основной публикации не подменяет generated_at отдельного свежего CP-раздела. Сохранённые общие оценки:80STALE/2EXPIRED, текущих0. Эти нули не означают отсутствия свечей и не являются проверкой отдельных торговых контекстов.
+
+**Личный вклад и изменения:**из177 перепроверяемых случаев3 сейчас не приняты;Work исправил0 и записал0свечей, этот этап только проверочный. Новых тестов не запускалось, код/свечи/допуски/счёт/позиции/стратегии не менялись. CP продолжает обычную работу:квитанции588 против501 на прежнем снимке;физические операции+1добавление/+4изменения/+5переносов. Это не87 исправленных ошибок. Доказательства сохранены локально:CP candle scope recheck current.json,CP remaining TV acceptance.json,CP older additional current.json. Старые результаты и публичная адресная таблица177 остаются историей снимка01:18CET; текущую оценку использовать из этой записи. Итог:утверждать «все свечные проблемы программы решены» нельзя.
+
+
+<a id="issue16-20261123-pr-stack"></a>
+### 23.11.2026 — #16 и сверка цепочки PR #17, #18, #21
+
+**Свежесть.** Согласованные чтения журналов TEST без запросов к поставщику. Для первичного GETTEX дедупликация по ISIN и точному времени сделки, только первое наблюдение той же даты по Берлину. Позднее заполнение прошлых дат исключено. 20.11 наблюдения с 16:20 по 23:06, 58 акций и 28 интервалов публикации, ≤15/20/25 мин соответственно 1039/1220/1254 из 1255 (медиана 8 мин 46 с, P90 16 мин 58 с). 23.11 до 09:21, 78 акций и 7 интервалов, 395/444/450 из 450 (медиана 8 мин 03 с, P90 16 мин 46 с). Это возраст биржевой сделки на зарегистрированное СМ время проверки пары, не подтверждённое время публикации поставщиком. Обе сессии частичные.
+
+У LSEG / gettex_chart отдельная метрика: от закрытия последней возвращённой 15m свечи до первого записанного получения в тот же день. 20.11 ≤15 мин 304/335, 53 акции, медиана 8 мин 16 с. 23.11 утром 42/48, 45 акций, медиана 7 мин 57 с. Для 5m лишь четыре и одно пригодное наблюдение соответственно. Подтверждённого времени сделки/публикации у LSEG в этих квитанциях не было. Это разные часы и разные знаменатели, ряды не объединялись. Полный многосессионный вывод и источник времени публикации всё ещё нужны. Торговый порог 900 секунд не менялся. [Issue #16](https://github.com/swindler2010/StockMonitor/issues/16)
+
+**Исправление статистики.** В read-only freshness_view прежний расчёт засчитывал историческую подгрузку и повторные квитанции в выборку текущих торговых наблюдений. Теперь в пределах уже существующего окна 5000 квитанций отдельно считаются наблюдения той же берлинской даты, повторные и исторические записи. Будущие относительно времени снимка записи исключены из статистики. В одном согласованном чтении 09:28:48 число пригодных для этой статистики наблюдений изменилось 4003 → 445; отдельно 3481 исторических и 77 повторных. Внутри исправленной выборки ≤15/20/25 мин 390/439/445. Текущий список 82 акций в обеих версиях одинаковый: 25 ≤15, 56 старше, 1 без подтверждения. Правка проверена на настоящем журнале в отдельном процессе только для чтения. Рабочий TEST запущен до этой правки; перезапуск ради одного отчёта не выполнялся во время уже идущей общей диагностики Bridge. Код счёта, исполнений, свечи и торговая конфигурация не менялись.
+
+Проверки 64 PASS на текущих локальных исходниках, включая 14:59/15:00/15:00.001, 53/200 инструментов, 11 TF, нулевой объём, чужой листинг, устаревшие ревизии, повторную квитанцию и историческую подгрузку. Старый тест PAPER ожидал автоматический отказ от одного предупреждения архива, хотя действующий GETTEX-first требует отдельно проверить фактическую котировку. Ожидание исправлено, каждый отрицательный сценарий изолирован SAVEPOINT; реально плохая свеча/CORE, неверный TF и прочие причины проверяются независимо. Это исправление теста, не ослабление проверки исполнения. Исходно выявлено 2 дефекта (статистика и тест), исправлено 2; исходное/остаточное число проблем свечей не измерялось, ручных записей свечей 0. Откат: «SM Issue16 receipt statistics before 20261123-092502.zip» и «SM Issue16 paper quote test before 20261123.py» в СМ-Архив.
+
+**GitHub.** Все три PR открыты как draft. Точная цепочка: #17 → main (head aff4862, 271 путь); #18 → ветка #17 (head adb3ecc, 116 путей); #21 → ветка #18 (head f3f5652, 159 путей). #18 содержит три коммита #17 через базу и 116 последующих, #21 содержит #18 через базу и 241 последующий. Это последовательные изменения проекта. У #17/#18 45 общих путей, у #18/#21 42, суммарно 438 уникальных путей. Сверка GitHub на каждом точном head не обнаружила запусков PR Actions или зарегистрированных reviews. Старые локальные протоколы уже есть и не подменяют приёмку этих head; в частности #17 ранее имел 400 PASS из 438.
+
+Трёхсторонним чтением без изменения веток воспроизведён один конфликт README.md между #17 и актуальным main. Для переноса всей цепочки отдельно воспроизведён конфликт AGENTS.md; MASTER добавлен независимо в main и #21, контрольные суммы различны, нужен один содержательный итог с сохранением последних разделов main. #18 и #21 технически сливаемы сейчас только относительно своих черновых баз. Сравнены 12 файлов #21 с нормализованным рабочим деревом до новой правки #16: пять точных совпадений, семь отличий, в том числе paper_account.py, paper_hourly.py, candle_schedule.py, gettex_chart.py и compute_process.py. Рабочий TEST и черновик #21 нельзя считать одним проверенным набором исходников. План приёмки существующей цепочки: разрешить README с сохранением актуального main, сверить добавленные правила AGENTS/MASTER по содержанию, перенести в итоговую ревизию только проверенные изменения TEST и прогнать эту точную ревизию, прежде чем переносить код в main. Проверено три конфликта/риска интеграции, исправлений в ветках 0, ветки и PR сохранены. [PR #17](https://github.com/swindler2010/StockMonitor/pull/17) · [PR #18](https://github.com/swindler2010/StockMonitor/pull/18) · [PR #21](https://github.com/swindler2010/StockMonitor/pull/21)
+
+Дополнение 09:33 CET. После состоявшегося штатного перезапуска новый TEST 0f8583613fc640fcc85e60932c0c71bf через MCP section freshness вернул AVAILABLE и новый confirmed_statistics_basis, а текущие статусы 82 акций прочитались отдельно. Исправленная версия отчёта работает. Порог и проверка исполнения прежние. Общий цикл Bridge шёл отдельно.
+
+<a id="issue16-20261123-pr-stack-dry-run"></a>
+### 23.11.2026 — пробное объединение PR #17/#18/#21 и новый замер #16
+
+**Кандидат GitHub.** Пробное трёхстороннее объединение точного `main` 2a9946d2e2dda9d928c610b713479e95d04be6b5 и последнего #21 b601ffec493c4e112e66e6af112237e760b6f2f3. Проверены предки #17 aff4862 и #18 adb3ecc. Обновление #21 после f3f5652 затронуло пять файлов CandlePilot и его проверок. В трёх документальных конфликтах сохранены правила и точка входа main, добавлены применимые правила и инструкции запуска. Точное побайтовое сравнение MASTER подтвердило, что ветка #21 сохранила весь main и дописала 256 строк. Все строки сохранены в одном реестре. 3 документальных конфликта выявлены и разрешены в пробном дереве, в этой категории осталось 0.
+
+**Приёмка.** В исходном пробном объединении воспроизведены три проблемы тестовой постановки: повторное использование состояния в тесте допуска и устаревшие ожидания, проверка 5m вместо действующей 15m для котировки, ожидание записи доказательства для отсутствующего в БД инструмента. После переноса уже установленной правки статистики #16 и коррекции тестов в пробном дереве пройдено 93 уникальных теста (9 модулей, около 40 секунд). Отдельно проверено, что транспортная отметка действующей 15m допускает перерасчёт, смена площадки отклоняется, до сохранения инструмента доказательство не пишется, после сохранения подтверждается. В целевой приёмочной выборке осталось 0 упавших тестов. Проверки качества, исполнения и риска в кандидате сохранены. Полный прогон выпускной версии не выполнялся.
+
+**Оставшаяся несовместимость.** В ветке #21 остаётся требование V5 выбрать 1H, отсутствуют модули индивидуальной V5 4H и дневного отката D1 и тест непрерывной V5. Рабочий PAPER-контур и кандидат расходятся также по ряду зависимостей CandlePilot и исполнения. Установка этой версии поверх TEST вернула бы старое поведение. Это 1 открытый блокер выпуска в проверенном объёме. Объединение с рабочим кодом V5 и приёмка именно итоговой ревизии остаются открытыми.
+
+Дерево кандидата d9ad0f7b83fa255383bcf9c1fffbcdff8d326ec8. Компактный патч «SM PR stack preview d9ad0f7b83fa.patch» в СМ-Архив/Работы по выпуску 0.17/issue16-view, SHA256 1efd90c42fa694452fb452c174ad99ab6cdd795edb1b15bcd01482c531913655. Проверено, что применение к точному #21 восстанавливает указанное дерево. GitHub, состояние TEST, SQLite и открытые позиции не изменялись. Прежняя публикация была отклонена автоматической проверкой, этот итог сохранён локально.
+
+**Свежесть к 09:47 CET.** В уникальной утренней выборке официальных сделок GETTEX по 78 акциям и 8 окнам было 512 наблюдений, из них 455 / 506 / 512 укладывались в 15 / 20 / 25 минут. Медиана возраста 7 мин 47 с. Это 62 новых наблюдения к утреннему срезу 09:21. Отдельно у LSEG зарегистрировано 57 первых получений последней закрытой 15m свечи по 53 акциям, из них 50 в пределах 15 минут, медиана 8 мин 12 с. Точное время публикации поставщика по-прежнему недоступно. Правка статистики прочиталась через Bridge и после следующего запуска TEST. Порог исполнения 900 с прежний. Замеры покрывают часть сессии.
+
+
+<a id="cp-recovery-scoped-20261123"></a>
+### 23.11.2026 — CandlePilot: четыре общие причины исправлены; восстановлено подтверждённое окно Siemens
+
+**Исходная область:** три повторно снятых исторических допуска из прежнего списка177 и отдельно163 новых незавершённых запроса у69акций. Это разные счётчики;163 — не число потерянных свечей. После штатной работы три допуска Novo Nordisk28.10,11:50/13:15 иBASF13.11,22:20–22:35 (5m,GETTEX/EUR) действуют. CP успел сам обновить их до окончательной установки правки; Work не приписывает себе их ручное восстановление.
+
+**Личный вклад Work:** исправлены4общие программные причины: ложный отказ точного TV-допуска после обновления глобального interval_evidence; ожидание пользователя при известной неполной официальной публикации; задержка такой дешёвой проверки за архивным проходом; неподдержанный случай полностью отсутствующего native5m/15m окна при точном подтверждении первичного родителя. Прямых свечных записей Work —0. Все guards source/ISIN/GETTEX/EUR/listing/DQ/policy/revisions/freshness/risk сохранены; read-only перепроверка не продлевает допуск/сроки и не выдаёт NO_TRADES.
+
+**Фактическое восстановление с помощью Work:** Siemens DE0007236101,21.10.2026,13:30–13:45Берлин. Work один раз визуально сверил TV GETTEX/EUR15m:265,35/265,50/264,90/265,50,V124 — все6полей совпали с заранее сохранённым полным первичным GETTEX. Штатный CP23.11,10:01:48CET восстановил3реальных5m свечи13:30/13:35/13:40 и1производный15m родитель13:30,added4/changed0,квитанция текущая. Повторный штатный ход10:02:57CET далRESOLVED_NATIVE/NATIVE_ROWS_CONFIRMED. Это1исправленный диапазон и3самостоятельных свечи+1родитель, не4независимые ошибки. Данные TV не импортировались.
+
+**Новый список163 на10:04:29CET:**8текущих подтверждений,155пока неподтверждённых;24изпоследних ждут конкретную неполную официальную публикацию. Сохранённые статусы:36QUEUED/100AWAITING_USER/22AWAITING_SOURCE/5RESOLVED_NATIVE; они не подменяют текущую проверку источника. Первые7подтверждений не считаются ручными исправлениями Work этого этапа. К09:53 короткий маршрут CP сам перепроверил206заданий у55акций; это не206восстановлений. Общий «все ошибки устранены» не заявляется. [Точные даты/TF/источники всех163 и оставшиеся причины](CP_CANDLE_RECOVERY_CURRENT_RU.md).
+
+**Внешние ограничения:** posttrade.20261120.08.15.mund.csv.gz обрывается наUTC08:05:51,парныйMUNC идёт до08:14:57;точное повторное получение вернуло404. Пустой/недоступный файл не доказательство отсутствия торгов. Отдельные сохранённые EXCHANGE_NOTICE_CONFLICT AbbVie15m/Micron5m/15m26.10 и SOURCE_COVERAGE_CONFLICT Micron не скрыты. AbbVie07:55:нулевая255,25совпала сTV,но это не доказательство сделки и не отмена биржевого уведомления. Новые визуальные подтверждения TV остаютсяASSISTED_ONLY; CP использует готовые доказательства и собственную очередь, автоматических прав GUI/OAuth ему не добавлено.
+
+**Проверки и установка:** публичный [1627148](https://github.com/swindler2010/StockMonitor/commit/1627148adedc3be15e83a59ed4a5af5a0ef27b6c),9адресныхPASS/3,814с,18точных публичных файлов; включая53/200, приоритет TV, будущие сроки, отказ при реальных изменениях native/source/политики/файлов/снимка, старый частично присутствующий родитель и новый полный пропуск. Не GitHub Actions/не полный аудит. Save/Close/Restart выполнены штатно;Meta4H/6месяцев сохранён. ИтоговыйTEST подтверждён read-only MCPhealth,instancef0c1c10f8b0ca9898902a8a6c09cc4a4. Один CP-раздел MCP прочитан ранее;последующее чтение подробностей вернулоPATH_NOT_FOUND/transport timeout — отсутствие снимка не выдаётся за ноль. Общая Bridge-публикация не изменялась. Selector выполнен внеTk:2,143→3,506с на текущем реестре,цель250мс не достигнута;устранённая промежуточнаяSQL-корреляция32,790с вTESTне устанавливалась.
+
+Счёт и исполнения совпали по хешам до/после. Work не создавал сделок, не менял позиции, настройки стратегии/риска, Work2,Store0.15,Performance Engine и реального брокера. Согласованная backup сохранена; собственные before/hunks иCP scoped recovery rollback.zip — в существующем архиве. Откат только собственных hunks после проверки текущего кода, без замены рабочейSQLite/параллельных модулей. Новые правила внесены в существующий опыт CP. Публикация — существующий draftPR21;main/force/merge не применялись.
+
+
+
+<a id="cp-tv-joint-20261123"></a>
+### 23.11.2026 — новые TV-сверки; общий ремонт конфликтующих независимых диагнозов CP
+
+Исходная область:163 новых запроса у 69 акций; к 10:04:29 CET подтверждено 8. На 23.11.2026 12:37:22 CET: **28 подтверждено/учтено, 135 без достаточного подтверждения**. Это диапазоны источников/TF, не физические свечи. Новые наблюдения Work помогли штатно обработать 15 запросов из 163; ещё 5 CP подтвердил самостоятельно. Личных прямых свечных записей Work0; новая общая программная причина устранена, суммарно с утренним этапом 5. Подтверждённый NO_TRADES, восстановление реальных свечей и исторический риск учитываются отдельно.
+
+Новый механизм совместно проверяет disjoint15m DIFFERENT внутри уже доказанного полного сохраняющего OHLCV разбиения GETTEX, сохраняет исходные визуальные привязки при доказанном изменении только соседа, штатно будит соседние задания и один раз повторяет только due старый конфликт. Оба порядка подтверждений проверены. Реальные изменения source/native/listing/policy/снимка, будущие сроки и противоречащие факты по-прежнему отклоняются.
+
+Код [9eed266](https://github.com/swindler2010/StockMonitor/commit/9eed26679a943c542d82cb968fd6c83f64033098),7 адресных PASS,19 точных публичных файлов, включая 53/200. СР 23.11 в 12:28:15 CET исправил окно 19.11,14:00–14:45 (added0/changed3/relocated2); диагноз 14:15 подтверждён той же совместной квитанцией, отдельно повторно не посчитан. В 12:31:37 CET CP исправил 15:00–15:15 (added0/changed3/relocated0). В 12:36:05 CET штатный следующий проход завершил 15:00 и подтвердил NO_TRADES14:45 по полному первичному окну 14:30–15:15 (added0/changed0). Все четыре связанные задания получили RESOLVED_NATIVE; три собственные квитанции и связанное подтверждение 14:15 проверены текущими. Work только сверял/передавал наблюдения и исправлял общий код; свечи писал обычный CP. Deutsche Bank 11.11,18:40–18:55 иSchneider 18.11,14:30 уже обработаны существующей штатной очередью. Новые полные даты, все 27 наблюдений и остаток 163 — в [текущем отчёте](CP_CANDLE_RECOVERY_CURRENT_RU.md#cp-tv-joint-20261123).
+
+TradingView Basic теперь ограничил intraday для Cancom/Hannover Re: барьер не обходился, подписка не оформлялась. Northern Star 20.08.2024/Michelin 22.09.2022 действительно есть в TV, но в СМ пока не восстановлены без независимых точных GETTEX/EUR данных. По Newmont 17.02.2015 отмечено отличие ценовой базы около 2,45%, причина не доказана. Полнота официального файла 20.11,08:15 UTC и прежние биржевые конфликты остаются ограничениями. read-only MCP12:35:05 CET вернул точный SCHN.GTX/GETTEX/EUR15m:19.11,14:15 flat239,85,V3;14:30 flat239,55,V0;15:00 239,00/239,20/238,95/239,15,V116;14:45 фактически отсутствует между соседями. Страница получена с новой обязательной revision на TEST7450158322e301e79611e46e801988fe. MCP12:38 подтвердил Bridge running, выбран Meta4H/6 месяцев,76 зависимостей CURRENT; общий аналитический проход 88 инструментов ещё RUNNING49/88 и не объявляется ни нулевой готовностью, ни завершённой новой приёмкой. Save/Close/Restart и сохранность PAPER по хешам проверены; стратегии/позиции/разрешения/реальный брокер не менялись. Точечный обратный patch/ZIP проверен в существующем архиве, чужие _memo и опыт сохранены. Автономная обработка готовых источников работает, новые TV-факты остаются ASSISTED_ONLY. Все свечные проблемы по всем акциям не объявлены решёнными.
+
+
+Публикация этого дополнения: [1418792](https://github.com/swindler2010/StockMonitor/commit/1418792b0de2498fbaf177d712be70a52a8e475a), [PR21](https://github.com/swindler2010/StockMonitor/pull/21), [подробный комментарий Issue5](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-7099989597). Публичные MASTER, текущий отчёт и запись опыта прочитаны обратно и точно совпали. Это завершённый программный этап; оставшиеся 135 запросов не объявлены исправленными.
+
+
+<a id="v1-weekly-daily-20261123"></a>
+### 23.11.2026 — долгосрочная V1
+
+Дневной пробой или восстановление при недельном росте, последовательный приоритет по относительной силе и подтягиваемый дневной стоп реализованы. Пройдено 156 проверок. TEST перезапущен на той же базе и текущей V5. Критерии прибыльности пока не проверены. [Правила, результаты и откат](../MCP_016_CHECKPOINT_RU.md#paper-v1-weekly-daily-deployed-20261123).
+
+<a id="paper-separate-portfolios-20261123"></a>
+### 23.11.2026 — отдельный виртуальный капитал V1–V5
+
+В TEST подтверждены пять независимых счетов по 10 000 €; старый общий журнал сохранён отдельно, 11 записей. Покупки и выходы проверены по всем пяти счетам, 190 тестов. [Приёмка и откат](../MCP_016_CHECKPOINT_RU.md#paper-separate-portfolios-20261123).
+
+
+<a id="cp-weekly-20261123"></a>
+### 23.11.2026 — недельный пересмотр GETTEX:15 фактических дневных сверок, ограничение управления
+
+Исходный реестр сроков до30.11.2026 10:00 Europe/Berlin:366 активных записей (291 уже due),21 дневная и345 внутридневных;227 завершённых первичных/RESOLVED_NATIVE не перепроверялись. Это не366 новых ошибок и не прежний список163. Work заново просмотрел15 дневных записей (Apple6,NVIDIA9) и передал через штатный observe;10 уже получили обычную проверку CP и сохранили AWAITING_SOURCE/UNCONFIRMED,5 ещё RECHECK_QUEUED на13:21:17CET. Лично исправленных свечных ошибок0, прямых свечных записей0; новых подтверждённых восстановлений CP0. Все старые результаты TV подтвердились на уровне наличия/отсутствия/нулевого объёма; независимого точного старого GETTEX/EUR всё ещё недостаточно. Только эти15 реально проверенных observation получили новый внешний срок30.11,12:58–13:18CET; все остальные сроки не продлевались.
+
+Не выполнены шесть дневных строк:Apple26.01–03.02.2015,25.05.2015,09.10.2017,23.05.2019;NVIDIA25.01.2018;SwissRe08.07.2025. 345 внутридневных кандидатов не объявлены проверенными при тарифном ограничении Basic. Средство Windows после unknown screenshotId/active request вернуло изображение «Демо» СМ вместо запрошенного окна TradingView393484; дальнейший ввод остановлен. Это ограничение средства управления, не повод ослаблять CP. Точные15 дат/исходные идентичности, сохранённые результаты и следующие сроки — [в текущем отчёте](CP_CANDLE_RECOVERY_CURRENT_RU.md#cp-weekly-20261123).
+
+Код/стратегия/риск/источники/разрешения/позиции/счёт не редактировались наблюдателем;торговых команд0. Старые PASS, пилот42 и общий аудит не повторялись;тестов кода нет, код не менялся. Совпадение полных хешей счёта с утренним этапом не заявлено:между этапами они изменились в рабочей базе, параллельные действия не исследовались. MCP13:21:Bridge running,TEST c5bf74c9f5732dacb791d7e7190d273a,общий расчёт RUNNING1/88,не готовность торговли. Доказательства и история наблюдений сохранены в существующем архиве;еженедельное продолжение остаётся полезным и не отключено. Общий DONE и исправление оставшихся351 внешних сверок не заявляются.
+
+
+Публикация недельного этапа e9778dd: [коммит](https://github.com/swindler2010/StockMonitor/commit/e9778dd871473876addca7f60f5f837135846b8e), [Issue5: фактические результаты и ограничения](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-7101059648), [PR21](https://github.com/swindler2010/StockMonitor/pull/21). Публичные MASTER и отчёт прочитаны обратно и совпали. Полная визуальная сверка не завершена; новых исправленных свечных ошибок 0.
+
+
+<a id="paper-independent-automation-20261123"></a>
+### 23.11.2026 — V работают независимо от просмотра
+
+В TEST фоновые V1, V4, V5 опубликовали новые оценки. Выбор счёта открывает журнал и не меняет режим торговли. У V2 и V3 живой расчёт упирается в отсутствие подтверждения устойчивости индикаторов, допуск к автоматическому входу отложен. [Приёмка, ограничения и откат](../MCP_016_CHECKPOINT_RU.md#paper-independent-automation-20261123).
+
+### 23.11.2026 — новостной фон V1
+
+В TEST добавлена вкладка «Новости V1». Источники и публикации, известные на момент расчёта, сохраняются рядом с решениями V1. [Приёмка, ограничения и откат](../MCP_016_CHECKPOINT_RU.md#paper-v1-news-background-20261123).
+
+
+### 23.11.2026 — отчётность компаний и макроэкономические события V1
+
+В TEST добавлены фоновые квартальные отчёты, календарь компаний, группы новостей и макропубликации. Отчёт Meta и календарь BEA проверены в интерфейсе. BLS недоступен с HTTP 403. [Приёмка, ограничения и откат](../MCP_016_CHECKPOINT_RU.md#paper-v1-company-reports-macro-20261123).
+
+
+
+### 23.11.2026 — окна и переключение графика: пять общих исправлений Work
+
+В адресном разборе найдены пять причин; Work исправил пять. Общее исходное число ошибок программы неизвестно. Свечных исправлений Work — 0; автономные действия CP этим этапом не пересчитывались и Work не приписываются.
+
+Убраны повторный SQLite-проход по всем акциям, очистка bitmap до готовности нового кадра, смена высоты карточки сигнала, повторные неизменные раскладки и лишний перезапуск прогретого CORE. Сохранены сброс старого сигнала, финальные проверки выбора/ревизий и ограниченная отмена read-only запроса. 12 адресных PASS, включая 53/200; после последнего изменения logger три затронутых PASS на финальном кандидате.
+
+Установлено в TEST: код 0a2ea08, штатный запуск 23.11 в 16:46:48 CET, instance 700a8a8728717cd5b44a0178c24d8cbf. Окна индикаторов/рисования/CP, Meta/Microsoft 1H/4H, масштаб после автообновления и размеры проверены. Живая передача CORE подтверждена: старый результат не опубликован; display 2,578 с / CORE 5,375 с в тёплом случае. Повтор с конечным logger: grace 4,531 с, display 7,328 с / CORE 10,281 с. Это не SLA. Исходный Meta/4H/6 месяцев восстановлен. MCP подтвердил совпадение настроек и отсутствие черновика; CP продолжает обычную очередь.
+
+Прежнее PARTIAL о незагруженной правке/недоступном окне снято. Остаются холодные расчёты/ожидание до 10–17 с, отдельный Agg около секунды, промежуточная нативная перерисовка Windows; ранее отмечен callback параллельных новостей 1,438 с. Полный максимум производительности не заявлен. Свечи, счёт, позиции, стратегия и торговые проверки этим этапом не менялись.
+
+[Подробные замеры, границы проверки, код и адресный откат](SM_PROGRAM_PERFORMANCE_REVIEW_RU.md#23112026--зависания-окон-и-рывки-при-переключении-графика). Публикация в draft PR21, без слияния и без приватной базы/ключей.
+
+<a id="sm-intraday-workspace-audit-20261123"></a>
+### 23.11.2026 — аудит рабочего места для внутридневного анализа
+
+Проверено чтением кода, TEST и журнала скорости. У СМ есть 11 интервалов от 5m до 1M, курсор, линейка, сохранённая разметка, индикаторы EMA/SMA/VWAP/Bollinger/RSI/MACD/ATR, приближённый профиль объёма, PNG, CandlePilot, новости и отчётность, независимые демосчета. Минутные свечи — внутренний источник, отдельного 1m графика нет. Есть пакетные теневые прогоны; интерактивного воспроизведения графика с изолированным счётом не найдено.
+
+На 17:06 CET в TEST 82 акции и 6 индексов. Сохранённые 5m и 15m из сделок GETTEX есть у 81/82 акций; отсутствие рядов у Exxon Mobil. В источнике графика LSEG/GETTEX EUR 15m есть у 80 акций, самая ранняя запись 30.07.2026. У Apple, NVIDIA, Amazon и Meta ряды 15m начинаются 30.07, 5m этого источника — 30.09. Это границы наличия записей, внутри есть пропуски; готовность каждого интервала нужно читать отдельно. Самая поздняя сделка четырёх бумаг в сохранённой ленте на момент чтения имела возраст около 22–24 минут, это не замер задержки публикации. Продолжается существующая проверка #16, без повторного назначения. В журнале последних 30 минут медиана до отображения 5,16 с (45 событий), до CORE 8,33 с (39 событий), включая работу фоновой очереди. Использован установленный этап ускорения 0a2ea08.
+
+Критично. Проверка расписания GETTEX на 04.01.2027 воспроизводимо отклоняется. Календарь нужно версионировать по официальным сессиям, с сообщением до окончания покрытия. Проверить источник следующего года, переходы CET/CEST, сокращённые сессии и закрытие агрегированной свечи. Срок действия котировок и контроль качества сохранить.
+
+Очередность работ. (1) В текущем контуре свечей показать карту доступной истории, причины отсутствия и актуальность точного GETTEX/EUR по инструментам и интервалам, продолжить штатный сбор; отдельно оценить 1m и источник истории до 30.07.2026. (2) Рабочее место с синхронными графиками 15m/1H/4H/D1, курсором, временем, переходом к дате и сохранением раскладки, поверх существующих графиков. (3) Воспроизведение закрытых свечей с пошаговым ходом, проверяемым временем доступности и отдельным симулятором; локальный CSV в пределах прав источника. (4) Скринер по сохранённым сигналам и состоянию данных, пользовательские уведомления по цене/сигналу, метки отчётов и макрособытий; котировки bid/ask только из подтверждённого источника при наличии доступа. Глубокий архив и поток реального времени зависят от доступности и условий поставщика.
+
+Аудит обнаружил один воспроизводимый риск календаря и остальные пробелы функциональности; прямо исправленных ошибок 0, открытых календарных рисков 1. Работа ограничена ревизией существующего СМ. Исходники, база, допуски, счёт и режимы не редактировались. Официальные источники: [календарь GETTEX](https://www.gettex.de/handel/handelskalender), [задержанные данные и условия](https://www.gettex.de/en/trading/delayed-data/), [раскладки TradingView](https://www.tradingview.com/support/solutions/43000692404-layouts-charts-drawings-indicators-and-their-interaction/) и [Bar Replay](https://www.tradingview.com/support/solutions/43000474024-how-do-i-turn-bar-replay-on/).
+
+## 23.11.2026 — Work1: ещё 4 причины задержек UI, установленный этап
+
+В ограниченном этапе найдено4 общих источника лишней CPU-работы, Work исправил4: копирование attrs в OHLCV-проверке/уровнях и тяжёлые read-only планировщик CP/порядок списка в GUI-интерпретаторе. Последние два теперь используют существующий compute_feed; writer/политики/финальные проверки token/identity не менялись. Свечных записей Work0, ремонты CP отдельно не пересчитывались; общего исходного числа ошибок программы нет.
+
+16 адресных тестов публичного пакета PASS, включая53/200, readonly, изменённые входы и отказ stale/expired. Установлено штатными перезапусками TEST: Agg10замеров среднее0,381с/максимум0,500с вместо прежних2–4с-всплесков; окно индикаторов callback0,109с, содержимое проверено. MCP после последующей смены instance подтвердил исходные настройки saved=true/unsaved=false; выбор Microsoft1H и возврат Meta4H выполнены. CP/Bridge продолжают работать; свечи, стратегии/позиции/счёт не менялись.
+
+**Общая скорость PARTIAL:** cold display9,891–12,718с, CORE13,860–15,437с; остаются подготовка/очередь, nativepaint и прежний news callback. Повтор всех окон не объявлен: Windows helper затем отказал foreground pid/active request. Код[f909698](https://github.com/swindler2010/StockMonitor/commit/f9096981f1d0d40651d66f178f3370039d6c23f7), draft[PR21](https://github.com/swindler2010/StockMonitor/pull/21), без merge. [Подробные измерения/границы](SM_PROGRAM_PERFORMANCE_REVIEW_RU.md#23112026--продолжение-фоновый-cpu-и-копирование-метаданных). Адресный rollbackZIP/patch в существующем СМ-Архив проверен CRC/SHA/reversecheck; только собственные блоки, без замены SQLite и чужих правок.
+
+Публикация этого этапа подтверждена read-back8файлов и отчёта/MASTER: код f909698, docs1d149e4, #5 comment7107469687, PR21 comment7107471404. Draft без merge. CRC/хеши/адресный reversecheck PASS. Временные дубли originals объединены в SM remaining latency rollback.zip, источники и данные не удалялись.
+
+### 23.11.2026 — рабочее место для внутридневного анализа в TEST
+
+«Вид → Рабочее место» включает четыре синхронных графика, карту покрытия и скринер, отдельное воспроизведение, уведомления и локальный CSV. Проверены Meta и скринер 82/82. Календарь действует по подтверждённый 2026 год; внешний архив и поток реального времени ожидают доступа. [Приёмка и откат](../MCP_016_CHECKPOINT_RU.md#intraday-workspace-installed-20261123).
+
+## 23.11.2026 — Work1: резерв chart/trading, один дефект очереди исправлен
+
+Воспроизведён1 новый общий дефект: trading занимал последний chart-резерв при3 фоновых задачах. Work исправил1, в ограниченном сценарии осталось0; общее число оставшихся ошибок не измерялось, предыдущие4 исправления не пересчитываются. Пул Dispatcher4→5, отдельные места chart/trading, прежний максимум3 фоновых заданий; под нагрузкой2, один writer и все guards сохранены. Свечных записей Work0; ремонты CP отдельно не аудированы.
+
+16 адресных тестов точного публичного пакета PASS, включая53+200, stale-result/input rejection, pressure, persistence/cancel и single writer. Штатно установлен в TEST6f4a8aa9a6391496536e01edd3d6bc61; Windows NVIDIA1H↔4H: display2,907–3,343с (mean3,152), CORE4,969–5,453с, Agg0,375–0,531с; это не SLA всего холодного архива. Индикаторы/обычный и боковой объём/уровни видны, окно настроек проверено без изменения параметров. Исходный NVIDIA1H/неделя восстановлен; MCP running/saved=true/unsaved=false. CP продолжает работать, общий failed6 этим этапом не разобран.
+
+Остаются холодная подготовка данных, прежние startup/native/news exceptions и ограничение ресурсов; общего DONE скорости нет. Код[ed83a8a](https://github.com/swindler2010/StockMonitor/commit/ed83a8a0c8f23649a1379b3425c9f2598bf78d7b), draft[PR21](https://github.com/swindler2010/StockMonitor/pull/21), без merge. [Доказательства/границы/откат](SM_PROGRAM_PERFORMANCE_REVIEW_RU.md#23112026--отдельные-места-графика-и-торговли-в-dispatcher). Откат2оригиналов/newtest и reversecheck проверен в существующем СМ-Архив. Данные/позиции/счёт/стратегии не менялись.
+
+Публикация нового Dispatcher подтверждена чтением3исходных/тестовых файлов и отчёта/MASTER: code ed83a8a0c8f23649a1379b3425c9f2598bf78d7b; docs d8048d043ce0be530ce9711ed07bf7707bbace8d; Issue5 comment7107969455, PR21 comment7107972029. Draft без merge. Адресные CRC/SHA/reversecheck PASS, чужие правки и базы не заменялись.
+
+## 23.11.2026 — Issue #23, свежесть GETTEX и V5
+
+Исправления очереди, закрытых свечей и наблюдаемости включены в TEST. Bridge подтвердил пересчёт и публикацию пяти ревизий Meta, Amazon рассчитывает 1H и 4H. Задание остаётся открытым до подтверждения стабильного нативного потока. [Результаты, часовой прогон и откат](../MCP_016_CHECKPOINT_RU.md#issue23-v5-gettex-live).
+
+## 23.11.2026 — Work1: ускорение холодной истории без смены DQ
+
+В ограниченном этапе было3 лишние операции, Work устранил3: поштучная геометрия крупных NO_TRADES-наборов, повторное декодирование подтверждённого заголовка в одном read-only WAL-виде, сразу отбрасываемый deepcopy attrs при привязке GETTEX-first. В данном объёме осталось0; общее число оставшихся ошибок не измерялось, прежние4+1 исправления не пересчитаны. Свечных записей Work0, автономные ремонты CP отдельно не пересчитывались.
+
+26 адресных тестов публичного пакета PASS, включая53+200 дифференциальных случаев, полный DQ-отчёт, реальные дыры/trades/zero/INVALID/неполную публикацию, DST/clock/identity, согласованное чтение/ревизии и невозможность заимствовать соседний допуск. Scalar-fallback, финальные guards и writer-путь сохранены. CP использует общий код автоматически.
+
+Две серии на отдельных неизменных Meta4H WAL-видах: средние7,154→6,232с и6,934→6,664с, совокупно~8,5%; разброс большой, это не универсальная гарантия. Чтения подтверждения103→5, сами свечи331/DQ/provenance/уровни/зависимости попарно совпали внутри каждой серии. В TEST75098bb916b3cfd815f1f318bac13d48: cold Meta4H display6,360с/CORE9,672с, последующие display3,109–3,312с; исходный NVIDIA1H/неделя восстановлен, display2,984с/CORE5,422с. Визуально индикаторы/боковой объём/уровни, INVALID не скрыт; MCP running/saved=true/unsaved=false. Очередь продолжает работу; торговли вручную/смены истории, стратегии, риска, счёта и позиций нет.
+
+Остаются необходимые вычисления/доказательства, фон и прежние native/startup/news exceptions; общего DONE скорости нет. Код[66e3a2d](https://github.com/swindler2010/StockMonitor/commit/66e3a2d0a8cb57894a8228143ec1004058580544), draft[PR21](https://github.com/swindler2010/StockMonitor/pull/21), без merge. [Измерения, границы и точечный откат](SM_PROGRAM_PERFORMANCE_REVIEW_RU.md#23112026--холодная-история-пакетная-проверка-доказательств). CRC/хеши/reversecheck3оригиналов/newtest в существующем СМ-Архив PASS; чужие правки и базы не заменять.
+
+Публикация этапа cold-proof подтверждена read-back4исходных/тестовых файлов и отчёта/MASTER: code 66e3a2d0a8cb57894a8228143ec1004058580544; docs 27412aa44900a5308d27054a4a8dc714f8bd4dfe; Issue5 comment7108790623, PR21 comment7108792272. Draft без merge, адресный CRC/SHA/reversecheck PASS. Временный JSON публичных исходников удалён после проверки полного совпадения с сохранённым ZIP; базы и чужие изменения не заменялись.
+
+## 23.11.2026 — Work1: продолжение выбранного дизайна, новости и поиск
+
+В исходном ограниченном перечне6 доработок, Work сделал6: превью источника, постоянные отметки/закладки, фактические OHLCV/цвет сводки, сортировка, избранное поиска, защита позднего логотипа. Дополнительно Work устранил2 выявленных в приёмке дефекта — перестройку карточек при отметке и ожидание ручного Search за misc/логотипами. В этом этапе0 незакрытых программных пунктов; общий остаток дизайна не измерялся, все7 макетов DONE не объявляются. Work свечных записей0, CP-ремонты не пересчитывались.
+
+21 различный адресный сценарий PASS (20, затем4 по изменённому поиску, затем1 по hover; повторы не суммировать),24 локализационных проверки PASS. Проверялся публичный кандидат с локальными неизменными зависимостями, не полный CI. Windows: реальные карточки NVIDIA/русский машинный перевод, правая сводка1H, закладка и фильтр1/8 после штатного Restart; живые5 результатов nv, сортировка и избранное без добавления/допуска. Обе временные UI-коллекции возвращены к0. Превью источника в этой сохранённой ленте отсутствуют — честный fallback, live-фото Windows не подтверждено.
+
+История, DQ/CORE, CP-очередь, PAPER/стратегии/счёт/позиции и настройки индикаторов не менялись этим этапом. Только2 UI-settings, ограниченный preview-cache, существующий Dispatcher/read-приоритет, без новых потоков. Сохраняется NVIDIA1H/неделя. Остались ранее записанные отличия других экранов, массовые действия/группировка/экспорт рисования и поля макета без реального источника.
+
+Код[5a85ac7b](https://github.com/swindler2010/StockMonitor/commit/5a85ac7beb7416284e26afbedea80f39cfac8092); [проверка, границы и адресный откат](DESIGN_SCREEN_MATRIX_AND_PROJECTIONS_RU.md#news-search-20261123), draft[PR21](https://github.com/swindler2010/StockMonitor/pull/21), без merge. Только собственные hunks, чужие локальные правки сохранены; CRC/SHA/reverse-check8 оригиналов PASS, новые4 файла описаны в rollback.json. Базы/счёт/ключи не публикуются.
+
+## 23.11.2026 — Work1: фоновая лента всех акций и недельное хранение
+
+2 запроса владельца реализованы. В узком объёме5 препятствий (календарное голодание RSS, misc-ожидание, замена/лимиты30–100, отсутствие TTL-очистки связанных записей, перевод по открытию); Work исправил5/5, остаток0. Общее число ошибок СМ неизвестно, свечных исправлений0. Существующий один NewsRuntime/Dispatcher, без новых потоков или массового параллельного запроса всех акций; график/торговля/явные чтения сохраняют приоритет.
+
+Все82 акции+рынок загружаются/переводятся без открытия графика. Новости накапливаются7дней от публикации, при отсутствии даты — от зафиксированного получения. Пустая/повторная выдача не продлевает срок. Примерно раз в минуту в доступном фоне очищаются истёкшие статьи, переводы и отметки; после закрытого СМ — при следующем запуске. Физический архив отката отдельно сохраняется. У источников остаются rate limits/Retry-After,30мин — порог необходимости обновления, не гарантия длительности полного обхода. Перевод3 статьи за ход с явным fallback и backoff, без подмены языка.
+
+41 различный локальный адресный сценарий PASS, из них25 отдельно на публичном кандидате (один дополнительный локальный BLS-сценарий не публиковался); новые53/200 обход/очередь, exact7d, накопление, guards, backoff и сохранность соседних settings подтверждены. Не полный CI/аудит свечей.
+
+TEST:83/83 недельных политик;1422→931 после автоматической очистки до новых загрузок (491 истёкшая публикация, это не ручной ремонт Work и не свечи);0 старых по дате,0 потерявших статью переводов. В19:30:31/19:32:36UTC штатно обновились DÜRR/ASML без их открытия Work; затем933 статьи. Чтение новой metadata83 лент11,35–12,89мс. Windows-подпись7дней/карточки/сохранение проверены после штатного Save/Restart. Сохранён текущий Amazon4H/6месяцев и прежние несохранённые настройки владельца; при его активном вводе оставлено окно новостей, дальнейших кликов нет. Bridge running instance3daad08b122f825d71d99e88c5ecf43f. Торговая логика/разрешения/риск/счёт/позиции/история не менялись, сделок нет.
+
+Код[2273df2f](https://github.com/swindler2010/StockMonitor/commit/2273df2f362b1dd254316a9d9d4627683eef340d); [правила, результаты и точечный откат](NEWS_DRAWING_DESIGN_RU.md#background-week-20261123), draft[PR21](https://github.com/swindler2010/StockMonitor/pull/21), без merge. Только собственные изменения, локальный опциональный company-calendar адаптер сохранён и не опубликован этим этапом; публикация работает без него. CRC scoped-backup/10 оригиналов/экспорта новостных ключей, SHA и reverse-check PASS;2 новых файла. Не восстанавливать целую SQLite/чужие модули. Приватный backup и рабочие статьи/база/ключи не публикуются. Ограничения источников/перевода не скрыты, полного DONE всех прежних задач дизайна нет.
+
+## 23.11.2026 — Work1: вкладки главного экрана
+
+Исходно5 неверных переходов; Work исправил5/5: «Обзор», «Анализ», «Финансы» больше не вызывают общую карточку, «Отчёты»/«События» — новости. Дополнительно исправлены3 связанные причины (4 непереведённых заголовка, смешение дат кешей, ожидание короткого чтения за фоном). Всего8 описанных пунктов исправлены Work,0 осталось в этом объёме; нижние дубликаты отдельно не считать. Общее число ошибок СМ неизвестно, свечных записей Work0, CP-ремонты не пересчитывались.
+
+Семь разделов внутри главного окна, отдельное содержимое/активная вкладка, сохранённый canvas/viewport/рисунки. CORE переиспользуется с точным capture/ревизиями/файлами и финальной проверкой; нет актуального результата — честное ожидание. Вспомогательные данные с собственными источниками/датами/валютами; отсутствующие не выдумываются. Существующий Dispatcher/chart-резервация, без новых работников/смены writer/торговых правил.
+
+19 различных адресных сценариев PASS:16 на закреплённом публичном кандидате, после изменения резервации4 затронутых PASS (новый53/200), два ранее затронутых TF/fullscreen/viewport PASS; повторы не суммируются.50 проверок переводов de/en PASS. Это не полный CI/аудит программы. Windows после штатного Save/Close/Restart:7 вкладок, нижние кнопки, реальные финансы/отчёты/события AIRBUS/Amazon,8 новостей, принятый4H WAIT с331 закрытой свечой/причинами/показателями и ожидание пересчёта. Вернули AIRBUS/4H/6месяцев/«График», шкала/EMA/объём/уровни сохранены. Bridge running972a2d2638b8144c618555e3e16d8173; MCP независимо подтвердил текущие ISIN/TF/период. Ручных сделок/изменения свечей, допуска, риска, счёта или позиций нет.
+
+Ограничения: отдельный overview-cache AIRBUS пуст; финансовая таблица/отчёты доступны отдельно. Вспомогательные refresh читают кеш, загрузка полной отчётности — в прежнем подробном окне; перевод источника может ожидаться и явно показан оригинал. Уже запущенный расчёт/ресурсы могут задерживать показ; общего SLA250мс и DONE всего дизайна нет.
+
+Код [25e827c4](https://github.com/swindler2010/StockMonitor/commit/25e827c42119034d834edf073e5e052bb9faa224), draft[PR21](https://github.com/swindler2010/StockMonitor/pull/21), без merge. [Подробная проверка и границы](DESIGN_SCREEN_MATRIX_AND_PROJECTIONS_RU.md#asset-tabs-20261123). Адресный before.zip/own.patch/reverse.patch/rollback.json в существующем СМ-Архив: CRC/хеши/обратное восстановление3 оригиналов и хеши2 новых файлов PASS. Только свои изменения, чужие категории/диагностика сохранены; приватные базы/новости/счёт/ключи не публикуются.
+
+Публикация вкладок подтверждена: code25e827c4, docs e6869ec1,7 файлов read-backPASS, Issue5/7113479901 и PR21/7113478163 — текст прочитан обратно. Квитанция и CRC/SHA/адресный reverse-check в существующем СМ-Архив. Draft без merge.
+
+## 23.11.2026 — Work1: краткое оформление всех семи разделов
+
+4 запрошенных улучшения отображения выполнены Work4/4: суммы/единицы, выравнивание, служебные строки, даты. Найденные при приёмке2 недочёта геометрии (7 строк обзора и исходное число под таблицей) исправлены Work2/2. Остаток0 в этом объёме; исходное/остаточное число ошибок всей программы неизвестно, свечных записей Work0, CP-ремонты не пересчитывались.
+
+Сокращения тыс/млн/млрд/трлн по выбранному ru/de/en; цена/EPS/P/E/ratio и валюты не смешиваются. Исходные числа в подсказке/по выбору финансовой строки, подробные окна сохранены. Свои источники/даты, STALE→Устарело, ISIN не проверен виден. Berlin/CET/CEST только при известной временной базе, внешнему naive timestamp пояс не додумывается. Записи анализа/отчётов выровнены, события/новости/шапка графика компактнее; текст причин/новостей не заменяется выдуманным резюме.
+
+11 различных адресных сценариев PASS (9 публичного кандидата, затем2 после изменения геометрии),18 переводных подписей PASS. Windows после Save/Close/Restart:7 разделов,7 чисел обзора без прокрутки, точное значение tooltip/финансовой строки, отчёты/события/принятый4H WAIT/11 новостей, компактный объём и даты; Amazon/4H/6месяцев сохранены, оставлен Обзор. Bridge running64e629a190126f197841db83f5cec4ae; MCP независимо подтвердил выборку. Торговая логика/счёт/позиции/история не менялись, ручных сделок нет. Это оформление, не общий аудит или SLA250мс.
+
+Код[e45fb0d1](https://github.com/swindler2010/StockMonitor/commit/e45fb0d1d4a0c8fc61bc1cea9bd14df2d48476ac), draft[PR21](https://github.com/swindler2010/StockMonitor/pull/21). [Подробности и адресный откат](DESIGN_SCREEN_MATRIX_AND_PROJECTIONS_RU.md#compact-figures-20261123): before.zip/own.patch/reverse.patch/rollback.json в существующем СМ-Архив, CRC/SHA/reverse-check5 оригиналов и хеш нового теста PASS. Только свои изменения; базы/ключи/счёт не публикуются.
+
+Публикация компактных записей подтверждена:codee45fb0d1,docs0ec196c0,8 файлов read-backPASS, Issue5/7114509333 и PR21/7114511184 — текст совпал после чтения. CRC/SHA/адресный reverse-check и квитанция в существующем СМ-Архив.
+
+## 23.11.2026 — Work1: диагностика полного красного INVALID
+
+1 недостаток представления выявлен,0 исправлено,1 остаётся:показывать причину/TF историческогоDQ отдельно от анализа/исполнения. bind_chart рисует100 для любого известного статуса, INVALID — красный; это не процент повреждения.3 адресных4H:MCP Amazon331/331 и17 неполных агрегатов;NVIDIA331/331 и2(25.09 19:30,26.10 07:30);Apple21 неполный+17 неподтверждённых+coverage conflict, категории перекрываются. Apple sourcegettex, NV/Amazongettex_chart, GETTEX/EUR; сравнение поставщиков не заявлено. Во всех3 analysis_ready=true/GETTEX-first audit-only. PAPER/котировка/риск здесь не проверялись,read-only execution_permission=false не равен фактическому отказу. Полного аудита/исправления свечей не было, глобальные числа неизвестны,Work writes0. Код/данные/счёт/очередь не менялись. [Факты и ограничения](https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-7114681181), детали вcheckpoint22:36CET.
+
+## 23.11.2026 — Work1: исправлен общий виджет DQ/анализа
+
+1 ранее установленный UI-недостаток исправлен Work1/1, остаток0 в этом механизме. Убрана полоса-константа100; история CP сTF/исходнымDQ/причинами отделена от принятого анализа. ОжиданиеCORE не стирает DQ; новая акция/TF/период сбрасывает старую область, пустой/чужой ряд не сохраняет прежнюю готовность.ⓘ показывает source/identity/время/исходные причины и даты, read-only и bounded. Все акции/11 TF используют общий код. Реальные INVALID/ошибки не скрыты, новой торговой готовности/процента этот виджет не выдаёт.
+
+10 адресных сценариев публичного кандидата PASS,56 переводных подписей PASS; kernel-проверка подтвердила существующее различение доказанного отсутствия ребёнка и неизвестного пропуска, изменения агрегатора не потребовалось. Не полный CI/аудит всех свечей. Windows Save/Close/Restart:Apple4H21 неполный/17 неподтверждённых/coverage conflict и отдельно доступныйWAIT; подробности gettex/GETTEX/EUR сдатами;1H очистка затем25/75 и свойWAIT; вернулиApple4H/6месяцев/График. MCP подтвердилвыборку, Bridge runningbaceae54d6a28128cef873553f4363c3. История/CORE/CP/источники/риск/счёт/позиции не менялись, ручных сделок0.
+
+Данные не объявлять восстановленными:Work candle writes0; глобальные начальный/остаточный счётчики неизвестны, CP-ремонты не пересчитывались. Прежние NVIDIA4H2(25.09 19:30,26.10 07:30)/Amazon4H17(07.08–17.11.2026) остаются на штатной проверке CP, исходные даты/источники различаются; текущие Apple-предупреждения сохранены. Только достоверные данные/доказательства могут снять их. Пустой источник и отображение процента не являются подтверждением. Гарантии отсутствия любых будущих ошибок нет.
+
+Код[28ecbe71](https://github.com/swindler2010/StockMonitor/commit/28ecbe718cee82ec406dfbc5903752fd9eb09103), draft[PR21](https://github.com/swindler2010/StockMonitor/pull/21). [Проверка и адресный откат](DESIGN_SCREEN_MATRIX_AND_PROJECTIONS_RU.md#quality-panel-20261123):2 исходника CRC/SHA/reverse-check и2 новых файла с хешами в существующем СМ-Архив, только свои изменения. Базы/ключи/счёт не публикуются.
+
+Публикация панелиDQ подтверждена:code28ecbe71,docs c973461b,6 файлов read-backPASS,Issue5/7115199535 иPR21/7115201098 —текст совпал при чтении. Квитанция и адресный CRC/SHA/reverse-check в существующем СМ-Архив.
+
+## 24.11.2026 — Work1: четыре оставшихся блока дизайна
+
+Реализованы адаптивные размеры/оформление окон и контекстные действия списка; множественный выбор/группировка/массовые операции/JSON-экспорт разметки; справочный премаркет существующей карточки с identity/currency/time и архивной отметкой; шкала/фильтр словарной тональности исходных заголовков. Переводы ru/de/en. Undo/redo, защита закреплённых групп и финальные проверки контекста сохранены. Торговые/свечные механизмы не менялись.
+
+Исходный план4 блока, общий исходный счётчик программных ошибок неизвестен. При приёмке новой версии Work лично устранил2 UI-недочёта (подписи фильтров и активная вкладка рисования), остаток по ним0. Work candle writes0; CP repairs не пересчитывались. 50 адресных PASS, после уточнения14 PASS публичного кандидата; всего51 различный сценарий, плюс60 de/en проверок. Windows: ASML4H/неделя после штатного сохранения/запуска; список/контекстное меню, поиск, индикаторы, рисование/таблица/экспорт, русские новости/сводка/шкала. Пользовательские рисунки/сделки для теста не создавались.
+
+Ограничения: в проверенной карточке ASML нет premaket-полей — live-премаркет не подтверждён; процент влияния новости на цену отсутствует у источника; тональность — явно подписанная словарная эвристика без исследования точности, не торговый сигнал. Попиксельный паритет всех изображений и SLA всех окон не заявляются. Два образца рисования обслуживает один каталог. MCP health дал транспортный timeout, независимая торговая готовность в этом этапе не проверялась.
+
+Код[86f0e44c](https://github.com/swindler2010/StockMonitor/commit/86f0e44c31e32350251fba30a3ec79dbcdb24d1b), [bfa7ceff](https://github.com/swindler2010/StockMonitor/commit/bfa7ceffd9952c9294d6987a978d1148be108cc1), draft[PR21](https://github.com/swindler2010/StockMonitor/pull/21), без merge. [Доказательства/ограничения/адресный откат](DESIGN_SCREEN_MATRIX_AND_PROJECTIONS_RU.md#completion-20261124). Только свои hunks; архив исходных11 файлов CRC/SHA, кандидат/обратный патч проверены, приватные базы и счёт не публикуются.
+
+Публикация дизайна 24.11 подтверждена read-back: code86f0e44c/bfa7ceff, docs71e8e396;13 исходников/тестов и2 документа совпали, Issue5/7128822015 и PR21/7128824171 — текст совпал. Обратный патч git apply --check PASS. Материалы упакованы в существующем СМ-Архив/SM remaining design materials.zip с CRC/SHA-проверкой перед удалением только собственных временных дубликатов; квитанция SM remaining design publication.json. Финальный Windows запуск сохраняет ASML4H/неделя; активный раздел «Объекты» и JSON-экспорт видны.
+
+<a id="final-design-20261124"></a>
+
+## 24.11.2026 — Work1: оставшиеся три блока дизайна завершены
+
+В Windows TEST реализованы и проверены 3/3 согласованных блока: визуальный проход по семи изображениям/шести окнам, автоматический премаркет и контекстная тональность новостей. Общий исходный счётчик ошибок программы неизвестен; в адресной приёмке найдены 2 технических дефекта (белая вспышка окон, повторное ожидание уже полученной котировки), Work исправил 2/2, остаток этого набора 0. Work candle writes0, ручных сделок0; CP repairs не пересчитывались.
+
+Премаркет выбранной акции работает через прежний Dispatcher, с проверкой TLS, источника, символа/валюты/площадки, pre-сессии, возраста, поколения и cooldown; отдельный информационный ряд, без подмены GETTEX/исполнения. Apple AAPL/NMS/USD автоматически обновлялся 24.11 в12:04,12:11,12:15–12:16 CET и после штатного перезапуска. ASME.DE: NOT_PROVIDED, без подстановки другой площадки.
+
+Тональность: на фиксированной отложенной части FinancialPhraseBank 56/58 верно (96,55% среди выданных оценок), покрытие58/459=12,64%,401 без оценки,2 ошибки классификации остаются. Это не точность всего потока и не прогноз цены; ru/de имеют15 адресных смысловых случаев без независимой оценки рынка. Проверены43 различных сценария (29чистых+14GUI), повторные5GUI не суммируются,28de/en сообщений; синтаксис/rollback/15файлов read-back PASS. В новостях фильтр1/10 и возврат«Все»; исходный ASML4H/неделя восстановлен и сохранён.
+
+Итоговый код[0663b0f2](https://github.com/swindler2010/StockMonitor/commit/0663b0f24a022aa1cef9903042ff29e0095eb1ab), [draft PR21](https://github.com/swindler2010/StockMonitor/pull/21), без merge. [Полный отчёт, таблица окон, источники, ограничения и откат](DESIGN_SCREEN_MATRIX_AND_PROJECTIONS_RU.md#final-design-20261124). Полный аудит свечей/торговой готовности не выполнялся, реальные DQ не скрывались, счёт/CORE/стратегии/история не изменялись.
+
+Публикация финального дизайна подтверждена read-back:15исходников/тестов code0663b0f2,2документа docs cf4798ab,Issue5/7130098571 и PR21/7130102319; MASTER2517341символов, прежняя удалённая история сохранена. ASML4H/неделя сохранён и проверен адресным read-only SELECT selected.8временных материалов упакованы в SM design final materials.zip,CRC/SHA/byte-roundtrip PASS перед удалением исходных дубликатов; источник/rollback/benchmark/TESTreceipt сохранены. Квитанция СМ-Архив/SM design final publication.json. Этап завершён,не merge.
+
+
+<a id="paper-v2-runtime-issue24-20261124"></a>
+
+## 24.11.2026 — Issue #24, новая V2 30m в штатном PAPER
+
+**Положительные исследования — да на ранее проверенной истории; новые прибыли не подтверждены.** Использована комбинация «Ложный пробой вниз с персональным прогнозом V2», 30.07–20.11.2026: +199,37 € после €2/сторону и полного спреда20б.п.,16сделок,9/7 дней,просадка0,846%; не доказана устойчивость и цель€500/месяц не выполнена. Новый поиск параметров и повтор старых исследований не проводились. Подключён замороженный `v2_frozen_forward_watch_1` (не Early Entry), неделя23.11, обучение до20.11, SHA b8a24119c66b9188ada6a70007522539398e765c691253c49db8f93d415ec2f2. Общий существующий PAPER/CORE, независимая V2€10000, один риск0,5%/позиция, до10шт.,45%средств, задержка30мин, step30/lock75, стоп/цель/безубыток/трейлинг, ежедневный замок после плюса. V5, прочие позиции и история сохранены.
+
+В ограниченном участке Work выявил6 и исправил6 в коде причин: лишний полный CORE при непригодной цене; NULLобъём вспомогательной бумаги; выбор устаревшего chart-архива вместо уже загруженной официальной GETTEX-цены; задержка свежего окна/лучшего кандидата за общим обходом; неверная подпись риска/паузы V2; зависимость номера заявки от старого времени CORE вместо собственного закрытого сигнала V2. Последняя правка времени заявки ещё ожидает штатной загрузки в TEST после остановок Windows из-за параллельного ввода; issue24 остаётся открытой. Нерешённых подтверждённых дефектов в проверенном коде этого перечня0; исходное общее число свечных/программных ошибок неизвестно, полного аудита не было. Прямых правок свечей0, ручных рабочих сделок0; автономный ремонтCP не пересчитывался и не приписывался Work. Происхождение официальной цены явно в execution_identity; история/позиционная identity не переименовываются. Подсказка очереди не заменяет CORE, свежесть900с, сессию, ревизии, риск и окончательную проверку строки.
+
+88различных сценариев PASS (23новыхV2+65общегоисполнения/защиты/независимыхсчетов); публикационный кандидат172файла без неявной подстановки локальных Python-модулей. Настоящие функции BUY/SELL/стоп/цель/комиссии/идемпотентность проверены на изолированной SQLite в памяти. Полный read-only CORE Apple30m READY, официальная цена без блокировки, WAIT следующего30mокна;23,099с. Отказы0,031–0,063с, coldкорзина5,315с/warm0,196с; приоритет69кандидатов0,038с. Это не SLAвсейпрограммы. Публикация38файлов сверена точно с TEST. [Код91fa1a8c](https://github.com/swindler2010/StockMonitor/commit/91fa1a8c193707f2b8a2b58cdb7ccd7e8ad48ada), [draftPR25](https://github.com/swindler2010/StockMonitor/pull/25), безmerge.
+
+Активация15:14:35CET; полноценный обычный сетевой запуск подтверждён после15:30, поэтому срок открытия не выполнен. На финальном instance27c3b339d2328da6d040285e5927f67a штатная очередь24.11 в16:50:47CET: Nordex30m WAIT V2_WAIT_NEXT_30M_EXECUTION_SLOT, закрытая цена16:45CET принята,0,078с; это настоящий результат очереди, не вручную поставленная сделка. Дальнейший снимок и ограничения — в [отчётеIssue24](https://github.com/swindler2010/StockMonitor/blob/work1/v2-30m-issue24/docs/PAPER_V2_30M_ISSUE24_RU.md). Естественного полного цикла рабочего V2 пока нет, недельная модель истекает без автоматического переобучения, свежесть отдельных цен остаётся обязательной. Новые бумаги без листинга/индивидуального опыта ждут штатной подготовки. Ускорение не является безусловной готовностью всех акций.
+
+Откат: СМ-Архив/PAPER issue24 rollback.json, before.zip, settings before.json, forward.patch, candidate.zip, E2E.json. CRC/байтовый roundtrip и reverse-check PASS. При открытой V2 не удалять новое сопровождение до выхода, не заменять БД.10собственных временных материалов упакованы в materials.zip, CRC/SHA/byte-roundtrip проверены перед удалением точных дубликатов. CP/Store0.15/Work2/PerformanceEnginePAUSED не менялись.
+
+
+
+### 24.11.2026 21:12 CET — итог применения Issue24
+
+Ожидание перезапуска снято по ответу владельца. Код91fa1a8c применён, instance f79f6c9f231e41bd020b856018362455, Bridge running. Обычная очередь после перезапуска: Apple30m21:10:43 WAIT V2_NO_COMPLETE_SIGNAL_CANDLE; Meta30m21:11:08 WAIT V2_PRICE_OUTSIDE_DELAYED_ENTRY; обе закрытые цены21:00CET пригодны, quote_blocker=null, быстрый отбор не выдается за CORE READY.88PASS/23новых+65общих сценариев. Внедрение принято; code/root strategy clock остаются раздельными.
+
+За время ожидания штатная V2 сама исполнила Micron BUY4шт.19:36:39CET → SELL4шт.20:46:45CET, trend_room/lock75, выход V2_TIME_EXIT,75мин между закрытыми ценами. Входная квитанция со стопом и целью,€2/сторону и20б.п., фактический цикл после издержек убыточен; частные суммы/полный журнал только локально. V5за тот же15:30–21:08интервал0исполнений, правила не изменялись. Это не доказательство превосходства. Последняя правка ID проверена отдельно E2E и применена после естественного цикла, нового BUY ради проверки не создавали. После restart две квитанции совпали по SHA,2уникальных ID, открытых V2позиций0, дублей0. Изолированный E2E покрывает стоп/цель/трейлинг; на рынке в этом цикле сработал только временной выход. Цикл восстановлен из штатного журнала, не объявляется непрерывным ручным наблюдением Work.
+
+В ограниченном перечне найдено/исправлено Work6/6, нерешённых подтверждённых дефектов этого перечня0. Исходный глобальный счётчик неизвестен; свечи вручную0, рабочие ручные сделки0, CPремонт отдельно/не пересчитывался. Срок15:30не выполнен, недельная модель не переобучается автоматически, новый долгосрочный P&Lне определён, PR25draft безmerge/без разрешения конфликтов базовогоPR21. Подробности и адресный откат — в отчётеIssue24 и СМ-Архив/PAPER issue24 rollback.json. Завершение относится к внедрению текущего PAPER-эксперимента, не к обещанию прибыли или бессрочному допуску всех акций.
+
+Публикация Issue24 подтверждена точным read-back:38исходников, финальные3после правки часов,2документа ветки и MASTERmain; Issue24/7143306724 и Issue5/7143308913. Код91fa1a8c, docs794f5d8c, MASTERmain b1fe6020. Issue24closed; PR25draft безmerge. Квитанция СМ-Архив/PAPER issue24 publication.json, адресный откат/история натурального цикла сохранены.
+
+
+<a id="v2-calendar-expiry-correction-20261124"></a>
+
 ## 24.11.2026 21:37 CET — исправление не заданного владельцем недельного срока
 
 Владелец не ограничивал V2 неделей. Недельная остановка и прежнее закрытие #24 с таким ограничением были ошибкой Work. Утверждения выше о необходимости обновить модель к30ноября отменены этой записью. Научный недельный протокол не объявляется распоряжением владельца о сроке работы программы.
@@ -27282,3 +29152,135 @@ Windows: штатные Save/Close/Restart21:25 и21:40, Meta4H/6месяцев 
 
 Код b1dbd9d9; [PR #28](https://github.com/swindler2010/StockMonitor/pull/28), без слияния. [Полный отчёт](https://github.com/swindler2010/StockMonitor/blob/work1/design-four-polish/docs/DESIGN_SCREEN_MATRIX_AND_PROJECTIONS_RU.md#design-four-polish-20261124). Адресный откат и CRC/SHA-подтверждения — в существующем СМ-Архив, набор SM four design. Рыночные ожидания и исходные DQ-коды не подменялись визуальным READY.
 
+
+### 25.11.2026 — Work1: устранена пауза отрисовки портфеля
+
+Воспроизведена 1 причина → Work исправил 1 → остаток 0 в этом объёме; полного аудита иных задержек нет. Причина: тысячи повторов полупрозрачного центра 14px у больших округлых карточек. Отдельное оформление портфеля 512×128 с прежними углами/минимумом32 устраняет лишнюю отрисовку; общие стили других диалогов сохранены. Код9b748623, тестыe9337134, отчёт40816270 в PR#28 без слияния.
+3 новые + 3 соответствующие прежние проверки PASS. Сравнительный Windows TEST: первая отрисовка2,511→0,497с; после данных0,359→0,144с; resize1000 0,798→0,183с,1240 1,141→0,228с. Последующие resize0,278/0,414с превышают250мс; общий стартовый пик9,95с отдельно. После штатного перезапуска проверены Демо, журнал и подробности; обработчик открытия0,203с, в наблюдаемом прогретом отрезке пауз>=1с не было. Инструменты, таблицы исполнений и выбранные настройки до/после совпали по SHA; Bridge running, диагностика RUNNING. Счёт/стратегии/свечи не менялись, ручных сделок0.
+Адресный откат: ../../СМ-Архив/SM portfolio freeze before.zip и freeze.patch, CRC и reverse-check PASS (исходный формат перевода строк патча нормализован перед окончательной проверкой). Локальные замеры/квитанции: SM portfolio freeze measurements.json и persistence before/after.json. Подробности: docs/DESIGN_SCREEN_MATRIX_AND_PROJECTIONS_RU.md#portfolio-paint-20261125. GitHub: https://github.com/swindler2010/StockMonitor/blob/work1/design-four-polish/docs/DESIGN_SCREEN_MATRIX_AND_PROJECTIONS_RU.md#portfolio-paint-20261125
+
+
+### 25.11.2026 — Work1: кнопки V2, V3, V4, V5 вместо общей вкладки Демо
+
+Одна запрошенная переработка навигации: выполнено Work1/1, остаток0 в этом объёме; общего аудита ошибок нет, CP-ремонтов0. Общая видимая вкладка заменена четырьмя кнопками рядом с V1. Используется одна панель PAPER с явной привязкой к выбранному счёту, без смены режима/настроек и без четырёх параллельных циклов. V1/реальный портфель не менялись. Поздний ответ старого счёта отклоняется; неизвестный/неправильный счёт не подменяет данные; ручной PAPER-запрос связан с выбранным счётом. На V1 чтение этой панели не запускается.
+5 новых +2 соответствующие существующие проверки PASS. После штатного перезапуска Windows TEST проверены четыре кнопки и загрузка каждого счёта; read-only4/4 соответствия requested/returned. Контрольные суммы инструментов, исполнений/архивов/портфельных исполнений и выбранных настроек до/после совпали. Bridge running, сделок ради приёмки0. При занятой существующей очереди чтения возможна задержка; предыдущие данные при смене очищаются.
+Код bba11306/f325a3e5, тесты15853c7d, отчёт2d6946e8 в PR#28 без слияния. Адресный откат: ../../СМ-Архив/SM portfolio account buttons before.zip и account buttons.patch, CRC/reverse-check PASS; persistence before/after.json и verification.json локально. Подробности: docs/DESIGN_SCREEN_MATRIX_AND_PROJECTIONS_RU.md#portfolio-account-buttons-20261125 . GitHub: https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-7147597072 . Рабочие финансовые данные/базы/чужие изменения не публиковались.
+
+
+<a id="bridge-restart-delivery-20261125"></a>
+### 25.11.2026 — Work1: Bridge после перезапусков, два полных согласованных чтения
+
+Исходный повод1 подтверждённый обрыв на снимке владельца. В ходе проверки дополнительно1 обрыв незавершённого чтения при очередном штатном закрытии TEST. По ui-performance: закрытие25.11 00:28:41 CET, запуск00:29:22 (применение кнопок Work); позднее закрытие00:45:38, запуск00:45:57 (параллельное завершение V1). Дополнительно в журнале был отдельный перезапуск00:37–00:38, он не считается ещё одним обрывом наших запросов. В этом этапе Work СМ не перезапускал. Отдельный программный дефект Bridge не подтвердился; кодовых/свечных исправлений Work0, CP-ремонтов0. Транспорт автоматически снова отвечает после запуска, а прерванную приёмку Work начал с новым корнем. Старые instance/revision не подменялись.
+
+До второго обрыва один полный проход88/88 COMPLETE/0budget уже прошёл на прежнем экземпляре. После завершения перезапусков заключительная пара на одном instance10f3d357c9dd996a12e73b53a87ed02b: снимки25.11 00:48:13.061423 и00:50:34.609287 CET, каждый88/88 (82 акции+6 индексов), COMPLETE, budget_limited0, транспортных ошибок0. Ревизии bc259f3eef3e7585f868152e67f0837af22b9ac825a9a65339a7b8357374bc8a и d56b5b516e0bd634128fc7a2e51890334587d3d56621f10ff02fae85e2ad7a76. Вторая /completion/comparison: comparable=true, from/to точно эти ревизии; physical_ohlcv EXACT, новых/исправленных/удалённых0, unknown0. Это наблюдаемый storage delta, не приписанный ремонт Work/CP. Health после пары Bridge running на том же instance.
+
+NO_PREVIOUS_COMPLETE_SNAPSHOT первого прохода означает отсутствие предыдущей полной базы после запуска, а не потерю подключения. После пары доступно обычное сравнение. READ_DIAGNOSTIC_TIMEOUT и BRIDGE_DESCRIPTOR_UNAVAILABLE в заключительной паре не повторились. Сохранённые DQ/допуски/сроки остаются исходными; расчёты торговли не переиздавались. Новых автотестов нет: исполняемый код не менялся, проверена текущая внешняя MCP-доставка. Данные, настройки, источники, очередь CP, счёт/позиции и торговые команды Work не менял; откат приложения не требуется. После будущего закрытия приложение/Bridge закономерно недоступно, старую незавершённую доставку надо начинать с новым корнем после запуска.
+
+Доказательства: ../../СМ-Архив/SM Bridge restart verification.json. Общий итог диагностики дополнен в ../Диагностика CandlePilot — результат.txt. В GitHub опубликован только обезличенный итог связи, без приватных снимков/метрик счёта/идентификаторов: https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-7147925197 . Ранее отклонённый подробный CP Bridge report этим не публиковался.
+
+
+<a id="cp-durable-diagnostics-20261125"></a>
+### 25.11.2026 — Work1: сохраняемая база сравнения диагностики (r8)
+
+Объём: 2 подтверждённые программные недоработки снимка владельца — потеря previous complete при закрытии процесса и отсутствие точного структурного OHLCV-счётчика. Обе исправлены Work; нерешённых подтверждённых программных дефектов этого этапа0. Ручных правок свечей Work0; автономные загрузки не считаются ручным ремонтом.
+
+В TEST установлен cp-pages-20261125-r8: отдельный приватный cp-diagnostic-baseline.sqlite3 содержит ключи/SHA256, сжатые метаданные и только полный согласованный baseline; OHLCV-цены/счёт в кэш не копируются. Полный physical key включает ISIN/source/venue/currency/symbol/TF/ts. Чужая identity не смешивается. Добавления, изменения и удаления не выводятся из DQ или накопительных recovery-счётчиков. Частичное/повреждённое/ограниченное чтение остаётся UNKNOWN. Рыночная база query_only; expiry/DQ/CORE/торговой допуск не продлеваются. Кэш ограничен512MiB; manifest24MiB с распаковкой128MiB на ISIN, metadata32MiB с распаковкой64MiB; активные и last complete ревизии сохраняются при pruning.
+
+Приёмка: первый полный снимок 2026-11-25T00:16:09.939889+00:00, instance f88f5da0185629dd79142ce1c7288584, revision 88e976cd8d5fee2861469f38eb511b5ab09143ac9415dea5d38c975cd8d25095; 88/88 COMPLETE, budget0, checkpoint SAVED. Промежуточный перезапуск выявил слишком малый8MiB лимит metadata (реальные17251373байта); эта ошибка новой реализации снята адресной правкой, добавлен большой отрицательный/положительный тест. Заключительный штатный перезапуск восстановил именно исходный baseline: root RESTORED. Второй полный снимок 2026-11-25T00:25:00.307160+00:00, instance 29bd508dd352624ec528fc583ffa6645, revision ebb90a015990d6a932dc204468024567e1df279f94d61fedfbddd6ad6937907d; 88/88 COMPLETE, budget0/таймаутов0, checkpoint SAVED. /completion/comparison from/to совпадают с первой/второй ревизией, EXACT: новых физических ключей73, изменённых0, удалённых0, unknown instruments0. Это наблюдаемые записи продолжающейся программы, не ремонт Work/CP и не экономически уникальные свечи между разными TF/источниками.
+
+Точный structural OHLCV count0; volume0 допустим. Непокрытых saved scopes255561: это НЕ доказанные ошибки свечей. Общее source correctness не сертифицировано, legacy unresolved_errors остаётся null. В двух снимках chart_ready true33→44 и analysis_ready19→28 считаются по TF, signal/trade true0 на закрытом рынке; это as-of proof, не разрешение исполнения. После финального сохранения новый отдельный процесс загрузил compressed checkpoint: scope88, metadata9738722байта, integrity_check ok, cache132472832байта. Закрытые/незавершённые проходы не заменяли полный baseline.
+
+15 новых адресных тестов и7 затронутых существующих PASS (22 уникальных сценария); HTTP-тест повторён после последнего изменения формата хранения. Включены53/200, реальные insert/update/delete, identity/currency, конфликт native copies, corrupt metadata/blob, future timestamp, размер полного каталога, диск/лимиты, partial и read-only. Книга опыта дополнена persistent_diagnostic_comparison_baseline, прежние записи сохранены. Полный старый аудит не повторялся.
+
+Доказательства/откат: ../../СМ-Архив/CP durable comparison verification.json, before.zip, comparison.patch, source hashes.json. Backup CRC и reverse-check PASS. Удаление служебного checkpoint допустимо лишь как сброс базы сравнения, не восстановление торговых данных; при откате вернуться к before-коду, рыночную базу не заменять. Приватные снимки/кэш остаются локально. GitHub содержит обезличенный отчёт этапа: https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-7148585704 . Это публикация отчёта, а не объявление всего параллельно изменённого дерева синхронизированным с GitHub.
+
+
+<a id="automatic-disputed-recovery-20261125"></a>
+
+## 25.11.2026 — Work1: автоматическая обработка готовых свечных доказательств
+
+PARTIAL. Исходные14192 незавершённых CP-задания08:31:30UTC → CP автономно разрешил219 NO_TRADES →13973 остаются09:51:10UTC; пропавших0, новых36 отдельно. Это задания, не число доказанных ошибочных OHLCV. Work исправил3 общие программные причины; ручных записей свечей0. Автоматически111/111 готовых own-gettex номинаций обработаны обычными пакетами; повторный query-only поиск не нашёл пропущенных готовых доказательств, включая позиции за128. Необозреваемые single15m получают прежний доказательный retime_plan; изменённые own-source доказательства больше не ждут архива. Политика, identity, DQ, сроки и окончательная writer-проверка сохранены.
+
+Диагностика использует общий с CP UI текущий native validator:2203 официально подтверждённые области исключены из активных подозрений на попарно одинаковых входах75+7 акций. Это не один одновременный снимок, не219CP-заданий и не2203 свечные правки. Сырые DQ сохранены.7 новых+4 затронутых существующих уникальных сценария PASS; книга опыта дополнена, прежние записи сохранены. В общей MCP-приёмке другого чата пока первый88/88 COMPLETE, остальные проходы продолжаются. TEST/диагностический код Work1 в окне не меняет.
+
+Остаток:12703 UNCONFIRMED,1004 SOURCE_TIMEBASE_UNCONFIRMED,215 NATIVE_ROWS_PRESENT,12 GAP,13 SOURCE_DISCREPANCY,26 без finding. Нужны полные соответствующие MUNC/MUND либо достаточный допустимый независимый источник; пустой ответ и неполная публикация не NO_TRADES. Исторические расхождения Apple/SiemensEnergy/Palantir/Newmont и конфликт notice/положительных записей26.10 сохранены. Onvista automation ждёт письменного ответа. Цены/торговля/счёт/допуски вручную не менялись. Доказательства и queue-only rollback в существующем СМ-Архив, CRC/reverse-check PASS. Полное изложение: [действующий отчёт](CP_CANDLE_RECOVERY_CURRENT_RU.md#automatic-disputed-recovery-20261125). GitHub-публикация итоговой записи и завершение совместной MCP-приёмки ожидаются; полный DONE источников не заявлен.
+
+
+Публикация нового этапа25.11: https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-7159132264 ; подробный отчёт559ded99, MASTER b797f3e8 в PR#21 без слияния. Обратное чтение отчёта и полного GitHub MASTER подтвердило новый текст и сохранность прежнего содержимого. Это документальная публикация, не полная синхронизация исходников. Три MCP-прохода другого чата продолжаются; Work1 не перезапускает TEST и не меняет диагностический код.
+
+
+### 2026-11-25T10:29:01.039528+00:00 — Work1: PR25 установлен; будущая рабочая область не проверена
+
+По поручению владельца применён контрольный b95e73ae: дневная оценкаV2, ATR0, персональное pullback/lock75 Micron/SiemensEnergy.3компонента установлены/3, остаток0.83 уникальных теста PASS; параллельная UI сохранена(AST), новые строки ru/de/en. Штатный restart после3MCP-проходов, instance e59bed73a343581e37261cda5ccb85ce, Bridge running. На экранеV2 и в read-only журнале5дней:24.11LOSS/1BUY+1SELL,25.11IN_PROGRESS; иных новых сделок не создавали. Все6настроек, instruments/paper_accounts и4таблицы исполнений/архивов до/после SHA совпали. V2 активна уже до этапа, флаг не менялся; раннее упоминание паузы исправлено. Общие dispatcher/diagnostic файлы не редактировались. Детали docs/PAPER_V2_30M_ISSUE24_RU.md#pr25-applied-20261125.
+
+Отдельно1блокер доступа будущих задач остаётся1: нет локального projectId в доступном инвентаре/команды добавления, ChatGPT UI автоматизировать нельзя, managed-права не обходились. Конкретный шаг владельца и будущая проба в docs/SM_PROJECT_WORKSPACE_ACCESS_RU.md. В отдельной задаче не проверено, разрешённые escalation нынешнего применения не выдаются за постоянное исправление. Записи свечей Work0, CP-ремонт не пересчитывался, новых исследований стратегии нет.
+
+
+Публикация приёмки Work1: https://github.com/swindler2010/StockMonitor/pull/25#issuecomment-7159806193 и https://github.com/swindler2010/StockMonitor/issues/5#issuecomment-7159808150 . Отчёт3d46de3/MASTER726f5be, обратное чтение семи областей PASS, прежний GitHub MASTER сохранён. Новая локализация/регрессии63094d8/1b3bc8b/0639b28. Доступ будущих задач остаётся NOT_RESOLVED_NOT_TESTED. Штатный перезапуск V2 выполнен10:19:48UTC после трёх MCP-проходов; последующая правка dispatcher не загружалась этим запуском. Для V2 новых перезапусков не нужно: Work1 сохраняет текущее окно стабильным, dispatcher/diagnostics не редактирует.
+
+
+### 2026-11-25T11:54:32.420761+01:00 — Work1: запись проверена из нового Local-чата V1
+
+Старый durable new-chat-4 не запускает новый ход: invalid legacy sandbox writable root; его среда не исправлена. Создан «V1 — проверка доступа к СМ» (local); он сам создал/прочитал/удалил единственный временный файл в0.16, обычная команда exit0/1,364с, BASE_WRITE=PASS/FILE_REMOVED=true, без escalation. Work1 проверил лог и отсутствие. Новый чат workspace-write с унаследованным корнем Documents/Codex (шире СМ), cwd автоматически созданный; проектный root толькоСМ не настроен. Настройки безопасности/ACL/config не менялись.1 практический блокер продолженияV1 устранён проверенной новой задачей,0 блокеров записи там;1 ошибка старой среды остаётся. Краткий контекст Issue26/PR27/v1-readable.patch передан без применения старого патча, изменений программы/счёта/БД0, перезапусков0. Подробности docs/SM_PROJECT_WORKSPACE_ACCESS_RU.md#local-v1-access-verified-20261125; частная квитанция SM V1 workspace access receipt.json в СМ-Архив.
+
+
+Публикация независимой пробы доступа25.11: https://github.com/swindler2010/StockMonitor/issues/26#issuecomment-7160382900 ; Issue5#issuecomment-7160385567 и PR25#issuecomment-7160387359. Инструкция f209c3c, MASTER14938bc; обратное чтение3проверкиPASS, прежняя история сохранена. Новый чат «V1 — проверка доступа к СМ» готов к продолжению, старая durable-среда не исправлена. Work1 не перезапускает TEST в продолжающемся окне другого чата (до12:25–12:30CET либо сообщения об окончании).
+
+
+### 2026-11-25T13:43:30.956453+01:00 — Work1: проектный доступ СМ подтверждён из новой задачи
+
+Владелец добавил существующую СМ как локальный проект. Work1 создал внутри него «V1 — проект СМ», API membership/cwd подтверждены.25.11 13:41:35CET этот чат сам обычным shell без расширений создал/записал/прочитал/удалил один временный файл в0.16: PROJECT_WRITE=PASS / FILE_REMOVED=true, exit0. Work1 проверил исходную команду/вывод и отсутствие файла. Профиль workspace-write: корень СМ+системные temp, более широкого Documents/Codex не указано.1незавершённый пункт проектного доступа→1/1PASS→остаток0 для новых задач этого проекта; старый durable new-chat-4 отдельно не исправлен. Контекст Issue26/PR27/патчаV1 передан без применения; программа/БД/счёт/CP/торговля не менялись, перезапусков0. Подробности docs/SM_PROJECT_WORKSPACE_ACCESS_RU.md#sm-project-access-pass-20261125, старая частная квитанция дополнена project_probe.
+
+
+Публикация проектного доступа25.11: https://github.com/swindler2010/StockMonitor/issues/26#issuecomment-7162808022 ; Issue5#issuecomment-7162810012. Инструкция3850d6b, MASTER951ae90, обратное чтение3/3PASS. Канонический чат продолженияV1 — проект «СМ»→«V1 — проект СМ», PROJECT_WRITE=PASS. Программа и TEST не изменялись, перезапусков0.
+
+
+## 25.11.2026 — Work1: readable V1 применён и проверен в TEST; полная ветка PR29
+
+Патч владельца прошёл git apply --check; исходные2файла совпали с его baseline, конфликтов0. Применены читаемые рекомендации и фильтры BUY/SELL; поздний v1-investment-plan из проектного чата сохранён, не заменён старой копией. Work добавил150+82=232языковыхзаписи en/de, прежние значения сохранены полностью, остаток пропущенных строк этого объёма0. Общее исходное число программных ошибок не измерялось.
+
+25различныхV1-тестовPASS; после параллельной смены кода повторены те же25(4,161с), не50. В живом TEST после разрешённого общего запуска25.11 14:42:33CET проверены рекомендации, оба фильтра, детали выбранной операции и возврат общего журнала. Завершённая NVIDIA WAIT/«Пока подождать», расчёт14:54:40CET по дневной24.11, причины/уровни/DQ/время видимы, отсутствие финансовой отчётности явно обозначено. Сроки/ревизии/запрет брокерских заявок сохранены. Обе требуемыеUIпроверки2/2PASS. СчётV1/7settings/6tables совпали с исходнымиSHA после приёмки; финансовые значения/скриншоты не публикуются. Workсделок/ручныхопераций/OHLCV0.
+
+Полный срез526файлов в [draft PR29](https://github.com/swindler2010/StockMonitor/pull/29): source15e3fc41/tests119bf207/docs6a4b27a8, все3дерева/526путейсовпали. РабочиеHEAD/index/незакоммиченныеизменения и история сохранены;main не менялся, force/reset/checkout0. Свежие согласованныеbackup:main integrity=ok+reopen,3PAPERintegrity=ok+ZIPreadback3/3; прежняя копия сохранена.95уникальныхпубликационных/V1сценариев:91PASS/4старыхfixtureERROR; полныйCIнеPASS. Повторён только этот остаток4 после сменыCP-кода, ошибки подтверждены. Автоматическогоmerge нет. Последующие параллельныеV1/r13правки включаются отдельным fast-forward дополнением;3полныхMCPприёмки другого чата ещё не объявляютсяDONE.
+
+[ПриёмкаV1](V1_READABLE_PATCH_RU.md), [актуальнаяхронология](CHANGELOG_2026-10-23_to_current.md#sync-20261125), [все19Bridge/MCPкоманд](BRIDGE_MCP_CAPABILITIES_RU.md#bridge-20261125). Откаты/частныеSHAквитанции в существующемСМ-Архив.
+
+
+Дополнение Work1 к приёмке V1 2026-11-25T14:05:42.371004+00:00: новый параллельный тест повторного нажатия сохранён/PASS;26различныхV1, финально26PASS. Новые4перевода ошибок добавлены адресно, всего236, старые значения сохранены; остатокязыковыхстрок0. Публикационныйагрегат96уникальных:92PASS/4fixtureERROR. Позднийфикс кнопки ещёне загружен(после14:42:33CET), его runtime-проверка отдельно; исходныйreadable/фильтры/рекомендация ужеPASSвTEST. ПерезапусковWork1дляпозднегофикса0.
+
+
+## 25.11.2026 — Work1: безопасная очистка хранения СМ
+
+В исходном списке 13 672 подтверждённых кандидата на удаление. Work1 удалил 13 671 файл / 762 535 123 байта (~763 МБ); 1 пересозданный параллельным тестом файл байткода оставлен. Удалены старые распакованные Review 1–5, точный дубликат установщика, пять старых изолированных тестовых БД и воспроизводимый байткод тестов. Все 13 414 payload-файлов совпали SHA256 с сохранёнными ZIP; пробное восстановление 5/5 PASS. Метаданные установок и тестовые БД сохранены адресно. После очистки RESTORE_CHECK_PASS: 13 425 отсутствующих файлов, текущий указатель не изменён. Review 7/6, 0.16, среда/модели, рабочие БД/WAL, GETTEX и исходные доказательства, резервные копии, настройки/счёт и параллельные правки V1 сохранены. Work1 не перезапускал TEST для очистки; лёгкий Bridge health отвечает, расчёт RUNNING. Ошибки программы/свечей этим этапом не считались, прямых исправлений OHLCV/торговли 0. Частные квитанции/откат в существующем СМ-Архив. Текущий отчёт: [STORAGE_CLEANUP_RU.md](STORAGE_CLEANUP_RU.md). Других подтверждённых удалений не осталось; изменившийся байткод сознательно сохранён.
+
+
+### 26.11.2026 — Work1: внутренний путь снятия INVALID после восстановления
+
+Проверены численные OHLCV всех106акций: сохранённых gettex/gettex_chart строк с невозможными значениями0; это не проверка полноты и источника. Отдельно52INVALID-отчёта/32акции (40proxy/6legacyбезidentity/6gettex) и123карантина gettex_chart/74акции:2913дневных+25пятиминутных+29пятнадцатиминутных исходных отклонений; уровни пересекаются, не складывать. Найден и исправлен1программныйдефект: штатный DQ-ремонт не снимал дату из archive_invalid; теперь только точное подтверждённое восстановление снимает её в той же транзакции, с сохранением прочих дат/квитанций и rollback. До правки2FAIL/3PASS, после5новых+10затронутыхPASS. ПрямыхOHLCVправок и снятийврабочейБДWork0. Источник для одной даты Michelin пока ждёт штатный слот; неизвестный объём не заменён0. Нового перезапускаWork1нет: кодготовкследующейсогласованнойзагрузке, runtimeприёмканеобъявлена; внешние123карантина не закрыты. Подробности docs/CP_MAIN_PANEL_INVALID_RU.md; адресныйоткат/исходныесписки вСМ-Архив. Параллельныеобщиедиагностические/стратегическиеправки сохранены.
+
+
+### 26.11.2026 � ��������� �������� ����������� ������ INVALID
+
+������� �������� ������ ������� ������ frame.attrs: ��������� ������ �������� ���� ����� identity ��� ��������� �������� �������. ���� �������������� �������� ������� FAIL, ����� ��������� PASS; ���� 6 ����� + 10 ���������� = 16 ���������� PASS. ��� ��������� ���� ����� ����������� ������, � �� ���������� 2 967 �������� ����������. �� ��������� ������ 123 ��������� / 74 ����� �� ��������� ���������; ������ ����������� ������ Work 0, ������ ����������������� ��������� Work 0. ������� �������� TEST �������� �������������� ��������: �� ������� ����� ���������� �� ���������� CP/PAPER, �������� ������������� ����. ���� �� �����������, ������ ���; ������ � ����������� ������� ������ ���������. Runtime-������ � ����������� �������������� �������� ��������������. �����������: docs/CP_MAIN_PANEL_INVALID_RU.md.
+
+### 26.11.2026 — Work1: восстановлено отображение шести прямых индексов
+
+Исходно 6/6 дневных графиков индексов пустые. Work исправил общий фильтр EUR-акций для отдельной точной каталоговой identity индекса; отображение 6/6 восстановлено, остаток этой UI-ошибки 0. Свечей напрямую исправлено Work 0; автономных ремонтов CP в этом этапе 0. Добавлены локальные сведения индекса вместо корпоративной отчётности, подписи источника/пунктов, корректный контекст без ложного WAIT. Объём/Volume Profile скрыты только в индексном отображении, сохранённые настройки акций не менялись.
+
+18 уникальных адресных тестов покрывают графики, отрицательную identity/intraday, stale VIX, вкладки и ревизии; промежуточные ошибки устранены с повтором только затронутых сценариев. На одном query-only SQL-срезе chart_worker вернул непустые 18/18 сочетаний шести индексов × 1D/1W/1M (среднее 1,620 с, максимум 5,609 с). В окончательном Windows TEST 84259a1d6062ad58c5d4ca9d5cc94930 в 15:39–15:43 CET открыты все шесть 1D-графиков, DAX обзор/анализ, VIX 1W/1M. Подтверждено исходное STALE VIX 24.11 и INVALID неполных агрегатов, без повышения свежести/допуска. Intraday прямым источником не предоставляется, архив INCOMPLETE DAX/STOXX600/VIX сохранён. Повторных аудитов акций и изменения торговли не было. Правка старого quarantine INVALID из предыдущего этапа также загружена перезапусками; прежний пункт об ожидании разрешения устарел, но снятие 123 карантинов этим не доказано.
+
+Подробности: docs/INDEX_DISPLAY_RU.md и ../Индексы — проверка отображения.json. Адресный rollback: СМ-Архив/Index display routing before.zip и собственный Index display routing.patch; не заменять целые файлы с поздними чужими правками. Дополнительных перезапусков для этого этапа Work1 не планирует.
+
+Финальная UI-добавка загружена по отдельному явному разрешению владельца «Перезапустить сейчас»: TEST 24ef28aefad1a1a5f06ed41083620a04, 26.11.2026 15:54–15:56 CET. В действующем DAX 1D недоступные верхние intraday-кнопки отключены, нажатие боковой 1H сохраняет 1D; условия и сила сигнала не выдают старую акцию за индекс. При возврате к Alphabet восстановлены доступность обычных TF, объём и Volume Profile. Полный stock→index→stock с предзаполненными старыми условиями дополнительно PASS в реальном изолированном Tk-сценарии. Последняя загрузка завершена; новых перезапусков Work1 не выполняет. Остаток программного дефекта пустых индексных экранов 0; ограничения источников выше сохранены.
+
+
+
+### 26.11.2026 — Work1: все внутридневные ТФ индексов загружены в TEST
+
+Предыдущий этап оставлял 48 недоступных внутридневных представлений. После штатного «Сохранить» старый GUI и writer завершились самостоятельно; единственный TEST запущен через обычный launcher. Никакого прямого импорта в рабочую SQLite не было. Сам CP по прежней serial feed-очереди получил все шесть настоящих Yahoo 5m-рядов: S&P 500, Nasdaq-100 и SOX по 3 335 строк, DAX 4 486, STOXX600 4 487, VIX 3 488 — всего 22 466 исходных наблюдений в этом срезе. Это первичная загрузка, а не исправление такого числа свечей.
+
+На рабочей базе chart_worker в query-only WAL-срезах сформировал непустые 48/48 сочетаний шести индексов × 5m/10m/15m/30m/1H/2H/3H/4H, проверены точные identity и ревизии перед приёмкой. Уже принятые графики при последующих загрузках не повторялись. В реальном окне дополнительно виден DAX 1H с ценой, правильным Yahoo/GER/^GDAXI и пунктами индекса; исходное UNCONFIRMED/PARTIAL не скрыто. Дополнительные UI-переключения остановлены на время параллельной проверки Портфеля и Bridge; это не объявляется визуальной проверкой каждого из 48 экранов. Код и 35 адресных тестов не менялись с принятого прогона. Дневные архивы и источник Cboe VIX 1D сохранены отдельно.
+
+Work восстановил программную доступность 48 из исходных 48 представлений, недоступных внутридневных ТФ в проверенном пути осталось 0. Work лично не исправлял OHLCV (0), CP выполнил шесть первичных загрузок; доказанных свечных ремонтов CP в этом этапе 0. Качество полного 60-дневного окна всех шести рядов остаётся UNCONFIRMED из-за конкретных пробелов/отклонённых наблюдений поставщика. График показывает реальные участки, индикаторы требуют фактического непрерывного прогрева; эти предупреждения не преобразованы в READY или допуск к сделке. Исторические исходные сравнения пятидневной выборки не подменяют новое 60-дневное состояние. Точные диапазоны и время каждой штатной загрузки: docs/INDEX_DISPLAY_EVIDENCE.json, intraday.live_source_states.
+
+Вход GitHub восстановлен штатной командой Git Credential Manager через уже авторизованный браузер по прямому поручению владельца; сохранённый аккаунт подтверждён без вывода секретов. Публикация собственного патча и отчёта подготавливается в отдельном git index; общий код параллельного аудита, рабочий git index, счёт и стратегии не меняются. Дополнительных перезапусков Work1 не выполняет.

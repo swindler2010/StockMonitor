@@ -1,0 +1,170 @@
+"""Read-only portfolio presentation around existing PAPER controls and ledger."""
+import tkinter as tk
+from tkinter import ttk
+from decimal import Decimal, InvalidOperation
+from i18n import tr, language
+from financial_format import format_value
+from themes import THEMES
+from reference_design import Card, wrap_label
+
+
+def metrics(state):
+    """No estimated equity or P&L when the account projection has no valid value."""
+    result={key:state.get(key) for key in ('equity','cash','fees')}
+    try:
+        equity=Decimal(str(state.get('equity')))
+        start=Decimal(str(state.get('policy',{}).get('starting_cash')))
+        result['return']=(equity/start-1) if equity.is_finite() and start.is_finite() and start>0 else None
+    except (InvalidOperation,ValueError,ZeroDivisionError):result['return']=None
+    if state.get('status')!='ACTIVE':result={key:None for key in (*result,'return')}
+    return result
+
+
+def _card_style(root, prefix, palette):
+    """Keep rounded cards without tiling a tiny alpha image over large panels.
+
+    Tk repeats the image centre. A 14px centre required thousands of Windows
+    alpha blits per repaint. A larger centre keeps the same 9px corner slices
+    and explicit 32px minimum, without changing any shared dialog style.
+    """
+    cache=getattr(root,'_portfolio_card_images',None)
+    if cache is None:root._portfolio_card_images=cache={}
+    name=prefix+'.PaperCard.TFrame'
+    if name in cache:return name
+    from PIL import Image,ImageDraw,ImageTk
+    dark=palette['bg']!='#f8fafc'
+    bitmap=Image.new('RGBA',(1536,384))
+    ImageDraw.Draw(bitmap).rounded_rectangle((2,2,1533,381),radius=23,
+        fill='#0a2136' if dark else '#ffffff',
+        outline='#477797' if dark else '#7892ad',width=4)
+    photo=ImageTk.PhotoImage(bitmap.resize((512,128),Image.Resampling.LANCZOS),master=root)
+    element=prefix+'PaperCard'
+    style=ttk.Style(root)
+    style.element_create(element,'image',photo,border=9,width=32,height=32,sticky='nsew')
+    style.layout(name,[(element,{'sticky':'nsew'})])
+    cache[name]=photo
+    return name
+
+
+class Surface:
+    def __init__(self,app,parent):
+        from indicator_dialog import styles
+        from ui_icons import photo
+        self.parent=parent;self.root=app.root
+        self.palette=THEMES.get(app.store.setting('theme','Тёмная'),THEMES['Тёмная'])
+        self.p=p=styles(app.root,self.palette)
+        self.card_style=_card_style(app.root,p,self.palette)
+        style=ttk.Style(parent)
+        field='#0a2136' if self.palette['bg']!='#f8fafc' else '#ffffff'
+        style.configure(p+'.Paper.TLabel',background=style.lookup(p+'.TFrame','background'),foreground=self.palette['text'],font=('Segoe UI',10))
+        style.configure(p+'.Drawing.TLabel',background=field,foreground=self.palette['text'])
+        style.configure(p+'.Card.TLabel',background=field,foreground=self.palette['text'],font=('Segoe UI',10))
+        style.configure(p+'.Paper.Treeview',background=style.lookup(p+'.TFrame','background'),fieldbackground=style.lookup(p+'.TFrame','background'),foreground=self.palette['text'],font=('Segoe UI',10),rowheight=28,borderwidth=0,relief='flat',bordercolor=self.palette['grid'],lightcolor=self.palette['bg'],darkcolor=self.palette['bg'])
+        style.configure(p+'.Paper.Treeview.Heading',background=self.palette['panel'],foreground=self.palette['text'],font=('Segoe UI',10,'bold'),padding=(7,6),relief='flat')
+        style.layout(p+'.Paper.Treeview.Heading',[('Treeheading.padding',{'sticky':'nswe','children':[('Treeheading.text',{'sticky':'we'})]})])
+        style.configure(p+'.Horizontal.TScrollbar',background=self.palette['grid'],troughcolor=self.palette['bg'],bordercolor=self.palette['bg'],lightcolor=self.palette['bg'],darkcolor=self.palette['bg'],arrowcolor=self.palette['muted'],width=10,arrowsize=10)
+        style.map(p+'.Paper.Treeview',background=[('selected','#075585')],foreground=[('selected','#ffffff')])
+        style.configure(p+'.Paper.TNotebook',background=style.lookup(p+'.TFrame','background'),borderwidth=0,tabmargins=(0,4,0,3))
+        style.configure(p+'.Paper.TNotebook.Tab',padding=(12,7),font=('Segoe UI',10),background=self.palette['panel'])
+        style.map(p+'.Paper.TNotebook.Tab',background=[('selected','#005b8c'),('active',self.palette['grid'])],foreground=[('selected','#ffffff')])
+        parent.configure(style=p+'.TFrame')
+        heading=ttk.Frame(parent,style=p+'.TFrame',padding=(12,8));heading.pack(fill='x')
+        ttk.Label(heading,image=photo(app.root,'portfolio',27,color='#00c5ff'),style=p+'.Paper.TLabel').pack(side='left',padx=(0,9))
+        self.title=tk.StringVar(parent,tr('Демо — виртуальная торговля'))
+        ttk.Label(heading,textvariable=self.title,style=p+'.Paper.TLabel',font=('Segoe UI',15,'bold')).pack(side='left')
+        strip=ttk.Frame(parent,style=p+'.TFrame');strip.pack(fill='x',padx=10,pady=(0,5))
+        self.values={}
+        for column,(key,label) in enumerate((('equity','Капитал'),('cash','Свободно'),('return','Доходность'),('fees','Комиссии'))):
+            box=self.card(strip,label);box.grid(row=0,column=column,sticky='nsew',padx=(0,6) if column<3 else 0)
+            strip.columnconfigure(column,weight=1,uniform='paper-kpi')
+            variable=tk.StringVar(parent,'—');self.values[key]=variable
+            ttk.Label(box,textvariable=variable,style=p+'.Drawing.TLabel',font=('Segoe UI',14,'bold')).pack(anchor='w')
+
+    def card(self,parent,text):
+        box=Card(parent,text,self.p)
+        box.configure(style=self.card_style)
+        return box
+
+    def bind(self,state):
+        self.title.set(tr('Демо — виртуальная торговля')+' · '+str(state.get('account') or '—'))
+        for key,value in metrics(state).items():
+            self.values[key].set('—' if value is None else format_value(value,language(),kind='percent' if key=='return' else 'amount',currency=None if key=='return' else 'EUR'))
+
+    def finish(self, parent=None):
+        """Style the same widgets in place; never replace their commands or bindings."""
+        p=self.p;style=ttk.Style(self.parent)
+        def visit(widget):
+            current=str(widget.cget('style')) if isinstance(widget,ttk.Widget) else ''
+            if not current:
+                target=(p+'.Paper.Treeview' if isinstance(widget,ttk.Treeview) else
+                        p+'.Paper.TNotebook' if isinstance(widget,ttk.Notebook) else
+                        p+'.TCombobox' if isinstance(widget,ttk.Combobox) else
+                        p+('.Vertical.TScrollbar' if str(widget.cget('orient'))=='vertical' else '.Horizontal.TScrollbar') if isinstance(widget,ttk.Scrollbar) else
+                        p+'.TEntry' if isinstance(widget,ttk.Entry) else
+                        p+'.Secondary.TButton' if isinstance(widget,ttk.Button) else
+                        p+('.Card.TLabel' if isinstance(widget.master,Card) else '.Paper.TLabel') if isinstance(widget,ttk.Label) else
+                        p+'.TFrame' if isinstance(widget,ttk.Frame) else None)
+                if target:widget.configure(style=target)
+            if isinstance(widget,(ttk.Label,ttk.Button,ttk.Checkbutton)):
+                text=widget.cget('text')
+                if text:widget.configure(text=tr(text))
+            if isinstance(widget,ttk.Treeview):
+                from tkinter.font import Font
+                heading_font=Font(widget,font=style.lookup(p+'.Paper.Treeview.Heading','font'))
+                for column in widget['columns']:
+                    text=tr(widget.heading(column,'text'));widget.heading(column,text=text)
+                    widget.column(column,width=max(int(widget.column(column,'width')),heading_font.measure(text)+22))
+            if isinstance(widget,ttk.Notebook):
+                for tab in widget.tabs():widget.tab(tab,text=tr(widget.tab(tab,'text')))
+            if isinstance(widget,tk.Text):
+                widget.configure(background=style.lookup(p+'.TFrame','background'),foreground=self.palette['text'],relief='flat',borderwidth=0,highlightthickness=0,font=('Segoe UI',10),padx=9,pady=6,spacing3=3)
+            if isinstance(widget,ttk.Label) and int(float(widget.cget('wraplength') or 0))>0:wrap_label(widget)
+            for child in widget.winfo_children():visit(child)
+        visit(parent or self.parent)
+
+
+
+def _account_navigation(app,win,tabs):
+    """Five navigation buttons, one real page and one shared PAPER reader."""
+    from indicator_dialog import styles
+    p=styles(app.root,THEMES.get(app.store.setting('theme','Тёмная'),THEMES['Тёмная']))
+    style=ttk.Style(win)
+    style.layout(p+'.Accounts.TNotebook.Tab',[])
+    tabs.configure(style=p+'.Accounts.TNotebook')
+    tabs._portfolio_nav_book='V1'
+    bar=ttk.Frame(win,style=p+'.TFrame',padding=(10,7))
+    bar.pack(side='top',fill='x',before=tabs)
+    buttons={}
+    def choose(book):
+        if book not in ('V1','V2','V3','V4','V5'):raise ValueError('Unknown portfolio page')
+        pages=tabs.tabs()
+        if len(pages)!=2:return
+        tabs._portfolio_nav_book=book
+        tabs.select(pages[0] if book=='V1' else pages[1])
+        if book!='V1':
+            paper=tabs.nametowidget(pages[1])
+            paper._paper_select_portfolio(book)
+        for code,button in buttons.items():
+            button.configure(style=p+('.Primary.TButton' if code==book else '.Secondary.TButton'))
+    for book in ('V1','V2','V3','V4','V5'):
+        button=ttk.Button(bar,text=book,width=6,style=p+('.Primary.TButton' if book=='V1' else '.Secondary.TButton'),
+                          command=lambda b=book:choose(b))
+        button.pack(side='left',padx=(0,6))
+        buttons[book]=button
+    win._portfolio_account_buttons=buttons
+    win._portfolio_choose_account=choose
+
+
+def window(app,win,tabs):
+    from main_screen import native_titlebar
+    from design_layout import fit_window
+    from ui_icons import photo
+    palette=THEMES.get(app.store.setting('theme','Тёмная'),THEMES['Тёмная'])
+    win.configure(background=palette['bg'])
+    fit_window(win,1240,850,(900,700))
+    _account_navigation(app,win,tabs)
+    win.iconphoto(False,photo(app.root,'portfolio',32,color='#00c5ff'))
+    win.bind('<Map>',lambda e:win.after_idle(lambda:native_titlebar(win,palette)) if e.widget is win else None,add='+')
+    win.bind('<Escape>',lambda _:win.destroy())
+    win.after_idle(lambda:next((child._paper_design.finish(win) for child in tabs.winfo_children() if hasattr(child,'_paper_design')),None) if win.winfo_exists() else None)
+
