@@ -4,6 +4,36 @@
   "scope": "Reusable candle recovery knowledge. Imported evidence is NOT new market validation.",
   "cases": [
     {
+      "id": "recovered_native_row_retires_source_quarantine_atomically",
+      "title": "Исправленная свеча оставалась в списке отклонённых исходных строк",
+      "sources": [
+        "gettex_chart"
+      ],
+      "states": [
+        "INVALID",
+        "PARTIAL"
+      ],
+      "status": "SOURCE FIXED; 5 new + 10 affected PASS; runtime reload and natural production recovery pending",
+      "steps": [
+        "Повторно проверить точную source/venue/currency/symbol/timezone, закрытие и OHLCV восстановленного окна.",
+        "В той же транзакции после штатной записи и проверки lineage сверить фактически записанные строки с проверенным replacement.",
+        "Удалить из rejected_timestamps только совпавшие восстановленные даты; остальные даты, исходные квитанции, DQ, freshness и риск сохранить.",
+        "Откат после позднего сбоя возвращает свечи и метаданные вместе. Не объявлять source completeness или торговый допуск."
+      ],
+      "evidence": {
+        "test": "test_cp_recovered_quarantine.py",
+        "before": "2 FAIL / 3 PASS",
+        "after": "5/5 PASS; affected native reject scope 10/10 PASS",
+        "real_candle_writes_by_work": 0,
+        "production_retired_rejections": 0
+      },
+      "limits": [
+        "Не снимает неопределённость отсутствующего объёма или конфликта биржевого уведомления.",
+        "Наличие строки без подтверждённого восстановления само по себе не разрешает снимать прежнее отклонение."
+      ],
+      "report": "docs/CP_MAIN_PANEL_INVALID_RU.md"
+    },
+    {
       "id": "v5_daily_priority_survives_ns_clock_and_4h_calendar",
       "title": "V5: точность времени 4H отключала очередь дневных входов",
       "sources": [
@@ -3304,5 +3334,5 @@
       "sha256_at_import": "1cdb3ec4c375da282bcdcc62de0eeba30ea30f1c7d1bd76bcd03f37d62c8da57"
     }
   ],
-  "updated_at": "2026-11-25T09:54:08.628988+00:00"
+  "updated_at": "2026-11-26T10:47:17.993Z"
 }

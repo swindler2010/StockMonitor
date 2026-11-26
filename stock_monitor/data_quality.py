@@ -870,6 +870,9 @@ def repair(info,store,symbol,base,meta,download,now=None,max_ranges=8,target_ran
                         proof['input_revisions']=revisions(db)
                         saved[stamp]=proof
                     db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',(lineage_key,json.dumps(saved)))
+                if meta['source']=='gettex_chart':
+                    from gettex_chart import retire_recovered_rejections
+                    retire_recovered_rejections(db,info,meta,base,window,clock)
                 cp_experience.record(db,info,meta,base,first,last,before,clock,attempt_method,'SUCCESS',
                                      cp_experience.measured_reason('Validated OHLCV and provenance committed atomically; current DQ/CORE remain independent',observations))
             completed.append([first,last])

@@ -213,6 +213,67 @@ def confirmed_state(info,saved):
     except (ValueError,KeyError,TypeError):return False
 
 
+
+
+def retire_recovered_rejections(db, info, meta, base, recovered, now):
+    """Reconcile quarantine in the SAME validated native-recovery transaction.
+
+    Original provider receipts remain immutable. Mere row presence, a different
+    source, an unclosed replacement or a changed listing cannot retire a fault.
+    This is not completeness, freshness, risk or execution approval.
+    """
+    if meta.get('source') != SOURCE or base not in BASES or recovered.empty:
+        return 0
+    saved_key = state_key(info['isin'], base)
+    row = db.execute('SELECT value FROM settings WHERE key=?', (saved_key,)).fetchone()
+    saved = json.loads(row[0]) if row else {}
+    if not confirmed_state(info, saved) or saved.get('identity') != meta:
+        return 0
+    fault = saved.get('archive_invalid') or {}
+    rejected = fault.get('rejected_timestamps') or []
+    if fault.get('identity') != meta or not rejected:
+        return 0
+    if not db.in_transaction or any(recovered.attrs.get(k) != meta[k] for k in quality.IDENTITY):
+        raise ValueError('RECOVERED_QUARANTINE_IDENTITY_OR_TRANSACTION')
+    checked = recovered.copy(deep=False)
+    checked.attrs = {**recovered.attrs, **meta, 'timeframe': base}
+    if (quality.audit(checked, base, expected=meta, now=now, check_stale=False)['state'] != 'READY'
+            or endpoints(checked).isna().any() or (endpoints(checked) > now).any()):
+        raise ValueError('RECOVERED_QUARANTINE_INPUT_UNCONFIRMED')
+    candidates = set(map(str, checked.index))
+    resolved = sorted(set(rejected).intersection(candidates))
+    if not resolved:
+        return 0
+    for stamp in resolved:
+        actual = db.execute('SELECT open,high,low,close,volume FROM series WHERE '
+            'isin=? AND source=? AND venue=? AND currency=? AND symbol=? AND base_tf=? AND ts=?',
+            (info['isin'], *[meta[k] for k in quality.IDENTITY[:4]], base, stamp)).fetchone()
+        expected = tuple(float(checked.loc[pd.Timestamp(stamp), field]) for field in FIELDS)
+        if actual is None or tuple(actual) != expected:
+            raise ValueError('RECOVERED_QUARANTINE_ROW_CHANGED')
+    remaining = [stamp for stamp in rejected if stamp not in resolved]
+    proof = dict(isin=info['isin'], identity=meta, base_tf=base,
+        resolved_timestamps=resolved, checked_at=now.isoformat(),
+        method='validated_native_recovery_same_transaction',
+        previous_fault_sha256=hashlib.sha256(json.dumps(fault,sort_keys=True).encode()).hexdigest())
+    saved = dict(saved)
+    saved['archive_recovery'] = proof
+    if remaining:
+        saved['archive_invalid'] = {**fault, 'rejected_timestamps': remaining,
+            'ranges': [span for span in fault.get('ranges', [])
+                       if not (len(span)==2 and span[0]==span[1] and span[0] in resolved)]}
+    else:
+        saved.pop('archive_invalid', None)
+        if saved.get('state') == 'PARTIAL':
+            saved['state'] = 'SAVED'
+        saved['quality'] = 'RECHECK_REQUIRED'
+    db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',
+               (saved_key, json.dumps(saved, ensure_ascii=False, allow_nan=False)))
+    db.execute('INSERT INTO journal(kind,payload) VALUES (?,?)',
+               ('cp_source_quarantine_recovered', json.dumps(proof, ensure_ascii=False)))
+    return len(resolved)
+
+
 def _load_native(store, info, base):
     saved = store.setting(state_key(info['isin'], base), {})
     if not confirmed_state(info,saved):return pd.DataFrame()
