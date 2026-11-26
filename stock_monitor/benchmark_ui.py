@@ -22,7 +22,8 @@ class BenchmarkMixin:
         meta=bm.identity(info)
         source='Cboe' if meta['source']=='cboe' else 'Yahoo'
         unit=tr(info['unit'])
-        self.ax_price.set_title(f"{info['name']} · {self.timeframe.get()} · {source} / {meta['venue']} / {meta['symbol']} · {unit}",color='#e2e8f0',fontsize=10)
+        self.ax_price.set_title('',loc='center');self.ax_price.set_title('',loc='right')
+        self.ax_price.set_title(f"{info['name']} · {self.timeframe.get()} · {source} / {meta['venue']} / {meta['symbol']} · {unit}",loc='left',color='#e2e8f0',fontsize=8)
         self.ax_price.set_ylabel(unit,color='#94a3b8')
         for key in ('price','ema10','ema30','support','resistance'):
             value=self.metrics[key].get()

@@ -6,12 +6,15 @@ from tkinter.scrolledtext import ScrolledText
 from i18n import tr,language
 
 SECTIONS={'overview':'Обзор','chart':'График','analysis':'Анализ','finances':'Финансы','reports':'Отчёты','news':'Новости','events':'События'}
-IDENTITY=('isin','name','symbol','profile_symbol','history_symbol','venue','currency','kind')
+IDENTITY=('isin','name','symbol','profile_symbol','history_symbol','venue','currency','kind','history_source','history_venue','timezone','unit','return_basis','volume_policy')
 
 def identity(info):return tuple(info.get(k) for k in IDENTITY)
 
 def load(app,info):
     """Read/format auxiliary records in the existing worker, never load a feed."""
+    if info.get('kind')=='benchmark':
+        from benchmark_display import information
+        return dict(info=info,benchmark=information(app.store,info),technical=None)
     from fundamentals_view import cache_matches,legacy_card,overview_rows,freshness
     card=app.store.setting('card:'+info['isin'],{})
     symbol=info.get('profile_symbol') or info.get('history_symbol')
@@ -45,7 +48,7 @@ def load(app,info):
 
 def technical(app,info,tf,period,cached):
     """Reuse the accepted calculation with the same revision/file guards."""
-    result={'technical':None}
+    result={'technical':None,'info':info}
     if not cached:return result
     from snapshot_worker import ALIASES
     values,prepared=cached
@@ -214,6 +217,9 @@ class Pages:
         for child in self.body.winfo_children():child.destroy()
         kind=self.active
         if kind=='analysis':self.analysis(packet);return
+        if packet.get('info',{}).get('kind')=='benchmark':
+            from benchmark_display import information_text
+            self.text(information_text(packet['info'],packet['benchmark'],kind));return
         data=packet['data'];info=packet['info']
         actions=ttk.Frame(self.body,style='Desk.TFrame');actions.pack(side='bottom',fill='x',pady=(6,0))
         if kind=='overview':ttk.Button(actions,text=tr('Карточка'),command=self.app.show_card).pack(side='right')
@@ -267,12 +273,18 @@ class Pages:
         technical=packet.get('technical')
         if technical is None:
             title,body=format_engine(None);self.text(title+'\n\n'+body);return
-        title,body=format_engine(technical['engine']);source=technical['source'];lang=language()
+        index=packet.get('info',{}).get('kind')=='benchmark'
+        title,body=(tr('ИНДЕКС'),tr('Рыночный контекст; торговые сигналы не рассчитываются.')) if index else format_engine(technical['engine'])
+        source=technical['source'];lang=language()
         lines=[title,technical['tf']+' · '+str(source.get('source') or '—')+' / '+str(source.get('venue') or '—')+' / '+str(source.get('currency') or '—'),
                tr('Последняя свеча')+': '+format_date(technical['latest'],language(),clock=True,assume_zone='Europe/Berlin'),tr('Закрытых свечей')+': '+str(technical['closed']),body,'',tr('Индикаторы последней свечи; формирующаяся свеча предварительная')]
         labels={'ema10':'EMA 10','ema30':'EMA 30','rsi':'RSI (14)','atr':'ATR (14)','macd':'MACD','macd_signal':'Signal MACD','volume':'Объём','volume_mean20':'Средний объём'}
-        for key,label in labels.items():lines.append(tr(label)+'\t'+format_value(technical['indicators'].get(key),lang,kind='number',compact=key in ('volume','volume_mean20'),digits=2 if key in ('volume','volume_mean20','ema10','ema30','rsi') else 3))
-        for key,label in [('support','Поддержка'),('resistance','Сопротивление'),('stop','Стоп сценария')]:lines.append(tr(label)+'\t'+format_value(technical['levels'].get(key),lang,kind='number',digits=3))
+        for key,label in labels.items():
+            if index and key in ('volume','volume_mean20'):continue
+            lines.append(tr(label)+'\t'+format_value(technical['indicators'].get(key),lang,kind='number',compact=key in ('volume','volume_mean20'),digits=2 if key in ('volume','volume_mean20','ema10','ema30','rsi') else 3))
+        for key,label in [('support','Поддержка'),('resistance','Сопротивление'),('stop','Стоп сценария')]:
+            if index and key=='stop':continue
+            lines.append(tr(label)+'\t'+format_value(technical['levels'].get(key),lang,kind='number',digits=3))
         self.text('\n'.join(lines))
     def finances(self,packet):
         from financial_format import format_value,format_date

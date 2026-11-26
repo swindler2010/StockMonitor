@@ -321,8 +321,10 @@ class Screen:
                 path = app.store.path
                 app.job(lambda: cached_quotes(path, tuple(x[0] for x in logo_signature)), self.show_quotes,
                         lambda _: None, lane='misc', key='main-screen-quotes')
+        benchmark=bool(selected and selected.get('kind')=='benchmark')
         for tf, button in self.tf_buttons.items():
-            button.configure(style='DeskActive.TButton' if tf == app.timeframe.get() else 'TButton')
+            button.configure(style='DeskActive.TButton' if tf == app.timeframe.get() else 'TButton',
+                             state='disabled' if benchmark and tf not in ('1D','1W','1M') else 'normal')
         for key, button in getattr(self, 'group_buttons', {}).items():
             button.configure(style='DeskActive.TButton' if key == self.group.get() else 'DeskGroup.TButton')
         self.schedule_deltas()
@@ -525,6 +527,8 @@ class Screen:
             self.app.refresh_chart()
 
     def choose_tf(self, tf):
+        info=next((x for x in self.app.watchlist if x['name']==self.app.symbol.get()),{})
+        if info.get('kind')=='benchmark' and tf not in ('1D','1W','1M'):return
         if tf != self.app.timeframe.get():
             self.app.timeframe.set(tf)
             self.app.refresh_chart()
@@ -558,6 +562,17 @@ class Screen:
                 selected=tf==self.app.timeframe.get()
                 cell.configure(style='DeskSelected.TFrame' if selected else 'DeskCard.TFrame')
                 label.configure(style='DeskSelected.TLabel' if selected else 'DeskSmall.TLabel')
+        benchmark=next((x.get('kind')=='benchmark' for x in self.app.watchlist if x['name']==self.app.symbol.get()),False)
+        if benchmark:
+            for variable in getattr(self,'condition_vars',{}).values():variable.set('—')
+            self.strength.set('—');self.progress['value']=0
+            self.app.decision.set(tr('ИНДЕКС'))
+            self.signal_caption.set(tr('ИНДЕКС')+f' ({self.app.timeframe.get()})')
+            self.signal_reason.set(tr('Рыночный контекст; торговые сигналы не рассчитываются.'))
+            if hasattr(self,'quality_panel'):
+                self.quality_panel.analysis.set(tr('Рыночный контекст; торговые сигналы не рассчитываются.'))
+                self.quality_panel.analysis_label.configure(style='DeskMuted.TLabel')
+            return
         if hasattr(self, 'condition_vars'):
             selected = contexts.get(self.app.timeframe.get()) or {}
             facts = selected.get('facts') or {} if isinstance(selected, dict) else {}
@@ -588,6 +603,8 @@ class Screen:
             self.quality.set(tr('Нет подтверждённого ряда'))
             return
         meta = frame.attrs
+        info=next((x for x in self.app.watchlist if x['name']==self.app.symbol.get()),{})
+        benchmark=info.get('kind')=='benchmark'
         self.sync_text.set(tr('Синхронизация: ОК'))
         self.sync_label.configure(style='DeskSyncGood.TLabel')
         self.listing.set(' · '.join(str(meta.get(k) or '—') for k in ('venue', 'currency', 'source')))
@@ -604,6 +621,21 @@ class Screen:
             for name, (variable, label) in self.source_rows.items():
                 variable.set(('✓ ' + timestamp) if used.get(name) else '—')
                 label.configure(style='DeskPositive.TLabel' if used.get(name) else 'DeskMuted.TLabel')
+        if hasattr(self,'source_captions'):
+            provider='Cboe' if meta.get('source')=='cboe' else 'Yahoo Finance'
+            index_rows={'GETTEX':(provider,frame.index[-1].strftime('%d.%m %H:%M')),
+                'Xetra':(tr('Индекс'),meta.get('symbol','—')),
+                'LSEG / Refinitiv':(tr('Валюта источника'),meta.get('currency','—')),
+                'financial.com':(tr('Часовой пояс'),meta.get('timezone','—'))}
+            for name,caption in self.source_captions.items():
+                caption.configure(text=index_rows[name][0] if benchmark else name)
+                if benchmark:
+                    variable,label=self.source_rows[name];variable.set(index_rows[name][1]);label.configure(style='DeskMuted.TLabel')
+        if benchmark:
+            self.source_summary.set(('Cboe' if meta.get('source')=='cboe' else 'Yahoo Finance')+' · '+str(meta.get('symbol','—')))
+            self.header_volume.set(tr('Объём: не применяется к индексу'))
+            self.signal_caption.set(tr('ИНДЕКС')+f' ({self.app.timeframe.get()})')
+            self.signal_reason.set(tr('Рыночный контекст; торговые сигналы не рассчитываются.'))
         close = finite_float(frame.close.iloc[-1])
         delta = '—'
         if len(frame) > 1:
@@ -1118,10 +1150,12 @@ def build(app, periods, bg, text):
     screen.source_summary = tk.StringVar(app.root, '—')
     screen.listing = tk.StringVar(app.root, '—')
     screen.source_rows = {}
+    screen.source_captions = {}
     for name in ('GETTEX','Xetra','LSEG / Refinitiv','financial.com'):
         row = ttk.Frame(sources, style='Desk.TFrame')
         row.pack(fill='x', pady=1)
-        ttk.Label(row, text=name, style='DeskSmall.TLabel').pack(side='left')
+        caption=ttk.Label(row, text=name, style='DeskSmall.TLabel');caption.pack(side='left')
+        screen.source_captions[name]=caption
         variable = tk.StringVar(app.root, '—')
         label = ttk.Label(row, textvariable=variable, style='DeskMuted.TLabel', font=('Segoe UI', 9))
         label.pack(side='right')

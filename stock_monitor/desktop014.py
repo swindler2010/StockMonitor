@@ -754,6 +754,10 @@ class Desktop014:
         self.fig.clear();self.panels=[]
         render_timing.mark('clear_figure')
         settings={**DEFAULT_IND,**self.store.setting('global_indicators',{})}
+        if info.get('kind')=='benchmark':
+            # Local presentation only: an index has no executable trade volume.
+            # Do not rewrite the owner's saved indicators for stock charts.
+            settings.update({'Объём':False,'Средний объём':False,'Относительный объём':False,'Volume Profile':False})
         panel_names=[k for k in ('Объём','RSI','MACD','ATR','Относительный объём') if settings.get(k)]
         main=hasattr(self,'main_screen')
         heights=([5]+[1.1 if name=='Объём' else 1 for name in panel_names]) if main else [4]+[1.4 if name=='Объём' else 1 for name in panel_names]

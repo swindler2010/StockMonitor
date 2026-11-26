@@ -1,0 +1,364 @@
+{
+  "checked_at": "2026-11-26T14:24:14.630031+00:00",
+  "scope": "six direct catalogue indices, read-only same SQL view, actual chart preparation",
+  "initial_blank_daily_indices": 6,
+  "results": [
+    {
+      "isin": "INDEX:DAX",
+      "tf": "1D",
+      "shown": 2166,
+      "first": "2018-05-22 00:00:00",
+      "last": "2026-11-26 00:00:00",
+      "quality": "READY",
+      "display_only": false,
+      "source": {
+        "source": "proxy",
+        "symbol": "^GDAXI",
+        "venue": "GER",
+        "currency": "EUR",
+        "timezone": "Europe/Berlin"
+      },
+      "seconds": 1.172,
+      "engine_status": null
+    },
+    {
+      "isin": "INDEX:DAX",
+      "tf": "1W",
+      "shown": 445,
+      "first": "2018-05-25 00:00:00",
+      "last": "2026-11-27 00:00:00",
+      "quality": "READY",
+      "display_only": false,
+      "source": {
+        "source": "proxy",
+        "symbol": "^GDAXI",
+        "venue": "GER",
+        "currency": "EUR",
+        "timezone": "Europe/Berlin"
+      },
+      "seconds": 2.313,
+      "engine_status": null
+    },
+    {
+      "isin": "INDEX:DAX",
+      "tf": "1M",
+      "shown": 103,
+      "first": "2018-05-01 00:00:00",
+      "last": "2026-11-01 00:00:00",
+      "quality": "INVALID",
+      "display_only": true,
+      "source": {
+        "source": "proxy",
+        "symbol": "^GDAXI",
+        "venue": "GER",
+        "currency": "EUR",
+        "timezone": "Europe/Berlin"
+      },
+      "seconds": 0.484,
+      "engine_status": "DATA BLOCKED"
+    },
+    {
+      "isin": "INDEX:NDX",
+      "tf": "1D",
+      "shown": 5065,
+      "first": "2006-10-09 00:00:00",
+      "last": "2026-11-25 00:00:00",
+      "quality": "READY",
+      "display_only": false,
+      "source": {
+        "source": "proxy",
+        "symbol": "^NDX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "seconds": 1.484,
+      "engine_status": null
+    },
+    {
+      "isin": "INDEX:NDX",
+      "tf": "1W",
+      "shown": 1051,
+      "first": "2006-10-13 00:00:00",
+      "last": "2026-11-27 00:00:00",
+      "quality": "READY",
+      "display_only": false,
+      "source": {
+        "source": "proxy",
+        "symbol": "^NDX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "seconds": 5.36,
+      "engine_status": null
+    },
+    {
+      "isin": "INDEX:NDX",
+      "tf": "1M",
+      "shown": 242,
+      "first": "2006-10-01 00:00:00",
+      "last": "2026-11-01 00:00:00",
+      "quality": "INVALID",
+      "display_only": true,
+      "source": {
+        "source": "proxy",
+        "symbol": "^NDX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "seconds": 1.234,
+      "engine_status": "DATA BLOCKED"
+    },
+    {
+      "isin": "INDEX:SOX",
+      "tf": "1D",
+      "shown": 5065,
+      "first": "2006-10-09 00:00:00",
+      "last": "2026-11-25 00:00:00",
+      "quality": "READY",
+      "display_only": false,
+      "source": {
+        "source": "proxy",
+        "symbol": "^SOX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "seconds": 0.406,
+      "engine_status": null
+    },
+    {
+      "isin": "INDEX:SOX",
+      "tf": "1W",
+      "shown": 1051,
+      "first": "2006-10-13 00:00:00",
+      "last": "2026-11-27 00:00:00",
+      "quality": "READY",
+      "display_only": false,
+      "source": {
+        "source": "proxy",
+        "symbol": "^SOX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "seconds": 4.422,
+      "engine_status": null
+    },
+    {
+      "isin": "INDEX:SOX",
+      "tf": "1M",
+      "shown": 242,
+      "first": "2006-10-01 00:00:00",
+      "last": "2026-11-01 00:00:00",
+      "quality": "INVALID",
+      "display_only": true,
+      "source": {
+        "source": "proxy",
+        "symbol": "^SOX",
+        "venue": "NIM",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "seconds": 1.203,
+      "engine_status": "DATA BLOCKED"
+    },
+    {
+      "isin": "INDEX:SP500",
+      "tf": "1D",
+      "shown": 5065,
+      "first": "2006-10-09 00:00:00",
+      "last": "2026-11-25 00:00:00",
+      "quality": "READY",
+      "display_only": false,
+      "source": {
+        "source": "proxy",
+        "symbol": "^GSPC",
+        "venue": "SNP",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "seconds": 1.688,
+      "engine_status": null
+    },
+    {
+      "isin": "INDEX:SP500",
+      "tf": "1W",
+      "shown": 1051,
+      "first": "2006-10-13 00:00:00",
+      "last": "2026-11-27 00:00:00",
+      "quality": "READY",
+      "display_only": false,
+      "source": {
+        "source": "proxy",
+        "symbol": "^GSPC",
+        "venue": "SNP",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "seconds": 5.609,
+      "engine_status": null
+    },
+    {
+      "isin": "INDEX:SP500",
+      "tf": "1M",
+      "shown": 242,
+      "first": "2006-10-01 00:00:00",
+      "last": "2026-11-01 00:00:00",
+      "quality": "INVALID",
+      "display_only": true,
+      "source": {
+        "source": "proxy",
+        "symbol": "^GSPC",
+        "venue": "SNP",
+        "currency": "USD",
+        "timezone": "America/New_York"
+      },
+      "seconds": 1.266,
+      "engine_status": "DATA BLOCKED"
+    },
+    {
+      "isin": "INDEX:STOXX600",
+      "tf": "1D",
+      "shown": 133,
+      "first": "2026-05-26 00:00:00",
+      "last": "2026-11-26 00:00:00",
+      "quality": "READY",
+      "display_only": false,
+      "source": {
+        "source": "proxy",
+        "symbol": "^STOXX",
+        "venue": "ZRH",
+        "currency": "EUR",
+        "timezone": "Europe/Zurich"
+      },
+      "seconds": 0.141,
+      "engine_status": null
+    },
+    {
+      "isin": "INDEX:STOXX600",
+      "tf": "1W",
+      "shown": 27,
+      "first": "2026-05-29 00:00:00",
+      "last": "2026-11-27 00:00:00",
+      "quality": "INVALID",
+      "display_only": true,
+      "source": {
+        "source": "proxy",
+        "symbol": "^STOXX",
+        "venue": "ZRH",
+        "currency": "EUR",
+        "timezone": "Europe/Zurich"
+      },
+      "seconds": 0.218,
+      "engine_status": "DATA BLOCKED"
+    },
+    {
+      "isin": "INDEX:STOXX600",
+      "tf": "1M",
+      "shown": 7,
+      "first": "2026-05-01 00:00:00",
+      "last": "2026-11-01 00:00:00",
+      "quality": "INVALID",
+      "display_only": true,
+      "source": {
+        "source": "proxy",
+        "symbol": "^STOXX",
+        "venue": "ZRH",
+        "currency": "EUR",
+        "timezone": "Europe/Zurich"
+      },
+      "seconds": 0.094,
+      "engine_status": "DATA BLOCKED"
+    },
+    {
+      "isin": "INDEX:VIX",
+      "tf": "1D",
+      "shown": 1006,
+      "first": "2023-01-03 00:00:00",
+      "last": "2026-11-24 00:00:00",
+      "quality": "STALE",
+      "display_only": true,
+      "source": {
+        "source": "cboe",
+        "symbol": "VIX",
+        "venue": "CXI",
+        "currency": "USD",
+        "timezone": "America/Chicago"
+      },
+      "seconds": 0.188,
+      "engine_status": "DATA BLOCKED"
+    },
+    {
+      "isin": "INDEX:VIX",
+      "tf": "1W",
+      "shown": 204,
+      "first": "2023-01-06 00:00:00",
+      "last": "2026-11-27 00:00:00",
+      "quality": "INVALID",
+      "display_only": true,
+      "source": {
+        "source": "cboe",
+        "symbol": "VIX",
+        "venue": "CXI",
+        "currency": "USD",
+        "timezone": "America/Chicago"
+      },
+      "seconds": 1.359,
+      "engine_status": "DATA BLOCKED"
+    },
+    {
+      "isin": "INDEX:VIX",
+      "tf": "1M",
+      "shown": 47,
+      "first": "2023-01-01 00:00:00",
+      "last": "2026-11-01 00:00:00",
+      "quality": "INVALID",
+      "display_only": true,
+      "source": {
+        "source": "cboe",
+        "symbol": "VIX",
+        "venue": "CXI",
+        "currency": "USD",
+        "timezone": "America/Chicago"
+      },
+      "seconds": 0.516,
+      "engine_status": "DATA BLOCKED"
+    }
+  ],
+  "windows_verification": {
+    "date": "2026-11-26",
+    "timezone": "Europe/Berlin",
+    "times": "15:39–15:43 CET",
+    "indices_daily": [
+      "DAX",
+      "NDX",
+      "SP500",
+      "SOX",
+      "STOXX600",
+      "VIX"
+    ],
+    "overview": "DAX source, timezone, points, price, depth and DQ visible",
+    "analysis": "DAX EMA/RSI/MACD/ATR and 2165 closed bars visible",
+    "weekly_monthly": "VIX visible with original INVALID / PARTIAL",
+    "stale": "VIX 1D STALE / PARTIAL, last 2026-11-24",
+    "volume": "Index volume and Volume Profile panels hidden locally",
+    "instance": "84259a1d6062ad58c5d4ca9d5cc94930",
+    "final_ui_status": "PASS"
+  },
+  "final_ui_verification": {
+    "instance": "24ef28aefad1a1a5f06ed41083620a04",
+    "local_time": "2026-11-26 15:54–15:56 Europe/Berlin",
+    "status": "PASS",
+    "live_checks": [
+      "DAX 1D graph and cleared index conditions",
+      "Top intraday disabled for index",
+      "Side 1H leaves DAX on 1D",
+      "Alphabet returns all stock TF controls and volume/Volume Profile"
+    ],
+    "isolated_Tk_regression": "stock→index→stock with prefilled old conditions PASS",
+    "new_restarts_planned": false
+  }
+}

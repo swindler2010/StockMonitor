@@ -3031,19 +3031,19 @@
     "ru": "пункты волатильности"
   },
   "price": {
-    "en": "price return",
-    "de": "Kursrendite",
-    "ru": "ценовая доходность"
+    "en": "Price index",
+    "de": "Kursindex",
+    "ru": "Ценовой индекс"
   },
   "performance (includes dividends)": {
-    "en": "total return (includes dividends)",
-    "de": "Gesamtrendite (einschließlich Dividenden)",
-    "ru": "полная доходность (включая дивиденды)"
+    "en": "Performance index (includes dividends)",
+    "de": "Performanceindex (einschließlich Dividenden)",
+    "ru": "Индекс полной доходности (включает дивиденды)"
   },
   "volatility": {
-    "en": "volatility",
-    "de": "Volatilität",
-    "ru": "волатильность"
+    "en": "Volatility index",
+    "de": "Volatilitätsindex",
+    "ru": "Индекс волатильности"
   },
   "VIX is volatility context, not an equity performance benchmark": {
     "en": "VIX is volatility context, not an equity performance benchmark",
@@ -6485,5 +6485,49 @@
   "Данные реального счёта V1 ещё не загружены.": {
     "en": "The real V1 account data has not loaded yet.",
     "de": "Die Daten des realen V1-Kontos sind noch nicht geladen."
+  },
+  "Последнее значение": {
+    "en": "Latest value",
+    "de": "Letzter Wert"
+  },
+  "Рыночный контекст; торговые сигналы не рассчитываются.": {
+    "en": "Market context; trading signals are not calculated.",
+    "de": "Marktkontext; es werden keine Handelssignale berechnet."
+  },
+  "Сохранённые расчёты: {saved} · Пересчитываем: {changed}": {
+    "en": "Saved assessments: {saved} · Recalculating: {changed}",
+    "de": "Gespeicherte Bewertungen: {saved} · Neuberechnung: {changed}"
+  },
+  "Объём: не применяется к индексу": {
+    "en": "Volume: not applicable to an index",
+    "de": "Volumen: für einen Index nicht anwendbar"
+  },
+  "Прямой индекс · рыночный контекст": {
+    "en": "Direct index · market context",
+    "de": "Direkter Index · Marktkontext"
+  },
+  "Доступные интервалы: 1D / 1W / 1M. Внутридневная история этим источником не предоставляется.": {
+    "en": "Available intervals: 1D / 1W / 1M. This source does not provide intraday history.",
+    "de": "Verfügbare Intervalle: 1D / 1W / 1M. Diese Quelle liefert keine Intraday-Historie."
+  },
+  "Валюта источника": {
+    "en": "Source currency",
+    "de": "Quellwährung"
+  },
+  "Часовой пояс": {
+    "en": "Time zone",
+    "de": "Zeitzone"
+  },
+  "Свечей в архиве": {
+    "en": "Archived candles",
+    "de": "Kerzen im Archiv"
+  },
+  "Это индекс, а не компания: корпоративная отчётность, прибыль и дивиденды эмитента не применяются.": {
+    "en": "This is an index, not a company: issuer financial statements, earnings and dividends do not apply.",
+    "de": "Dies ist ein Index, kein Unternehmen: Unternehmensberichte, Gewinne und Emittentendividenden sind nicht anwendbar."
+  },
+  "Тип индекса": {
+    "en": "Index type",
+    "de": "Indextyp"
   }
 }

@@ -394,6 +394,11 @@ def select_display(info,tf,normal,store,now=None):
     Existing loaders, DQ and projection only; no joins, downloads or writes.
     The complete original quality report remains attached even to safe parts.
     """
+    # Direct indices have a separate, exact catalogue identity. The stock EUR
+    # listing projector must never discard them or substitute a traded listing.
+    if info.get('kind')=='benchmark':
+        from benchmark_display import select_frame
+        return select_frame(info,tf,normal,store,now)
     from analytics import resample,bar_ends,RANK
     from eur_listings import confirmed_listing,venue_allowed
     import gettex_chart
