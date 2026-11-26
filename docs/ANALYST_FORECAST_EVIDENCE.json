@@ -1,0 +1,27 @@
+{
+  "generated_at": "2026-11-26T21:59:42.751831+00:00",
+  "status": "READY_FOR_SHARED_RELOAD",
+  "tests": 28,
+  "stocks": 106,
+  "configured_profiles": 75,
+  "missing_profiles": 31,
+  "oracle": {
+    "history": 501,
+    "decisions": 100,
+    "recommendations": 42,
+    "currency": "USD"
+  },
+  "moderna": {
+    "identity": "US60770K1079",
+    "symbol": "MRNA",
+    "history": 501
+  },
+  "direct_candle_writes": 0,
+  "files": {
+    "stock_monitor/analyst_forecast.py": "e6e0102047665587531db0e7d8baefaebc849de6aaabbaa0cd676880864bbb14",
+    "stock_monitor/analyst_forecast_view.py": "6972518aa5afe3d312c49795484d4baf0b053133f4eba5c79910fca5033ef858",
+    "stock_monitor/workspace_pages.py": "df682680b0168686ebe229520cef1e3f5b7c4bddaedc4bf438003ce07678c037",
+    "stock_monitor/ui_messages.json": "f78190f8feed9155f653cf597dd369458712baea9712f83dfb48f9200c69eaf9",
+    "test_analyst_forecast.py": "933d00ae9032ca008f1c5ea54656b6a5c3ae2989283c2f9479290b36dacdc2d0"
+  }
+}

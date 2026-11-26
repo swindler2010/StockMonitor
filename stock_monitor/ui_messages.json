@@ -6553,5 +6553,6 @@
   "Минутная история (база 1m)": {
     "en": "Minute history (1m base)",
     "de": "Minutenhistorie (1m-Basis)"
-  }
+  },
+  "Прогноз аналитиков": {"de": "Analystenprognose", "en": "Analyst forecast"}
 }

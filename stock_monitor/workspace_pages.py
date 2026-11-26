@@ -5,7 +5,7 @@ from tkinter import ttk
 from tkinter.scrolledtext import ScrolledText
 from i18n import tr,language
 
-SECTIONS={'overview':'Обзор','chart':'График','analysis':'Анализ','finances':'Финансы','reports':'Отчёты','news':'Новости','events':'События'}
+SECTIONS={'overview':'Обзор','chart':'График','analysis':'Анализ','finances':'Финансы','reports':'Отчёты','news':'Новости','events':'События','forecast':'Прогноз аналитиков'}
 IDENTITY=('isin','name','symbol','profile_symbol','history_symbol','venue','currency','kind','history_source','history_venue','timezone','unit','return_basis','volume_policy')
 
 def identity(info):return tuple(info.get(k) for k in IDENTITY)
@@ -169,11 +169,14 @@ class Pages:
             self.news=Dialog(self.app,parent=self.host);return
         self.heading=ttk.Frame(self.host,padding=(15,10),style='DeskCard.TFrame');self.heading.pack(fill='x',pady=(3,8))
         self.title=ttk.Label(self.heading,text=tr(SECTIONS[section])+' • '+str(self.context[0].get('name') or ''),style='DeskTitle.TLabel');self.title.pack(side='left')
-        ttk.Button(self.heading,text=tr('Обновить'),command=self.request).pack(side='right')
+        ttk.Button(self.heading,text=tr('Обновить'),command=lambda:self.request(refresh=True)).pack(side='right')
+        if section=='forecast' and self.context[0].get('kind')!='benchmark':
+            from analyst_forecast_view import show,word
+            ttk.Button(self.heading,text=word('expand'),command=lambda:show(self.app,dict(self.context[0]))).pack(side='right',padx=5)
         self.body=ttk.Frame(self.host,padding=12,style='DeskCard.TFrame');self.body.pack(fill='both',expand=True)
         self.note=ttk.Label(self.body,text=tr('Чтение сохранённых данных…'),style='DeskMuted.TLabel');self.note.pack(anchor='w',pady=8)
         self.request()
-    def request(self):
+    def request(self,refresh=False):
         if self.closed or self.active in ('chart','news'):return
         captured=self.capture();self.context=captured;self.sequence+=1;serial=self.sequence;section=self.active
         info,tf,period,lang=captured
@@ -198,12 +201,25 @@ class Pages:
                 except Exception:valid=False
                 if not valid:packet['technical']=None
             self.model=packet;self.render(packet)
+            if section=='forecast' and not refresh and info.get('kind')!='benchmark':
+                from analyst_forecast import due
+                if due(packet.get('forecast',{}),info):self.request(refresh=True)
         def failed(_):
             if not self.closed and serial==self.sequence and section==self.active and self.same(captured):
                 for child in self.body.winfo_children():child.destroy()
                 ttk.Label(self.body,text=tr('Данные временно недоступны. Повторите обновление.'),style='DeskMuted.TLabel',wraplength=600).pack(anchor='w')
-        work=(lambda:technical(self.app,info,tf,period,cached)) if section=='analysis' else (lambda:load(self.app,info))
-        if self.app.job(work,done,failed,lane='chart',key=('workspace-section',id(self),serial)) is False:failed(None)
+        if section=='forecast':
+            from analyst_forecast import load as forecast_load
+            work=lambda:dict(info=info,forecast=forecast_load(self.app,info,refresh=refresh),technical=None)
+            key=('analyst-forecast',info['isin']) if refresh else ('workspace-section',id(self),serial)
+        else:
+            work=(lambda:technical(self.app,info,tf,period,cached)) if section=='analysis' else (lambda:load(self.app,info))
+            key=('workspace-section',id(self),serial)
+        if self.app.job(work,done,failed,lane='misc' if section=='forecast' else 'chart',key=key) is False:
+            if section=='forecast' and self.model:
+                from analyst_forecast_view import word
+                ttk.Label(self.body,text=word('partial'),style='DeskMuted.TLabel').pack(anchor='w')
+            else:failed(None)
         if self.timer is not None:self.app.root.after_cancel(self.timer)
         self.timer=self.app.root.after(60000,self.periodic)
     def periodic(self):self.timer=None;self.request()
@@ -217,6 +233,9 @@ class Pages:
         for child in self.body.winfo_children():child.destroy()
         kind=self.active
         if kind=='analysis':self.analysis(packet);return
+        if kind=='forecast':
+            from analyst_forecast_view import Panel
+            self.forecast_panel=Panel(self.body,self.app,packet['info'],packet.get('forecast',{}));return
         if packet.get('info',{}).get('kind')=='benchmark':
             from benchmark_display import information_text
             self.text(information_text(packet['info'],packet['benchmark'],kind));return
