@@ -26,10 +26,55 @@ def new_slots(db,codes,previous,now):
     return boosted
 
 
+# Only instrument-specific admission failures can release the next candidate.
+# Temporary database, revision or application errors leave the leader eligible.
+V2_LOCAL_REJECTIONS = frozenset({
+    'V2_CASH_OR_RISK', 'V2_REWARD_AFTER_COSTS', 'V2_PRICE_OR_QUOTE_CHANGED',
+    'PAPER_STALE_QUOTE', 'PAPER_NO_CLOSED_BAR', 'PAPER_AUTO_IDENTITY_BLOCKED',
+    'PAPER_NO_LISTING_REVISION', 'PAPER_AUTO_QUOTE_IDENTITY_BLOCKED',
+    'PAPER_AUTO_IDENTITY_CHANGED',
+})
+
+
+def ranked_candidate(queue, previous, allowed=None):
+    """Return the first untried candidate for this exact quote and model."""
+    for code in queue['candidates']:
+        if allowed is not None and code not in allowed:
+            continue
+        row = previous.get(code, {})
+        if (row.get('v2_queue_key') == queue['key']
+                and row.get('v2_attempted_isin') == code
+                and row.get('v2_candidate_rejected') is True):
+            continue
+        return code
+    return None
+
+
+def candidate_rejected(report):
+    if report.get('state') != 'BLOCKED' or not report.get('v2_attempted_isin'):
+        return False
+    blocker = report.get('execution_blocker') or report.get('quote_blocker')
+    if blocker:
+        return blocker.split(': ')[-1] in V2_LOCAL_REJECTIONS
+    return report.get('core') in ('DATA BLOCKED', 'DATA_BLOCKED')
+
+
 def ranked_slots(codes,previous,now):
     """Route an already ranked basket winner to its own full guarded CORE job."""
     ranked=set()
+    allowed=set(codes)
     for status in previous.values():
+        queue = status.get('v2_queue')
+        if queue:
+            stamp = pd.Timestamp(queue['quote_at']).timestamp()
+            if 0 <= now-stamp <= 900:
+                candidate = ranked_candidate(queue, previous, allowed)
+                row = previous.get(candidate, {})
+                waiting_for_leader = (row.get('v2_queue_key') == queue['key']
+                                      and row.get('reason') == 'V2_HIGHER_RANKED_STOCK')
+                if candidate and (waiting_for_leader or row.get('next_check', 0) <= now):
+                    ranked.add(candidate)
+            continue
         code=status.get('v2_ranked_isin');stamp=status.get('quote_at')
         if (code not in codes or status.get('reason')!='V2_HIGHER_RANKED_STOCK' or not stamp
                 or status.get('v2_market_source')!='gettex'):continue
