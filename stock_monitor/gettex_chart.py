@@ -222,6 +222,7 @@ def retire_recovered_rejections(db, info, meta, base, recovered, now):
     source, an unclosed replacement or a changed listing cannot retire a fault.
     This is not completeness, freshness, risk or execution approval.
     """
+    meta = {key: meta.get(key) for key in quality.IDENTITY}
     if meta.get('source') != SOURCE or base not in BASES or recovered.empty:
         return 0
     saved_key = state_key(info['isin'], base)

@@ -5,7 +5,7 @@
   "cases": [
     {
       "id": "recovered_native_row_retires_source_quarantine_atomically",
-      "title": "Исправленная свеча оставалась в списке отклонённых исходных строк",
+      "title": "������������ ����� ���������� � ������ ����������� �������� �����",
       "sources": [
         "gettex_chart"
       ],
@@ -13,23 +13,24 @@
         "INVALID",
         "PARTIAL"
       ],
-      "status": "SOURCE FIXED; 5 new + 10 affected PASS; runtime reload and natural production recovery pending",
+      "status": "SOURCE FIXED; 6 new + 10 affected PASS; runtime reload and natural production recovery pending",
       "steps": [
-        "Повторно проверить точную source/venue/currency/symbol/timezone, закрытие и OHLCV восстановленного окна.",
-        "В той же транзакции после штатной записи и проверки lineage сверить фактически записанные строки с проверенным replacement.",
-        "Удалить из rejected_timestamps только совпавшие восстановленные даты; остальные даты, исходные квитанции, DQ, freshness и риск сохранить.",
-        "Откат после позднего сбоя возвращает свечи и метаданные вместе. Не объявлять source completeness или торговый допуск."
+        "�������� ��������� ������ source/venue/currency/symbol/timezone, �������� � OHLCV ���������������� ����.",
+        "� ��� �� ���������� ����� ������� ������ � �������� lineage ������� ���������� ���������� ������ � ����������� replacement.",
+        "������� �� rejected_timestamps ������ ��������� ��������������� ����; ��������� ����, �������� ���������, DQ, freshness � ���� ���������.",
+        "����� ����� �������� ���� ���������� ����� � ���������� ������. �� ��������� source completeness ��� �������� ������."
       ],
       "evidence": {
         "test": "test_cp_recovered_quarantine.py",
         "before": "2 FAIL / 3 PASS",
-        "after": "5/5 PASS; affected native reject scope 10/10 PASS",
+        "after": "6/6 PASS including ordinary archive full-frame metadata; affected native reject scope 10/10 PASS",
         "real_candle_writes_by_work": 0,
-        "production_retired_rejections": 0
+        "production_retired_rejections": 0,
+        "ordinary_archive_before": "Full frame metadata prevented retirement; targeted regression FAIL before canonical identity projection, PASS after"
       },
       "limits": [
-        "Не снимает неопределённость отсутствующего объёма или конфликта биржевого уведомления.",
-        "Наличие строки без подтверждённого восстановления само по себе не разрешает снимать прежнее отклонение."
+        "�� ������� ��������������� �������������� ������ ��� ��������� ��������� �����������.",
+        "������� ������ ��� �������������� �������������� ���� �� ���� �� ��������� ������� ������� ����������."
       ],
       "report": "docs/CP_MAIN_PANEL_INVALID_RU.md"
     },
@@ -3334,5 +3335,5 @@
       "sha256_at_import": "1cdb3ec4c375da282bcdcc62de0eeba30ea30f1c7d1bd76bcd03f37d62c8da57"
     }
   ],
-  "updated_at": "2026-11-26T10:47:17.993Z"
+  "updated_at": "2026-11-26T10:56:38.116Z"
 }

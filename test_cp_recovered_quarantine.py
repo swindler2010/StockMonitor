@@ -11,14 +11,14 @@ from test_cp_tv_legacy_reference import FlatStore
 
 class RecoveredQuarantine(unittest.TestCase):
  def setUp(self):
-  root=Path(__file__).parent.parent.parent/'СМ-Архив'
+  root=Path(__file__).parent.parent.parent/'��-�����'
   f=tempfile.NamedTemporaryFile(dir=root,prefix='CP repaired quarantine ',suffix='.sqlite3',delete=False)
   self.path=Path(f.name);f.close();self.store=FlatStore(self.path);self.addCleanup(self.cleanup)
   self.info=dict(isin='US0378331005',name='Fixture',kind='stock')
   self.store.save_instrument(self.info);self.meta=g.identity(self.info['isin'],'APC.GTX')
   self.now=pd.Timestamp('2026-11-13T12:00Z');self.at='2026-11-13 11:35:00'
   self.key=g.state_key(self.info['isin'],'5m')
-  report=dict(state='INVALID',identity=self.meta,base_tf='5m',issues=['Невозможные OHLC/цены/объёмы'],
+  report=dict(state='INVALID',identity=self.meta,base_tf='5m',issues=['����������� OHLC/����/������'],
        ranges=[[self.at,self.at]],repairable=True,rejected_timestamps=[self.at])
   self.saved=dict(state='PARTIAL',quality='INVALID',identity=self.meta,
        listing_proof={**self.meta,'isin':self.info['isin'],'status':'CONFIRMED'},
@@ -33,10 +33,10 @@ class RecoveredQuarantine(unittest.TestCase):
   self.store.read_cache.close()
   for suffix in ('','-wal','-shm'):Path(str(self.path)+suffix).unlink(missing_ok=True)
 
- def repair(self,frame=None):
+ def repair(self,frame=None,meta=None):
   candidate=self.full if frame is None else frame
   with patch.object(cp_experience,'local_recovery',return_value=(None,False)):
-   return dq.repair(self.info,self.store,self.meta['symbol'],'5m',self.meta,
+   return dq.repair(self.info,self.store,self.meta['symbol'],'5m',self.meta if meta is None else meta,
           lambda *a,**kw:candidate.copy(),now=self.now,max_ranges=1)
 
  def test_real_source_repair_removes_only_resolved_rejection_and_preserves_raw_receipt(self):
@@ -77,5 +77,12 @@ class RecoveredQuarantine(unittest.TestCase):
   with patch.object(cp_experience,'record',side_effect=record):self.repair()
   self.assertEqual(self.store.setting(self.key),self.saved)
   self.assertNotIn(pd.Timestamp(self.at),g._load_native(self.store,self.info,'5m').index)
+
+ def test_ordinary_archive_repair_accepts_full_frame_metadata_without_losing_identity(self):
+  meta={**self.meta,'timeframe':'5m','classify_absence':True,'listing_proof':self.saved['listing_proof']}
+  before=copy.deepcopy(meta);result=self.repair(meta=meta)
+  self.assertEqual(result['recovery_completed_ranges'],[[self.at,self.at]])
+  self.assertNotIn('archive_invalid',self.store.setting(self.key))
+  self.assertEqual(meta,before)
 
 if __name__=='__main__':unittest.main()
