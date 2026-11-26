@@ -15,7 +15,7 @@ def read(db,key,default=None):
 def write(db,key,value):db.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',(key,json.dumps(value,ensure_ascii=False,allow_nan=False)))
 def repair_id(problem):return digest({k:problem.get(k) for k in ('isin','kind','identity','tf','range','report_key')})
 
-def problems(db,isin):
+def problems(db,isin,*,include_source_quarantines=False):
     """Saved reports only. IDs bind the named defect, not unrelated new bars."""
     import data_quality as dq
     rows=[]
@@ -32,11 +32,26 @@ def problems(db,isin):
         if state=='READY':continue
         for span in q.get('ranges') or [None]:
             add('archive',q.get('identity',{}),q.get('base_tf',key.rsplit(':',1)[-1]),state,q.get('issues',[]),span,key)
+    if include_source_quarantines:
+        # The native loader publishes quarantines separately from data_quality.
+        # Expose that exact source fault to the SAME ordinary recovery mechanism.
+        from gettex_chart import pending_source_rejections,state_key,BASES
+        seen={(p['tf'],digest(p['identity']),tuple(p.get('range') or ())) for p in rows}
+        source_keys=[state_key(isin,base) for base in (*BASES,'1M')]
+        for source_key,payload in db.execute('SELECT key,value FROM settings WHERE key IN ('+','.join('?' for _ in source_keys)+')',source_keys):
+            saved=json.loads(payload);meta=saved.get('identity') or {};base=source_key.rsplit(':',1)[-1]
+            fault=saved.get('archive_invalid') or {}
+            for at in pending_source_rejections({'isin':isin},saved,meta,base):
+                span=[at,at];binding=(base,digest(meta),tuple(span))
+                if binding in seen:continue
+                add('archive',meta,base,'INVALID',fault.get('issues') or ['Источник отклонил исходное наблюдение; нужно подтверждение'],span,source_key)
+                seen.add(binding)
     record=read(db,'cp_eligibility:'+isin,{})
     for tf,row in record.get('timeframes',{}).items():
         for reason in row.get('blockers',[]):
             add('context',row.get('identity',{}),tf,'ANALYSIS_BLOCKED',[reason],count=row.get('count'))
     return list({r['id']:r for r in rows}.values())
+
 
 def view(db,isin):
     grants=read(db,'cp_manual_risk:'+isin,{'accepted':{}})
@@ -44,7 +59,8 @@ def view(db,isin):
     requests=read(db,'cp_repair_requests:'+isin,{})
     return [dict(p,accepted=p['id'] in accepted,accepted_by=accepted.get(p['id'],{}).get('actor'),
                  acceptance_evidence=accepted.get(p['id'],{}).get('evidence'),repair=requests.get(repair_id(p)),
-                 historical_review=grants.get('historical_review',{}).get('results',{}).get(p['id'])) for p in problems(db,isin)]
+                 historical_review=grants.get('historical_review',{}).get('results',{}).get(p['id'])) for p in problems(db,isin,include_source_quarantines=True)]
+
 
 def gap_price_estimate(db,problem,now=None,memo=None):
     """Read-only estimate for a saved missing range, never an OHLCV row.
@@ -1212,7 +1228,7 @@ def _queue_repair(db,problem,at,origin=None):
 def request_repair(store,problem,priority=False):
     isin=problem['isin']
     with store.connect() as db:
-        db.execute('BEGIN IMMEDIATE');current={p['id']:p for p in problems(db,isin)}
+        db.execute('BEGIN IMMEDIATE');current={p['id']:p for p in problems(db,isin,include_source_quarantines=True)}
         if problem['id'] not in current:raise ValueError('Проблема изменилась. Обновите список')
         at=stamp();item=_queue_repair(db,current[problem['id']],at)
         if priority:
@@ -1221,6 +1237,7 @@ def request_repair(store,problem,priority=False):
             requests[repair_id(current[problem['id']])]=item
             write(db,'cp_repair_requests:'+isin,requests)
         return item
+
 
 def _automatic_request(item):
     return (item.get('origin') or {}).get('kind')=='AUTOMATIC_DEPENDENCY' and not item.get('owner_priority_at')
@@ -1313,7 +1330,7 @@ def automatic_repair_turn(store,info,now=None):
                 scopes.setdefault((digest(meta),base),set()).add((start,end))
             except (KeyError,TypeError,ValueError):continue
         candidates={};dependencies=set()
-        for problem in problems(db,isin):
+        for problem in problems(db,isin,include_source_quarantines=True):
             if problem['kind']!='archive' or not problem.get('range'):continue
             meta=problem['identity'];base=problem['tf']
             if (base not in ('5m','15m','1H','1D') or meta.get('source') not in ('gettex','gettex_chart')
@@ -1402,6 +1419,7 @@ def automatic_repair_turn(store,info,now=None):
         return result
 
 
+
 def due_request(db,isin=None,now=None,include_automatic=True):
     import pandas as pd
     clock=pd.Timestamp(now or stamp());pending=[]
@@ -1448,7 +1466,7 @@ def service_request(info,store,recover_gettex,now=None):
         item.update(state='RUNNING',started_at=clock.isoformat())
         target=repair_id(p);requests[target]=item;write(db,key,requests)
     try:
-        with store.connect() as db:current=problems(db,isin)
+        with store.connect() as db:current=problems(db,isin,include_source_quarantines=True)
         matches=any(repair_id(q)==target for q in current)
         if _automatic_request(item):
             # Automatically split daily ranges remain bound to a CURRENT saved
@@ -1493,13 +1511,24 @@ def service_request(info,store,recover_gettex,now=None):
                 return adapter(symbol,interval,start,end=end)
             try:
                 report=dq.repair(info,store,meta['symbol'],p['tf'],meta,callback,clock,max_ranges=1,target_range=p['range'],
-                    local_only=capped or bool(future),network_not_before=max(future).isoformat() if future else None)
+                    local_only=capped or bool(future),network_not_before=max(future).isoformat() if future else None,include_stale_tail=True)
             finally:
                 if attempted:
                     item['last_attempt_at']=clock.isoformat();item['attempts']=item.get('attempts',0)+1
             if report.get('recovery_provider_attempted') and not attempted:
                 item['last_attempt_at']=clock.isoformat();item['attempts']=item.get('attempts',0)+1
-            a,b=map(pd.Timestamp,p['range']);remaining=any(pd.Timestamp(x)<=b and pd.Timestamp(y)>=a for x,y in report.get('ranges',[]))
+            a,b=map(pd.Timestamp,p['range'])
+            unresolved=[*report.get('ranges',[])]
+            if report.get('stale_range'):unresolved.append(report['stale_range'])
+            source_rejections=[]
+            if meta['source']=='gettex_chart':
+                from gettex_chart import pending_source_rejections,state_key
+                source_rejections=pending_source_rejections(info,store.setting(state_key(isin,p['tf']),{}),meta,p['tf'],p['range'])
+            remaining=bool(source_rejections) or any(pd.Timestamp(x)<=b and pd.Timestamp(y)>=a for x,y in unresolved)
+            target_complete=None
+            if not remaining and report.get('state') not in ('INVALID','SOURCE_UNAVAILABLE','RECOVERING'):
+                target_complete=dq.repair_target_complete(info,store,meta['symbol'],p['tf'],meta,p['range'],clock)
+                remaining=not target_complete
             if not remaining and report.get('state') not in ('INVALID','SOURCE_UNAVAILABLE','RECOVERING'):
                 out=dict(state='COMPLETED',reason='Выбранный диапазон больше не имеет этой DQ-проблемы; остальные проверки сохранены')
             elif report.get('next_retry') or future:
@@ -1508,7 +1537,13 @@ def service_request(info,store,recover_gettex,now=None):
                 if report.get('recovery_wait')=='PROVIDER' and not report.get('recovery_error'):
                     out['reason']='WAITING_PROVIDER: проверка источника не ранее '+out['next_retry']+'; DQ '+str(report.get('state'))
             else:out=dict(state='BLOCKED',reason=report.get('recovery_constraints',{}).get('status') or report.get('state','UNCONFIRMED'))
+            if source_rejections:
+                out['source_quarantine_remaining']=source_rejections
+                out['reason']='SOURCE_QUARANTINE_UNCONFIRMED: исходное отклонение не снято проверенным восстановлением; '+str(out.get('reason',''))
             out['quality']=report.get('state')
+            if target_complete is False:
+                out['target_state']='UNCONFIRMED'
+                out['reason']='REQUESTED_RANGE_UNCONFIRMED: запрошенные закрытые интервалы не подтверждены; '+str(out.get('reason',''))
         item.update(out,finished_at=stamp())
     except Exception as error:item.update(state='BLOCKED',reason=str(error),finished_at=stamp())
     if _automatic_request(item) or item.get('attempts',0)>=3:

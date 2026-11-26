@@ -231,6 +231,26 @@ def confirmed_state(info,saved):
 
 
 
+def pending_source_rejections(info,saved,meta,base,target=None):
+    """Exact saved source fault, never inferred from a missing/valid DB row."""
+    canonical={k:meta.get(k) for k in quality.IDENTITY}
+    fault=saved.get('archive_invalid') or {}
+    if (not confirmed_state(info,saved) or saved.get('identity')!=canonical
+            or fault.get('identity')!=canonical or fault.get('base_tf')!=base or fault.get('state')!='INVALID'):
+        return []
+    stamps=fault.get('rejected_timestamps') or []
+    if target is None:return list(dict.fromkeys(stamps))
+    first,last=map(pd.Timestamp,target)
+    if first.tzinfo is not None or last.tzinfo is not None or first>last:return []
+    result=[]
+    for stamp in stamps:
+        try:
+            at=pd.Timestamp(stamp)
+            if at.tzinfo is None and first<=at<=last:result.append(stamp)
+        except (ValueError,TypeError):continue
+    return list(dict.fromkeys(result))
+
+
 def retire_recovered_rejections(db, info, meta, base, recovered, now):
     """Reconcile quarantine in the SAME validated native-recovery transaction.
 

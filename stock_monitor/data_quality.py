@@ -699,6 +699,44 @@ def inspect_cached(info,store,symbol,base,meta,now=None):
     frame.attrs.update(meta)
     return frame,audit(frame,base,meta,now)
 
+def repair_target_complete(info,store,symbol,base,meta,target,now):
+    """A missing prefix/tail is outside a row-only audit. Prove its exact slots.
+
+    One bounded read snapshot, no acquisition, approvals or writes. A provider
+    cooldown and an empty response never certify the requested interval.
+    """
+    from eur_listings import stored_identity
+    from types import SimpleNamespace
+    first,last=map(pd.Timestamp,target)
+    with store.connect() as db:
+        db.execute('BEGIN')
+        row=db.execute('SELECT payload FROM instruments WHERE isin=?',(info['isin'],)).fetchone()
+        if not row or not stored_identity(db,json.loads(row[0]),meta,base):return False
+        if meta['source']=='gettex':
+            query="SELECT ts,open,high,low,close,volume FROM candles WHERE isin=? AND source='gettex' AND base_tf=? AND ts>=? AND ts<=? ORDER BY ts LIMIT 50001"
+            args=(info['isin'],base,str(first),str(last))
+        else:
+            query='SELECT ts,open,high,low,close,volume FROM series WHERE isin=? AND source=? AND symbol=? AND venue=? AND currency=? AND base_tf=? AND ts>=? AND ts<=? ORDER BY ts LIMIT 50001'
+            args=(info['isin'],meta['source'],symbol,meta['venue'],meta['currency'],base,str(first),str(last))
+        rows=db.execute(query,args).fetchall()
+        if len(rows)>50000:return False
+        def setting(key,default=None):
+            value=db.execute('SELECT value FROM settings WHERE key=?',(key,)).fetchone()
+            return json.loads(value[0]) if value else default
+        if meta['source']=='gettex_chart':
+            from gettex_chart import pending_source_rejections,state_key
+            if pending_source_rejections(info,setting(state_key(info['isin'],base),{}),meta,base,target):return False
+        frame=pd.DataFrame([r[1:] for r in rows],columns=FIELDS,index=pd.DatetimeIndex([r[0] for r in rows]))
+        frame.attrs={**meta,'timeframe':base};attach_interval_evidence(SimpleNamespace(setting=setting),frame,info['isin'])
+        expected=expected_index(frame.attrs,base,first,last,now)
+        if expected.empty:
+            end=last+(STEPS[base] if base in STEPS else pd.Timedelta(days=1))
+            return interval_status(frame.attrs,first,end,now)['state']=='MARKET_CLOSED'
+        missing=expected.difference(frame.index)
+        if len(missing.difference(covered_empty(frame.attrs,missing,base,now))):return False
+        return frame.empty or audit(frame,base,expected=meta,now=now,check_stale=False)['state']=='READY'
+
+
 def repair(info,store,symbol,base,meta,download,now=None,max_ranges=8,target_range=None,network_not_before=None,include_stale_tail=False,local_only=False):
     previous=store.setting(key(info,symbol,base),{})
     frame,report=inspect_cached(info,store,symbol,base,meta,now)
@@ -711,19 +749,33 @@ def repair(info,store,symbol,base,meta,download,now=None,max_ranges=8,target_ran
     child_scopes=['market:'+info['isin']+':'+tf for tf in ('1m','5m','15m','1H') if MINUTES[tf]<(1440 if base=='1D' else MINUTES[base])]
     child_revisions=store.read_cache.token_for(child_scopes)
     report['parent_child_revisions']=child_revisions
-    tail=report.get('stale_range') if include_stale_tail and base=='1D' and report.get('state') in ('READY','GAP','UNCONFIRMED','STALE') else None
-    if report.get('interval_classification',{}).get('NO_TRADES') and not report.get('repairable') and not tail:
+    tail=report.get('stale_range') if include_stale_tail and (base=='1D' or target_range is not None) and report.get('state') in ('READY','GAP','UNCONFIRMED','STALE') else None
+    source_rejections=[]
+    if meta['source']=='gettex_chart' and target_range is not None:
+        from gettex_chart import pending_source_rejections,state_key
+        source_rejections=pending_source_rejections(info,store.setting(state_key(info['isin'],base),{}),meta,base,target_range)
+        if source_rejections and expected_index(meta,base,*target_range,clock).empty:
+            # Positive after-session source observations are not exchange
+            # NO_TRADES and cannot be fixed by requesting non-session candles.
+            report.update(recovery_error='SOURCE_TIMEBASE_UNCONFIRMED: отклонённая отметка поставщика вне подтверждённой сессии; требуется подтверждение временной привязки',
+                recovery_constraints={'status':'SOURCE_TIMEBASE_UNCONFIRMED'},source_quarantine_pending=source_rejections)
+            return persist(store,info,symbol,base,report)
+
+    if report.get('interval_classification',{}).get('NO_TRADES') and not report.get('repairable') and not tail and not source_rejections:
         return persist(store,info,symbol,base,report)
     # A series-wide market revision is insufficient to reuse a failed local
     # check: identity/evidence/lineage may change without a new candle. The
     # bounded interval memo below checks these actual dependencies. Existing
     # next_retry is still enforced at the network boundary.
     persist(store,info,symbol,base,report)
-    if not report.get('repairable') and not tail:return report
+    if not report.get('repairable') and not tail and not source_rejections:return report
     # A large number of gaps is work to bound, not a reason to disable recovery.
     # Resume by timestamp, newest first; no index cursor invalidated by repairs.
     pending=list(reversed(report['ranges']))
     if tail:pending.append(tail)
+    if source_rejections:
+        pending.extend([at,at] for at in source_rejections)
+        pending=list(dict.fromkeys(map(tuple,pending)))
     # A rolling source cannot recover bars that have aged out of its archive.
     # Preserve the original DQ/ranges; this is a recovery constraint, not READY.
     if meta['source']=='proxy':

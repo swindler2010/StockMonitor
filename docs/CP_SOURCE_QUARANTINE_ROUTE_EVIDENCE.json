@@ -1,0 +1,83 @@
+{
+  "schema": 1,
+  "scope": "106 stocks; indices excluded; no account data",
+  "baseline_at": "2026-11-26T18:20:25.807867+00:00",
+  "baseline": {
+    "source_quarantines": 125,
+    "stocks_with_quarantines": 76,
+    "source_observations_rejected": 3912,
+    "daily": 3858,
+    "5m": 25,
+    "15m": 29,
+    "separate_invalid_dq_reports": 54
+  },
+  "software_defects_corrected_this_stage": 1,
+  "tests": {
+    "new": 10,
+    "affected": 20,
+    "unique_pass": 30,
+    "initial_reproduction_fail": 6,
+    "rollback_forward_and_reverse": "PASS"
+  },
+  "runtime": {
+    "instance": "1cc7133144bd4a56faa9b81e385a778b",
+    "started_approximately": "2026-11-26T19:45:00+01:00",
+    "request_id": "8932c2404639c68c9fd549993efece7419c9dad44cbe8df57b2776a2745f12ce",
+    "request": {
+      "problem": {
+        "isin": "FR001400AJ45",
+        "kind": "archive",
+        "identity": {
+          "source": "gettex_chart",
+          "symbol": "MCHAG.GTX",
+          "venue": "GETTEX",
+          "currency": "EUR",
+          "timezone": "Europe/Berlin"
+        },
+        "tf": "1D",
+        "state": "INVALID",
+        "reasons": [
+          "Невозможные OHLC/цены/объёмы"
+        ],
+        "range": [
+          "2026-11-12 00:00:00",
+          "2026-11-12 00:00:00"
+        ],
+        "report_key": "gettex_chart:FR001400AJ45:1D",
+        "id": "8cddbb17ea164f22cc8266eb3237968185f021396af15826601eba5a25bcadd2"
+      },
+      "state": "WAITING",
+      "requested_at": "2026-11-26T18:46:44.611336+00:00",
+      "attempts": 0,
+      "owner_priority_at": "2026-11-26T18:46:44.611336+00:00",
+      "started_at": "2026-11-26T18:48:21.640863+00:00",
+      "next_retry": "2026-11-26T18:49:12.463774+00:00",
+      "reason": "SOURCE_QUARANTINE_UNCONFIRMED: исходное отклонение не снято проверенным восстановлением; WAITING_PROVIDER: проверка источника не ранее 2026-11-26T18:49:12.463774+00:00; DQ GAP",
+      "source_quarantine_remaining": [
+        "2026-11-12 00:00:00"
+      ],
+      "quality": "GAP",
+      "finished_at": "2026-11-26T18:50:04.310906+00:00"
+    }
+  },
+  "comparable_followup": {
+    "captured_at": "2026-11-26T18:56:24.728829+00:00",
+    "initial_quarantines": 125,
+    "remaining_quarantines": 125,
+    "initial_rejected": 3912,
+    "remaining_rejected": 3912,
+    "work_direct_candle_writes": 0
+  },
+  "confirmed_cp_retirements": 0,
+  "source_constraints": [
+    "Daily missing volume requires confirmed same-listing evidence.",
+    "54 positive-volume intraday source timestamps on 2026-10-20 23:00 Europe/Berlin require a proven timebase/partition; no arbitrary dropping or retiming."
+  ],
+  "source_sha256": {
+    "stock_monitor/gettex_chart.py": "e7612529e53568c43818f10072f299406c2bcc201562bf4fce94d4d7dc437f70",
+    "stock_monitor/data_quality.py": "ee60f3e2bff73ae19b49eae99b582537b491e5dca48ddeb04e19ee7b8b0c67eb",
+    "stock_monitor/cp_controls.py": "0339244ba75af8c4b19284dd48ca62190cee51b3c24efc589230632d2d2c9d80",
+    "stock_monitor/revision_watcher.py": "08b0b10e837eb897ad8f263a63c2253e7c96822db27370c1f781bd02f017a6f1"
+  },
+  "privacy": "No databases, credentials, balances, positions or fills included."
+}

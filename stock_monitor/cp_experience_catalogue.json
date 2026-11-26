@@ -2920,6 +2920,31 @@
         "docs/MINUTE_CHARTS_RU.md"
       ],
       "limits": "Exxon exactGETTEX ISIN/GTX search returned statusOK/data[]/totalCount0 at2026-11-26T17:47:39Z. No NO_TRADES inference. Full provider archive/freshness and slow cold stock display remain explicit; no new strategy/execution grant."
+    },
+    {
+      "id": "source_quarantine_enters_existing_recovery_20261126",
+      "title": "Карантин native-публикаций не доходил до штатного автоисправления CP",
+      "sources": [
+        "gettex_chart"
+      ],
+      "states": [
+        "INVALID",
+        "SOURCE_TIMEBASE_UNCONFIRMED"
+      ],
+      "status": "INSTALLED TEST;10new+20affected unique PASS; ordinary Michelin request reached WAITING_PROVIDER with quarantine preserved",
+      "steps": [
+        "Включить проверенные source quarantine в существующий problems/view/request/service/automatic-repair путь; default problem universe риск-проверок и торговых допусков не расширять. Чтение native только по5точным индексированным ключам.",
+        "Корректная сохранённая строка не снимает исходное отклонение: повторить точный recovery target и удалить дату только существующим атомарным retire_recovered_rejections.",
+        "Не объявлять MARKET_CLOSED/COMPLETED для отклонённой положительной публикации вне сессии. Сохранить SOURCE_TIMEBASE_UNCONFIRMED без бесполезного HTTP.",
+        "Сохранить identity, source cooldown,3attempt/week retry, final revisions, raw receipts, serial writer и пользовательский приоритет."
+      ],
+      "evidence": [
+        "test_cp_quarantine_route.py:6FAIL before;10PASS after incl53/200 and full automatic source-to-retirement path",
+        "test_cp_recovered_quarantine.py + test_native_reject_scope.py + test_repair_target_scope.py:20affected PASS",
+        "CP source quarantine route live read.json; INVALID — текущая проверка.json",
+        "docs/CP_SOURCE_QUARANTINE_ROUTE_EVIDENCE.json: runtime 1cc71331; QUEUED 18:46:44Z, taken 18:48:21Z, WAITING 18:50:04Z; no verified market repair"
+      ],
+      "limits": "Snapshot2026-11-26T18:20Z:125 source quarantines/76stocks/3912rejected.54positive5m/15m timestamps20Oct23:00 cannot be dropped as empty service quotes. Missing daily volumes need actual proof. Work directOHLCV corrections0."
     }
   ],
   "sources": [
@@ -3390,5 +3415,5 @@
       "sha256_at_import": "1cdb3ec4c375da282bcdcc62de0eeba30ea30f1c7d1bd76bcd03f37d62c8da57"
     }
   ],
-  "updated_at": "2026-11-26T17:56:37.053364+00:00"
+  "updated_at": "2026-11-26T19:02:26.704973+00:00"
 }
