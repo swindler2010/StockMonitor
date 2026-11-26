@@ -246,9 +246,33 @@ def context(store,info,identity,now,execution_quote):
         shared=dict(_v2_inputs=peers,cohort=[item['isin'] for item in instruments],
                     market_source='gettex' if official else 'gettex_chart')
         if not offers:return dict(shared,action='WAIT',reason=waits.get(info['isin'],'V2_PEER_OR_PRICE_COVERAGE_INSUFFICIENT'))
-        best=offers[0]
-        if best['isin']!=info['isin']:return dict(shared,action='WAIT',reason='V2_HIGHER_RANKED_STOCK',ranked_isin=best['isin'])
-        return dict(best,**shared,action='BUY',reason='V2_30M_FROZEN_ENTRY',hold_minutes=f.EXITS[best['exit_rule']]*15)
+        from paper_account import entry_status_key, independent_portfolios
+        from paper_hourly import CONFIG, read
+        configured = read(db, CONFIG, {}).get('identities', {})
+        independent = independent_portfolios(db) is not None
+        options = {}
+        for offer in offers:
+            code = offer['isin']
+            if not independent or code in configured:
+                options.setdefault(code, offer)
+        queue = dict(key=digest([model['artifact_sha256'], shared['market_source'],
+                                 when.isoformat(), list(options.items())]),
+                     quote_at=when.isoformat(), candidates=list(options))
+        previous = {}
+        if independent:
+            for code in options:
+                key = entry_status_key('V2', code)
+                cache.depend('setting:'+key)
+                previous[code] = read(db, key, {})
+        code = sources.ranked_candidate(queue, previous)
+        shared['v2_queue'] = queue
+        if code is None:
+            return dict(shared, action='WAIT', reason='V2_NO_ADMISSIBLE_RANKED_CANDIDATE')
+        if code != info['isin']:
+            return dict(shared, action='WAIT', reason='V2_HIGHER_RANKED_STOCK', ranked_isin=code)
+        best = options[code]
+        return dict(best, **shared, action='BUY', reason='V2_30M_FROZEN_ENTRY',
+                    hold_minutes=f.EXITS[best['exit_rule']]*15)
 
 
 def validate_context(db,engine,now):
